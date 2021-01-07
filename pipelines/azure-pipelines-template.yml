@@ -1,0 +1,115 @@
+# .NET Core Function App to Windows on Azure
+# Build a .NET Core function app and deploy it to Azure as a Windows function App.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
+
+parameters:
+- name: VariableGroup
+  type: string
+  default: itpeople-functions-test
+
+variables:
+  # Azure Resource Manager connection created during pipeline creation
+  azureSubscription: 'Azure - IU Print'
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+  # # Flag for integration test fixture that we're running in a CI environment
+  # ci_build: 'true'
+
+# resources:
+#   containers:
+#   - container: 'print-integration-test'
+#     image: 'mcr.microsoft.com/mssql/server:2019-latest'
+#     ports:
+#     - 1433:1433/tcp
+#     env:
+#       ACCEPT_EULA: 'Y'
+#       SA_PASSWORD: 'abcd1234@'
+#       MSSQL_PID: 'Developer'
+
+stages:
+- stage: Build
+  displayName: Build stage
+
+  - job: BuildSolution
+    displayName: Build Solution
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Build Solution
+      inputs:
+        command: build
+
+  # - job: BuildFunctionApp
+  #   displayName: Build Function App
+  #   pool:
+  #     vmImage: $(vmImageName)
+
+  #   steps:
+  #   - task: DotNetCoreCLI@2
+  #     displayName: Build
+  #     inputs:
+  #       command: 'build'
+  #       projects: src/functions/functions.csproj
+  #       arguments: --output $(System.DefaultWorkingDirectory)/FunctionApp --configuration Release
+
+  #   - task: ArchiveFiles@2
+  #     displayName: 'Archive files'
+  #     inputs:
+  #       rootFolderOrFile: '$(System.DefaultWorkingDirectory)/FunctionApp'
+  #       includeRootFolder: false
+  #       archiveType: zip
+  #       archiveFile: $(Build.ArtifactStagingDirectory)/FunctionApp.zip
+  #       replaceExistingArchive: true
+
+  #   - publish: $(Build.ArtifactStagingDirectory)/FunctionApp.zip
+  #     displayName: Publish Web App Artifacts
+  #     artifact: FunctionAppDrop
+
+  # - job: TestFunctionApp
+  #   displayName: Test Function App
+  #   pool:
+  #     vmImage: $(vmImageName)
+  #   services:
+  #     integrationTestDb: 'print-integration-test'
+
+  #   steps:
+  #   - task: DotNetCoreCLI@2
+  #     displayName: Unit Test
+  #     inputs:
+  #       command: 'test'
+  #       projects: tests/unit/unit.csproj
+
+  #   - task: DotNetCoreCLI@2
+  #     displayName: Integration Tests
+  #     inputs:
+  #       command: 'test'
+  #       projects: tests/integration.api/integration.api.csproj
+
+# - stage: Deploy
+#   displayName: Deploy stage
+#   dependsOn: Build
+#   condition: succeeded()
+
+#   jobs:
+#   - deployment: Deploy
+#     displayName: Deploy
+#     environment: 'development'
+#     pool:
+#       vmImage: $(vmImageName)
+
+#     strategy:
+#       runOnce:
+#         deploy:
+
+#           steps:
+#           - task: AzureFunctionApp@1
+#             displayName: Publish Function App
+#             inputs:
+#               azureSubscription: '$(azureSubscription)'
+#               appType: functionApp
+#               appName: ${{ parameters.functionAppName }}
+#               package: '$(Pipeline.Workspace)/FunctionAppDrop/FunctionApp.zip'
+    
