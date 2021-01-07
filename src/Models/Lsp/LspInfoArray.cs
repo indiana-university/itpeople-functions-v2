@@ -1,3 +1,6 @@
+using System;
+using System.Xml.Serialization;
+
 namespace Models
 {
     [Serializable]

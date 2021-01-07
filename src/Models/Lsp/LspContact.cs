@@ -1,21 +1,23 @@
+using System;
+using System.Xml.Serialization;
 namespace Models
 {
     [Serializable]
     public record LspContact
     {
-        [XmlElement("Email")] 
+        [XmlElement(ElementName = "Email")] 
         public string  Email { get;  } 
-        [XmlElement("FullName")] 
+        [XmlElement(ElementName = "FullName")] 
         public string FullName { get;  }
-        [XmlElement("GroupInternalEmail")] 
+        [XmlElement(ElementName = "GroupInternalEmail")] 
         public string GroupInternalEmail { get;  } 
-        [XmlElement("NetworkID")] 
+        [XmlElement(ElementName = "NetworkID")] 
         public string NetworkID { get;  } 
-        [XmlElement("Phone")] 
+        [XmlElement(ElementName = "Phone")] 
         public string Phone { get;  } 
-        [XmlElement("PreferredEmail")] 
+        [XmlElement(ElementName = "PreferredEmail")] 
         public string PreferredEmail { get;  } 
-        [XmlElement("isLspAdmin")] 
+        [XmlElement(ElementName = "isLspAdmin")] 
         public bool IsLSPAdmin { get;  }
     }
     
