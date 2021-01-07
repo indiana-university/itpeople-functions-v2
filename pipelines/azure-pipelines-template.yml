@@ -30,7 +30,7 @@ variables:
 stages:
 - stage: Build
   displayName: Build stage
-
+jobs:
   - job: BuildSolution
     displayName: Build Solution
     pool:
