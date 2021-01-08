@@ -31,11 +31,10 @@ namespace Models
         public string PhotoUrl { get; init; }
         /// A collection of IT-related responsibilites of this person.
         public Responsibilities Responsibilities { get; init; }
-        /// The HR department to which this person belongs.
-        public int DepartmentId { get; init; }
         /// Whether this person is an administrator of the IT People service.
         public bool IsServiceAdmin { get; init; }
-
+        /// The HR department to which this person belongs.
+        public int DepartmentId { get; init; }
         /// The department in this relationship.
         public Department Department { get; init; }
     }
