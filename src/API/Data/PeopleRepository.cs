@@ -1,6 +1,8 @@
-using System;
+using System.Linq;
 using System.Threading.Tasks;
+using API.Middleware;
 using CSharpFunctionalExtensions;
+using Microsoft.EntityFrameworkCore;
 using Models;
 
 namespace API.Data
@@ -25,8 +27,23 @@ namespace API.Data
         // /// Get a single person by ID
         // public async Task<Result<Person,Error>> GetById(int Id) => throw new NotImplementedException();
         /// Get a single person by NetId
-        public Task<Result<Person,string>> GetByNetId(string NetId) => 
-            Task.FromResult(Result.Success<Person, string>(new Person(){Name="foo"}));
+        public async Task<Result<Person,Error>> GetByNetId(string netid)
+        {
+            try
+            {
+                using (var db = new DataContext())
+                {
+                    var person = await db.People.SingleOrDefaultAsync(p => EF.Functions.Like(p.NetId, netid));
+                    return person == null
+                        ? Pipeline.NotFound("No person found with that netid.")
+                        : Pipeline.Success(person);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                return Pipeline.InternalServerError(ex.Message);
+            }
+        }
         // /// Create a person from canonical HR data
         // public  async Task<Result<Person,Error>> Create(Person person) => throw new NotImplementedException();
         // /// Get a list of a person's unit memberships, by the person's ID
