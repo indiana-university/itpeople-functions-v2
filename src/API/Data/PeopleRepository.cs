@@ -1,12 +1,15 @@
 using System;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
+using Models;
+
 namespace Models
 {
     public class PeopleRepository
     {
-        // public PeopleRepository() {
-
-        // }
+        public PeopleRepository() 
+        {
+        }
 
         // /// Get a user record for a given net ID (e.g. 'jhoerr')
         // //TryGetId: NetId -> Async<Result<NetId * Id option,Error>>
@@ -21,8 +24,8 @@ namespace Models
         // public async Task<Result<Person,Error>> GetHr(string NetId) => throw new NotImplementedException();
         // /// Get a single person by ID
         // public async Task<Result<Person,Error>> GetById(int Id) => throw new NotImplementedException();
-        // /// Get a single person by NetId
-        // public async Task<Result<Person,Error>> GetByNetId(string NetId) => throw new NotImplementedException();
+        /// Get a single person by NetId
+        public async Task<Result<Person,string>> GetByNetId(string NetId) => throw new NotImplementedException();
         // /// Create a person from canonical HR data
         // public  async Task<Result<Person,Error>> Create(Person person) => throw new NotImplementedException();
         // /// Get a list of a person's unit memberships, by the person's ID
