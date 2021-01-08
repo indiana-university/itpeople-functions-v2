@@ -25,7 +25,8 @@ namespace API.Data
         // /// Get a single person by ID
         // public async Task<Result<Person,Error>> GetById(int Id) => throw new NotImplementedException();
         /// Get a single person by NetId
-        public async Task<Result<Person,string>> GetByNetId(string NetId) => throw new NotImplementedException();
+        public Task<Result<Person,string>> GetByNetId(string NetId) => 
+            Task.FromResult(Result.Success<Person, string>(new Person(){Name="foo"}));
         // /// Create a person from canonical HR data
         // public  async Task<Result<Person,Error>> Create(Person person) => throw new NotImplementedException();
         // /// Get a list of a person's unit memberships, by the person's ID

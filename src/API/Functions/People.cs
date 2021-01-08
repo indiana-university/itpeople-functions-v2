@@ -2,23 +2,26 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.Functions.Worker;
 using System.Net;
-using System.Collections.Generic;
+using API.Data;
+using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace API.Functions
 {
     public static class People
     {        
         [FunctionName("GetByNetid")]
-        public static HttpResponseData GetByNetid(
+        public static async Task<HttpResponseData> GetByNetid(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/getbynetid")] HttpRequestData req) 
             {
-                var response = new HttpResponseData(HttpStatusCode.OK);
-                var headers = new Dictionary<string, string>();
-                headers.Add("Date", "Mon, 18 Jul 2016 16:06:00 GMT");
-                headers.Add("Content", "Content - Type: text / plain; charset = utf-8");
-                response.Headers = headers;
-                response.Body = "Pong!";
-                return response;
+                var repo = new PeopleRepository();
+                var result = await repo.GetByNetId("");
+                return result.IsSuccess
+                    ? new HttpResponseData(HttpStatusCode.OK, JsonSerializer.Serialize(result.Value))
+                        {
+                            Headers = { { "Content-Type", "application/json; charset=utf-8" } }
+                        }
+                    : new HttpResponseData(HttpStatusCode.InternalServerError, result.Error);
             }
     }
 }
