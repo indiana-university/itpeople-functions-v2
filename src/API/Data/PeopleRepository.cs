@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using Models;
 
-namespace Models
+namespace API.Data
 {
     public class PeopleRepository
     {
