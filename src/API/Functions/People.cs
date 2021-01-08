@@ -8,9 +8,9 @@ namespace API.Functions
 {
     public static class People
     {        
-        [FunctionName("Ping")]
-        public static HttpResponseData Ping(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequestData req) 
+        [FunctionName("GetByNetid")]
+        public static HttpResponseData GetByNetid(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/getbynetid")] HttpRequestData req) 
             {
                 var response = new HttpResponseData(HttpStatusCode.OK);
                 var headers = new Dictionary<string, string>();
