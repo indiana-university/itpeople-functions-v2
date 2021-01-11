@@ -15,6 +15,8 @@ variables:
   vmImageName: 'ubuntu-latest'
   # # Flag for integration test fixture that we're running in a CI environment
   # ci_build: 'true'
+  imageName: 'integration-test'
+  tagName: 'ci'
 
 # resources:
 #   containers:
@@ -42,6 +44,32 @@ stages:
       displayName: Build Solution
       inputs:
         command: build
+
+- stage: Test
+  displayName: Test
+  dependsOn: Build
+
+  jobs: 
+    - job: ApiIntegrationTest
+      displayName: API Integration Test
+      pool:
+        vmImage: $(vmImageName)
+
+      steps:
+      - script: docker build --pull --rm --file $(System.DefaultWorkingDirectory)/Dockerfile.API --tag $(imageName)-api:$(tagName) $(System.DefaultWorkingDirectory)
+        displayName: Build the image
+
+      - script: docker run --detach --publish 8080:80/tcp --name $(imageName)-api $(imageName)-api:$(tagName)
+        displayName: Start container
+        
+      - script: sh ./wait-for-it.sh 45 $(imageName)-api
+        displayName: Wait for container ready 
+
+      - script: curl http://localhost:8080/api/ping
+        displayName: Poke healthcheck endpoint
+
+      - script: docker stop $(imageName)-api
+        displayName: Stop container
 
   # - job: BuildFunctionApp
   #   displayName: Build Function App
