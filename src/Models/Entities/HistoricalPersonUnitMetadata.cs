@@ -1,6 +1,6 @@
 namespace Models
 {
-    public record HistoricalPersonUnitMetadata : Entity
+    public class HistoricalPersonUnitMetadata : Entity
     {
         public string Unit { get; }
         public int UnitId { get; }

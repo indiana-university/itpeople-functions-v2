@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 namespace Models
 {
     [Serializable]
-    public record LspContact
+    public class LspContact
     {
         [XmlElement(ElementName = "Email")] 
         public string  Email { get;  } 

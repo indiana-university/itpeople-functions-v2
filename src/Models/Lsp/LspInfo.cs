@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 namespace Models
 {
     [Serializable]
-    public record LspInfo
+    public class LspInfo
     {
         [XmlElement(ElementName = "IsLA")]
         public bool IsLA { get; }

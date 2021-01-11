@@ -13,7 +13,7 @@ namespace API.Data
         {
         }
 
-        // /// Get a user record for a given net ID (e.g. 'jhoerr')
+        // /// Get a user class for a given net ID (e.g. 'jhoerr')
         // //TryGetId: NetId -> Async<Result<NetId * Id option,Error>>
         // public async Task<Result<(NetId, Id), option, Error>> TryGetId(string NetId) {
         //     throw new NotImplementedException();

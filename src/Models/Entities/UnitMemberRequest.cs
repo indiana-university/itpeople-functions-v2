@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Models
 {
-    public record UnitMemberRequest
+    public class UnitMemberRequest
     {
         [Required]
         public int UnitId { get; }
@@ -13,7 +13,7 @@ namespace Models
         /// The permissions of the person in this membership as part of the unit. Defaults to 'viewer'.
         [DefaultValue(UnitPermissions.Viewer)]
         public UnitPermissions UnitPermissions { get; }
-        /// The ID of the person record. This can be null if the position is vacant.
+        /// The ID of the person class. This can be null if the position is vacant.
         public int? PersonId { get; }
         /// The NetId of the person, if they are not already in the IT people directory. This can be null if the position is vacant.
         public string NetId { get; }

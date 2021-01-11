@@ -5,7 +5,7 @@ namespace Models
 {
     [Serializable]
     [XmlRoot("ArrayOfLspInfo")]
-    public record LspInfoArray
+    public class LspInfoArray
     {
         [XmlElement(ElementName = "LspInfo")]
         public LspInfo[] LspInfos { get; }

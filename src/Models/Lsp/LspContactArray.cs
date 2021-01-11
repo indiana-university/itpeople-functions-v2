@@ -5,7 +5,7 @@ namespace Models
 {
     [Serializable]
     [XmlRoot("ArrayOfLspContact")]
-    public record LspContactArray
+    public class LspContactArray
     {
 
         [XmlElement(ElementName = "LspContact")]

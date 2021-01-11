@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 namespace Models
 {
     [Serializable]
-    public record DeptCodeList
+    public class DeptCodeList
     {
         [XmlElement(ElementName = "a")]
         public string[] Values { get; }

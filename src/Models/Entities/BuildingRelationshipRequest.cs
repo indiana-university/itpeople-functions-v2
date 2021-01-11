@@ -1,6 +1,6 @@
 namespace Models
 {
-    public record BuildingRelationshipRequest
+    public class BuildingRelationshipRequest
     {
        
         /// The ID of the unit in this relationship

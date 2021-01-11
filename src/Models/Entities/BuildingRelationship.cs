@@ -1,7 +1,7 @@
 namespace Models
 {
     /// This relationship describes which IT Unit provides IT-related support for a given building.
-    public record BuildingRelationship : Entity
+    public class BuildingRelationship : Entity
     {
         
         /// The ID of the unit in this relationship

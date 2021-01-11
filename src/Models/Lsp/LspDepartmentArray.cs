@@ -5,7 +5,7 @@ namespace Models
 {
     [Serializable]
     [XmlRoot("LspDepartment")]
-    public record LspDepartmentArray
+    public class LspDepartmentArray
     {
         [XmlElement(ElementName = "DeptCodeList")]
         public DeptCodeList[] DeptCodeLists { get; }

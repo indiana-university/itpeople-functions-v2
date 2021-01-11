@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Models
 {
-    public record MemberTool : Entity
+    public class MemberTool : Entity
     {   
         /// The ID of the member in this relationship
         [Required]

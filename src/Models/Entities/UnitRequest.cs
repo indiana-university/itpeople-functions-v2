@@ -1,6 +1,6 @@
 namespace Models
 {
-    public record UnirRequest
+    public class UnirRequest
     {
    
         /// The unique name of this unit.

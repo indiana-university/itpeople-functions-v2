@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
-using Microsoft.Azure.Functions.Worker;
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Net.Http;
 
 namespace API.Middleware
 {
@@ -48,8 +49,16 @@ namespace API.Middleware
 
         public HttpStatusCode StatusCode { get; set; }
         public string Message { get; set; }
-
-        public HttpResponseData ToResponse() 
-            => new HttpResponseData(StatusCode, Message);
+        public IActionResult ToActionResult()// => new StatusCodeResult((int)StatusCode);        
+        {
+            switch (StatusCode)
+            {
+                case HttpStatusCode.Unauthorized: return new UnauthorizedResult();
+                case HttpStatusCode.BadRequest: return new BadRequestObjectResult(Message);
+                case HttpStatusCode.NotFound: return new NotFoundObjectResult(Message);
+                case HttpStatusCode.Conflict: return new ConflictObjectResult(Message);
+                default: return new StatusCodeResult(500);
+            }
+        }
     }
 }

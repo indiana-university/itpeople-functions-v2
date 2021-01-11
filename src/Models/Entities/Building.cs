@@ -1,7 +1,7 @@
 namespace Models
 {
     /// A university building or location
-    public record Building : Entity
+    public class Building : Entity
     {
         /// The name of this department.
         public string  Name { get; }

@@ -1,7 +1,7 @@
 namespace Models
 
 {
-    public record ToolPermission
+    public class ToolPermission
     {
         /// The netid of the grantee
         public string NetId { get; }

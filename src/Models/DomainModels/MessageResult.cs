@@ -1,6 +1,6 @@
 namespace Models
 {
-    public record MessageResult
+    public class MessageResult
     {
         public string Message { get; }
     }

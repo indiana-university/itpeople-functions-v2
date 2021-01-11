@@ -1,6 +1,6 @@
 namespace Models
 {
-    public record Tool : Entity
+    public class Tool : Entity
     {        
         
         /// The name of this tool.

@@ -1,10 +1,10 @@
 namespace Models
 {
-    public record Department : Entity
+    public class Department : Entity
     {    
         /// The name of this department.
-        public string Name { get; init; }
+        public string Name { get; set; }
         /// A description or longer name of this department.
-        public string Description { get; init; }
+        public string Description { get; set; }
     }
 }

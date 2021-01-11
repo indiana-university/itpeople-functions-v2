@@ -1,15 +1,15 @@
 namespace Models
 {
-    public record UnitMember : Entity
+    public class UnitMember : Entity
     {
         
-        /// The ID of the unit record.
+        /// The ID of the unit class.
         public int UnitId { get; }
         /// The role of the person in this membership as part of the unit.
         public Role Role { get; }
         /// The permissions of the person in this membership as part of the unit. Defaults to 'viewer'.
         public UnitPermissions Permissions { get; set; }
-        /// The ID of the person record. This can be null if the position is vacant.
+        /// The ID of the person class. This can be null if the position is vacant.
         public Person PersonId { get; }    
         /// The title/position of this membership.
         public string Title { get; }   

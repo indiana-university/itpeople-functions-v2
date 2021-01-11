@@ -1,7 +1,7 @@
 namespace Models
 {
     /// A person doing or supporting IT work
-    public record HrPerson : Entity
+    public class HrPerson : Entity
     {
         
         /// The net id (username) of this person.

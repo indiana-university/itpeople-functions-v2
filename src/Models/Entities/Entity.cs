@@ -1,8 +1,8 @@
 namespace Models
 {
-    public record Entity
+    public class Entity
     {
-        /// The unique ID of this record.
-        public int Id { get; init; }
+        /// The unique ID of this class.
+        public int Id { get; set; }
     }
 }

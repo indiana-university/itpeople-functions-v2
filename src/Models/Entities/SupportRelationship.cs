@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Models
 {
-    public record SupportRelationship : Entity 
+    public class SupportRelationship : Entity 
     { 
         /// The ID of the unit in this relationship
         [Required]

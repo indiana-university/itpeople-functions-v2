@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Models
 {
-    public record Unit : Entity
+    public class Unit : Entity
     {
         /// The name of this unit.
         [Required]

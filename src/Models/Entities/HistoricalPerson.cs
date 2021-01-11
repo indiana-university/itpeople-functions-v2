@@ -2,7 +2,7 @@ using System;
 
 namespace Models
 {
-    public record HistoricalPerson
+    public class HistoricalPerson
     { 
         /// The netid of the removed person
         public string NetId { get; }

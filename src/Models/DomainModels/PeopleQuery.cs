@@ -1,6 +1,6 @@
 namespace Models
 {
-    public record PeopleQuery
+    public class PeopleQuery
     {
         public string Query { get; }
         public int Classes { get; }

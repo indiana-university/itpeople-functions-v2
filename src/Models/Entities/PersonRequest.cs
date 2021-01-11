@@ -1,6 +1,6 @@
 namespace Models
 {
-    public record PersonRequest : Entity
+    public class PersonRequest : Entity
     {
 
         /// The physical location (building, room) of this person.

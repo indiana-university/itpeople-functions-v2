@@ -1,6 +1,6 @@
 namespace Models
 {
-    public record SupportRelationshipRequest
+    public class SupportRelationshipRequest
     { 
         /// The ID of the unit in this relationship
         public int  UnitId { get; }
