@@ -13,11 +13,13 @@ namespace Integration
         public string ImageName { get; }
         public string ContainerName { get; }
         public TextWriter Progress { get; }
+        public TextWriter Error { get; }
         // public StartAction StartAction { get; private set; } = StartAction.none;
 
-        protected DockerContainer(TextWriter progress, string imageName, string containerName)
+        protected DockerContainer(TextWriter progress, TextWriter error, string imageName, string containerName)
         {
             Progress = progress;
+            Error = error;
 			ImageName = imageName;
             ContainerName = containerName; // + "-" + Guid.NewGuid().ToString();
         }
@@ -26,10 +28,8 @@ namespace Integration
         {
             // if (StartAction != StartAction.none) return;
 
-
             var images =
                 await client.Images.ListImagesAsync(new ImagesListParameters { MatchName = ImageName });
-
 
             if (images.Count == 0)
             {
@@ -72,17 +72,15 @@ namespace Integration
         {
             Progress.WriteLine($"⏳ Waiting for container '{ContainerName}' to become ready...");
             var i = 0;
-            while (!await isReady())
+            do
             {
-                i++;
-
-                if (i > 20)
+                if (i++ > 30)
                 {
                     throw new TimeoutException($"😫 Container {ContainerName} does not seem to be responding in a timely manner");
                 }
-
-                await Task.Delay(5000);
+                await Task.Delay(2000);
             }
+            while(!await isReady());
 
             Progress.WriteLine($"😎 Container '{ContainerName}' is ready.");
         }
@@ -90,22 +88,26 @@ namespace Integration
         private async Task createContainer(IDockerClient client)
         {
             Progress.WriteLine($"⏳ Creating container '{ContainerName}' using image '{ImageName}'");
-
-            var hostConfig = ToHostConfig();
-            var config = ToConfig();
-
-            await client.Containers.CreateContainerAsync(new CreateContainerParameters(config)
+            await client.Containers.CreateContainerAsync(new CreateContainerParameters(ToConfig())
             {
                 Image = ImageName,
                 Name = ContainerName,
                 Tty = true,
-                HostConfig = hostConfig,
+                HostConfig = ToHostConfig(),
             });
         }
 
         public async Task Stop(IDockerClient client)
-        {
-            await client.Containers.StopContainerAsync(ContainerName, new ContainerStopParameters());
+        {            
+            try
+            {
+                Progress.WriteLine($"⏳ Stopping '{ContainerName}'....");
+                await client.Containers.StopContainerAsync(ContainerName, new ContainerStopParameters());
+            }
+            catch(Exception ex)
+            {
+                Error.WriteLine($"❌Error encountered while stopping {ContainerName}: {ex.Message}");
+            }
         }
 
         public Task Remove(IDockerClient client)

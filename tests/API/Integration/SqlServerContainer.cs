@@ -4,10 +4,10 @@ using Docker.DotNet.Models;
 using System;
 using System.IO;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
-using NUnit.Framework;
+// using Microsoft.EntityFrameworkCore;
+// using Microsoft.EntityFrameworkCore.Infrastructure;
+// using Microsoft.EntityFrameworkCore.Migrations;
+// using NUnit.Framework;
 
 namespace Integration
 {
@@ -18,7 +18,7 @@ namespace Integration
         public const string LocalMasterConnectionString = "Server=localhost;Database=master;User Id=SA;Password=abcd1234@;";
         public const string LocalConnectionString = "Server=localhost;Database=ItPeople;User Id=SA;Password=abcd1234@;";
         
-        public SqlServerContainer(TextWriter progress) : base(progress, "mcr.microsoft.com/mssql/server:2019-latest", "itpeople-integration-test")
+        public SqlServerContainer(TextWriter progress, TextWriter error) : base(progress, error, "mcr.microsoft.com/mssql/server:2019-latest", "integration-test-db")
         {
         }
 
@@ -36,104 +36,97 @@ namespace Integration
             }
             catch (Exception e)
             {
-                Progress.WriteLine($"🤔 Container is not yet ready: {e.Message}");
+                Progress.WriteLine($"🤔 {ContainerName} is not yet ready: {e.Message}");
                 return false;
             }
         }
 
         // Watch the port mapping here to avoid port
         // contention w/ other Sql Server installations
-        public override HostConfig ToHostConfig()
-        {
-            return new HostConfig()
+        public override HostConfig ToHostConfig() 
+            => new HostConfig()
             {
                 PortBindings = new Dictionary<string, IList<PortBinding>>
-                {
                     {
-                        "1433/tcp",
-                        new List<PortBinding>
                         {
-                            new PortBinding
+                            "1433/tcp",
+                            new List<PortBinding>
                             {
-                                HostPort = $"1433",
-                                HostIP = "localhost"
+                                new PortBinding
+                                {
+                                    HostPort = $"1433",
+                                    HostIP = "localhost"
+                                }
                             }
-                        }
+                        },
                     },
-
-
-                },
-
             };
-        }
 
-        public override Config ToConfig()
-        {
-            return new Config
+        public override Config ToConfig() 
+            => new Config
             {
                 Env = new List<string> { "ACCEPT_EULA=Y", "SA_PASSWORD=abcd1234@", "MSSQL_PID=Developer" }
             };
-        }
-/*
-        public static void ResetDatabase()
-        {
-            using (var printContext = GetDbContext())
-            {
-                ResetSchema(printContext);
-                SeedTestData(printContext);
-            }
-        }
+        /*
+                public static void ResetDatabase()
+                {
+                    using (var printContext = GetDbContext())
+                    {
+                        ResetSchema(printContext);
+                        SeedTestData(printContext);
+                    }
+                }
 
-        private static void ResetSchema(PrintContext printContext)
-        {
-            var migrator = printContext.Database.GetService<IMigrator>();
-            migrator.Migrate(Migration.InitialDatabase);
-            migrator.Migrate();
-        }
+                private static void ResetSchema(PrintContext printContext)
+                {
+                    var migrator = printContext.Database.GetService<IMigrator>();
+                    migrator.Migrate(Migration.InitialDatabase);
+                    migrator.Migrate();
+                }
 
-        private static void SeedTestData(PrintContext printContext)
-        {
-            var testEntities = new TestEntities(printContext);
+                private static void SeedTestData(PrintContext printContext)
+                {
+                    var testEntities = new TestEntities(printContext);
 
-            using (var transaction = printContext.Database.BeginTransaction())
-            {
-                printContext.Devices.AddRange(
-                    testEntities.Device1,
-                    testEntities.Device2,
-                    testEntities.Device3,
-                    testEntities.DeviceInactive
-                );
-                
-                printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Devices] ON;");
-                printContext.SaveChanges();
-                printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Devices] OFF;");
-                
-                printContext.Clients.AddRange(testEntities.Client1, testEntities.Client2, testEntities.Client3, testEntities.ClientInactive);
-                printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Clients] ON");
-                printContext.SaveChanges();
-                printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Clients] OFF");
-                
-                //Add Cost Centers for Clients.
-                printContext.CostCenters.AddRange(testEntities.Client1CostCenterA, testEntities.Client1CostCenterB, testEntities.Client2CostCenterA, testEntities.ClientInactiveCostCenterA);
-                printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[CostCenters] ON;");
-                printContext.SaveChanges();
-                printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[CostCenters] OFF;");
+                    using (var transaction = printContext.Database.BeginTransaction())
+                    {
+                        printContext.Devices.AddRange(
+                            testEntities.Device1,
+                            testEntities.Device2,
+                            testEntities.Device3,
+                            testEntities.DeviceInactive
+                        );
 
-                //Add Clients for Device1 and Device2                                
-                testEntities.Device1.Client = testEntities.Client1;
-                testEntities.Device2.Client = testEntities.Client1;
-                printContext.SaveChanges();
+                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Devices] ON;");
+                        printContext.SaveChanges();
+                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Devices] OFF;");
 
-                transaction.Commit();
-            }
-        }
+                        printContext.Clients.AddRange(testEntities.Client1, testEntities.Client2, testEntities.Client3, testEntities.ClientInactive);
+                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Clients] ON");
+                        printContext.SaveChanges();
+                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Clients] OFF");
 
-        public static PrintContext GetDbContext()
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<PrintContext>();
-            optionsBuilder.UseSqlServer(PrintContext.LocalConnectionString+";Database=Print");
-            return new PrintContext(optionsBuilder.Options);
-        } 
-    */
+                        //Add Cost Centers for Clients.
+                        printContext.CostCenters.AddRange(testEntities.Client1CostCenterA, testEntities.Client1CostCenterB, testEntities.Client2CostCenterA, testEntities.ClientInactiveCostCenterA);
+                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[CostCenters] ON;");
+                        printContext.SaveChanges();
+                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[CostCenters] OFF;");
+
+                        //Add Clients for Device1 and Device2                                
+                        testEntities.Device1.Client = testEntities.Client1;
+                        testEntities.Device2.Client = testEntities.Client1;
+                        printContext.SaveChanges();
+
+                        transaction.Commit();
+                    }
+                }
+
+                public static PrintContext GetDbContext()
+                {
+                    var optionsBuilder = new DbContextOptionsBuilder<PrintContext>();
+                    optionsBuilder.UseSqlServer(PrintContext.LocalConnectionString+";Database=Print");
+                    return new PrintContext(optionsBuilder.Options);
+                } 
+            */
     }
 }
