@@ -36,8 +36,8 @@ stages:
   jobs:
   - job: BuildSolution
     displayName: Build Solution
-    pool:
-      vmImage: $(vmImageName)
+    pool: Default
+      # vmImage: $(vmImageName)
 
     steps:
     - task: DotNetCoreCLI@2
@@ -52,8 +52,8 @@ stages:
   jobs: 
     - job: ApiIntegrationTest
       displayName: API Integration Test
-      pool:
-        vmImage: $(vmImageName)
+      pool: Default
+        # vmImage: $(vmImageName)
 
       steps:
       # - script: docker build --pull --rm --file $(System.DefaultWorkingDirectory)/Dockerfile.API --tag $(imageName)-api:$(tagName) $(System.DefaultWorkingDirectory)
