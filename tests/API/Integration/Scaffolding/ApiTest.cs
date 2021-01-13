@@ -13,7 +13,7 @@ namespace Integration
 
         protected static void AssertStatusCode(HttpResponseMessage resp, HttpStatusCode expected)
         {
-            Assert.AreEqual(HttpStatusCode.OK, resp.StatusCode);
+            Assert.AreEqual(expected, resp.StatusCode);
         }
 
         protected static async Task AssertStringContent(HttpResponseMessage resp, string expected)
