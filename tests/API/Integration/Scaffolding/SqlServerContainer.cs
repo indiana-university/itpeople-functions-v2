@@ -4,6 +4,7 @@ using Docker.DotNet.Models;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using Database;
 // using Microsoft.EntityFrameworkCore;
 // using Microsoft.EntityFrameworkCore.Infrastructure;
 // using Microsoft.EntityFrameworkCore.Migrations;
@@ -14,10 +15,7 @@ namespace Integration
 
     ///<summary>See https://hub.docker.com/_/microsoft-mssql-server for imags, tags, and usage notes.</summary>
     internal class SqlServerContainer : DockerContainer
-    {
-        public const string LocalMasterConnectionString = "Server=localhost;Database=master;User Id=SA;Password=abcd1234@;";
-        public const string LocalConnectionString = "Server=localhost;Database=ItPeople;User Id=SA;Password=abcd1234@;";
-        
+    {        
         public SqlServerContainer(TextWriter progress, TextWriter error) : base(progress, error, "mcr.microsoft.com/mssql/server:2019-latest", "integration-test-db")
         {
         }
@@ -28,7 +26,7 @@ namespace Integration
         {
             try
             {
-                using (var conn = new SqlConnection(LocalMasterConnectionString))
+                using (var conn = new SqlConnection(PeopleContext.LocalMasterConnectionString))
                 {
                     await conn.OpenAsync();
                     return true;
