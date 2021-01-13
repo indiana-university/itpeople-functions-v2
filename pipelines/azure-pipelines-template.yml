@@ -12,7 +12,7 @@ variables:
   # Azure Resource Manager connection created during pipeline creation
   azureSubscription: 'Azure - IU Print'
   # Agent VM image name
-  vmImageName: 'ubuntu-latest'
+  vmImageName: 'ubuntu-20.04'
   # # Flag for integration test fixture that we're running in a CI environment
   # ci_build: 'true'
   imageName: 'integration-test'
