@@ -11,14 +11,13 @@ using Microsoft.AspNetCore.Http;
 namespace API.Functions
 {
     public static class People
-    {   
+    {
         [FunctionName("PeopleGetAll")]
-        public static IActionResult PeopleGetAll(
+        public static Task<IActionResult> PeopleGetAll(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people")] HttpRequest req) 
-            {
-                return Security.Authenticate(req)
-                    .Finally(result => Response.Ok(req, result));                
-            }
+            => Security.Authenticate(req)
+                .Bind(_ => PeopleRepository.GetAllAsync())
+                .Finally(people => Response.Ok(req, people));
 
         [FunctionName("GetByNetid")]
         public static Task<IActionResult> GetByNetid(

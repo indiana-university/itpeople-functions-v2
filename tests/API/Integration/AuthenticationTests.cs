@@ -9,8 +9,7 @@ namespace Integration
 {
     public class AuthenticationTests : ApiTest
     {
-        // valid from 1/1/2000 - 1/19/2038 💥
-        // private static string ValidJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiamhvZXJyIiwiZXhwIjoyMTQ3NDgzNjQ4fQ.ihv-eghNulIFiHRg7pvw48fel-w0vlhuaFEd2LtfgWyjy6S61tXxab2ewWWjzTmNLoKV7RhP5s47_I46RYO_pb38k68JjED-M86R6tcunMNYxCo45siLRUOLopl0TtDuuInvKQXOthKW2S82xSfesGbgfWxVOE1ihZ0Tp3YQ76fTINRwnE4DRB3nRHtr_a_FP0z8GJImdxFtjZb6gRS0IAqA1EXfxkgFG8Gy_tW7U_KZkhvseQ0OPVJojGti3Ll6dd5wsUius8z2bjyDLwyK79H88Ab3ksMurl-4QDC_l9BjWCrJ7IYdqrrCguQgk6w_Qp_TuRiZ-rzb4-Mv1DTQjA";
+        
         
         // expired 1/1/2000
         private static string ExpiredJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDcwMCwidXNlcl9uYW1lIjoiamhvZXJyIiwiZXhwIjo5NDY2ODQ4MDB9.CpjTHlt_wMTtoB79EsLEZSQRw8wNkIaLL_I3dFf3GAFuosQdAd8PkAxbDzJBki-pTEWCLvxH8d2zxDPn4RYzKW2whMMrFrG6q49-aHwlwHAP22Ku60nU4JcqmiTPJ99i5d0XTvNfU1y2EMfQ2uiJ9fbd46FifgrY4faqzOUrWlchcLNv4GGK_nB4BP7PY2xh0SntHlbrEpNdzG_6NJAlo0JurGohSBj_DqWfM8geE0pxZfXEwQnTjJZ1wAViLGbMii_NFfhFQ94G7Y1gGeH357T8584THJCcnzCxmLqSUUn1O0_L21m49438598faPrWkG9ATgOPc14AklTfIf07qA";

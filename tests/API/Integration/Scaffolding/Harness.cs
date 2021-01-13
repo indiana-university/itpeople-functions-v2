@@ -26,15 +26,15 @@ namespace Integration
         public void OneTimeSetup()
         {
             // Start SQL Server container
-            // _dbContainer.Start(_client).Wait(60 * 1000);
+            _dbContainer.Start(_client).Wait(60*1000);
             // Wait for SQL Server container to finish starting
-            // _dbContainer.WaitUntilReady().Wait(60*1000);
+            _dbContainer.WaitUntilReady().Wait(60*1000);
 
             // Build and start API Function app container
             _appContainer.BuildImage();
-            _appContainer.Start(_client).Wait(60*1000);
+            _appContainer.Start(_client).Wait(10*1000);
             // Wait for API container to finish starting
-            _appContainer.WaitUntilReady().Wait(60*1000);
+            _appContainer.WaitUntilReady().Wait(10*1000);
 
         }
 

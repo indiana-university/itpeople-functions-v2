@@ -1,7 +1,10 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Middleware;
 using CSharpFunctionalExtensions;
+using Database;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
@@ -11,6 +14,22 @@ namespace API.Data
     {
         public PeopleRepository() 
         {
+        }
+
+        internal static async Task<Result<List<Person>, Error>> GetAllAsync()
+        {
+            try
+            {
+                using (var db = PeopleContext.Create())
+                {
+                    var result = await db.People.ToListAsync();
+                    return Pipeline.Success(result);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                return Pipeline.InternalServerError(ex.Message);
+            }        
         }
 
         // /// Get a user class for a given net ID (e.g. 'jhoerr')
@@ -27,11 +46,13 @@ namespace API.Data
         // /// Get a single person by ID
         // public async Task<Result<Person,Error>> GetById(int Id) => throw new NotImplementedException();
         /// Get a single person by NetId
+
+
         public async Task<Result<Person,Error>> GetByNetId(string netid)
         {
             try
             {
-                using (var db = new DataContext())
+                using (var db = PeopleContext.Create())
                 {
                     var person = await db.People.SingleOrDefaultAsync(p => EF.Functions.Like(p.NetId, netid));
                     return person == null

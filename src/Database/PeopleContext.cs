@@ -24,9 +24,9 @@ namespace Database
 
         public static PeopleContext Create()
         {
-            var ConnectionString = System.Environment.GetEnvironmentVariable("SqlServer.ConnectionString");
+            var ConnectionString = System.Environment.GetEnvironmentVariable("SqlServerConnectionString");
             if (string.IsNullOrWhiteSpace(ConnectionString))
-                throw new Exception("Missing environment variable: 'SqlServer.ConnectionString'");
+                throw new Exception("Missing environment variable: 'SqlServerConnectionString'");
 
             var optionsBuilder = new DbContextOptionsBuilder<PeopleContext>();
             optionsBuilder.UseSqlServer(ConnectionString);
