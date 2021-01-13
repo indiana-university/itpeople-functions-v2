@@ -7,6 +7,7 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Security;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -21,6 +22,9 @@ namespace API.Middleware
                 .Bind(ValidateJWT);
 
         public const string ErrorRequestMissingAuthorizationHeader = "Request is missing an Authorization header.";
+        public const string ErrorRequestEmptyAuthorizationHeader = "Request contains empty Authorization header.";
+        public const string ErrorRequestAuthorizationHeaderMissingBearerScheme = "Request Authorization header scheme must be \"Bearer\"";
+        public const string ErrorRequestAuthorizationHeaderMissingBearerToken = "Request Authorization header contains empty \"Bearer\" token.";
 
         private static Result<string,Error> ExtractJWT(HttpRequest request)
         {
@@ -29,15 +33,15 @@ namespace API.Middleware
             
             var authHeaders = request.Headers["Authorization"].ToArray();
             if (!authHeaders.Any()) 
-                return Pipeline.BadRequest("Request contains empty Authorization header.");
+                return Pipeline.BadRequest(ErrorRequestEmptyAuthorizationHeader);
             
             var header = authHeaders.First();
-            if (!header.Contains("Bearer")) 
-                return Pipeline.BadRequest("Request Authorization header does not contain \"Bearer\"");
+            if (!header.StartsWith("Bearer", ignoreCase: true, culture: CultureInfo.InvariantCulture)) 
+                return Pipeline.BadRequest(ErrorRequestAuthorizationHeaderMissingBearerScheme);
 
-            var bearerToken = header.Replace("Bearer", "").Trim();
+            var bearerToken = header.Replace("Bearer", "", ignoreCase: true, culture: CultureInfo.InvariantCulture).Trim();
             if (string.IsNullOrWhiteSpace(bearerToken)) 
-                return Pipeline.BadRequest("Request Authorization header contains empty \"Bearer\" token.");
+                return Pipeline.BadRequest(ErrorRequestAuthorizationHeaderMissingBearerToken);
             
             return Pipeline.Success(bearerToken);
         }
@@ -63,8 +67,12 @@ namespace API.Middleware
 
         private static Result<string,Error> ValidateJWT(UaaJwt jwt)
         {
-            var expiration = Epoch.AddSeconds((float)(jwt.exp));
-            if(expiration < DateTime.UtcNow)
+            // check for expired token
+            if(DateTime.UtcNow > Epoch.AddSeconds((float)(jwt.exp)))
+                return Pipeline.Unauthorized();
+
+            // check for unripe token
+            if(DateTime.UtcNow < Epoch.AddSeconds((float)jwt.nbf))
                 return Pipeline.Unauthorized();
 
             return Pipeline.Success(jwt.user_name);
@@ -110,7 +118,10 @@ namespace API.Middleware
 
 		class UaaJwt{
 			public string user_name { get; set; }
-			public long exp {get;set;}
+			// when this token expires, as a Unix timestamp
+            public long exp { get; set; }
+            // when this token becomes valid, as a Unix timestamp
+            public long nbf { get; set; }
 		}
     }
 }
