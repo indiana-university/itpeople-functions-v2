@@ -1,10 +1,10 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using System.Net.Http;
 
 namespace API.Middleware
 {
+
     public class Pipeline
     {
         public static Result<T, Error> Success<T>(T value) => Result.Success<T,Error>(value);
