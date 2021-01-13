@@ -9,16 +9,13 @@ namespace Integration
 {
     internal class FunctionAppContainer : DockerContainer
     {
-        public FunctionAppContainer(TextWriter progress, TextWriter error) : base(progress, error, "integration-test-api:dev", "integration-test-api")
+        public FunctionAppContainer(TextWriter progress, TextWriter error) 
+            : base(progress, error, "integration-test-api:dev", $"integration-test-api")
         {
         }
 
         public void BuildImage() 
         {
-            // start a process
-            // working directory: repo root
-            // command: docker build --pull --rm --file Dockerfile.API --tag integration-test-api:dev .
-            //Sample pathing Path.Combine(Path.Combine(Directory.GetCurrentDirectory(), "Client"), "Directives")
             Progress.WriteLine($"⏳ Building Function App image '{ImageName}'. This can take some time -- hang in there!");
             var p = new Process()
             {
@@ -83,6 +80,7 @@ namespace Integration
                     Env = new List<string> 
                     { 
                         $"DbConnectionString={SqlServerContainer.LocalConnectionString}", 
+                        $"JwtPublicKey=-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnzyis1ZjfNB0bBgKFMSv\nvkTtwlvBsaJq7S5wA+kzeVOVpVWwkWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHc\naT92whREFpLv9cj5lTeJSibyr/Mrm/YtjCZVWgaOYIhwrXwKLqPr/11inWsAkfIy\ntvHWTxZYEcXLgAXFuUuaS3uF9gEiNQwzGTU1v0FqkqTBr4B8nW3HCN47XUu0t8Y0\ne+lf4s4OxQawWD79J9/5d3Ry0vbV3Am1FtGJiJvOwRsIfVChDpYStTcHTCMqtvWb\nV6L11BWkpzGXSW4Hv43qa+GSYOD2QU68Mb59oSk2OB+BtOLpJofmbGEGgvmwyCI9\nMwIDAQAB\n-----END PUBLIC KEY-----"
                     }
                 };
 
