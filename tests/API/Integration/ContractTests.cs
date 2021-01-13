@@ -7,8 +7,7 @@ namespace Integration
 {
     public class ContractTests
     {
-        [Test]
-        [Ignore("This will be a clown car of failures for a while.")]
+        // [Test] // Ignore this until we get more of the API implemented
         public void VerifyContract()
         {
             var pactOutputs = new[] { new PactOutput(TestContext.Progress) };
