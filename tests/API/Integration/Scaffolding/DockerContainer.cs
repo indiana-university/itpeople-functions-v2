@@ -10,6 +10,7 @@ namespace Integration
 {
     internal abstract class DockerContainer
     {
+        public static string NetworkName => "IntegrationTestNetwork";
         public string ImageName { get; }
         public string ContainerName { get; }
         public TextWriter Progress { get; }

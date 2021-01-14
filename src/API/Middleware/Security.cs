@@ -55,10 +55,10 @@ namespace API.Middleware
 
 			try
 			{
-                var csp = ImportPublicKey(publicKey);
+                var csp = ImportPublicKey(publicKey.Replace("\\n", "\n"));
 				var jwt = JWT.Decode<UaaJwt>(token, csp, JwsAlgorithm.RS256);
+                Console.WriteLine($"Heya lookit {jwt.user_name} is here! 🎸");
                 return Pipeline.Success(jwt);
-                
 			} 
             catch
 			{

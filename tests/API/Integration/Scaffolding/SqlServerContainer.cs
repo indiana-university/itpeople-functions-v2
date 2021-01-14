@@ -16,7 +16,8 @@ namespace Integration
     ///<summary>See https://hub.docker.com/_/microsoft-mssql-server for imags, tags, and usage notes.</summary>
     internal class SqlServerContainer : DockerContainer
     {        
-        public SqlServerContainer(TextWriter progress, TextWriter error) : base(progress, error, "mcr.microsoft.com/mssql/server:2019-latest", "integration-test-db")
+        public SqlServerContainer(TextWriter progress, TextWriter error) 
+            : base(progress, error, "mcr.microsoft.com/mssql/server:2019-latest", "integration-test-db")
         {
         }
 
@@ -44,6 +45,7 @@ namespace Integration
         public override HostConfig ToHostConfig() 
             => new HostConfig()
             {
+                NetworkMode = NetworkName,
                 PortBindings = new Dictionary<string, IList<PortBinding>>
                     {
                         {
@@ -52,8 +54,7 @@ namespace Integration
                             {
                                 new PortBinding
                                 {
-                                    HostPort = $"1433",
-                                    HostIP = "localhost"
+                                    HostPort = $"1433"
                                 }
                             }
                         },

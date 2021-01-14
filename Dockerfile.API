@@ -7,9 +7,9 @@ RUN mkdir -p /home/site/wwwroot && \
 FROM mcr.microsoft.com/azure-functions/dotnet:3.0-appservice
 ENV AzureWebJobsScriptRoot=/home/site/wwwroot
 ENV AzureFunctionsJobHost__Logging__Console__IsEnabled=true
-ENV SqlServerConnectionString="Server=localhost;Database=ItPeople;User Id=SA;Password=abcd1234@;"
-ENV JwtPublicKey="-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnzyis1ZjfNB0bBgKFMSv\nvkTtwlvBsaJq7S5wA+kzeVOVpVWwkWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHc\naT92whREFpLv9cj5lTeJSibyr/Mrm/YtjCZVWgaOYIhwrXwKLqPr/11inWsAkfIy\ntvHWTxZYEcXLgAXFuUuaS3uF9gEiNQwzGTU1v0FqkqTBr4B8nW3HCN47XUu0t8Y0\ne+lf4s4OxQawWD79J9/5d3Ry0vbV3Am1FtGJiJvOwRsIfVChDpYStTcHTCMqtvWb\nV6L11BWkpzGXSW4Hv43qa+GSYOD2QU68Mb59oSk2OB+BtOLpJofmbGEGgvmwyCI9\nMwIDAQAB\n-----END PUBLIC KEY-----"
+ENV SqlServerConnectionString=Server=integration-test-db;Database=ItPeople;User\ Id=SA;Password=abcd1234@;
+ENV JwtPublicKey=-----BEGIN\ PUBLIC\ KEY-----\\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnzyis1ZjfNB0bBgKFMSv\\nvkTtwlvBsaJq7S5wA+kzeVOVpVWwkWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHc\\naT92whREFpLv9cj5lTeJSibyr/Mrm/YtjCZVWgaOYIhwrXwKLqPr/11inWsAkfIy\\ntvHWTxZYEcXLgAXFuUuaS3uF9gEiNQwzGTU1v0FqkqTBr4B8nW3HCN47XUu0t8Y0\\ne+lf4s4OxQawWD79J9/5d3Ry0vbV3Am1FtGJiJvOwRsIfVChDpYStTcHTCMqtvWb\\nV6L11BWkpzGXSW4Hv43qa+GSYOD2QU68Mb59oSk2OB+BtOLpJofmbGEGgvmwyCI9\\nMwIDAQAB\\n-----END\ PUBLIC\ KEY-----
 COPY --from=installer-env ["/home/site/wwwroot", "/home/site/wwwroot"]
 
-HEALTHCHECK --interval=1s --timeout=1s --retries=60 \ 
+HEALTHCHECK --interval=10s --timeout=1s --retries=60 \ 
     CMD curl --fail http://localhost:80/api/ping || exit 1     

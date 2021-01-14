@@ -1,6 +1,5 @@
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using Database;
 
@@ -9,14 +8,6 @@ namespace API
 {
     class Startup : FunctionsStartup
     {
-        public static string Env(string key)
-        {
-            string value = Environment.GetEnvironmentVariable(key);
-            if (string.IsNullOrWhiteSpace(value))
-                throw new Exception($"Required environment variable '{key}' was not found.");
-            return value;
-        }
-
         public override void Configure(IFunctionsHostBuilder builder)
         {
             MigrateDatabaseToLatest();
@@ -24,16 +15,17 @@ namespace API
 
         private static void MigrateDatabaseToLatest()
         {
-            using (var context = PeopleContext.Create())
+            try
             {
-                try
+                using (var context = PeopleContext.Create())
                 {
                     context.Database.Migrate();
                 }
-                catch (Exception e)
-                {
-                    throw new Exception($"Error when migrating database: {e.Message}");
-                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"Error when migrating database: {e.Message}");
+                throw new Exception($"Error when migrating database: {e.Message}");
             }
         }
     }
