@@ -28,8 +28,13 @@ namespace Database
             if (string.IsNullOrWhiteSpace(ConnectionString))
                 throw new Exception("Missing environment variable: 'SqlServerConnectionString'");
 
+            return Create(ConnectionString);
+        }
+
+        public static PeopleContext Create(string connectionString)
+        {
             var optionsBuilder = new DbContextOptionsBuilder<PeopleContext>();
-            optionsBuilder.UseSqlServer(ConnectionString);
+            optionsBuilder.UseSqlServer(connectionString);
             return new PeopleContext(optionsBuilder.Options);
         }
 

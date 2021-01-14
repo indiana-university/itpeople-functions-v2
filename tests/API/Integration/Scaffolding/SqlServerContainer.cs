@@ -5,6 +5,10 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using Database;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Models;
+using Microsoft.EntityFrameworkCore;
 // using Microsoft.EntityFrameworkCore;
 // using Microsoft.EntityFrameworkCore.Infrastructure;
 // using Microsoft.EntityFrameworkCore.Migrations;
@@ -66,66 +70,46 @@ namespace Integration
             {
                 Env = new List<string> { "ACCEPT_EULA=Y", "SA_PASSWORD=abcd1234@", "MSSQL_PID=Developer" }
             };
-        /*
-                public static void ResetDatabase()
-                {
-                    using (var printContext = GetDbContext())
-                    {
-                        ResetSchema(printContext);
-                        SeedTestData(printContext);
-                    }
-                }
+        public static void ResetDatabase()
+        {
+            using (var peopleContext = PeopleContext.Create(PeopleContext.LocalConnectionString))
+            {
+                Console.WriteLine("Resetting schema...");
+                ResetSchema(peopleContext);
+                Console.WriteLine("Seeding test data...");
+                SeedTestData(peopleContext);
+            }
+        }
 
-                private static void ResetSchema(PrintContext printContext)
-                {
-                    var migrator = printContext.Database.GetService<IMigrator>();
-                    migrator.Migrate(Migration.InitialDatabase);
-                    migrator.Migrate();
-                }
+        private static void ResetSchema(PeopleContext peopleContext)
+        {
+            var migrator = peopleContext.Database.GetService<IMigrator>();
+            migrator.Migrate(Migration.InitialDatabase);
+            migrator.Migrate();
+        }
 
-                private static void SeedTestData(PrintContext printContext)
-                {
-                    var testEntities = new TestEntities(printContext);
+        private static void SeedTestData(PeopleContext peopleContext)
+        {
+            using (var transaction = peopleContext.Database.BeginTransaction())
+            {
+                Department parksDept = new Department() { Id = 1, Name = "Parks Department" };
+                peopleContext.Departments.Add(parksDept);
 
-                    using (var transaction = printContext.Database.BeginTransaction())
-                    {
-                        printContext.Devices.AddRange(
-                            testEntities.Device1,
-                            testEntities.Device2,
-                            testEntities.Device3,
-                            testEntities.DeviceInactive
-                        );
+                peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Departments] ON;");
+                peopleContext.SaveChanges();
+                peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Departments] OFF;");
 
-                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Devices] ON;");
-                        printContext.SaveChanges();
-                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Devices] OFF;");
+                Person rswanson = new Person() { Id = 1, NetId = "rswanson", Name="Swanson, Ron", NameFirst = "Ron", NameLast = "Swanson", Position = "Parks and Rec Director", Location = "", Campus = "Pawnee", CampusPhone = "", CampusEmail = "rswanso@pawnee.in.us", Expertise = "Woodworking; Honor", Notes = "", PhotoUrl = "http://flavorwire.files.wordpress.com/2011/11/ron-swanson.jpg", Responsibilities = Responsibilities.ItLeadership, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
+                Person lknope = new Person() { Id = 2, NetId = "lknope", Name="Knope, Leslie", NameFirst = "Leslie", NameLast = "Knope", Position = "Parks and Rec Deputy Director", Location = "", Campus = "Pawnee", CampusPhone = "", CampusEmail = "lknope@pawnee.in.us", Expertise = "Canvassing; Waffles", Notes = "", PhotoUrl = "https://en.wikipedia.org/wiki/Leslie_Knope#/media/File:Leslie_Knope_(played_by_Amy_Poehler).png", Responsibilities = Responsibilities.ItLeadership | Responsibilities.ItProjectMgt, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
+                Person bwyatt = new Person() { Id = 3, NetId = "bwyatt", Name="Wyatt, Ben", NameFirst = "Ben", NameLast = "Wyatt", Position = "Auditor", Location = "", Campus = "Indianapolis", CampusPhone = "", CampusEmail = "bwyatt@pawnee.in.us", Expertise = "Board Games; Comic Books", Notes = "", PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg", Responsibilities = Responsibilities.ItProjectMgt, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
+                peopleContext.People.AddRange(new List<Person> { rswanson, lknope, bwyatt });
 
-                        printContext.Clients.AddRange(testEntities.Client1, testEntities.Client2, testEntities.Client3, testEntities.ClientInactive);
-                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Clients] ON");
-                        printContext.SaveChanges();
-                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Clients] OFF");
+                peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[People] ON;");
+                peopleContext.SaveChanges();
+                peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[People] OFF;");
 
-                        //Add Cost Centers for Clients.
-                        printContext.CostCenters.AddRange(testEntities.Client1CostCenterA, testEntities.Client1CostCenterB, testEntities.Client2CostCenterA, testEntities.ClientInactiveCostCenterA);
-                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[CostCenters] ON;");
-                        printContext.SaveChanges();
-                        printContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[CostCenters] OFF;");
-
-                        //Add Clients for Device1 and Device2                                
-                        testEntities.Device1.Client = testEntities.Client1;
-                        testEntities.Device2.Client = testEntities.Client1;
-                        printContext.SaveChanges();
-
-                        transaction.Commit();
-                    }
-                }
-
-                public static PrintContext GetDbContext()
-                {
-                    var optionsBuilder = new DbContextOptionsBuilder<PrintContext>();
-                    optionsBuilder.UseSqlServer(PrintContext.LocalConnectionString+";Database=Print");
-                    return new PrintContext(optionsBuilder.Options);
-                } 
-            */
+                transaction.Commit();
+            }
+        }
     }
 }

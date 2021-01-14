@@ -11,7 +11,7 @@ namespace Integration
     {
         public class GetAll : ApiTest
         {
-            // [Test]
+            [Test]
             public async Task HasCorrectNumber()
             {
                 var resp = await GetAuthenticated("people");
