@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models
 {
+    [Table("departments")]
     public class Department : Entity
     {    
         /// The name of this department.

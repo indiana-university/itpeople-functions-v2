@@ -8,47 +8,17 @@ using Database;
 
 namespace Integration
 {
-    internal class FunctionAppContainer : DockerContainer
+    public class FunctionAppContainer : DockerContainer
     {
         public FunctionAppContainer(TextWriter progress, TextWriter error) 
             : base(progress, error, "integration-test-api:dev", $"integration-test-api")
         {
         }
 
-        public void BuildImage() 
+        public void BuildImage()
         {
             Progress.WriteLine($"⏳ Building Function App image '{ImageName}'. This can take some time -- hang in there!");
-            var p = new Process()
-            {
-                StartInfo = new ProcessStartInfo()
-                {
-                    FileName = "docker",
-                    Arguments = $"build --pull --rm --file Dockerfile.API --tag {ImageName} .",
-                    WorkingDirectory = "../../../../../../", // repo root 🤞🏻
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,                    
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                },
-            };
-            p.Start();            
-            p.WaitForExit();
-
-            var output = p.StandardOutput.ReadToEnd();
-            var error = p.StandardError.ReadToEnd();
-            if (!string.IsNullOrWhiteSpace(output))
-                Progress.WriteLine(output);
-            if (!string.IsNullOrWhiteSpace(error))
-                Error.WriteLine(output);
-
-            if (p.ExitCode == 0)
-            {
-                Progress.WriteLine($"😎 Finished building '{ImageName}'.");
-            }
-            else
-            {
-                Error.WriteLine($"🤮 Failed to build '{ImageName}'.");
-            }
+            DockerExec($"build --pull --rm --file Dockerfile.API --tag {ImageName} .", "../../../../../../");
         }
 
         protected override async Task<bool> isReady()

@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 
 namespace Models
 {
     /// A person doing or supporting IT work
+    [Table("people")]
     public class Person : Entity
     {
         /// The net id (username) of this person.

@@ -7,23 +7,23 @@ using System.Collections.Generic;
 using Database;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Models;
 using Microsoft.EntityFrameworkCore;
-// using Microsoft.EntityFrameworkCore;
-// using Microsoft.EntityFrameworkCore.Infrastructure;
-// using Microsoft.EntityFrameworkCore.Migrations;
-// using NUnit.Framework;
+using Models;
+using Npgsql;
+using System.Data.Common;
 
 namespace Integration
 {
 
-    ///<summary>See https://hub.docker.com/_/microsoft-mssql-server for imags, tags, and usage notes.</summary>
-    internal class SqlServerContainer : DockerContainer
-    {        
-        public SqlServerContainer(TextWriter progress, TextWriter error) 
-            : base(progress, error, "mcr.microsoft.com/mssql/server:2019-latest", "integration-test-db")
+    public abstract class DatabaseContainer : DockerContainer
+    {
+        protected DatabaseContainer(TextWriter progress, TextWriter error, string imageName, string connectionString) 
+            : base(progress, error, imageName, "integration-test-db")
         {
+            ConnectionString = connectionString;
         }
+
+        public static string ConnectionString { get; private set; }
 
         // Gotta wait until the database server is really available
         // or you'll get oddball test failures;)
@@ -31,7 +31,7 @@ namespace Integration
         {
             try
             {
-                using (var conn = new SqlConnection(PeopleContext.LocalMasterConnectionString))
+                using (var conn = GetConnection())
                 {
                     await conn.OpenAsync();
                     return true;
@@ -43,6 +43,120 @@ namespace Integration
                 return false;
             }
         }
+
+        protected abstract DbConnection GetConnection();
+
+        public void ResetDatabase()
+        {
+            using (var peopleContext = PeopleContext.Create(ConnectionString+";Database=ItPeople"))
+            {
+                Progress.WriteLine("Resetting schema...");
+                ResetSchema(peopleContext);
+                Progress.WriteLine("Seeding test data...");
+                SeedTestData(peopleContext);
+            }
+        }
+
+        private static void ResetSchema(PeopleContext peopleContext)
+        {
+            // This probably needs to be done with a connection string that doesn't specify the ItPeople database, 
+            // since it won't exist yet.
+            peopleContext.Database.ExecuteSqlRaw(@"
+            SELECT 'CREATE DATABASE ItPeople' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ItPeople')\gexec
+            ");
+            // This probably needs to be done with a connection string that does specify the ItPeople database.
+            peopleContext.Database.ExecuteSqlRaw(@"
+            DROP SCHEMA public CASCADE;
+            CREATE SCHEMA public;
+            CREATE TABLE public.__EFMigrationsHistory (
+                MigrationId text NOT NULL,
+                ProductVersion text NOT NULL,
+                CONSTRAINT PK_HistoryRow PRIMARY KEY (MigrationId)
+            );");
+
+            var migrator = peopleContext.Database.GetService<IMigrator>();
+            migrator.Migrate();
+        }
+
+        private static void SeedTestData(PeopleContext peopleContext)
+        {
+            using (var transaction = peopleContext.Database.BeginTransaction())
+            {
+                Department parksDept = new Department() { Id = 1, Name = "Parks Department" };
+                peopleContext.Departments.Add(parksDept);
+
+                // peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT departments ON;");
+                // peopleContext.SaveChanges();
+                // peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT departments OFF;");
+
+                Person rswanson = new Person() { Id = 1, NetId = "rswanson", Name="Swanson, Ron", NameFirst = "Ron", NameLast = "Swanson", Position = "Parks and Rec Director", Location = "", Campus = "Pawnee", CampusPhone = "", CampusEmail = "rswanso@pawnee.in.us", Expertise = "Woodworking; Honor", Notes = "", PhotoUrl = "http://flavorwire.files.wordpress.com/2011/11/ron-swanson.jpg", Responsibilities = Responsibilities.ItLeadership, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
+                Person lknope = new Person() { Id = 2, NetId = "lknope", Name="Knope, Leslie", NameFirst = "Leslie", NameLast = "Knope", Position = "Parks and Rec Deputy Director", Location = "", Campus = "Pawnee", CampusPhone = "", CampusEmail = "lknope@pawnee.in.us", Expertise = "Canvassing; Waffles", Notes = "", PhotoUrl = "https://en.wikipedia.org/wiki/Leslie_Knope#/media/File:Leslie_Knope_(played_by_Amy_Poehler).png", Responsibilities = Responsibilities.ItLeadership | Responsibilities.ItProjectMgt, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
+                Person bwyatt = new Person() { Id = 3, NetId = "bwyatt", Name="Wyatt, Ben", NameFirst = "Ben", NameLast = "Wyatt", Position = "Auditor", Location = "", Campus = "Indianapolis", CampusPhone = "", CampusEmail = "bwyatt@pawnee.in.us", Expertise = "Board Games; Comic Books", Notes = "", PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg", Responsibilities = Responsibilities.ItProjectMgt, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
+                peopleContext.People.AddRange(new List<Person> { rswanson, lknope, bwyatt });
+
+                // peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT people ON;");
+                peopleContext.SaveChanges();
+                // peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT people OFF;");
+
+                transaction.Commit();
+            }
+        }
+ 
+    }
+
+    public class PostgresContainer : DatabaseContainer
+    {
+        public PostgresContainer(TextWriter progress, TextWriter error) 
+            : base(progress, error, "postgres:11.7-alpine", PeopleContext.LocalPostgresConnectionString)
+        {
+        }
+
+        public void Pull()
+        {
+            DockerExec($"pull {ImageName}", ".");
+        }
+
+        public override Config ToConfig() 
+            => new Config
+            {
+                Env = new List<string> 
+                { 
+                    "POSTGRES_PASSWORD=abcd1234@",
+                }
+            };
+
+        // Watch the port mapping here to avoid port
+        // contention w/ other Sql Server installations
+        public override HostConfig ToHostConfig() 
+            => new HostConfig()
+            {
+                NetworkMode = NetworkName,
+                PortBindings = new Dictionary<string, IList<PortBinding>>
+                    {
+                        {
+                            "5432/tcp",
+                            new List<PortBinding>
+                            {
+                                new PortBinding
+                                {
+                                    HostPort = $"5432"
+                                }
+                            }
+                        },
+                    },
+            };
+
+        protected override DbConnection GetConnection() => new NpgsqlConnection(ConnectionString);
+    }
+
+    ///<summary>See https://hub.docker.com/_/microsoft-mssql-server for imags, tags, and usage notes.</summary>
+    public class SqlServerContainer : DatabaseContainer
+    {        
+        public SqlServerContainer(TextWriter progress, TextWriter error) 
+            : base(progress, error, "mcr.microsoft.com/mssql/server:2019-latest", PeopleContext.LocalSqlServerConnectionString)
+        {
+        }
+
 
         // Watch the port mapping here to avoid port
         // contention w/ other Sql Server installations
@@ -70,46 +184,7 @@ namespace Integration
             {
                 Env = new List<string> { "ACCEPT_EULA=Y", "SA_PASSWORD=abcd1234@", "MSSQL_PID=Developer" }
             };
-        public static void ResetDatabase()
-        {
-            using (var peopleContext = PeopleContext.Create(PeopleContext.LocalConnectionString))
-            {
-                Console.WriteLine("Resetting schema...");
-                ResetSchema(peopleContext);
-                Console.WriteLine("Seeding test data...");
-                SeedTestData(peopleContext);
-            }
-        }
 
-        private static void ResetSchema(PeopleContext peopleContext)
-        {
-            var migrator = peopleContext.Database.GetService<IMigrator>();
-            migrator.Migrate(Migration.InitialDatabase);
-            migrator.Migrate();
-        }
-
-        private static void SeedTestData(PeopleContext peopleContext)
-        {
-            using (var transaction = peopleContext.Database.BeginTransaction())
-            {
-                Department parksDept = new Department() { Id = 1, Name = "Parks Department" };
-                peopleContext.Departments.Add(parksDept);
-
-                peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Departments] ON;");
-                peopleContext.SaveChanges();
-                peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[Departments] OFF;");
-
-                Person rswanson = new Person() { Id = 1, NetId = "rswanson", Name="Swanson, Ron", NameFirst = "Ron", NameLast = "Swanson", Position = "Parks and Rec Director", Location = "", Campus = "Pawnee", CampusPhone = "", CampusEmail = "rswanso@pawnee.in.us", Expertise = "Woodworking; Honor", Notes = "", PhotoUrl = "http://flavorwire.files.wordpress.com/2011/11/ron-swanson.jpg", Responsibilities = Responsibilities.ItLeadership, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
-                Person lknope = new Person() { Id = 2, NetId = "lknope", Name="Knope, Leslie", NameFirst = "Leslie", NameLast = "Knope", Position = "Parks and Rec Deputy Director", Location = "", Campus = "Pawnee", CampusPhone = "", CampusEmail = "lknope@pawnee.in.us", Expertise = "Canvassing; Waffles", Notes = "", PhotoUrl = "https://en.wikipedia.org/wiki/Leslie_Knope#/media/File:Leslie_Knope_(played_by_Amy_Poehler).png", Responsibilities = Responsibilities.ItLeadership | Responsibilities.ItProjectMgt, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
-                Person bwyatt = new Person() { Id = 3, NetId = "bwyatt", Name="Wyatt, Ben", NameFirst = "Ben", NameLast = "Wyatt", Position = "Auditor", Location = "", Campus = "Indianapolis", CampusPhone = "", CampusEmail = "bwyatt@pawnee.in.us", Expertise = "Board Games; Comic Books", Notes = "", PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg", Responsibilities = Responsibilities.ItProjectMgt, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
-                peopleContext.People.AddRange(new List<Person> { rswanson, lknope, bwyatt });
-
-                peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[People] ON;");
-                peopleContext.SaveChanges();
-                peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT [dbo].[People] OFF;");
-
-                transaction.Commit();
-            }
-        }
+        protected override DbConnection GetConnection() => new SqlConnection(ConnectionString);
     }
 }

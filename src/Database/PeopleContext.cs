@@ -6,13 +6,12 @@ namespace Database
 {
     public class PeopleContext : DbContext
     {
-        public const string LocalMasterConnectionString = "Server=localhost;Database=master;User Id=SA;Password=abcd1234@;";
-        public const string LocalConnectionString = "Server=localhost;Database=ItPeople;User Id=SA;Password=abcd1234@;";
-        
+        public const string LocalSqlServerConnectionString = "Server=localhost;User Id=SA;Password=abcd1234@;";
+        public const string LocalPostgresConnectionString = "Server=localhost;Port=5432;User Id=postgres;Password=abcd1234@;";
+
         private readonly bool _makingMigration = false;
 
-        // This constructor is only called by the dotnet-ef tool 
-        // when scaffolding a new migration.
+        // This constructor is needed for the dotnet-ef tool to make a new migration.
         public PeopleContext()
         {         
             _makingMigration = true;
@@ -34,7 +33,7 @@ namespace Database
         public static PeopleContext Create(string connectionString)
         {
             var optionsBuilder = new DbContextOptionsBuilder<PeopleContext>();
-            optionsBuilder.UseSqlServer(connectionString);
+            optionsBuilder.UseNpgsql(connectionString);
             return new PeopleContext(optionsBuilder.Options);
         }
 
@@ -42,14 +41,16 @@ namespace Database
         public DbSet<Department> Departments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
+        {   
+            modelBuilder.HasDefaultSchema("public");
         }
 
+        // This method is needed for the dotnet-ef tool to make a new migration.
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             if (_makingMigration)
             {
-                options.UseSqlServer(LocalConnectionString);
+                options.UseNpgsql(LocalPostgresConnectionString + ";Database=ItPeople");
             }
         }
     }

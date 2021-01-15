@@ -14,7 +14,7 @@ namespace Integration
         [SetUp]
         public void Init()
         {
-            SqlServerContainer.ResetDatabase();
+            Harness.DbContainer.ResetDatabase();
         }
 
         protected static HttpClient Http = new HttpClient(){

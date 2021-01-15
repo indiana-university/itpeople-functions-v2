@@ -5,10 +5,11 @@ using System;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using System.Diagnostics;
 
 namespace Integration
 {
-    internal abstract class DockerContainer
+    public abstract class DockerContainer
     {
         public static string NetworkName => "IntegrationTestNetwork";
         public string ImageName { get; }
@@ -126,6 +127,41 @@ namespace Integration
         public override string ToString()
         {
             return $"{nameof(ImageName)}: {ImageName}, {nameof(ContainerName)}: {ContainerName}";
+        }
+
+        protected void DockerExec(string arguments, string workingDirectory)
+        {
+            var p = new Process()
+            {
+                StartInfo = new ProcessStartInfo()
+                {
+                    FileName = "docker",
+                    Arguments = arguments,
+                    WorkingDirectory = workingDirectory, // repo root 🤞🏻
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                },
+            };
+            p.Start();
+            p.WaitForExit();
+
+            var output = p.StandardOutput.ReadToEnd();
+            var error = p.StandardError.ReadToEnd();
+            if (!string.IsNullOrWhiteSpace(output))
+                Progress.WriteLine(output);
+            if (!string.IsNullOrWhiteSpace(error))
+                Error.WriteLine(output);
+
+            if (p.ExitCode == 0)
+            {
+                Progress.WriteLine($"😎 Finished running 'docker {arguments}'.");
+            }
+            else
+            {
+                Error.WriteLine($"🤮 Failed to run 'docker {arguments}'.");
+            }
         }
     }
 
