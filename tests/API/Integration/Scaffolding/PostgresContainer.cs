@@ -10,7 +10,7 @@ namespace Integration
     public class PostgresContainer : DatabaseContainer
     {
         public PostgresContainer(TextWriter progress, TextWriter error) 
-            : base(progress, error, "postgres:11.7-alpine", PeopleContext.LocalPostgresConnectionString)
+            : base(progress, error, "postgres:11.7-alpine")
         {
         }
 
@@ -24,6 +24,7 @@ namespace Integration
             {
                 Env = new List<string> 
                 { 
+                    "POSTGRES_USER=SA",
                     "POSTGRES_PASSWORD=abcd1234@",
                 }
             };
@@ -49,6 +50,7 @@ namespace Integration
                     },
             };
 
-        protected override DbConnection GetConnection() => new NpgsqlConnection(ConnectionString);
+        protected override DbConnection GetConnection() 
+            => new NpgsqlConnection(PeopleContext.LocalServerConnectionString);
     }
 }

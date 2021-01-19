@@ -10,6 +10,7 @@ using Models;
 
 namespace API.Data
 {
+
     public class PeopleRepository
     {
         public PeopleRepository() 
@@ -22,7 +23,7 @@ namespace API.Data
             {
                 using (var db = PeopleContext.Create())
                 {
-                    var result = await db.People.ToListAsync();
+                    var result = await db.People.AsNoTracking().ToListAsync();
                     return Pipeline.Success(result);
                 }
             }

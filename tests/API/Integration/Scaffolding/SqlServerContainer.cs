@@ -12,7 +12,7 @@ namespace Integration
     public class SqlServerContainer : DatabaseContainer
     {        
         public SqlServerContainer(TextWriter progress, TextWriter error) 
-            : base(progress, error, "mcr.microsoft.com/mssql/server:2019-latest", PeopleContext.LocalSqlServerConnectionString)
+            : base(progress, error, "mcr.microsoft.com/mssql/server:2019-latest")
         {
         }
 
@@ -44,6 +44,7 @@ namespace Integration
                 Env = new List<string> { "ACCEPT_EULA=Y", "SA_PASSWORD=abcd1234@", "MSSQL_PID=Developer" }
             };
 
-        protected override DbConnection GetConnection() => new SqlConnection(ConnectionString);
+        protected override DbConnection GetConnection() 
+            => new SqlConnection(PeopleContext.LocalServerConnectionString);
     }
 }

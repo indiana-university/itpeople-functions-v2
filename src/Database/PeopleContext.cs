@@ -1,13 +1,14 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Models;
+using Npgsql.Logging;
 
 namespace Database
 {
     public class PeopleContext : DbContext
     {
-        public const string LocalSqlServerConnectionString = "Server=localhost,1433;User Id=SA;Password=abcd1234@;";
-        public const string LocalPostgresConnectionString = "Server=localhost;Port=5432;User Id=postgres;Password=abcd1234@;";
+        public const string LocalServerConnectionString = "Server=localhost;User Id=SA;Password=abcd1234@";
+        public const string LocalDatabaseConnectionString = "Server=localhost;Database=ItPeople;User Id=SA;Password=abcd1234@";
 
         private readonly bool _calledFromEfCoreTools = false;
 
@@ -23,9 +24,9 @@ namespace Database
 
         public static PeopleContext Create()
         {
-            var ConnectionString = System.Environment.GetEnvironmentVariable("SqlServerConnectionString");
+            var ConnectionString = System.Environment.GetEnvironmentVariable("DatabaseConnectionString");
             if (string.IsNullOrWhiteSpace(ConnectionString))
-                throw new Exception("Missing environment variable: 'SqlServerConnectionString'");
+                throw new Exception("Missing environment variable: 'DatabaseConnectionString'");
 
             return Create(ConnectionString);
         }
@@ -62,7 +63,7 @@ namespace Database
             if (_calledFromEfCoreTools)
             {
                 Console.WriteLine("Configuring database options to manage migrations for local DB instance.");
-                ConfigureDatabaseOptions(options, LocalPostgresConnectionString + ";Database=ItPeople");
+                ConfigureDatabaseOptions(options, LocalDatabaseConnectionString);
             }
         }
 
@@ -70,7 +71,9 @@ namespace Database
         {
             options
             .UseNpgsql(connectionString)
-            .UseSnakeCaseNamingConvention();
+            .UseSnakeCaseNamingConvention()
+            .EnableDetailedErrors()
+            .EnableSensitiveDataLogging();
         }
     }
 }

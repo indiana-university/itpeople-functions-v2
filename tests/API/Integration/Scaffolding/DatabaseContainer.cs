@@ -13,10 +13,9 @@ namespace Integration
 {
     public abstract class DatabaseContainer : DockerContainer
     {
-        protected DatabaseContainer(TextWriter progress, TextWriter error, string imageName, string connectionString) 
+        protected DatabaseContainer(TextWriter progress, TextWriter error, string imageName) 
             : base(progress, error, imageName, "integration-test-db")
         {
-            ConnectionString = connectionString;
         }
 
         public static string ConnectionString { get; private set; }
@@ -44,20 +43,13 @@ namespace Integration
 
         public void ResetDatabase()
         {
-            using (var peopleContext = PeopleContext.Create(ConnectionString+";Database=ItPeople"))
+            using (var peopleContext = PeopleContext.Create(PeopleContext.LocalDatabaseConnectionString))
             {
-                ResetSchema(peopleContext);
-                SeedTestData(peopleContext);
+                ResetTestData(peopleContext);
             }
         }
 
-        protected void ResetSchema(PeopleContext peopleContext)
-        {
-            var migrator = peopleContext.Database.GetService<IMigrator>();
-            migrator.Migrate();
-        }
-
-        private static void SeedTestData(PeopleContext peopleContext)
+        private static void ResetTestData(PeopleContext peopleContext)
         {
             peopleContext.Database.ExecuteSqlRaw(@"
                 TRUNCATE 
@@ -67,26 +59,15 @@ namespace Integration
                 CASCADE;
             ");
 
-            using (var transaction = peopleContext.Database.BeginTransaction())
-            {
-                Department parksDept = new Department() { Id = 1, Name = "Parks Department", Description = "Your local Parks department." };
-                peopleContext.Departments.Add(parksDept);
+            Department parksDept = new Department() { Id = 1, Name = "Parks Department", Description = "Your local Parks department." };
+            peopleContext.Departments.Add(parksDept);
 
-                // peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT departments ON;");
-                // peopleContext.SaveChanges();
-                // peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT departments OFF;");
+            Person rswanson = new Person() { Id = 1, Netid = "rswanson", Name="Swanson, Ron", NameFirst = "Ron", NameLast = "Swanson", Position = "Parks and Rec Director", Location = "", Campus = "Pawnee", CampusPhone = "", CampusEmail = "rswanso@pawnee.in.us", Expertise = "Woodworking; Honor", Notes = "", PhotoUrl = "http://flavorwire.files.wordpress.com/2011/11/ron-swanson.jpg", Responsibilities = Responsibilities.ItLeadership, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
+            Person lknope = new Person() { Id = 2, Netid = "lknope", Name="Knope, Leslie", NameFirst = "Leslie", NameLast = "Knope", Position = "Parks and Rec Deputy Director", Location = "", Campus = "Pawnee", CampusPhone = "", CampusEmail = "lknope@pawnee.in.us", Expertise = "Canvassing; Waffles", Notes = "", PhotoUrl = "https://en.wikipedia.org/wiki/Leslie_Knope#/media/File:Leslie_Knope_(played_by_Amy_Poehler).png", Responsibilities = Responsibilities.ItLeadership | Responsibilities.ItProjectMgt, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
+            Person bwyatt = new Person() { Id = 3, Netid = "bwyatt", Name="Wyatt, Ben", NameFirst = "Ben", NameLast = "Wyatt", Position = "Auditor", Location = "", Campus = "Indianapolis", CampusPhone = "", CampusEmail = "bwyatt@pawnee.in.us", Expertise = "Board Games; Comic Books", Notes = "", PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg", Responsibilities = Responsibilities.ItProjectMgt, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
+            peopleContext.People.AddRange(new List<Person> { rswanson, lknope, bwyatt });
 
-                Person rswanson = new Person() { Id = 1, Netid = "rswanson", Name="Swanson, Ron", NameFirst = "Ron", NameLast = "Swanson", Position = "Parks and Rec Director", Location = "", Campus = "Pawnee", CampusPhone = "", CampusEmail = "rswanso@pawnee.in.us", Expertise = "Woodworking; Honor", Notes = "", PhotoUrl = "http://flavorwire.files.wordpress.com/2011/11/ron-swanson.jpg", Responsibilities = Responsibilities.ItLeadership, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
-                Person lknope = new Person() { Id = 2, Netid = "lknope", Name="Knope, Leslie", NameFirst = "Leslie", NameLast = "Knope", Position = "Parks and Rec Deputy Director", Location = "", Campus = "Pawnee", CampusPhone = "", CampusEmail = "lknope@pawnee.in.us", Expertise = "Canvassing; Waffles", Notes = "", PhotoUrl = "https://en.wikipedia.org/wiki/Leslie_Knope#/media/File:Leslie_Knope_(played_by_Amy_Poehler).png", Responsibilities = Responsibilities.ItLeadership | Responsibilities.ItProjectMgt, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
-                Person bwyatt = new Person() { Id = 3, Netid = "bwyatt", Name="Wyatt, Ben", NameFirst = "Ben", NameLast = "Wyatt", Position = "Auditor", Location = "", Campus = "Indianapolis", CampusPhone = "", CampusEmail = "bwyatt@pawnee.in.us", Expertise = "Board Games; Comic Books", Notes = "", PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg", Responsibilities = Responsibilities.ItProjectMgt, DepartmentId = parksDept.Id, Department = parksDept, IsServiceAdmin = false };
-                peopleContext.People.AddRange(new List<Person> { rswanson, lknope, bwyatt });
-
-                // peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT people ON;");
-                peopleContext.SaveChanges();
-                // peopleContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT people OFF;");
-
-                transaction.Commit();
-            }
+            peopleContext.SaveChanges();
         }
  
     }
