@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Models;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Integration
@@ -16,8 +17,9 @@ namespace Integration
             {
                 var resp = await GetAuthenticated("people");
                 AssertStatusCode(resp, HttpStatusCode.OK);
-                var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(3, actual.Count);
+                var json = await resp.Content.ReadAsStringAsync();
+                var actual = JsonConvert.DeserializeObject<List<Person>>(json);
+                Assert.AreEqual(3, actual.Count, $"\n********** Start Response JSON **********\n\n{json}\n\n*********** End Response JSON ***********\n");
             }
         }
     }
