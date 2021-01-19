@@ -37,14 +37,12 @@ namespace Integration
             // Wait for SQL Server container to finish starting
             DbContainer.WaitUntilReady().Wait(60*1000);
 
-            /*
+            try { AppContainer.Remove(_client).Wait(60*1000); } catch {}
             // Build and start API Function app container
-            _appContainer.BuildImage();
-            _appContainer.Start(_client).Wait(10 * 1000);
+            AppContainer.BuildImage();
+            AppContainer.Start(_client).Wait(10 * 1000);
             // Wait for API container to finish starting
-            _appContainer.WaitUntilReady().Wait(10 * 1000);
-            */
-
+            AppContainer.WaitUntilReady().Wait(10 * 1000);
         }
 
         private void EnsureIntegrationTestsNetworkExists()
@@ -61,7 +59,7 @@ namespace Integration
         [OneTimeTearDown]
         public void OneTimeTeardown()
         {
-            AppContainer.Remove(_client).Wait(60*1000);
+            // AppContainer.Remove(_client).Wait(60*1000);
             // DbContainer.Remove(_client).Wait(60*1000);
         }
     }

@@ -1,21 +1,32 @@
-using System.Data.SqlClient;
 using Docker.DotNet.Models;
 using System.IO;
 using System.Collections.Generic;
 using Database;
+using Npgsql;
 using System.Data.Common;
 
 namespace Integration
 {
-
-    ///<summary>See https://hub.docker.com/_/microsoft-mssql-server for imags, tags, and usage notes.</summary>
-    public class SqlServerContainer : DatabaseContainer
-    {        
-        public SqlServerContainer(TextWriter progress, TextWriter error) 
-            : base(progress, error, "mcr.microsoft.com/mssql/server:2019-latest", PeopleContext.LocalSqlServerConnectionString)
+    public class PostgresContainer : DatabaseContainer
+    {
+        public PostgresContainer(TextWriter progress, TextWriter error) 
+            : base(progress, error, "postgres:11.7-alpine", PeopleContext.LocalPostgresConnectionString)
         {
         }
 
+        public void Pull()
+        {
+            DockerExec($"pull {ImageName}", ".");
+        }
+
+        public override Config ToConfig() 
+            => new Config
+            {
+                Env = new List<string> 
+                { 
+                    "POSTGRES_PASSWORD=abcd1234@",
+                }
+            };
 
         // Watch the port mapping here to avoid port
         // contention w/ other Sql Server installations
@@ -26,24 +37,18 @@ namespace Integration
                 PortBindings = new Dictionary<string, IList<PortBinding>>
                     {
                         {
-                            "1433/tcp",
+                            "5432/tcp",
                             new List<PortBinding>
                             {
                                 new PortBinding
                                 {
-                                    HostPort = $"1433"
+                                    HostPort = $"5432"
                                 }
                             }
                         },
                     },
             };
 
-        public override Config ToConfig() 
-            => new Config
-            {
-                Env = new List<string> { "ACCEPT_EULA=Y", "SA_PASSWORD=abcd1234@", "MSSQL_PID=Developer" }
-            };
-
-        protected override DbConnection GetConnection() => new SqlConnection(ConnectionString);
+        protected override DbConnection GetConnection() => new NpgsqlConnection(ConnectionString);
     }
 }

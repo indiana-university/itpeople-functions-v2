@@ -18,7 +18,7 @@ namespace Models
         /// Notes about this person (for admins/reporting eyes only.)
         public string Notes { get; }
         /// The netid of the person related to this membership.
-        public string NetId { get;  }
+        public string Netid { get;  }
         /// The person related to this membership.
         public Person Person { get; }
         /// The unit related to this membership.

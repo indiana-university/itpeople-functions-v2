@@ -7,8 +7,212 @@ namespace Database.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            
-migrationBuilder.Sql(@"
+            migrationBuilder.EnsureSchema(
+                name: "public");
+
+/*
+            migrationBuilder.CreateTable(
+                name: "building_relationships",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_building_relationships", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "buildings",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_buildings", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "departments",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(nullable: false),
+                    description = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_departments", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "historical_people",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_historical_people", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "hr_people",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    net_id = table.Column<string>(nullable: true),
+                    name = table.Column<string>(nullable: true),
+                    name_first = table.Column<string>(nullable: true),
+                    name_last = table.Column<string>(nullable: true),
+                    position = table.Column<string>(nullable: true),
+                    campus = table.Column<string>(nullable: true),
+                    campus_phone = table.Column<string>(nullable: true),
+                    campus_email = table.Column<string>(nullable: true),
+                    hr_department = table.Column<string>(nullable: true),
+                    hr_department_description = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_hr_people", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "unit_member_tools",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_unit_member_tools", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "support_relationships",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_support_relationships", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "tool_permissions",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_tool_permissions", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "tools",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    description = table.Column<string>(nullable: true),
+                    ad_path = table.Column<string>(nullable: true),
+                    department_scoped = table.Column<bool>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_tools", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "unit_members",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    permissions = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_unit_members", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "units",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_units", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "people",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    net_id = table.Column<string>(nullable: false),
+                    name = table.Column<string>(nullable: false),
+                    name_first = table.Column<string>(nullable: false),
+                    name_last = table.Column<string>(nullable: false),
+                    position = table.Column<string>(nullable: false),
+                    location = table.Column<string>(nullable: false),
+                    campus = table.Column<string>(nullable: false),
+                    campus_phone = table.Column<string>(nullable: false),
+                    campus_email = table.Column<string>(nullable: false),
+                    expertise = table.Column<string>(nullable: true),
+                    notes = table.Column<string>(nullable: true),
+                    photo_url = table.Column<string>(nullable: true),
+                    responsibilities = table.Column<int>(nullable: false),
+                    is_service_admin = table.Column<bool>(nullable: false),
+                    department_id = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_people", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_people_departments_department_id",
+                        column: x => x.department_id,
+                        principalSchema: "public",
+                        principalTable: "departments",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_people_department_id",
+                schema: "public",
+                table: "people",
+                column: "department_id");
+*/
+
+            migrationBuilder.Sql(@"
 --
 -- PostgreSQL database dump
 --
@@ -18,16 +222,16 @@ migrationBuilder.Sql(@"
 
 -- Started on 2021-01-15 10:13:55 EST
 
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
+-- SET statement_timeout = 0;
+-- SET lock_timeout = 0;
+-- SET idle_in_transaction_session_timeout = 0;
+-- SET client_encoding = 'UTF8';
+-- SET standard_conforming_strings = on;
+-- SELECT pg_catalog.set_config('search_path', '', false);
+-- SET check_function_bodies = false;
+-- SET xmloption = content;
+-- SET client_min_messages = warning;
+-- SET row_security = off;
 
 --
 -- TOC entry 19 (class 2615 OID 2200)
@@ -48,39 +252,6 @@ SET row_security = off;
 -- COMMENT ON SCHEMA public IS 'standard public schema';
 
 
---
--- TOC entry 424 (class 1255 OID 16714)
--- -- Name: get_leaders(integer); Type: FUNCTION; Schema: public; Owner: edb_admin
---
-
-CREATE FUNCTION public.get_leaders(integer) RETURNS text
-    LANGUAGE sql
-    AS $_$
-	SELECT string_agg(p.netid, ', ') 
-	FROM people p
-	JOIN unit_members um on um.person_id = p.id
-	WHERE um.unit_id = $1 AND um.role = 4 -- whatever person attribute we want to filter on
-$_$;
-
-
--- -- ALTER FUNCTION public.get_leaders(integer) OWNER TO edb_admin;
-
---
--- TOC entry 425 (class 1255 OID 16715)
--- -- Name: unit_leaders(integer); Type: FUNCTION; Schema: public; Owner: edb_admin
---
-
-CREATE FUNCTION public.unit_leaders(integer) RETURNS text
-    LANGUAGE sql
-    AS $_$
-   SELECT string_agg(p.netid, ', ') 
-   FROM people p
-   JOIN unit_members um on um.person_id = p.id
-   WHERE um.unit_id = $1 AND um.role = 4
-$_$;
-
-
--- -- ALTER FUNCTION public.unit_leaders(integer) OWNER TO edb_admin;
 
 SET default_tablespace = '';
 
@@ -1171,6 +1342,39 @@ ALTER TABLE ONLY public.units
 -- GRANT ALL ON TABLE public.versioninfo TO edb_admin;
 
 
+--
+-- TOC entry 424 (class 1255 OID 16714)
+-- -- Name: get_leaders(integer); Type: FUNCTION; Schema: public; Owner: edb_admin
+--
+
+CREATE FUNCTION public.get_leaders(integer) RETURNS text
+    LANGUAGE sql
+    AS $_$
+	SELECT string_agg(p.netid, ', ') 
+	FROM people p
+	JOIN unit_members um on um.person_id = p.id
+	WHERE um.unit_id = $1 AND um.role = 4 -- whatever person attribute we want to filter on
+$_$;
+
+-- -- ALTER FUNCTION public.get_leaders(integer) OWNER TO edb_admin;
+
+--
+-- TOC entry 425 (class 1255 OID 16715)
+-- -- Name: unit_leaders(integer); Type: FUNCTION; Schema: public; Owner: edb_admin
+--
+
+CREATE FUNCTION public.unit_leaders(integer) RETURNS text
+    LANGUAGE sql
+    AS $_$
+   SELECT string_agg(p.netid, ', ') 
+   FROM people p
+   JOIN unit_members um on um.person_id = p.id
+   WHERE um.unit_id = $1 AND um.role = 4
+$_$;
+
+
+-- -- ALTER FUNCTION public.unit_leaders(integer) OWNER TO edb_admin;
+
 -- Completed on 2021-01-15 10:14:02 EST
 
 --
@@ -1183,13 +1387,53 @@ ALTER TABLE ONLY public.units
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            /*
             migrationBuilder.DropTable(
-                name: "people");
+                name: "building_relationships",
+                schema: "public");
 
             migrationBuilder.DropTable(
-                name: "departments");
-            */
+                name: "buildings",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "historical_people",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "hr_people",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "unit_member_tools",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "people",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "support_relationships",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "tool_permissions",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "tools",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "unit_members",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "units",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "departments",
+                schema: "public");
         }
     }
 }

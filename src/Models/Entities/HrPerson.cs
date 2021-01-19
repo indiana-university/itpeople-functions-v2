@@ -5,7 +5,7 @@ namespace Models
     {
         
         /// The net id (username) of this person.
-        public string NetId { get; set; }
+        public string Netid { get; set; }
         /// The preferred name of this person.
         public string Name { get; set; }
         /// The preferred first name of this person.

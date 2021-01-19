@@ -54,7 +54,7 @@ namespace API.Data
             {
                 using (var db = PeopleContext.Create())
                 {
-                    var person = await db.People.SingleOrDefaultAsync(p => EF.Functions.Like(p.NetId, netid));
+                    var person = await db.People.SingleOrDefaultAsync(p => EF.Functions.Like(p.Netid, netid));
                     return person == null
                         ? Pipeline.NotFound("No person found with that netid.")
                         : Pipeline.Success(person);

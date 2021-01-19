@@ -15,8 +15,8 @@ namespace Models
         public UnitPermissions UnitPermissions { get; }
         /// The ID of the person class. This can be null if the position is vacant.
         public int? PersonId { get; }
-        /// The NetId of the person, if they are not already in the IT people directory. This can be null if the position is vacant.
-        public string NetId { get; }
+        /// The NetID of the person, if they are not already in the IT people directory. This can be null if the position is vacant.
+        public string Netid { get; }
         /// The title/position of this membership.
         public string Title { get; }
         /// The percentage of time allocated to this position by this person (in case of split appointments).

@@ -5,17 +5,16 @@ using System.Text.Json;
 namespace Models
 {
     /// A person doing or supporting IT work
-    [Table("people")]
     public class Person : Entity
     {
         /// The net id (username) of this person.
-        [Required] public string NetId { get; set; }
+        [Required] public string Netid { get; set; }
         /// The preferred name of this person.
         [Required] public string  Name { get; set; }
         /// The preferred first name of this person.
-        [Required] public string NameFirst { get; set; }
+        public string NameFirst { get; set; }
         /// The preferred last name of this person.
-        [Required] public string NameLast { get; set; }
+        public string NameLast { get; set; }
         /// The job position of this person as defined by HR. This may be different than the person's title in relation to an IT unit.
         [Required] public string Position { get; set; }
         /// The physical location (building, room) of this person.
