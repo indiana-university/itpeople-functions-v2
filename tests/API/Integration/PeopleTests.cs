@@ -44,6 +44,30 @@ namespace Integration
                 Assert.AreEqual(1, actual.Count);
                 Assert.AreEqual(TestEntities.People.RSwanson.Id, actual.Single().Id);
             }
+
+            [TestCase(
+                Responsibilities.ItLeadership, 
+                new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId })]
+            [TestCase(
+                Responsibilities.ItProjectMgt, 
+                new int[]{ TestEntities.People.LKnopeId, TestEntities.People.BWyattId })]
+            [TestCase(
+                Responsibilities.ItLeadership | Responsibilities.ItProjectMgt, 
+                new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId })]
+            [TestCase(
+                Responsibilities.BizSysAnalysis,
+                new int[0])]
+            [TestCase(
+                Responsibilities.BizSysAnalysis | Responsibilities.ItLeadership,
+                new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId })]
+            public async Task CanSearchByJobClass(Responsibilities jobClass, int[] expectedMatches)
+            {
+                var resp = await GetAuthenticated($"people?class={jobClass.ToString()}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(expectedMatches.Length, actual.Count);
+                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
+            }
         }
     }
 }

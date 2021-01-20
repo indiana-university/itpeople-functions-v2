@@ -15,8 +15,9 @@ namespace Integration
 
         public static class People
         {
+            public const int RSwansonId = 1;
             public static readonly Person RSwanson = new Person() { 
-                Id = 1, 
+                Id = RSwansonId, 
                 Netid = "rswanson", 
                 Name="Swanson, Ron", 
                 NameFirst = "Ron", 
@@ -33,8 +34,10 @@ namespace Integration
                 DepartmentId = Departments.Parks.Id, 
                 Department = Departments.Parks, 
                 IsServiceAdmin = false };
+
+            public const int LKnopeId = 2;
             public static readonly Person LKnope = new Person() { 
-                Id = 2, 
+                Id = LKnopeId, 
                 Netid = "lknope", 
                 Name="Knope, Leslie", 
                 NameFirst = "Leslie", 
@@ -52,8 +55,10 @@ namespace Integration
                 Department = Departments.Parks, 
                 IsServiceAdmin = false 
             };
+
+            public const int BWyattId = 3;
             public static readonly Person BWyatt = new Person() { 
-                Id = 3, 
+                Id = BWyattId, 
                 Netid = "bwyatt", 
                 Name="Wyatt, Ben", 
                 NameFirst = "Ben", 

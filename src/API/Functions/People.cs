@@ -29,19 +29,25 @@ namespace API.Functions
 
         public class PeopleSearchQueryParameters
         {
-            public PeopleSearchQueryParameters(string q)
+            public PeopleSearchQueryParameters(string q, Responsibilities responsibilities )
             {
                 Q = q;
+                Responsibilities = responsibilities;
             }
             
-            public string Q { get; private set; }
+            public string Q { get; }
+            public Responsibilities Responsibilities { get; }
         }
 
         private static Result<PeopleSearchQueryParameters, Error> ResolveSearchQueryParameters(HttpRequest req)
         { 
             var queryParms = req.GetQueryParameterDictionary(); 
             queryParms.TryGetValue("q", out string q);
-            var result = new PeopleSearchQueryParameters(q);
+            queryParms.TryGetValue("class", out string jobClass);
+            var responsibilities = string.IsNullOrWhiteSpace(jobClass) 
+                ? Responsibilities.None 
+                : (Responsibilities)Enum.Parse(typeof(Responsibilities), jobClass);
+            var result = new PeopleSearchQueryParameters(q, responsibilities);
             return Pipeline.Success(result);
         }
 
