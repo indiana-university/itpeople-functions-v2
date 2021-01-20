@@ -26,7 +26,9 @@ namespace API.Data
                     
                     var result = await db.People
                         .Where(p=> 
-                            string.IsNullOrWhiteSpace(query.Q) || EF.Functions.ILike(p.Netid, $"%{query.Q}%")
+                            string.IsNullOrWhiteSpace(query.Q) 
+                            || EF.Functions.ILike(p.Netid, $"%{query.Q}%")
+                            || EF.Functions.ILike(p.Name, $"%{query.Q}%")
                         )
                         .AsNoTracking().ToListAsync();
                     return Pipeline.Success(result);

@@ -18,24 +18,32 @@ namespace Integration
             {
                 var resp = await GetAuthenticated("people");
                 AssertStatusCode(resp, HttpStatusCode.OK);
-                var json = await resp.Content.ReadAsStringAsync();
-                var actual = JsonConvert.DeserializeObject<List<Person>>(json);
-                Assert.AreEqual(3, actual.Count, $"\n********** Start Response JSON **********\n\n{json}\n\n*********** End Response JSON ***********\n");
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(3, actual.Count);
             }
 
-            [TestCase("rswanson", Description="Exact match of netid")]
-            [TestCase("RSWANSON", Description="Search is case-insensitive")]
-            [TestCase("rSwaN", Description="Search supports partial match")]
+            [TestCase("rswanso", Description="Exact match of netid")]
+            [TestCase("RSWANSO", Description="Search is case-insensitive")]
+            [TestCase("rSwaN", Description="Partial netid match")]
             public async Task CanSearchByNetid(string netid)
             {
                 var resp = await GetAuthenticated($"people?q={netid}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
-                var json = await resp.Content.ReadAsStringAsync();
-                var actual = JsonConvert.DeserializeObject<List<Person>>(json);
-                Assert.AreEqual(1, actual.Count, $"\n********** Start Response JSON **********\n\n{json}\n\n*********** End Response JSON ***********\n");
-                Assert.AreEqual("rswanson", actual.First().Netid);
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(1, actual.Count);
+                Assert.AreEqual(TestEntities.People.RSwanson.Id, actual.Single().Id);
             }
 
+            [TestCase("Ron", Description="Name match")]
+            [TestCase("Ro", Description="Partial name match")]
+            public async Task CanSearchByName(string netid)
+            {
+                var resp = await GetAuthenticated($"people?q={netid}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(1, actual.Count);
+                Assert.AreEqual(TestEntities.People.RSwanson.Id, actual.Single().Id);
+            }
         }
     }
 }
