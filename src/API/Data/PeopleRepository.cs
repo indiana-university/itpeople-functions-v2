@@ -7,6 +7,7 @@ using CSharpFunctionalExtensions;
 using Database;
 using Microsoft.EntityFrameworkCore;
 using Models;
+using API.Functions;
 
 namespace API.Data
 {
@@ -17,13 +18,13 @@ namespace API.Data
         {
         }
 
-        internal static async Task<Result<List<Person>, Error>> GetAllAsync()
+        internal static async Task<Result<List<Person>, Error>> GetAllAsync(People.PeopleSearchQueryParameters query)
         {
             try
             {
                 using (var db = PeopleContext.Create())
                 {
-                    var result = await db.People.AsNoTracking().ToListAsync();
+                    var result = await db.People.Where(p=>EF.Functions.Like(p.Netid, query.Q)).AsNoTracking().ToListAsync();
                     return Pipeline.Success(result);
                 }
             }

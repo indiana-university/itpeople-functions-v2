@@ -3,8 +3,6 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using Database;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using System.Data.Common;
@@ -54,7 +52,7 @@ namespace Integration
             peopleContext.Database.ExecuteSqlRaw(@"
                 TRUNCATE 
                     public.people, 
-                    public.departments 
+                    public.departments
                 RESTART IDENTITY
                 CASCADE;
             ");
