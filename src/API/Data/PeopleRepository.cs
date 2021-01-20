@@ -31,8 +31,11 @@ namespace API.Data
                                 || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
                             && (query.Responsibilities == Responsibilities.None
                                 || ((int)p.Responsibilities & (int)query.Responsibilities) != 0)
+                            && (query.Expertise.Length == 0
+                                || query.Expertise.Any(exp => EF.Functions.ILike(p.Expertise, $"%{exp}%")))
                         )
-                        .AsNoTracking().ToListAsync();
+                        .AsNoTracking()
+                        .ToListAsync();
                     return Pipeline.Success(result);
                 }
             }

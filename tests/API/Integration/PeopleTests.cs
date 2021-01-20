@@ -68,6 +68,22 @@ namespace Integration
                 Assert.AreEqual(expectedMatches.Length, actual.Count);
                 Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
             }
+
+            [TestCase("programming", new int[0])]
+            [TestCase("woodworking", new int[]{TestEntities.People.RSwansonId})]
+            [TestCase("working", new int[]{TestEntities.People.RSwansonId})]
+            [TestCase("wood", new int[]{TestEntities.People.RSwansonId})]
+            [TestCase("programming, woodworking", new int[]{TestEntities.People.RSwansonId})]
+            [TestCase("woodworking, waffles", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId})]
+            [TestCase("woOdworKing, waFFlEs", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId})]
+            public async Task CanSearchByExpertise(string interest, int[] expectedMatches)
+            {
+                var resp = await GetAuthenticated($"people?interest={interest}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(expectedMatches.Length, actual.Count);
+                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
+            }
         }
     }
 }

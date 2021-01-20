@@ -12,6 +12,7 @@ using System.Net;
 using System.Collections.Generic;
 using Models;
 using System;
+using System.Linq;
 
 namespace API.Functions
 {
@@ -29,14 +30,16 @@ namespace API.Functions
 
         public class PeopleSearchQueryParameters
         {
-            public PeopleSearchQueryParameters(string q, Responsibilities responsibilities )
+            public PeopleSearchQueryParameters(string q, Responsibilities responsibilities, string[] expertise )
             {
                 Q = q;
                 Responsibilities = responsibilities;
+                Expertise = expertise;
             }
             
             public string Q { get; }
             public Responsibilities Responsibilities { get; }
+            public string[] Expertise { get; }
         }
 
         private static Result<PeopleSearchQueryParameters, Error> ResolveSearchQueryParameters(HttpRequest req)
@@ -44,10 +47,14 @@ namespace API.Functions
             var queryParms = req.GetQueryParameterDictionary(); 
             queryParms.TryGetValue("q", out string q);
             queryParms.TryGetValue("class", out string jobClass);
+            queryParms.TryGetValue("interest", out string interests);
             var responsibilities = string.IsNullOrWhiteSpace(jobClass) 
                 ? Responsibilities.None 
                 : (Responsibilities)Enum.Parse(typeof(Responsibilities), jobClass);
-            var result = new PeopleSearchQueryParameters(q, responsibilities);
+            var expertises = string.IsNullOrWhiteSpace(interests) 
+                ? new string[0]
+                : interests.Split(",", StringSplitOptions.RemoveEmptyEntries).Select(i=>i.Trim()).ToArray();
+            var result = new PeopleSearchQueryParameters(q, responsibilities, expertises);
             return Pipeline.Success(result);
         }
 
