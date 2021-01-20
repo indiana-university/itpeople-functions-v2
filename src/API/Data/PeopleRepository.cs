@@ -24,7 +24,7 @@ namespace API.Data
                 using (var db = PeopleContext.Create())
                 {
                     
-                    var result = await db.People.Where(p=> EF.Functions.ILike(p.Netid,query.Q)).AsNoTracking().ToListAsync();
+                    var result = await db.People.Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")).AsNoTracking().ToListAsync();
                     return Pipeline.Success(result);
                 }
             }
