@@ -22,23 +22,20 @@ namespace API.Data
             try
             {
                 using (var db = PeopleContext.Create())
-                {
-                    
+                {                    
                     var result = await db.People
-                        .Where(p=> 
-                            // Name/Netid: Skip filter if no 'q' query param
-                            (string.IsNullOrWhiteSpace(query.Q) 
-                                // otherwise partial match netid and/or name
+                        .Where(p=> // partial match netid and/or name
+                            string.IsNullOrWhiteSpace(query.Q) 
                                 || EF.Functions.ILike(p.Netid, $"%{query.Q}%")
                                 || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
-                            // Responsibilities: Skip filter if no 'class' query param
-                            && (query.Responsibilities == Responsibilities.None
-                                // otherwise check for overlapping responsibilities
+                        .Where(p=> // check for overlapping responsibilities / job classes
+                            query.Responsibilities == Responsibilities.None
                                 || ((int)p.Responsibilities & (int)query.Responsibilities) != 0)
-                            // Expertise: Skip filter if no 'interest' query param
-                            && (query.Expertise.Length == 0
-                                // otherwise partial match any supplied interest against any self-described expertise
-                                || query.Expertise.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Expertise, s)))
+                                // That & is a bitwise operator - go read-up!
+                                // https://stackoverflow.com/questions/12988260/how-do-i-test-if-a-bitwise-enum-contains-any-values-from-another-bitwise-enum-in
+                        .Where(p=> // partial match any supplied interest against any self-described expertise
+                            query.Expertise.Length == 0
+                                || query.Expertise.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Expertise, s))
                         )
                         .AsNoTracking()
                         .ToListAsync();
@@ -50,6 +47,8 @@ namespace API.Data
                 return Pipeline.InternalServerError(ex.Message);
             }        
         }
+
+
 
         // /// Get a user class for a given net ID (e.g. 'jhoerr')
         // //TryGetId: NetId -> Async<Result<NetId * Id option,Error>>
