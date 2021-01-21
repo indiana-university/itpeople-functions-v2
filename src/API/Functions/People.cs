@@ -11,8 +11,6 @@ using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using System.Net;
 using System.Collections.Generic;
 using Models;
-using System;
-using System.Linq;
 
 namespace API.Functions
 {
@@ -24,39 +22,9 @@ namespace API.Functions
         public static Task<IActionResult> GetAll(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people")] HttpRequest req) 
             => Security.Authenticate(req)
-                .Bind(_ => ResolveSearchQueryParameters(req))
+                .Bind(_ => PeopleSearchParameters.Parse(req))
                 .Bind(query => PeopleRepository.GetAllAsync(query))
                 .Finally(people => Response.Ok(req, people));
-
-        public class PeopleSearchQueryParameters
-        {
-            public PeopleSearchQueryParameters(string q, Responsibilities responsibilities, string[] expertise )
-            {
-                Q = q;
-                Responsibilities = responsibilities;
-                Expertise = expertise;
-            }
-            
-            public string Q { get; }
-            public Responsibilities Responsibilities { get; }
-            public string[] Expertise { get; }
-        }
-
-        private static Result<PeopleSearchQueryParameters, Error> ResolveSearchQueryParameters(HttpRequest req)
-        { 
-            var queryParms = req.GetQueryParameterDictionary(); 
-            queryParms.TryGetValue("q", out string q);
-            queryParms.TryGetValue("class", out string jobClass);
-            queryParms.TryGetValue("interest", out string interests);
-            var responsibilities = string.IsNullOrWhiteSpace(jobClass) 
-                ? Responsibilities.None 
-                : (Responsibilities)Enum.Parse(typeof(Responsibilities), jobClass);
-            var expertises = string.IsNullOrWhiteSpace(interests) 
-                ? new string[0]
-                : interests.Split(",", StringSplitOptions.RemoveEmptyEntries).Select(i=>i.Trim()).ToArray();
-            var result = new PeopleSearchQueryParameters(q, responsibilities, expertises);
-            return Pipeline.Success(result);
-        }
 
         [FunctionName(nameof(People.GetByNetid))]
         [OpenApiOperation(nameof(People.GetByNetid))]
