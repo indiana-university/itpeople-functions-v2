@@ -35,8 +35,10 @@ namespace API.Data
                                 // https://stackoverflow.com/questions/12988260/how-do-i-test-if-a-bitwise-enum-contains-any-values-from-another-bitwise-enum-in
                         .Where(p=> // partial match any supplied interest against any self-described expertise
                             query.Expertise.Length == 0
-                                || query.Expertise.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Expertise, s))
-                        )
+                                || query.Expertise.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Expertise, s)))
+                        .Where(p=> // partial match campus
+                            query.Campus.Length == 0
+                                || query.Campus.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Campus, s)))
                         .AsNoTracking()
                         .ToListAsync();
                     return Pipeline.Success(result);

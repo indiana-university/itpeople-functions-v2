@@ -69,9 +69,11 @@ namespace Integration
                 Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
             }
 
+            // [TestCase("  ", new int[0])]
+            // [TestCase(",,", new int[0])]
             [TestCase("programming", new int[0])]
-            [TestCase("Woodworking; Honor", new int[]{TestEntities.People.RSwansonId})]
-            [TestCase("woodworking; honor", new int[]{TestEntities.People.RSwansonId})]
+            [TestCase("Woodworking; Honor", new int[]{TestEntities.People.RSwansonId}, Description="exact match")]
+            [TestCase("woodworking; honor", new int[]{TestEntities.People.RSwansonId}, Description="exact match case-insensitive")]
             [TestCase("woodworking", new int[]{TestEntities.People.RSwansonId})]
             [TestCase("working", new int[]{TestEntities.People.RSwansonId})]
             [TestCase("wood", new int[]{TestEntities.People.RSwansonId})]
@@ -81,6 +83,21 @@ namespace Integration
             public async Task CanSearchByInterest(string interest, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?interest={interest}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(expectedMatches.Length, actual.Count);
+                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
+            }
+
+            // [TestCase("  ", new int[0])]
+            // [TestCase(",,", new int[0])]
+            [TestCase("Pawnee", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId}, Description="full match of Pawnee")]
+            [TestCase("Ind", new int[]{TestEntities.People.BWyattId}, Description="start of Indianapolis")]
+            [TestCase("Indianapolis", new int[]{TestEntities.People.BWyattId}, Description="full match of Indianapolis")]
+            [TestCase("Pawnee, Indian", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId}, Description="multiple campus")]
+            public async Task CanSearchCampus(string campusName, int[] expectedMatches)
+            {
+                var resp = await GetAuthenticated($"people?campus={campusName}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
                 Assert.AreEqual(expectedMatches.Length, actual.Count);
