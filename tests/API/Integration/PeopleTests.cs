@@ -70,13 +70,15 @@ namespace Integration
             }
 
             [TestCase("programming", new int[0])]
+            [TestCase("Woodworking; Honor", new int[]{TestEntities.People.RSwansonId})]
+            [TestCase("woodworking; honor", new int[]{TestEntities.People.RSwansonId})]
             [TestCase("woodworking", new int[]{TestEntities.People.RSwansonId})]
             [TestCase("working", new int[]{TestEntities.People.RSwansonId})]
             [TestCase("wood", new int[]{TestEntities.People.RSwansonId})]
             [TestCase("programming, woodworking", new int[]{TestEntities.People.RSwansonId})]
             [TestCase("woodworking, waffles", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId})]
             [TestCase("woOdworKing, waFFlEs", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId})]
-            public async Task CanSearchByExpertise(string interest, int[] expectedMatches)
+            public async Task CanSearchByInterest(string interest, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?interest={interest}");
                 AssertStatusCode(resp, HttpStatusCode.OK);

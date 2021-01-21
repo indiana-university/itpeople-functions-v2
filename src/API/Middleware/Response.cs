@@ -20,6 +20,7 @@ namespace API.Middleware
             else 
             {
                 // logger.FailureResult<T>("Fetch", result.Error);
+                System.Console.WriteLine($"[{result.Error.StatusCode}] {result.Error.Message}");
                 return result.Error.ToActionResult();
             }
         }

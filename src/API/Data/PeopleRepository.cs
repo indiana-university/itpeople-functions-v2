@@ -17,7 +17,7 @@ namespace API.Data
         {
         }
 
-        internal static async Task<Result<List<Person>, Error>> GetAllAsync(People.PeopleSearchQueryParameters query)
+        internal static async Task<Result<List<Person>, Error>> GetAllAsync(PeopleSearchParameters query)
         {
             try
             {
@@ -26,13 +26,19 @@ namespace API.Data
                     
                     var result = await db.People
                         .Where(p=> 
+                            // Name/Netid: Skip filter if no 'q' query param
                             (string.IsNullOrWhiteSpace(query.Q) 
+                                // otherwise partial match netid and/or name
                                 || EF.Functions.ILike(p.Netid, $"%{query.Q}%")
                                 || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
+                            // Responsibilities: Skip filter if no 'class' query param
                             && (query.Responsibilities == Responsibilities.None
+                                // otherwise check for overlapping responsibilities
                                 || ((int)p.Responsibilities & (int)query.Responsibilities) != 0)
+                            // Expertise: Skip filter if no 'interest' query param
                             && (query.Expertise.Length == 0
-                                || query.Expertise.Any(exp => EF.Functions.ILike(p.Expertise, $"%{exp}%")))
+                                // otherwise partial match any supplied interest against any self-described expertise
+                                || query.Expertise.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Expertise, s)))
                         )
                         .AsNoTracking()
                         .ToListAsync();
