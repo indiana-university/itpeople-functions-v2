@@ -42,9 +42,13 @@ namespace API.Functions
             return Pipeline.Success(result);
         }
 
+        // " ,  ,"  😩  => [" ", "  "]
         private static string[] ParseCommaSeparatedList(string str) 
             => string.IsNullOrWhiteSpace(str)
                 ? new string[0]
-                : str.Split(",", StringSplitOptions.RemoveEmptyEntries).Select(i => i.Trim()).ToArray();
+                : str.Split(",", StringSplitOptions.RemoveEmptyEntries)
+                    .Select(i => i.Trim())
+                    .Where(i => !string.IsNullOrWhiteSpace(i))
+                    .ToArray();
     }
 }

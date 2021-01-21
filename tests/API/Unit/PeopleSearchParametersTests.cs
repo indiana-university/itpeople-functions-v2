@@ -9,7 +9,9 @@ namespace Unit
     {
         [TestCase(null, new string[0])]
         [TestCase("", new string[0])]
+        [TestCase("  ", new string[0])]
         [TestCase(",,", new string[0])]
+        [TestCase(" ,  ,", new string[0])]
         [TestCase("foo", new[]{"foo"})]
         [TestCase("foo,bar", new[]{"foo","bar"})]
         [TestCase("foo,,bar", new[]{"foo","bar"})]
