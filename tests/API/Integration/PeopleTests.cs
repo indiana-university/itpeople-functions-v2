@@ -99,6 +99,20 @@ namespace Integration
                 Assert.AreEqual(expectedMatches.Length, actual.Count);
                 Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
             }
+            
+            [TestCase("Auditor", new int[]{TestEntities.People.BWyattId}, Description="position match")]
+            [TestCase("AUDITOR", new int[]{TestEntities.People.BWyattId}, Description="position case-insensitive match")]
+            [TestCase("AuDi", new int[]{TestEntities.People.BWyattId}, Description="position partial match")]
+            [TestCase("Parks and Rec Director", new int[]{TestEntities.People.RSwansonId}, Description="Position match")]
+            [TestCase("Parks and Rec Deputy Director", new int[]{TestEntities.People.LKnopeId}, Description="Position match")]
+            public async Task CanSearchByPosition(string position, int[] expectedMatches)
+            {
+                var resp = await GetAuthenticated($"people?role={position}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(expectedMatches.Length, actual.Count);
+                Assert.AreEqual(expectedMatches, actual.Select(a=>a.Id).ToArray());                
+            }
         }
     }
 }

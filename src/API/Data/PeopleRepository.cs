@@ -39,6 +39,10 @@ namespace API.Data
                         .Where(p=> // partial match campus
                             query.Campus.Length == 0
                                 || query.Campus.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Campus, s)))
+                        .Where(p=>
+                            query.Position.Length == 0
+                                || query.Position.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Position, s))
+                        )
                         .AsNoTracking()
                         .ToListAsync();
                     return Pipeline.Success(result);
