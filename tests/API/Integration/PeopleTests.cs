@@ -36,13 +36,14 @@ namespace Integration
 
             [TestCase("Ron", Description="Name match")]
             [TestCase("Ro", Description="Partial name match")]
-            public async Task CanSearchByName(string netid)
+            public async Task CanSearchByName(string name)
             {
-                var resp = await GetAuthenticated($"people?q={netid}");
+                var resp = await GetAuthenticated($"people?q={name}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
                 Assert.AreEqual(1, actual.Count);
                 Assert.AreEqual(TestEntities.People.RSwanson.Id, actual.Single().Id);
+                Assert.AreEqual(TestEntities.People.RSwanson.Name, actual.Single().Name);
             }
 
             [TestCase(
