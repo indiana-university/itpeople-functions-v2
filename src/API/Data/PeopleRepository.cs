@@ -41,6 +41,21 @@ namespace API.Data
                                 || query.Campus.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Campus, s)))
                         .AsNoTracking()
                         .ToListAsync();
+
+                        // Fetch memberships that satisfy our role and our existing results.
+                        // NB: We're only doing this because the existing Person model doesn't have a relationship to it's UnitMember(s)
+                        if(query.Role != null)
+                        {
+                            var peopleIds = result.Select(r => (int?)r.Id).ToList();
+                            var peopleIdsWithRole = db.UnitMembers.Include(m => m.Person)
+                                /*.Where(m =>  peopleIds.Contains(m.PersonId)  && m.Role == query.Role)*/
+                                .Select(m => m.PersonId)
+                                .ToList();
+                            
+                            result = result
+                                .Where(p => peopleIdsWithRole.Contains(p.Id))
+                                .ToList();
+                        }
                     return Pipeline.Success(result);
                 }
             }
