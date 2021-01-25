@@ -52,7 +52,10 @@ namespace Integration
             peopleContext.Database.ExecuteSqlRaw(@"
                 TRUNCATE 
                     public.people, 
-                    public.departments
+                    public.departments,
+                    public.units,
+                    public.unit_members,
+                    public.unit_member_tools
                 RESTART IDENTITY
                 CASCADE;
             ");
@@ -60,13 +63,29 @@ namespace Integration
             peopleContext.Departments.AddRange(new List<Department> {
                 TestEntities.Departments.Parks
             });
+            
+            // peopleContext.Units.AddRange(new List<Unit> {
+            //     TestEntities.Units.Unit
+            // });
 
             peopleContext.People.AddRange(new List<Person> { 
                 TestEntities.People.RSwanson, 
                 TestEntities.People.LKnope,
                 TestEntities.People.BWyatt
             });
-
+            
+            /*
+            peopleContext.SaveChanges();//Maybe we need to stash what we've got in the DB before building relationships.
+            */
+            peopleContext.UnitMembers.AddRange(new List<UnitMember> { 
+                TestEntities.UnitMembers.RSwansonDirector,
+                // TestEntities.UnitMembers.LkNopeSublead,
+                // TestEntities.UnitMembers.BWyattAditor
+            });
+            // peopleContext.MemberTools.AddRange(new List<MemberTool> { 
+            //     TestEntities.MemberTools.MemberTool
+            // });
+            
             peopleContext.SaveChanges();
         }
     }

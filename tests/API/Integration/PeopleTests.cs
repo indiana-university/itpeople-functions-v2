@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -95,6 +96,16 @@ namespace Integration
             public async Task CanSearchCampus(string campusName, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?campus={campusName}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(expectedMatches.Length, actual.Count);
+                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
+            }           
+           
+            [TestCase(Role.Leader, new int[]{ TestEntities.People.RSwansonId }, Description = "Return group leader(s)")]
+            public async Task CanSearchByRole(Role role, int[] expectedMatches)
+            {
+                var resp = await GetAuthenticated($"people?role={role.ToString()}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
                 Assert.AreEqual(expectedMatches.Length, actual.Count);
