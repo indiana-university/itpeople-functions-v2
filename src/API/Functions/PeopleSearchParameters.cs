@@ -11,20 +11,18 @@ namespace API.Functions
 {
     public class PeopleSearchParameters
     {
-        public PeopleSearchParameters(string q, Responsibilities responsibilities, string[] expertise, string[] campus, string[] position )
+        public PeopleSearchParameters(string q, Responsibilities responsibilities, string[] expertise, string[] campus )
         {
             Q = q;
             Responsibilities = responsibilities;
             Expertise = expertise;
             Campus = campus;
-            Position = position;
         }
         
         public string Q { get; }
         public Responsibilities Responsibilities { get; }
         public string[] Expertise { get; }
         public string[] Campus { get; }
-        public string[] Position { get; }
 
         public static Result<PeopleSearchParameters, Error> Parse(HttpRequest req) 
             => Parse(req.GetQueryParameterDictionary());
@@ -35,14 +33,12 @@ namespace API.Functions
             queryParms.TryGetValue("class", out string jobClass);
             queryParms.TryGetValue("interest", out string interests);
             queryParms.TryGetValue("campus", out string campus);
-            queryParms.TryGetValue("role", out string position);
             var responsibilities = string.IsNullOrWhiteSpace(jobClass)
                 ? Responsibilities.None
                 : (Responsibilities)Enum.Parse(typeof(Responsibilities), jobClass);
             var expertises = ParseCommaSeparatedList(interests);
             var campuses = ParseCommaSeparatedList(campus);
-            var positions = ParseCommaSeparatedList(position);
-            var result = new PeopleSearchParameters(q, responsibilities, expertises, campuses, positions);
+            var result = new PeopleSearchParameters(q, responsibilities, expertises, campuses);
             return Pipeline.Success(result);
         }
 
@@ -51,8 +47,8 @@ namespace API.Functions
             => string.IsNullOrWhiteSpace(str)
                 ? new string[0]
                 : str.Split(",", StringSplitOptions.RemoveEmptyEntries)
-                    .Select(i => i.Trim())                    
-                    .Where(i => !string.IsNullOrEmpty(i))
+                    .Select(i => i.Trim())
+                    .Where(i => !string.IsNullOrWhiteSpace(i))
                     .ToArray();
     }
 }
