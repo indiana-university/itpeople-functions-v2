@@ -103,11 +103,23 @@ namespace Integration
             }           
            
             [TestCase(Role.Leader, new int[]{ TestEntities.People.RSwansonId }, Description = "Return group leader(s)")]
-            [TestCase(Role.Sublead, new int[]{ TestEntities.People.LKnopeId }, Description = "Return group leader(s)")]
-            [TestCase(Role.Member, new int[]{ TestEntities.People.BWyattId }, Description = "Return group leader(s)")]
+            [TestCase(Role.Sublead, new int[]{ TestEntities.People.LKnopeId }, Description = "Return group Subleader(s)")]
+            [TestCase(Role.Member, new int[]{ TestEntities.People.BWyattId }, Description = "Return group Member(s)")]
             public async Task CanSearchByRole(Role role, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?role={role.ToString()}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(expectedMatches.Length, actual.Count);
+                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
+            }
+            [TestCase(UnitPermissions.Owner, new int[]{ TestEntities.People.RSwansonId })]
+            [TestCase(UnitPermissions.Viewer, new int[]{ TestEntities.People.LKnopeId })]
+            [TestCase(UnitPermissions.ManageMembers, new int[]{ TestEntities.People.BWyattId })]
+            [TestCase(UnitPermissions.ManageTools, new int[0])]
+            public async Task CanSearchByPermission(UnitPermissions permissions, int[] expectedMatches)
+            {
+                var resp = await GetAuthenticated($"people?permission={permissions.ToString()}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
                 Assert.AreEqual(expectedMatches.Length, actual.Count);

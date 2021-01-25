@@ -152,7 +152,7 @@ namespace Integration
                 Id = BWyattMemberId,
                 // UnitId = Units.Unit.Id,
                 Role = Role.Member,
-                Permissions = UnitPermissions.Viewer,
+                Permissions = UnitPermissions.ManageMembers,
                 PersonId = People.BWyattId,
                 Title = "Auditor",
                 Percentage = 100,
