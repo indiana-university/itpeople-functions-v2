@@ -6,17 +6,17 @@ namespace Models
     {
         /// The name of this unit.
         [Required]
-        public string Name { get; }
+        public string Name { get; set; }
         /// A description of this unit.
-        public string Description { get; }
+        public string Description { get; set; }
         /// A URL for the website of this unit.
-        public string Url { get; }
+        public string Url { get; set; }
         /// A contact email for this unit.
-        public string Email { get; }
+        public string Email { get; set; }
         /// The unique ID of the parent unit of this unit.
-        public int? ParentId { get; } 
+        public int? ParentId { get; set; } 
         /// The parent unit of this unit
-        public Unit Parent { get; }
+        public Unit Parent { get; set; }
     }
     
 }

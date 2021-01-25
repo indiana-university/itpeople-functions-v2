@@ -1,30 +1,32 @@
+using System.Collections.Generic;
+
 namespace Models
 {
     public class UnitMember : Entity
     {
         
         /// The ID of the unit class.
-        public int UnitId { get; }
+        public int UnitId { get; set; }
         /// The role of the person in this membership as part of the unit.
-        public Role Role { get; }
+        public Role Role { get; set; }
         /// The permissions of the person in this membership as part of the unit. Defaults to 'viewer'.
         public UnitPermissions Permissions { get; set; }
         /// The ID of the person class. This can be null if the position is vacant.
-        public Person PersonId { get; }    
+        public int? PersonId { get; set; }    
         /// The title/position of this membership.
-        public string Title { get; }   
+        public string Title { get; set; }   
         /// The percentage of time allocated to this position by this person (in case of split appointments).
-        public int Percentage { get; }
+        public int Percentage { get; set; }
         /// Notes about this person (for admins/reporting eyes only.)
-        public string Notes { get; }
-        /// The netid of the person related to this membership.
-        public string Netid { get;  }
+        public string Notes { get; set; }
+        /// The netid of the person related to this membership.       
+        public string Netid { get => this.Person.Netid; }
         /// The person related to this membership.
-        public Person Person { get; }
+        public Person Person { get; set; }
         /// The unit related to this membership.
-        public Unit Unit { get; }
+        public Unit Unit { get; set; }
         /// The tools that can be used by the person in this position as part of this unit.
-        public MemberTool MemberTool { get;  }
+        public List<MemberTool> MemberTools { get;  set; }
 
     }
     

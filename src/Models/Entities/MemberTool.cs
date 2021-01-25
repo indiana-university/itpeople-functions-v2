@@ -8,10 +8,10 @@ namespace Models
     {   
         /// The ID of the member in this relationship
         [Required]
-        public int MembershipId { get; }
+        public int MembershipId { get; set; }
         /// The ID of the tool in this relationship
         [Required]
-        public int ToolId { get; }
+        public int ToolId { get; set; }
     }
         
 }
