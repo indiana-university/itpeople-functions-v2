@@ -103,6 +103,8 @@ namespace Integration
             }           
            
             [TestCase(Role.Leader, new int[]{ TestEntities.People.RSwansonId }, Description = "Return group leader(s)")]
+            [TestCase(Role.Sublead, new int[]{ TestEntities.People.LKnopeId }, Description = "Return group leader(s)")]
+            [TestCase(Role.Member, new int[]{ TestEntities.People.BWyattId }, Description = "Return group leader(s)")]
             public async Task CanSearchByRole(Role role, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?role={role.ToString()}");

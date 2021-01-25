@@ -64,23 +64,21 @@ namespace Integration
                 TestEntities.Departments.Parks
             });
             
-            // peopleContext.Units.AddRange(new List<Unit> {
-            //     TestEntities.Units.Unit
-            // });
+            peopleContext.Units.AddRange(new List<Unit> {
+                TestEntities.Units.ParentUnit,
+                TestEntities.Units.Unit
+            });
 
             peopleContext.People.AddRange(new List<Person> { 
                 TestEntities.People.RSwanson, 
                 TestEntities.People.LKnope,
                 TestEntities.People.BWyatt
-            });
+            });  
             
-            /*
-            peopleContext.SaveChanges();//Maybe we need to stash what we've got in the DB before building relationships.
-            */
             peopleContext.UnitMembers.AddRange(new List<UnitMember> { 
                 TestEntities.UnitMembers.RSwansonDirector,
-                // TestEntities.UnitMembers.LkNopeSublead,
-                // TestEntities.UnitMembers.BWyattAditor
+                TestEntities.UnitMembers.LkNopeSublead,
+                TestEntities.UnitMembers.BWyattAditor
             });
             // peopleContext.MemberTools.AddRange(new List<MemberTool> { 
             //     TestEntities.MemberTools.MemberTool

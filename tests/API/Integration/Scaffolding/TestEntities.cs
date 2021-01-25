@@ -146,7 +146,7 @@ namespace Integration
                 Unit = Units.Unit,
                 MemberTools = null
             };
-            public const int BWyattMemberId = 2;
+            public const int BWyattMemberId = 3;
             public static readonly UnitMember BWyattAditor= new UnitMember()
             {
                 Id = BWyattMemberId,

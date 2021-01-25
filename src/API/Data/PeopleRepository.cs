@@ -48,7 +48,7 @@ namespace API.Data
                         {
                             var peopleIds = result.Select(r => (int?)r.Id).ToList();
                             var peopleIdsWithRole = db.UnitMembers.Include(m => m.Person)
-                                /*.Where(m =>  peopleIds.Contains(m.PersonId)  && m.Role == query.Role)*/
+                                .Where(m =>  peopleIds.Contains(m.PersonId)  && m.Role == query.Role)
                                 .Select(m => m.PersonId)
                                 .ToList();
                             
