@@ -56,6 +56,18 @@ namespace API.Data
                                 .Where(p => peopleIdsWithRole.Contains(p.Id))
                                 .ToList();
                         }
+                        if(query.Permissions != null)
+                        {
+                            var peopleIds = result.Select(r => (int?)r.Id).ToList();
+                            var peopleIdsWithPermissions = db.UnitMembers.Include(m => m.Person)
+                                .Where(m =>  peopleIds.Contains(m.PersonId)  && m.Permissions == query.Permissions)
+                                .Select(m => m.PersonId)
+                                .ToList();
+                            
+                            result = result
+                                .Where(p => peopleIdsWithPermissions.Contains(p.Id))
+                                .ToList();
+                        }
                     return Pipeline.Success(result);
                 }
             }
