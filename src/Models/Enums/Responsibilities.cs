@@ -1,8 +1,12 @@
 using System;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Models
 {
     [Flags]
+    [JsonConverter(typeof(StringEnumConverter))]
+
     public enum Responsibilities
     {
         None                  = 0b00000000000000000,
