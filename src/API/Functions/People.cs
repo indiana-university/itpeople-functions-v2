@@ -22,7 +22,7 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<Person>))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description="The search query was malformed or incorrect. See response content for additional information.")]
         [OpenApiParameter("q", In=ParameterLocation.Query, Description="filter by name/netid, ex: `Ron` or `rswanso`")]
-        [OpenApiParameter("class", In=ParameterLocation.Query, Type=typeof(Responsibilities), Description="filter by job classification/responsibility, ex: `UserExperience` or `UserExperience, WebAdminDevEng`")]
+        [OpenApiParameter("class", In=ParameterLocation.Query, Type=typeof(ResponsibilitiesPropDoc), Description="filter by job classification/responsibility, ex: `UserExperience` or `UserExperience, WebAdminDevEng`")]
         [OpenApiParameter("interest", In=ParameterLocation.Query, Description="filter by one interests, ex: `serverless` or `node, lambda`")]
         [OpenApiParameter("campus", In=ParameterLocation.Query, Description="filter by primary campus: `Bloomington`, `Indianapolis`, `Columbus`, `East`, `Fort Wayne`, `Kokomo`, `Northwest`, `South Bend`, `Southeast`")]
         [OpenApiParameter("role", In=ParameterLocation.Query, Type=typeof(Role), Description="filter by unit role, ex: `Leader` or `Leader, Member`")]

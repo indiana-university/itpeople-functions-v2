@@ -1,12 +1,12 @@
 using System;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace Models
 {
     [Flags]
-    [JsonConverter(typeof(StringEnumConverter))]
-
     public enum Responsibilities
     {
         None                  = 0b00000000000000000,
@@ -27,4 +27,25 @@ namespace Models
         WebAdminDevEng        = 0b00100000000000000,
     }
 
+
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum ResponsibilitiesPropDoc
+    {
+        None                  = Responsibilities.None,
+        ItLeadership          = Responsibilities.ItLeadership,
+        BizSysAnalysis        = Responsibilities.BizSysAnalysis,
+        DataAdminAnalysis     = Responsibilities.DataAdminAnalysis,
+        DatabaseArchDesign    = Responsibilities.DatabaseArchDesign,
+        InstructionalTech     = Responsibilities.InstructionalTech,
+        ItProjectMgt          = Responsibilities.ItProjectMgt,
+        ItSecurityPrivacy     = Responsibilities.ItSecurityPrivacy,
+        ItUserSupport         = Responsibilities.ItUserSupport,
+        ItMultiDiscipline     = Responsibilities.ItMultiDiscipline,
+        Networks              = Responsibilities.Networks,
+        SoftwareAdminAnalysis = Responsibilities.SoftwareAdminAnalysis,
+        SoftwareDevEng        = Responsibilities.SoftwareDevEng,
+        SystemDevEng          = Responsibilities.SystemDevEng,
+        UserExperience        = Responsibilities.UserExperience,
+        WebAdminDevEng        = Responsibilities.WebAdminDevEng 
+    }
 }
