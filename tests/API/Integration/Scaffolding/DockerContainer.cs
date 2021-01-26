@@ -144,16 +144,20 @@ namespace Integration
                     CreateNoWindow = true
                 },
             };
+
+            p.OutputDataReceived += new DataReceivedEventHandler((s, e) => 
+            { 
+                Progress.WriteLine(e.Data); 
+            });
+            p.ErrorDataReceived += new DataReceivedEventHandler((s, e) =>
+            {
+                Error.WriteLine(e.Data);
+            });
             p.Start();
+            p.BeginOutputReadLine();
+            p.BeginErrorReadLine();
             p.WaitForExit();
-
-            var output = p.StandardOutput.ReadToEnd();
-            var error = p.StandardError.ReadToEnd();
-            if (!string.IsNullOrWhiteSpace(output))
-                Progress.WriteLine(output);
-            if (!string.IsNullOrWhiteSpace(error))
-                Error.WriteLine(output);
-
+            
             if (p.ExitCode == 0)
             {
                 Progress.WriteLine($"😎 Finished running 'docker {arguments}'.");
