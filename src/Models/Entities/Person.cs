@@ -1,6 +1,5 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json;
 
 namespace Models
 {
@@ -37,8 +36,13 @@ namespace Models
         public bool IsServiceAdmin { get; set; }
         /// The HR department to which this person belongs.
         public int? DepartmentId { get; set; }
+
+        /// Entity Navigation
+
         /// The department in this relationship.
         public Department Department { get; set; }
+
+        /// The units of which this person is a member
+        public List<UnitMember> UnitMemberships { get; set; }
     }
-    
 }

@@ -12,13 +12,13 @@ namespace API.Functions
     public class PeopleSearchParameters
     {
 
-        public PeopleSearchParameters(string q, Responsibilities responsibilities, string[] expertise, string[] campus, Role? role, UnitPermissions? permissions)
+        public PeopleSearchParameters(string q, Responsibilities responsibilities, string[] expertise, string[] campus, Role[] role, UnitPermissions[] permissions)
         {
             Q = q;
             Responsibilities = responsibilities;
             Expertise = expertise;
             Campus = campus;         
-            Role = role;
+            Roles = role;
             Permissions = permissions;
         }
         
@@ -26,8 +26,8 @@ namespace API.Functions
         public Responsibilities Responsibilities { get; }
         public string[] Expertise { get; }
         public string[] Campus { get; }        
-        public Role? Role { get; }
-        public UnitPermissions? Permissions { get; }
+        public Role[] Roles { get; }
+        public UnitPermissions[] Permissions { get; }
 
         public static Result<PeopleSearchParameters, Error> Parse(HttpRequest req) 
             => Parse(req.GetQueryParameterDictionary());
@@ -44,11 +44,23 @@ namespace API.Functions
                 ? Responsibilities.None
                 : (Responsibilities)Enum.Parse(typeof(Responsibilities), jobClass); 
             var roles = string.IsNullOrWhiteSpace(role)
-                ? null
-                : (Role?)Enum.Parse(typeof(Role), role);
+                ? new Role[0]
+                : ParseCommaSeparatedList(role)
+                    .Select(r => {
+                        if (!Enum.TryParse<Role>(r, true, out Role value))
+                            throw new Exception($"Unit role not recognized: '{r}'");
+                        return value;
+                    })
+                    .ToArray();
             var permissions = string.IsNullOrWhiteSpace(permission)
-                ? null
-                : (UnitPermissions?)Enum.Parse(typeof(UnitPermissions), permission);
+                ? new UnitPermissions[0]
+                : ParseCommaSeparatedList(permission)
+                    .Select(p => {
+                        if (!Enum.TryParse<UnitPermissions>(p, true, out UnitPermissions value))
+                            throw new Exception($"Unit permission not recognized: '{p}'");
+                        return value;
+                    })
+                    .ToArray();
             var expertises = ParseCommaSeparatedList(interests);
             var campuses = ParseCommaSeparatedList(campus);
             var result = new PeopleSearchParameters(q, responsibilities, expertises, campuses, roles, permissions);

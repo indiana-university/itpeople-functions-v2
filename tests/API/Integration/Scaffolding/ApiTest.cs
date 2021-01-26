@@ -30,7 +30,18 @@ namespace Integration
 
         protected static void AssertStatusCode(HttpResponseMessage resp, HttpStatusCode expected)
         {
-            Assert.AreEqual(expected, resp.StatusCode);
+            string content = "(none)";
+            if (expected != resp.StatusCode)
+            {
+                try 
+                {
+                    content = resp.Content.ReadAsStringAsync().Result;
+                } 
+                catch {
+                    content = "Failed to parse response content.";
+                }
+            }
+            Assert.AreEqual(expected, resp.StatusCode, content);
         }
 
         protected static async Task AssertStringContent(HttpResponseMessage resp, string expected)

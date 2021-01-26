@@ -39,16 +39,21 @@ namespace API.Data
                         .Where(p=> // partial match campus
                             query.Campus.Length == 0
                                 || query.Campus.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Campus, s)))
+                        .Where(p => query.Roles.Length == 0
+                                || p.UnitMemberships.Any(m => query.Roles.Contains(m.Role)))
+                        .Where(p => query.Permissions.Length == 0
+                                || p.UnitMemberships.Any(m => query.Permissions.Contains(m.Permissions)))
                         .AsNoTracking()
                         .ToListAsync();
 
                         // Fetch memberships that satisfy our role and our existing results.
                         // NB: We're only doing this because the existing Person model doesn't have a relationship to it's UnitMember(s)
-                        if(query.Role != null)
+                        /*
+                        if(query.Roles != null)
                         {
                             var peopleIds = result.Select(r => (int?)r.Id).ToList();
                             var peopleIdsWithRole = db.UnitMembers.Include(m => m.Person)
-                                .Where(m =>  peopleIds.Contains(m.PersonId)  && m.Role == query.Role)
+                                .Where(m =>  peopleIds.Contains(m.PersonId)  && m.Role == query.Roles)
                                 .Select(m => m.PersonId)
                                 .ToList();
                             
@@ -68,6 +73,7 @@ namespace API.Data
                                 .Where(p => peopleIdsWithPermissions.Contains(p.Id))
                                 .ToList();
                         }
+                        */
                     return Pipeline.Success(result);
                 }
             }
