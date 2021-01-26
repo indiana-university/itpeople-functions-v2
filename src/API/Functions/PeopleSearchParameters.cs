@@ -12,7 +12,7 @@ namespace API.Functions
     public class PeopleSearchParameters
     {
 
-        public PeopleSearchParameters(string q, Responsibilities responsibilities, string[] expertise, string[] campus, Role[] role, UnitPermissions[] permissions)
+        public PeopleSearchParameters(string q, Responsibilities responsibilities, string[] expertise, string[] campus, Role[] role, UnitPermissions[] permissions, Area[] areas)
         {
             Q = q;
             Responsibilities = responsibilities;
@@ -20,6 +20,7 @@ namespace API.Functions
             Campus = campus;         
             Roles = role;
             Permissions = permissions;
+            Areas = areas;
         }
         
         public string Q { get; }
@@ -28,6 +29,7 @@ namespace API.Functions
         public string[] Campus { get; }        
         public Role[] Roles { get; }
         public UnitPermissions[] Permissions { get; }
+        public Area[] Areas { get; set; }
 
         public static Result<PeopleSearchParameters, Error> Parse(HttpRequest req) 
             => Parse(req.GetQueryParameterDictionary());
@@ -40,14 +42,17 @@ namespace API.Functions
             queryParms.TryGetValue("interest", out string interests);
             queryParms.TryGetValue("campus", out string campus);
             queryParms.TryGetValue("permission", out string permission);
+            queryParms.TryGetValue("area", out string area);
             var responsibilities = string.IsNullOrWhiteSpace(jobClass)
                 ? Responsibilities.None
                 : (Responsibilities)Enum.Parse(typeof(Responsibilities), jobClass); 
+            var areas = ParseEnumList<Area>(area, "Unit area");
             var roles = ParseEnumList<Role>(role, "Unit role");
             var permissions = ParseEnumList<UnitPermissions>(permission, "Unit permission");
             var expertises = ParseCommaSeparatedList(interests);
             var campuses = ParseCommaSeparatedList(campus);
-            var result = new PeopleSearchParameters(q, responsibilities, expertises, campuses, roles, permissions);
+            var result = new PeopleSearchParameters(q, responsibilities, expertises, campuses, roles, permissions, areas);
+
             return Pipeline.Success(result);
         }
 

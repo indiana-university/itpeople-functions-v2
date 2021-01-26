@@ -90,7 +90,7 @@ namespace Integration
 
         public static class Units
         {
-            public static readonly Unit ParentUnit = new Unit(){
+            public static readonly Unit CityOfPawnee = new Unit(){
                 Id = 1,
                 Name = "City of Pawnee",
                 Description = "City of Pawnee, Indiana",
@@ -99,17 +99,15 @@ namespace Integration
                 ParentId = null,
                 Parent = null
             };
-            public static readonly Unit Unit = new Unit(){
+            public static readonly Unit ParksAndRecUnit = new Unit(){
                 Id = 2,
                 Name = "Parks and Rec",
                 Description = "Parks and Recreation",
                 Url = "http://pawneeindiana.com/parks-and-recreation/",
                 Email = "unit@example.com",
-                ParentId = ParentUnit.Id,
-                Parent = ParentUnit
+                ParentId = CityOfPawnee.Id,
+                Parent = CityOfPawnee
             };
-           
-
         }
 
         public static class UnitMembers
@@ -127,7 +125,7 @@ namespace Integration
                 Notes = "",
                 //Netid = People.RSwanson.Netid,
                 Person = People.RSwanson,
-                Unit = Units.Unit,
+                Unit = Units.ParksAndRecUnit,
                 MemberTools = new List<MemberTool> ()
             };
             public const int LkNopeSubleadId = 2;
@@ -143,7 +141,7 @@ namespace Integration
                 Notes = "Office busy-body.",
                 //Netid = People.LKnope.Netid,
                 Person = People.LKnope,
-                Unit = Units.Unit,
+                Unit = Units.ParksAndRecUnit,
                 MemberTools = null
             };
             public const int BWyattMemberId = 3;
@@ -159,7 +157,7 @@ namespace Integration
                 Notes = "",
                 //Netid = People.BWyatt.Netid,
                 Person = People.BWyatt,
-                Unit = Units.Unit,
+                Unit = Units.ParksAndRecUnit,
                 MemberTools = null
             };
             

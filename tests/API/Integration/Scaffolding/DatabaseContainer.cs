@@ -65,8 +65,8 @@ namespace Integration
             });
             
             peopleContext.Units.AddRange(new List<Unit> {
-                TestEntities.Units.ParentUnit,
-                TestEntities.Units.Unit
+                TestEntities.Units.CityOfPawnee,
+                TestEntities.Units.ParksAndRecUnit
             });
 
             peopleContext.People.AddRange(new List<Person> { 
