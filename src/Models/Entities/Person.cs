@@ -1,48 +1,52 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
 
 namespace Models
 {
     /// A person doing or supporting IT work
     public class Person : Entity
     {
-        /// The net id (username) of this person.
-        [Required] public string Netid { get; set; }
-        /// The preferred name of this person.
+        /// <summary>The net id (username) of this person.</summary>
+        [Required] 
+        public string Netid { get; set; }
+        /// <summary>The preferred name of this person.</summary>
         [Required] public string  Name { get; set; }
-        /// The preferred first name of this person.
+        /// <summary>The preferred first name of this person.</summary>
         public string NameFirst { get; set; }
-        /// The preferred last name of this person.
+        /// <summary>The preferred last name of this person.</summary>
         public string NameLast { get; set; }
-        /// The job position of this person as defined by HR. This may be different than the person's title in relation to an IT unit.
+        /// <summary>The job position of this person as defined by HR. This may be different than the person's title in relation to an IT unit.</summary>
         [Required] public string Position { get; set; }
-        /// The physical location (building, room) of this person.
+        /// <summary>The physical location (building, room) of this person.</summary>
         [Required] public string Location { get; set; }
-        /// The primary campus with which this person is affiliated.
+        /// <summary>The primary campus with which this person is affiliated.</summary>
         [Required] public string Campus { get; set; }
-        /// The campus phone number of this person.
+        /// <summary>The campus phone number of this person.</summary>
         [Required] public string CampusPhone { get; set; }
-        /// The campus (work) email address of this person.
+        /// <summary>The campus (work) email address of this person.</summary>
         [Required] public string CampusEmail { get; set; }
-        /// A collection of IT-related skills, expertise, or interests posessed by this person.
+        /// <summary>A collection of IT-related skills, expertise, or interests posessed by this person.</summary>
         public string Expertise { get; set; }
-        /// Administrative notes about this person, visible only to IT Admins.
+        /// <summary>Administrative notes about this person, visible only to IT Admins.</summary>
         public string Notes { get; set; }
-        /// A URL for a photograph (headshot) of this person.
+        /// <summary>A URL for a photograph (headshot) of this person.</summary>
         public string PhotoUrl { get; set; }
-        /// A collection of IT-related responsibilites of this person.
+        /// <summary>A collection of IT-related responsibilites of this person.</summary>
         public Responsibilities Responsibilities { get; set; }
-        /// Whether this person is an administrator of the IT People service.
+        /// <summary>Whether this person is an administrator of the IT People service.</summary>
         public bool IsServiceAdmin { get; set; }
-        /// The HR department to which this person belongs.
+        /// <summary>The HR department to which this person belongs.</summary>
         public int? DepartmentId { get; set; }
 
         /// Entity Navigation
 
-        /// The department in this relationship.
+        /// <summary>The department in this relationship.</summary>
         public Department Department { get; set; }
 
-        /// The units of which this person is a member
+        /// <summary>The units of which this person is a member</summary>
+        [JsonIgnore]
         public List<UnitMember> UnitMemberships { get; set; }
     }
 }
