@@ -13,4 +13,4 @@ ENV JwtPublicKey=-----BEGIN\ PUBLIC\ KEY-----\\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
 COPY --from=installer-env ["/home/site/wwwroot", "/home/site/wwwroot"]
 
 HEALTHCHECK --interval=10s --timeout=1s --retries=60 \ 
-    CMD curl --fail http://localhost:80/api/ping || exit 1     
+    CMD curl --fail http://localhost:80/ping || exit 1     

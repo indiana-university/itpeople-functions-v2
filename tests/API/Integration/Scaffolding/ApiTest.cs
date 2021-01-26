@@ -18,7 +18,7 @@ namespace Integration
         }
 
         protected static HttpClient Http = new HttpClient(){
-            BaseAddress = new System.Uri("http://localhost:8080/api/")
+            BaseAddress = new System.Uri("http://localhost:8080/")
         };
 
         public Task<HttpResponseMessage> GetAuthenticated(string url)

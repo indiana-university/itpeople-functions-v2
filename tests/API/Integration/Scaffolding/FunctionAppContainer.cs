@@ -21,13 +21,13 @@ namespace Integration
             DockerExec($"build --pull --rm --file Dockerfile.API --tag {ImageName} .", "../../../../../../");
         }
 
+
+        private static System.Net.Http.HttpClient http = new System.Net.Http.HttpClient();
         protected override async Task<bool> isReady()
         {
             try
             {
-                // send http request to localhost:8080/api/ping
-                var client = new System.Net.Http.HttpClient();
-                var response = await client.GetAsync("http://localhost:8080/api/ping");
+                var response = await http.GetAsync("http://localhost:8080/ping");
                 // look for HTTP OK (200) response
                 if(response.StatusCode == System.Net.HttpStatusCode.OK)
                 {

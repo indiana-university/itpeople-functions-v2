@@ -29,7 +29,7 @@ namespace API.Functions
         [OpenApiParameter("permission", In=ParameterLocation.Query, Type=typeof(UnitPermissions), Description="filter by unit permissions, ex: `Owner` or `Owner, ManageMembers`")]
         [OpenApiParameter("area", In=ParameterLocation.Query, Type=typeof(Area), Description="filter by unit area, e.g. `uits` or `edge`")]
         public static Task<IActionResult> GetAll(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "api/people")] HttpRequest req) 
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people")] HttpRequest req) 
             => Security.Authenticate(req)
                 .Bind(_ => PeopleSearchParameters.Parse(req))
                 .Bind(query => PeopleRepository.GetAll(query))
@@ -41,7 +41,7 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Person))]
         [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description="No person was found with the provided ID.")]
         public static Task<IActionResult> GetOne(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "api/people/{id}")] HttpRequest req, int id) 
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}")] HttpRequest req, int id) 
             {
                 return Security.Authenticate(req)
                     .Bind(_ => PeopleRepository.GetOne(id))
