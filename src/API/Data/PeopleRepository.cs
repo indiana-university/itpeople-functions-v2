@@ -23,30 +23,7 @@ namespace API.Data
             {
                 using (var db = PeopleContext.Create())
                 {                    
-                    var result = await db.People
-                        .FromSqlInterpolated<Person>($@"
-                            SELECT p.* from public.people p
-                                JOIN public.unit_members um ON um.person_id = p.id
-                            WHERE CARDINALITY({query.Areas}) = 0 -- no area specified
-                                OR {query.Areas} = ARRAY[1,2]    -- both uits and edge requested
-                                -- Area=1: UITS unit members only
-                                OR ({query.Areas} = ARRAY[1] AND um.unit_id IN (
-                                    WITH RECURSIVE parentage AS (
-                                        SELECT id, id as root_id FROM units WHERE parent_id IS NULL
-                                    UNION
-                                        SELECT u.id, p.root_id as root_id FROM units u INNER JOIN parentage p ON u.parent_id = p.id
-                                    )
-                                    SELECT id FROM parentage
-                                    WHERE root_id = 1))
-                                -- Area=2: Edge unit members only
-                                OR ({query.Areas} = ARRAY[2] AND um.unit_id IN (
-                                    WITH RECURSIVE parentage AS (
-                                        SELECT id, id as root_id FROM units WHERE parent_id IS NULL
-                                    UNION
-                                        SELECT u.id, p.root_id as root_id FROM units u INNER JOIN parentage p ON u.parent_id = p.id
-                                    )
-                                    SELECT id FROM parentage
-                                    WHERE root_id <> 1))")
+                    var result = await GetPeoleFilteredByArea(db, query)
                         .Where(p=> // partial match netid and/or name
                             string.IsNullOrWhiteSpace(query.Q) 
                                 || EF.Functions.ILike(p.Netid, $"%{query.Q}%")
@@ -77,7 +54,33 @@ namespace API.Data
             }        
         }
 
-
+        private static IQueryable<Person> GetPeoleFilteredByArea(PeopleContext db, PeopleSearchParameters query)
+        {
+            return db.People
+                .FromSqlInterpolated<Person>($@"
+                    SELECT p.* from public.people p
+                        JOIN public.unit_members um ON um.person_id = p.id
+                    WHERE CARDINALITY({query.Areas}) = 0 -- no area specified
+                        OR {query.Areas} = ARRAY[1,2]    -- both uits and edge requested
+                        -- Area=1: UITS unit members only
+                        OR ({query.Areas} = ARRAY[1] AND um.unit_id IN (
+                            WITH RECURSIVE parentage AS (
+                                SELECT id, id as root_id FROM units WHERE parent_id IS NULL
+                            UNION
+                                SELECT u.id, p.root_id as root_id FROM units u INNER JOIN parentage p ON u.parent_id = p.id
+                            )
+                            SELECT id FROM parentage
+                            WHERE root_id = 1))
+                        -- Area=2: Edge unit members only
+                        OR ({query.Areas} = ARRAY[2] AND um.unit_id IN (
+                            WITH RECURSIVE parentage AS (
+                                SELECT id, id as root_id FROM units WHERE parent_id IS NULL
+                            UNION
+                                SELECT u.id, p.root_id as root_id FROM units u INNER JOIN parentage p ON u.parent_id = p.id
+                            )
+                            SELECT id FROM parentage
+                            WHERE root_id <> 1))");
+        }
 
         // /// Get a user class for a given net ID (e.g. 'jhoerr')
         // //TryGetId: NetId -> Async<Result<NetId * Id option,Error>>
