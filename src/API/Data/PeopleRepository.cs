@@ -45,35 +45,6 @@ namespace API.Data
                                 || p.UnitMemberships.Any(m => query.Permissions.Contains(m.Permissions)))
                         .AsNoTracking()
                         .ToListAsync();
-
-                        // Fetch memberships that satisfy our role and our existing results.
-                        // NB: We're only doing this because the existing Person model doesn't have a relationship to it's UnitMember(s)
-                        /*
-                        if(query.Roles != null)
-                        {
-                            var peopleIds = result.Select(r => (int?)r.Id).ToList();
-                            var peopleIdsWithRole = db.UnitMembers.Include(m => m.Person)
-                                .Where(m =>  peopleIds.Contains(m.PersonId)  && m.Role == query.Roles)
-                                .Select(m => m.PersonId)
-                                .ToList();
-                            
-                            result = result
-                                .Where(p => peopleIdsWithRole.Contains(p.Id))
-                                .ToList();
-                        }
-                        if(query.Permissions != null)
-                        {
-                            var peopleIds = result.Select(r => (int?)r.Id).ToList();
-                            var peopleIdsWithPermissions = db.UnitMembers.Include(m => m.Person)
-                                .Where(m =>  peopleIds.Contains(m.PersonId)  && m.Permissions == query.Permissions)
-                                .Select(m => m.PersonId)
-                                .ToList();
-                            
-                            result = result
-                                .Where(p => peopleIdsWithPermissions.Contains(p.Id))
-                                .ToList();
-                        }
-                        */
                     return Pipeline.Success(result);
                 }
             }
