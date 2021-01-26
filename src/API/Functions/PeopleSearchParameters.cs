@@ -43,29 +43,25 @@ namespace API.Functions
             var responsibilities = string.IsNullOrWhiteSpace(jobClass)
                 ? Responsibilities.None
                 : (Responsibilities)Enum.Parse(typeof(Responsibilities), jobClass); 
-            var roles = string.IsNullOrWhiteSpace(role)
-                ? new Role[0]
-                : ParseCommaSeparatedList(role)
-                    .Select(r => {
-                        if (!Enum.TryParse<Role>(r, true, out Role value))
-                            throw new Exception($"Unit role not recognized: '{r}'");
-                        return value;
-                    })
-                    .ToArray();
-            var permissions = string.IsNullOrWhiteSpace(permission)
-                ? new UnitPermissions[0]
-                : ParseCommaSeparatedList(permission)
-                    .Select(p => {
-                        if (!Enum.TryParse<UnitPermissions>(p, true, out UnitPermissions value))
-                            throw new Exception($"Unit permission not recognized: '{p}'");
-                        return value;
-                    })
-                    .ToArray();
+            var roles = ParseEnumList<Role>(role, "Unit role");
+            var permissions = ParseEnumList<UnitPermissions>(permission, "Unit permission");
             var expertises = ParseCommaSeparatedList(interests);
             var campuses = ParseCommaSeparatedList(campus);
             var result = new PeopleSearchParameters(q, responsibilities, expertises, campuses, roles, permissions);
             return Pipeline.Success(result);
         }
+
+        private static T[] ParseEnumList<T>(string str, string typeDescription) where T : struct, IComparable 
+            => string.IsNullOrWhiteSpace(str)
+                ? new T[0]
+                : ParseCommaSeparatedList(str)
+                    .Select(r =>
+                    {
+                        if (!Enum.TryParse<T>(r, true, out T value))
+                            throw new Exception($"{typeDescription} not recognized: '{r}'");
+                        return value;
+                    })
+                    .ToArray();
 
         // " ,  ,"  😩  => [" ", "  "]
         private static string[] ParseCommaSeparatedList(string str) 
