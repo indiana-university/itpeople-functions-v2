@@ -11,13 +11,7 @@ namespace API.Functions
     {
         [FunctionName(nameof(HealthCheck.Ping))]
         public static IActionResult Ping(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequest req) 
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "api/ping")] HttpRequest req) 
                 => new OkObjectResult("Pong!");
-
-        [FunctionName(nameof(HealthCheck.RenderOpenApiJson))]
-        public static IActionResult RenderOpenApiJson(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "openapi.json")] HttpRequest req) 
-                => new RedirectResult("/api/swagger.json");
-
     }
 }
