@@ -144,5 +144,38 @@ namespace Integration
                 
             }
         }
+
+        public class GetOne : ApiTest
+        {
+            [TestCase(TestEntities.People.RSwansonId, HttpStatusCode.OK)]
+            [TestCase(9999, HttpStatusCode.NotFound)]
+            public async Task HasCorrectStatusCode(int id, HttpStatusCode expectedStatus)
+            {
+                var resp = await GetAuthenticated($"people/{id}");
+                AssertStatusCode(resp, expectedStatus);
+            }
+
+            [Test]
+            public async Task ResponseHasCorrectPersonShape()
+            {
+                var resp = await GetAuthenticated($"people/{TestEntities.People.RSwansonId}");
+                var actual = await resp.Content.ReadAsAsync<Person>();
+                var expected = TestEntities.People.RSwanson;
+                Assert.AreEqual(expected.Id, actual.Id);
+                Assert.AreEqual(expected.Netid, actual.Netid);
+                Assert.AreEqual(expected.DepartmentId, actual.DepartmentId);
+            }
+
+            [Test]
+            public async Task ResponseIncludesDepartment()
+            {
+                var resp = await GetAuthenticated($"people/{TestEntities.People.RSwansonId}");
+                var actual = await resp.Content.ReadAsAsync<Person>();
+                var expected = TestEntities.People.RSwanson.Department;
+                Assert.IsNotNull(actual.Department);
+                Assert.AreEqual(expected.Id, actual.Department.Id);
+                Assert.AreEqual(expected.Name, actual.Department.Name);
+            }
+        }
     }
 }

@@ -17,13 +17,13 @@ namespace API.Data
         {
         }
 
-        internal static async Task<Result<List<Person>, Error>> GetAllAsync(PeopleSearchParameters query)
+        internal static async Task<Result<List<Person>, Error>> GetAll(PeopleSearchParameters query)
         {
             try
             {
                 using (var db = PeopleContext.Create())
                 {                    
-                    var result = await GetPeoleFilteredByArea(db, query)
+                    var result = await GetPeopleFilteredByArea(db, query)
                         .Where(p=> // partial match netid and/or name
                             string.IsNullOrWhiteSpace(query.Q) 
                                 || EF.Functions.ILike(p.Netid, $"%{query.Q}%")
@@ -54,7 +54,7 @@ namespace API.Data
             }        
         }
 
-        private static IQueryable<Person> GetPeoleFilteredByArea(PeopleContext db, PeopleSearchParameters query)
+        private static IQueryable<Person> GetPeopleFilteredByArea(PeopleContext db, PeopleSearchParameters query)
         {
             return db.People
                 .FromSqlInterpolated<Person>($@"
@@ -82,8 +82,7 @@ namespace API.Data
                             WHERE root_id <> 1))");
         }
 
-        // /// Get a user class for a given net ID (e.g. 'jhoerr')
-        // //TryGetId: NetId -> Async<Result<NetId * Id option,Error>>
+
         // public async Task<Result<(NetId, Id), option, Error>> TryGetId(string NetId) {
         //     throw new NotImplementedException();
         // }
@@ -97,14 +96,15 @@ namespace API.Data
         // public async Task<Result<Person,Error>> GetById(int Id) => throw new NotImplementedException();
         /// Get a single person by NetId
 
-
-        public async Task<Result<Person,Error>> GetByNetId(string netid)
+        // /// Get a user class for a given net ID (e.g. 'jhoerr')
+        // //TryGetId: NetId -> Async<Result<NetId * Id option,Error>>
+        public static async Task<Result<Person,Error>> GetOne(int id)
         {
             try
             {
                 using (var db = PeopleContext.Create())
                 {
-                    var person = await db.People.SingleOrDefaultAsync(p => EF.Functions.Like(p.Netid, netid));
+                    var person = await db.People.Include(p => p.Department).SingleOrDefaultAsync(p => p.Id == id);
                     return person == null
                         ? Pipeline.NotFound("No person found with that netid.")
                         : Pipeline.Success(person);
