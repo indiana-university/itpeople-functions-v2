@@ -10,13 +10,8 @@ using API.Functions;
 
 namespace API.Data
 {
-
     public class PeopleRepository
     {
-        public PeopleRepository() 
-        {
-        }
-
         internal static async Task<Result<List<Person>, Error>> GetAll(PeopleSearchParameters query)
         {
             try
@@ -82,22 +77,6 @@ namespace API.Data
                             WHERE root_id <> 1))");
         }
 
-
-        // public async Task<Result<(NetId, Id), option, Error>> TryGetId(string NetId) {
-        //     throw new NotImplementedException();
-        // }
-        // /// Get a list of all people
-        // public async Task<Result<List<Person>,Error>> GetAll(PeopleQuery peopleQuery) => throw new NotImplementedException();
-        // /// Get a unioned list of IT and HR people, filtered by name/netid
-        // public async Task<Result<List<Person>,Error>> GetAllWithHr(string NetId) => throw new NotImplementedException();
-        // /// Get a single HR person by NetId
-        // public async Task<Result<Person,Error>> GetHr(string NetId) => throw new NotImplementedException();
-        // /// Get a single person by ID
-        // public async Task<Result<Person,Error>> GetById(int Id) => throw new NotImplementedException();
-        /// Get a single person by NetId
-
-        // /// Get a user class for a given net ID (e.g. 'jhoerr')
-        // //TryGetId: NetId -> Async<Result<NetId * Id option,Error>>
         public static async Task<Result<Person,Error>> GetOne(int id)
         {
             try
@@ -120,14 +99,6 @@ namespace API.Data
             => GetOne(id)
                 .Bind(person => Pipeline.Success(person.UnitMemberships));
 
-        // public async Task<Result<List<UnitMember>,Error>> GetMemberships(Id id) => throw new NotImplementedException();
 
-        // /// Create a person from canonical HR data
-        // public  async Task<Result<Person,Error>> Create(Person person) => throw new NotImplementedException();
-        // /// Get a list of a person's unit memberships, by the person's ID
-        // public async Task<Result<List<UnitMember>,Error>> GetMemberships(Id id) => throw new NotImplementedException();
-
-        // /// Update a person
-        // public async Task<Result<Person,Error>> Update(PersonRequest personRequest) => throw new NotImplementedException();
     }
 }
