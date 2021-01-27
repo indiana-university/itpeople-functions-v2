@@ -13,12 +13,23 @@ namespace API.Data
 {
     public class PeopleRepository
     {
-        internal static async Task<Result<List<Person>, Error>> GetAll(PeopleSearchParameters query)
+        private static async Task<Result<T,Error>> ExecuteDbPipeline<T>(string description, Func<PeopleContext, Task<Result<T,Error>>> pipeline)
         {
             try
             {
                 using (var db = PeopleContext.Create())
                 {                    
+                    return await pipeline(db);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                return Pipeline.InternalServerError($"Failed to {description}", ex);
+            }
+        }
+
+        internal static Task<Result<List<Person>, Error>> GetAll(PeopleSearchParameters query)
+            => ExecuteDbPipeline("search all people", async db => {
                     var result = await GetPeopleFilteredByArea(db, query)
                         .Where(p=> // partial match netid and/or name
                             string.IsNullOrWhiteSpace(query.Q) 
@@ -42,18 +53,10 @@ namespace API.Data
                         .AsNoTracking()
                         .ToListAsync();
                     return Pipeline.Success(result);
-                }
-            }
-            catch (System.Exception ex)
-            {
-                return Pipeline.InternalServerError(ex.Message);
-            }        
-        }
+                });
 
-        private static IQueryable<Person> GetPeopleFilteredByArea(PeopleContext db, PeopleSearchParameters query)
-        {
-            return db.People
-                .FromSqlInterpolated<Person>($@"
+        private static IQueryable<Person> GetPeopleFilteredByArea(PeopleContext db, PeopleSearchParameters query) 
+            => db.People .FromSqlInterpolated<Person>($@"
                     SELECT p.* from public.people p
                         JOIN public.unit_members um ON um.person_id = p.id
                     WHERE CARDINALITY({query.Areas}) = 0 -- no area specified
@@ -76,55 +79,42 @@ namespace API.Data
                             )
                             SELECT id FROM parentage
                             WHERE root_id <> 1))");
-        }
 
-        public static async Task<Result<Person,Error>> GetOne(int id)
-        {
-            try
-            {
-                using (var db = PeopleContext.Create())
-                {
-                    var person = await db.People.Include(p => p.Department).Include(p => p.UnitMemberships).SingleOrDefaultAsync(p => p.Id == id);
-                    return person == null
-                        ? Pipeline.NotFound("No person found with that netid.")
-                        : Pipeline.Success(person);
-                }
-            }
-            catch (System.Exception ex)
-            {
-                return Pipeline.InternalServerError(ex.Message);
-            }
-        }
+        public static Task<Result<Person, Error>> GetOne(int id) 
+            => ExecuteDbPipeline("get a person by ID", db => 
+                tryFindPerson(db, id));
 
         public static Task<Result<List<UnitMember>, Error>> GetMemberships(int id) 
-            => GetOne(id)
-                .Bind(person => Pipeline.Success(person.UnitMemberships));
+            => ExecuteDbPipeline("fetch unit memberships", db =>
+                tryFindPerson(db, id)
+                .Bind(person => Pipeline.Success(person.UnitMemberships)));
 
-        public static async Task<Result<Person, Error>> Update(int id, PersonUpdateRequest body)
+        public static Task<Result<Person, Error>> Update(int id, PersonUpdateRequest body)
+            => ExecuteDbPipeline("update person", db =>
+                tryFindPerson(db, id)
+                .Bind(person => tryUpdatePerson(db, body, person)));
+
+        private static async Task<Result<Person,Error>> tryFindPerson (PeopleContext db, int id)
         {
-            try
-            {
-                using (var db = PeopleContext.Create())
-                {
-                    var person = await db.People.Include(p => p.Department).Include(p => p.UnitMemberships).SingleOrDefaultAsync(p => p.Id == id);
-                    if (person == null)
-                        return Pipeline.NotFound("No person found with that netid.");
-                    
-                    // update the props
-                    person.Location = body.Location;
-                    person.Expertise = body.Expertise;
-                    person.PhotoUrl = body.PhotoUrl;
-                    person.Responsibilities = body.Responsibilities;
-                    // save changes
-                    await db.SaveChangesAsync();
+            var person = await db.People
+                .Include(p => p.Department)
+                .Include(p => p.UnitMemberships)
+                .SingleOrDefaultAsync(p => p.Id == id);
+            return person == null
+                ? Pipeline.NotFound("No person found with that netid.")
+                : Pipeline.Success(person);
+        }
 
-                    return Pipeline.Success(person);
-                }
-            }
-            catch (System.Exception ex)
-            {
-                return Pipeline.InternalServerError("Failed to update person information. Please try again.", ex);
-            }        
+        private static async Task<Result<Person,Error>> tryUpdatePerson (PeopleContext db, PersonUpdateRequest body, Person record)
+        {
+            // update the props
+            record.Location = body.Location;
+            record.Expertise = body.Expertise;
+            record.PhotoUrl = body.PhotoUrl;
+            record.Responsibilities = body.Responsibilities;
+            // save changes
+            await db.SaveChangesAsync();
+            return Pipeline.Success(record);
         }
     }
 }
