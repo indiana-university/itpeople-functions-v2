@@ -177,5 +177,25 @@ namespace Integration
                 Assert.AreEqual(expected.Name, actual.Department.Name);
             }
         }
+        public class GetMemberships : ApiTest
+        {
+            [TestCase(TestEntities.People.RSwansonId, HttpStatusCode.OK)]
+            [TestCase(9999, HttpStatusCode.NotFound)]
+            public async Task CanGetMemberships(int id, HttpStatusCode expectedStatus)
+            {
+                var resp = await GetAuthenticated($"people/{id}/memberships");
+                AssertStatusCode(resp, expectedStatus);
+            }
+
+            [Test]
+            public async Task GetRonsMemberships()
+            {
+                var resp = await GetAuthenticated($"people/{TestEntities.People.RSwansonId}/memberships");
+                var actual = await resp.Content.ReadAsAsync<List<UnitMember>>();
+                var expected = TestEntities.People.RSwanson.UnitMemberships;
+                Assert.That(actual.Count, Is.EqualTo(1));
+                Assert.That(actual.First().Id, Is.EqualTo(expected.First().Id));
+            }
+        }
     }
 }

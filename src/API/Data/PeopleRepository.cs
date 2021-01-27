@@ -104,7 +104,7 @@ namespace API.Data
             {
                 using (var db = PeopleContext.Create())
                 {
-                    var person = await db.People.Include(p => p.Department).SingleOrDefaultAsync(p => p.Id == id);
+                    var person = await db.People.Include(p => p.Department).Include(p => p.UnitMemberships).SingleOrDefaultAsync(p => p.Id == id);
                     return person == null
                         ? Pipeline.NotFound("No person found with that netid.")
                         : Pipeline.Success(person);
@@ -115,11 +115,18 @@ namespace API.Data
                 return Pipeline.InternalServerError(ex.Message);
             }
         }
+
+        public static Task<Result<List<UnitMember>, Error>> GetMemberships(int id) 
+            => GetOne(id)
+                .Bind(person => Pipeline.Success(person.UnitMemberships));
+
+        // public async Task<Result<List<UnitMember>,Error>> GetMemberships(Id id) => throw new NotImplementedException();
+
         // /// Create a person from canonical HR data
         // public  async Task<Result<Person,Error>> Create(Person person) => throw new NotImplementedException();
         // /// Get a list of a person's unit memberships, by the person's ID
         // public async Task<Result<List<UnitMember>,Error>> GetMemberships(Id id) => throw new NotImplementedException();
-        
+
         // /// Update a person
         // public async Task<Result<Person,Error>> Update(PersonRequest personRequest) => throw new NotImplementedException();
     }

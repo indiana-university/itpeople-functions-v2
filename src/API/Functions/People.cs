@@ -36,16 +36,25 @@ namespace API.Functions
                 .Finally(people => Response.Ok(req, people));
 
         [FunctionName(nameof(People.GetOne))]
-        [OpenApiOperation(nameof(People.GetOne), nameof(People), Summary="Get a person by ID")]
-        [OpenApiParameter("id", Type=typeof(int), In=ParameterLocation.Path, Required=true, Description="The ID of the person record.")]
+        [OpenApiOperation(nameof(People.GetOne), nameof(People), Summary = "Get a person by ID")]
+        [OpenApiParameter("id", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the person record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Person))]
-        [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description="No person was found with the provided ID.")]
+        [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No person was found with the provided ID.")]
         public static Task<IActionResult> GetOne(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}")] HttpRequest req, int id) 
-            {
-                return Security.Authenticate(req)
-                    .Bind(_ => PeopleRepository.GetOne(id))
-                    .Finally(result => Response.Ok(req, result));
-            }
+            => Security.Authenticate(req)
+                .Bind(_ => PeopleRepository.GetOne(id))
+                .Finally(result => Response.Ok(req, result));
+
+        [FunctionName(nameof(People.GetMemberships))]
+        [OpenApiOperation(nameof(People.GetMemberships), nameof(People), Summary = "List unit memberships", Description = "List all units for which this person does IT work.")]
+        [OpenApiParameter("id", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the person record.")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<UnitMember>))]
+        [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No person was found with the provided ID.")]
+        public static Task<IActionResult> GetMemberships(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}/memberships")] HttpRequest req, int id) 
+            => Security.Authenticate(req)
+                .Bind(_ => PeopleRepository.GetMemberships(id))
+                .Finally(result => Response.Ok(req, result));
     }
 }
