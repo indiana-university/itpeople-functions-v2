@@ -7,6 +7,7 @@ using Database;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using API.Functions;
+using System;
 
 namespace API.Data
 {
@@ -99,6 +100,31 @@ namespace API.Data
             => GetOne(id)
                 .Bind(person => Pipeline.Success(person.UnitMemberships));
 
+        public static async Task<Result<Person, Error>> Update(int id, PersonUpdateRequest body)
+        {
+            try
+            {
+                using (var db = PeopleContext.Create())
+                {
+                    var person = await db.People.Include(p => p.Department).Include(p => p.UnitMemberships).SingleOrDefaultAsync(p => p.Id == id);
+                    if (person == null)
+                        return Pipeline.NotFound("No person found with that netid.");
+                    
+                    // update the props
+                    person.Location = body.Location;
+                    person.Expertise = body.Expertise;
+                    person.PhotoUrl = body.PhotoUrl;
+                    person.Responsibilities = body.Responsibilities;
+                    // save changes
+                    await db.SaveChangesAsync();
 
+                    return Pipeline.Success(person);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                return Pipeline.InternalServerError("Failed to update person information. Please try again.", ex);
+            }        
+        }
     }
 }

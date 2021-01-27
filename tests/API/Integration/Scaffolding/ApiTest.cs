@@ -1,7 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Models;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Integration
@@ -9,7 +13,7 @@ namespace Integration
     public abstract class ApiTest
     {
         // valid from 1/1/2000 - 1/19/2038 💥
-        public static string ValidJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiamhvZXJyIiwiZXhwIjoyMTQ3NDgzNjQ4fQ.ihv-eghNulIFiHRg7pvw48fel-w0vlhuaFEd2LtfgWyjy6S61tXxab2ewWWjzTmNLoKV7RhP5s47_I46RYO_pb38k68JjED-M86R6tcunMNYxCo45siLRUOLopl0TtDuuInvKQXOthKW2S82xSfesGbgfWxVOE1ihZ0Tp3YQ76fTINRwnE4DRB3nRHtr_a_FP0z8GJImdxFtjZb6gRS0IAqA1EXfxkgFG8Gy_tW7U_KZkhvseQ0OPVJojGti3Ll6dd5wsUius8z2bjyDLwyK79H88Ab3ksMurl-4QDC_l9BjWCrJ7IYdqrrCguQgk6w_Qp_TuRiZ-rzb4-Mv1DTQjA";
+        public const string ValidRswansonJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoicnN3YW5zb24iLCJleHAiOjIxNDc0ODM2NDh9.HFziMgrIblB2dwn3po6D_C0zLCCHgPRwn7LcZ7i0K24ihdXtNGwlhOaens5Z97D0mS1qSYpK5oiqNsivaUNJGq6jQMWV6Rgbxddaid2H4PcrZOCIFRLqkmgl_Wyk2TTlDWtKXruMQEPS_hbEttDFP0Dr6Ii2x5KQTupqYspaKqdXggXjrV4GAk22x5Zz5KSKrZSmvFNCRciaCrqycPGpLrPlBG_CTztdIF_ycWVOsuNPKQr9ds80T3xXO87pP2x1W3AAO_d5UYCLRBLxhjzoDO6OndVm5LG9xHpZMRyUADbN2MjV1a7XJECSuHrPxOwV6DXZ-74W4Tl7n_6N0jYEhg";
 
         [SetUp]
         public void Init()
@@ -21,10 +25,18 @@ namespace Integration
             BaseAddress = new System.Uri("http://localhost:8080/")
         };
 
-        public Task<HttpResponseMessage> GetAuthenticated(string url)
+        public Task<HttpResponseMessage> GetAuthenticated(string url, string token = ValidRswansonJwt)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("bearer", ValidJwt);
+            request.Headers.Authorization = new AuthenticationHeaderValue("bearer", ValidRswansonJwt);
+            return Http.SendAsync(request);
+        }
+
+        public Task<HttpResponseMessage> PutAuthenticated(string url, object body, string token = ValidRswansonJwt)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Put, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("bearer", ValidRswansonJwt);
+            request.Content = new StringContent(JsonConvert.SerializeObject(body), System.Text.Encoding.UTF8, "application/json");
             return Http.SendAsync(request);
         }
 

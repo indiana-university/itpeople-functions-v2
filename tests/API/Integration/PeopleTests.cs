@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Models;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Integration
@@ -67,8 +66,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people?class={jobClass.ToString()}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(expectedMatches.Length, actual.Count);
-                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
+                AssertIdsMatchContent(expectedMatches, actual);
             }
 
             [TestCase("programming", new int[0])]
@@ -85,8 +83,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people?interest={interest}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(expectedMatches.Length, actual.Count);
-                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
+                AssertIdsMatchContent(expectedMatches, actual);
             }
 
             [TestCase("Pawnee", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId}, Description="full match of Pawnee")]
@@ -98,8 +95,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people?campus={campusName}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(expectedMatches.Length, actual.Count);
-                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
+                AssertIdsMatchContent(expectedMatches, actual);
             }           
            
             [TestCase("Leader", new int[]{ TestEntities.People.RSwansonId }, Description = "Return group Leader(s)")]
@@ -112,8 +108,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people?role={roles}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(expectedMatches.Length, actual.Count);
-                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
+                AssertIdsMatchContent(expectedMatches, actual);
             }
             
             [TestCase("Owner", new int[]{ TestEntities.People.RSwansonId })]
@@ -127,8 +122,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people?permission={permissions}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(expectedMatches.Length, actual.Count);
-                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
+                AssertIdsMatchContent(expectedMatches, actual);
             }
             [TestCase("UITS", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId }, Description = "All people in UITS area")]
             [TestCase("uits", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId})]
@@ -139,9 +133,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people?area={areas}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(expectedMatches.Length, actual.Count);
-                Assert.AreEqual(expectedMatches, actual.Select(a => a.Id).ToArray());
-                
+                AssertIdsMatchContent(expectedMatches, actual);                
             }
         }
 
@@ -195,6 +187,44 @@ namespace Integration
                 var expected = TestEntities.People.RSwanson.UnitMemberships;
                 Assert.That(actual.Count, Is.EqualTo(1));
                 Assert.That(actual.First().Id, Is.EqualTo(expected.First().Id));
+            }
+        }
+
+        public class UpdatePerson : ApiTest
+        {
+            private static readonly PersonUpdateRequest TestUpdateRequest = new PersonUpdateRequest
+            { 
+                Location = "Timbuktu", 
+                Expertise = "Woodworking; Honor; Managering",
+                PhotoUrl = "http://flavorwire.files.wordpress.com/2011/11/ron-swanson-NEW.jpg",
+                Responsibilities = Responsibilities.ItLeadership & Responsibilities.ItProjectMgt,
+            };
+
+            [TestCase(TestEntities.People.RSwansonId, Description="I can update my own record")]
+            [TestCase(TestEntities.People.LKnopeId, Description="I can update a person in a unit I manage")]
+            public async Task AuthorizedUserCanUpdatePerson(int personId)
+            {
+                //Make a request as a Unit Owner
+
+                //Update the user
+                var resp = await PutAuthenticated($"people/{personId}", TestUpdateRequest);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+
+                //verify the changes
+                var actual = await resp.Content.ReadAsAsync<Person>();
+                Assert.That(actual.Id, Is.EqualTo(personId));
+                Assert.That(actual.Location, Is.EqualTo(TestUpdateRequest.Location));
+                Assert.That(actual.Expertise, Is.EqualTo(TestUpdateRequest.Expertise));
+                Assert.That(actual.PhotoUrl, Is.EqualTo(TestUpdateRequest.PhotoUrl));
+                Assert.That(actual.Responsibilities, Is.EqualTo(TestUpdateRequest.Responsibilities));
+            }
+
+            [Test]
+            public async Task UnauthorzedUserCannotUpdatePerson()
+            {
+                // Ben belongs to a unit that Ron doesn't manage. Ron shouln't be able to modify Ben's record.
+                var resp = await PutAuthenticated($"people/{TestEntities.People.BWyattId}", TestUpdateRequest);
+                AssertStatusCode(resp, HttpStatusCode.Unauthorized);
             }
         }
     }

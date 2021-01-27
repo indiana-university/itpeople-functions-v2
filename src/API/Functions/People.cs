@@ -18,7 +18,7 @@ namespace API.Functions
     public static class People
     {
         [FunctionName(nameof(People.GetAll))]
-        [OpenApiOperation(nameof(People.GetAll), nameof(People), Summary="Search all people.", Description = @"Search results are unioned within a filter and intersected across filters. For example, `interest=node, lambda` will return people with an interest in either `node` OR `lambda`, whereas `role=ItLeadership&interest=node` will only return people who are both in `ItLeadership AND have an interest in `node`." )]
+        [OpenApiOperation(nameof(People.GetAll), nameof(People), Summary="Search all people", Description = @"Search results are unioned within a filter and intersected across filters. For example, `interest=node, lambda` will return people with an interest in either `node` OR `lambda`, whereas `role=ItLeadership&interest=node` will only return people who are both in `ItLeadership AND have an interest in `node`." )]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<Person>))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description="The search query was malformed or incorrect. See response content for additional information.")]
         [OpenApiParameter("q", In=ParameterLocation.Query, Description="filter by name/netid, ex: `Ron` or `rswanso`")]
@@ -56,5 +56,23 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(_ => PeopleRepository.GetMemberships(id))
                 .Finally(result => Response.Ok(req, result));
+
+
+        [FunctionName(nameof(People.Update))]
+        [OpenApiOperation(nameof(People.Update), nameof(People), Summary = "Update person information", Description = "Update a person's location, expertise, and responsibilities/job classes.\n\n_Authorization_: The JWT must represent either the person whose record is being modified (i.e., a person can modify their own record), or someone who has permissions to manage a unit of which this person is a member (i.e., typically that person's manager/supervisor.)")]
+        [OpenApiParameter("id", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the person record.")]
+        [OpenApiRequestBody("application/json", typeof(PersonUpdateRequest))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<UnitMember>))]
+        [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No person was found with the provided ID.")]
+        [OpenApiResponseWithoutBody(HttpStatusCode.BadRequest, Description = "The request body was missing or malformed.")]
+        [OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You do not have permission to modify this person.")]
+        public static Task<IActionResult> Update(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "people/{id}")] HttpRequest req, int id) 
+            => Security.Authenticate(req)
+                .Bind(requestor => AuthorizationRepository.CanModifyPerson(requestor, id))
+                .Bind(_ => Request.DeserializeBody<PersonUpdateRequest>(req))
+                .Bind(body => PeopleRepository.Update(id, body))
+                .Finally(result => Response.Ok(req, result));
+
     }
 }

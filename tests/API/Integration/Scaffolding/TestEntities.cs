@@ -157,7 +157,7 @@ namespace Integration
                 Notes = "",
                 //Netid = People.BWyatt.Netid,
                 Person = People.BWyatt,
-                Unit = Units.ParksAndRecUnit,
+                Unit = Units.CityOfPawnee,
                 MemberTools = null
             };
             
