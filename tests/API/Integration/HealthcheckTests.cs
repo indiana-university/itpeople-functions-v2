@@ -13,7 +13,8 @@ namespace Integration
         {
             var resp = await Http.GetAsync("ping");
             AssertStatusCode(resp, HttpStatusCode.OK);
-            await AssertStringContent(resp, "Pong!");
+            var actual = await resp.Content.ReadAsStringAsync();
+            Assert.AreEqual(actual, "Pong!");
         }
     }
 }

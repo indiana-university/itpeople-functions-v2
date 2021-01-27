@@ -44,10 +44,9 @@ namespace Integration
             Assert.AreEqual(expected, resp.StatusCode, content);
         }
 
-        protected static async Task AssertStringContent(HttpResponseMessage resp, string expected)
+        protected static void AssertIdsMatchContent<T>(int[] expectedIds, IEnumerable<T> content) where T: Entity
         {
-            var body = await resp.Content.ReadAsStringAsync();
-            Assert.AreEqual(expected, body);
+            CollectionAssert.AreEquivalent(expectedIds, content.Select(c => c.Id));
         }
     }
 }

@@ -1,8 +1,10 @@
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using API.Middleware;
+using Models;
 using NUnit.Framework;
 
 namespace Integration
@@ -23,7 +25,8 @@ namespace Integration
         {
             var resp = await Http.GetAsync("people");
             AssertStatusCode(resp, HttpStatusCode.BadRequest);
-            await AssertStringContent(resp, Security.ErrorRequestMissingAuthorizationHeader);
+            var actual = await resp.Content.ReadAsAsync<ApiError>();
+            Assert.AreEqual(actual.Errors.First(), Security.ErrorRequestMissingAuthorizationHeader);
         }
 
         [Test]
@@ -33,7 +36,8 @@ namespace Integration
             request.Headers.Authorization = new AuthenticationHeaderValue("some_scheme");
             var resp = await Http.SendAsync(request);
             AssertStatusCode(resp, HttpStatusCode.BadRequest);
-            await AssertStringContent(resp, Security.ErrorRequestAuthorizationHeaderMissingBearerScheme);
+            var actual = await resp.Content.ReadAsAsync<ApiError>();
+            Assert.AreEqual(actual.Errors.First(), Security.ErrorRequestAuthorizationHeaderMissingBearerScheme);
         }
 
         [TestCase("bearer", Description="scheme should be case-insensitive (lowercase)")]
@@ -44,7 +48,8 @@ namespace Integration
             request.Headers.Authorization = new AuthenticationHeaderValue(scheme);
             var resp = await Http.SendAsync(request);
             AssertStatusCode(resp, HttpStatusCode.BadRequest);
-            await AssertStringContent(resp, Security.ErrorRequestAuthorizationHeaderMissingBearerToken);
+            var actual = await resp.Content.ReadAsAsync<ApiError>();
+            Assert.AreEqual(actual.Errors.First(), Security.ErrorRequestAuthorizationHeaderMissingBearerToken);
         }
 
         [Test]
