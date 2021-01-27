@@ -1,5 +1,10 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Mvc;
+using Models;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 
 namespace API.Middleware
@@ -22,11 +27,14 @@ namespace API.Middleware
         }
 
         public static Error Unauthorized()
-            => new Error(HttpStatusCode.Unauthorized);
+            => new Error(HttpStatusCode.Unauthorized, "You are not authorized to make this request.");
 
 
         public static Error BadRequest(string message)
             => new Error(HttpStatusCode.BadRequest, message);
+
+        public static Error BadRequest(IEnumerable<string> messages)
+            => new Error(HttpStatusCode.BadRequest, messages);
 
         public static Error NotFound(string message)
             => new Error(HttpStatusCode.NotFound, message);
@@ -34,30 +42,45 @@ namespace API.Middleware
         public static Error Conflict(string message)
             => new Error(HttpStatusCode.Conflict, message);
 
-        public static Error InternalServerError(string message)
-            => new Error(HttpStatusCode.InternalServerError, message);
+        public static Error InternalServerError(string message, Exception ex = null)
+            => new Error(HttpStatusCode.InternalServerError, message, ex);
     
     }
 
     public class Error
     {
-        internal Error(HttpStatusCode statusCode, string message = null)
+        internal Error(HttpStatusCode statusCode, string message, Exception ex = null)
+            : this(statusCode, new[]{message}, ex)
         {
-            StatusCode = statusCode;
-            Message = message;
         }
 
-        public HttpStatusCode StatusCode { get; set; }
-        public string Message { get; set; }
+        internal Error(HttpStatusCode statusCode, IEnumerable<string> messages, Exception ex = null)
+        {
+            StatusCode = statusCode;
+            Messages = messages;
+            Exception = ex;
+        }
+
+        public HttpStatusCode StatusCode { get; private set; }
+        public IEnumerable<string> Messages { get; private set; }
+        public Exception Exception { get; private set; }
+
         public IActionResult ToActionResult()// => new StatusCodeResult((int)StatusCode);        
         {
+            var content = new ApiError()
+            {
+                StatusCode = (int)StatusCode,
+                Errors = Messages.ToList(),
+                Details = Exception == null ? "(none)" : Exception.ToString()
+            };
+
             switch (StatusCode)
             {
                 case HttpStatusCode.Unauthorized: return new UnauthorizedResult();
-                case HttpStatusCode.BadRequest: return new BadRequestObjectResult(Message);
-                case HttpStatusCode.NotFound: return new NotFoundObjectResult(Message);
-                case HttpStatusCode.Conflict: return new ConflictObjectResult(Message);
-                default: return new StatusCodeResult(500);
+                case HttpStatusCode.BadRequest: return new BadRequestObjectResult(content);
+                case HttpStatusCode.NotFound: return new NotFoundObjectResult(content);
+                case HttpStatusCode.Conflict: return new ConflictObjectResult(content);
+                default: return new ContentResult(){StatusCode=500, ContentType="application/json", Content=JsonConvert.SerializeObject(content)};
             }
         }
     }

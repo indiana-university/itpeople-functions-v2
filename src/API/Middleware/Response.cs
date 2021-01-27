@@ -1,7 +1,6 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using System.Net;
-using Newtonsoft.Json;
 using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,7 +19,7 @@ namespace API.Middleware
             else 
             {
                 // logger.FailureResult<T>("Fetch", result.Error);
-                System.Console.WriteLine($"[{result.Error.StatusCode}] {result.Error.Message}");
+                System.Console.WriteLine($"[{result.Error.StatusCode}] {result.Error.Messages}");
                 return result.Error.ToActionResult();
             }
         }
