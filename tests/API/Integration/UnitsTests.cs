@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 using Models;
 using NUnit.Framework;
 using System.Linq;
+using API.Middleware;
+using API.Data;
+using Newtonsoft.Json;
 
 namespace Integration
 {
@@ -49,6 +52,41 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<List<Unit>>();
                 Assert.AreEqual(0, actual.Count);
             }
+
+            [TestCase(ValidRswansonJwt, EntityPermissions.Get, Description="As non-admin I can't create/delete units")]
+            [TestCase(ValidAdminJwt, EntityPermissions.All, Description="As a service admin I can create/modify/delete units")]
+            public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, EntityPermissions expectedPermissions)
+            {
+                var resp = await GetAuthenticated($"units", jwt);
+                AssertPermissions(resp, expectedPermissions);
+            }
+        }
+
+        public class GetOne : ApiTest
+        {
+            [Test]
+            public async Task GetParksAndRecUnit()
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.ParksAndRecUnit.Id}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+
+                var actual = await resp.Content.ReadAsAsync<Unit>();
+                var expected = TestEntities.Units.ParksAndRecUnit;
+                Assert.AreEqual(expected.Id, actual.Id);
+                Assert.AreEqual(expected.Name, actual.Name);
+                Assert.AreEqual(expected.Parent?.Id, actual.Parent?.Id);
+            }
+
+            [TestCase(ValidRswansonJwt, TestEntities.Units.ParksAndRecUnitId, EntityPermissions.GetPut, Description="As Ron I can a unit I manage")]
+            [TestCase(ValidRswansonJwt, TestEntities.Units.CityOfPawneeUnitId, EntityPermissions.Get, Description="As Ron I can't update a unit I don't manage")]
+            [TestCase(ValidAdminJwt, TestEntities.Units.ParksAndRecUnitId, EntityPermissions.All, Description="As a service admin I can do anything to any unit")]
+            [TestCase(ValidAdminJwt, TestEntities.Units.CityOfPawneeUnitId, EntityPermissions.All, Description="As a service admin I can do anything to any unit")]
+            public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int unitId, EntityPermissions expectedPermissions)
+            {
+                var resp = await GetAuthenticated($"units/{unitId}", jwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, expectedPermissions);
+            }            
         }
     }
 }

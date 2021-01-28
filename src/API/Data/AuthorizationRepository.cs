@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Middleware;
@@ -60,13 +61,68 @@ namespace API.Data
                     || requestor.Id == target.Id // requestor and and target person are the same
                     || matches.Count() > 0)  // requestor manages a unit that the target person is a member of
                 {
-                    result = EntityPermissions.Get | EntityPermissions.Put;
+                    result = EntityPermissions.GetPut;
                 }   
             }
 
             // return the entity permissions to the next step of the pipeline.
             return Pipeline.Success(result);
         }
+
+        internal static Task<Result<EntityPermissions, Error>> DetermineUnitPermissions(HttpRequest req, string requestorNetId) 
+            => ExecuteDbPipeline("resolve unit permissions", db =>
+                FetchPersonAndMembership(db, requestorNetId)
+                .Bind(person => ResolveUnitPermissions(person))
+                .Tap(perms => AddResponseHeaders(req, perms)));
+
+        internal static Task<Result<EntityPermissions, Error>> DetermineUnitPermissions(HttpRequest req, string requestorNetId, int unitId) 
+            => ExecuteDbPipeline("resolve unit permissions", db =>
+                FetchPersonAndMembership(db, requestorNetId, unitId)
+                .Bind(person => ResolveUnitPermissions(person, unitId))
+                .Tap(perms => AddResponseHeaders(req, perms)));
+
+        private static async Task<Result<Person,Error>> FetchPersonAndMembership(PeopleContext db, string requestorNetid)
+        {
+            var requestor = await db.People
+                .SingleOrDefaultAsync(p => p.Netid.ToLower() == requestorNetid.ToLower());
+            return Pipeline.Success(requestor);
+        }
+
+        private static async Task<Result<Person,Error>> FetchPersonAndMembership(PeopleContext db, string requestorNetid, int unitId)
+        {
+            var requestor = await db.People
+                .Include(p => p.UnitMemberships)
+                .SingleOrDefaultAsync(p => p.Netid.ToLower() == requestorNetid.ToLower());
+            
+            var unit = await db.Units.SingleOrDefaultAsync(u => u.Id == unitId);
+            
+            return unit == null
+                ? Pipeline.NotFound("No unit was found with the ID provided.")
+                : Pipeline.Success(requestor);
+        }
+
+        public static Result<EntityPermissions, Error> ResolveUnitPermissions(Person requestor) 
+            => requestor != null && requestor.IsServiceAdmin
+                ? Pipeline.Success(EntityPermissions.All)
+                : Pipeline.Success(EntityPermissions.Get);
+                
+        public static Result<EntityPermissions,Error> ResolveUnitPermissions(Person requestor, int unitId)
+        {
+            var result = EntityPermissions.Get;
+            // service admins: get post put delete
+            if (requestor.IsServiceAdmin)
+            {
+                result = EntityPermissions.All;
+            }   
+            // Requestor owner/manage roles can get put
+            if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageMembers)))
+            {
+                result = EntityPermissions.GetPut;
+            }
+            
+            return Pipeline.Success(result);
+        }
+
 
         private static void AddResponseHeaders(HttpRequest req, EntityPermissions permissions)
         {

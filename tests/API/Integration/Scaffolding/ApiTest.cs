@@ -4,6 +4,8 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using API.Data;
+using API.Middleware;
 using Models;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -55,6 +57,14 @@ namespace Integration
                 }
             }
             Assert.AreEqual(expected, resp.StatusCode, content);
+        }
+
+        protected static void AssertPermissions(HttpResponseMessage resp, EntityPermissions expectedPermissions)
+        {
+            var actualHeader = resp.Headers.SingleOrDefault(h => h.Key == Response.Headers.XUserPermissions);
+            Assert.NotNull(actualHeader, "Permissions header is not present");
+            Assert.AreEqual(1, actualHeader.Value.Count(), "Permissions header should have one value");
+            Assert.AreEqual(expectedPermissions.ToString(), actualHeader.Value.Single());
         }
 
         protected static void AssertIdsMatchContent<T>(int[] expectedIds, IEnumerable<T> content) where T: Entity

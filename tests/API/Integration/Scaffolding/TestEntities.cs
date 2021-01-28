@@ -111,8 +111,9 @@ namespace Integration
 
         public static class Units
         {
+            public const int CityOfPawneeUnitId = 1;
             public static readonly Unit CityOfPawnee = new Unit(){
-                Id = 1,
+                Id = CityOfPawneeUnitId,
                 Name = "City of Pawnee",
                 Description = "City of Pawnee, Indiana",
                 Url = "http://pawneeindiana.com/",
@@ -120,8 +121,9 @@ namespace Integration
                 ParentId = null,
                 Parent = null
             };
+            public const int ParksAndRecUnitId = 2;
             public static readonly Unit ParksAndRecUnit = new Unit(){
-                Id = 2,
+                Id = ParksAndRecUnitId,
                 Name = "Parks and Rec",
                 Description = "Parks and Recreation",
                 Url = "http://pawneeindiana.com/parks-and-recreation/",

@@ -29,5 +29,19 @@ namespace API.Data
                     var result = await queryable.AsNoTracking().ToListAsync();
                     return Pipeline.Success(result);
                 });
+
+        public static Task<Result<Unit, Error>> GetOne(int id) 
+            => ExecuteDbPipeline("get a unit by ID", db => 
+                TryFindUnit(db, id));
+
+        private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id)
+        {
+            var person = await db.Units
+                .Include(u => u.Parent)
+                .SingleOrDefaultAsync(p => p.Id == id);
+            return person == null
+                ? Pipeline.NotFound("No unit found with that ID.")
+                : Pipeline.Success(person);
+        }
     }
 }

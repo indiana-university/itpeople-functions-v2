@@ -25,8 +25,21 @@ namespace API.Functions
         public static Task<IActionResult> UnitsGetAll(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units")] HttpRequest req) 
             => Security.Authenticate(req)
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor))
                 .Bind(_ => UnitSearchParameters.Parse(req))
                 .Bind(query => UnitsRepository.GetAll(query))
                 .Finally(units => Response.Ok(req, units));
+
+        [FunctionName(nameof(Units.UnitsGetOne))]
+        [OpenApiOperation(nameof(Units.UnitsGetOne), nameof(Units), Summary = "Find a unit by ID")]
+        [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Unit))]
+        [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No unit was found with the provided ID.")]
+        public static Task<IActionResult> UnitsGetOne(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}")] HttpRequest req, int unitId) 
+            => Security.Authenticate(req)
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))
+                .Bind(_ => UnitsRepository.GetOne(unitId))
+                .Finally(result => Response.Ok(req, result));
     }
 }
