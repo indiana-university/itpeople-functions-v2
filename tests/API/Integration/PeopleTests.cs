@@ -170,12 +170,17 @@ namespace Integration
                 Assert.AreEqual(expected.Name, actual.Department.Name);
             }
 
-            [TestCase(TestEntities.People.RSwansonId, "Get, Put", Description="I can update my own record")]
-            [TestCase(TestEntities.People.LKnopeId, "Get, Put", Description="I can update a person in a unit I manage")]
-            [TestCase(TestEntities.People.BWyattId, "Get", Description="I cannot update a person in a unit I don't manage")]
-            public async Task ResponseHasCorrectXUserPermissionsHeader(int personId, string expectedHeader)
+            [TestCase(ValidRswansonJwt, TestEntities.People.RSwansonId, "Get, Put", Description="As Ron I can update my own record")]
+            [TestCase(ValidRswansonJwt, TestEntities.People.LKnopeId, "Get, Put", Description="As Ron I can update a person in a unit I manage")]
+            [TestCase(ValidRswansonJwt, TestEntities.People.BWyattId, "Get", Description="As Ron I cannot update a person in a unit I don't manage")]
+            [TestCase(ValidRswansonJwt, TestEntities.People.ServiceAdminId, "Get", Description="As Ron I cannot update a person in a unit I don't manage")]
+            [TestCase(ValidAdminJwt, TestEntities.People.RSwansonId, "Get, Put", Description="As a service admin I can update anyone")]
+            [TestCase(ValidAdminJwt, TestEntities.People.LKnopeId, "Get, Put", Description="As a service admin I can update anyone")]
+            [TestCase(ValidAdminJwt, TestEntities.People.BWyattId, "Get, Put", Description="As a service admin I can update anyone")]
+            [TestCase(ValidAdminJwt, TestEntities.People.ServiceAdminId, "Get, Put", Description="As a service admin I can update anyone")]
+            public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int personId, string expectedHeader)
             {
-                var resp = await GetAuthenticated($"people/{personId}");
+                var resp = await GetAuthenticated($"people/{personId}", jwt);
                 var actualHeader = resp.Headers.SingleOrDefault(h => h.Key == Response.Headers.XUserPermissions);
                 Assert.NotNull(actualHeader);
                 Assert.AreEqual(expectedHeader, actualHeader.Value.Single());
@@ -213,14 +218,15 @@ namespace Integration
                 Responsibilities = Responsibilities.ItLeadership & Responsibilities.ItProjectMgt,
             };
 
-            [TestCase(TestEntities.People.RSwansonId, Description="I can update my own record")]
-            [TestCase(TestEntities.People.LKnopeId, Description="I can update a person in a unit I manage")]
-            public async Task AuthorizedUserCanUpdatePerson(int personId)
+            [TestCase(TestEntities.People.RSwansonId, ValidRswansonJwt, Description="I can update my own record")]
+            [TestCase(TestEntities.People.LKnopeId, ValidRswansonJwt, Description="I can update a person in a unit I manage")]
+            [TestCase(TestEntities.People.RSwansonId, ValidAdminJwt, Description="Service Admin can edit any person")]
+            public async Task AuthorizedUserCanUpdatePerson(int personId, string jwt)
             {
                 //Make a request as a Unit Owner
 
                 //Update the user
-                var resp = await PutAuthenticated($"people/{personId}", TestUpdateRequest);
+                var resp = await PutAuthenticated($"people/{personId}", TestUpdateRequest, jwt);
                 AssertStatusCode(resp, HttpStatusCode.OK);
 
                 //verify the changes

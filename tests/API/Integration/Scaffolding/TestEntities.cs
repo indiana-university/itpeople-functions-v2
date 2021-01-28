@@ -77,6 +77,27 @@ namespace Integration
                 Department = Departments.Parks, 
                 IsServiceAdmin = false 
             };
+
+            public const int ServiceAdminId = 4;
+            public static readonly Person ServiceAdmin = new Person() { 
+                Id = ServiceAdminId, 
+                Netid = "admin", 
+                Name="Bureaucrat, Faceless", 
+                NameFirst = "Faceless", 
+                NameLast = "Bureaucrat", 
+                Position = "BOH", 
+                Location = "", 
+                Campus = "Indianapolis", 
+                CampusPhone = "", 
+                CampusEmail = "admin@pawnee.in.us", 
+                Expertise = "Guarding the Precious", 
+                Notes = "", 
+                PhotoUrl = "", 
+                Responsibilities = Responsibilities.ItSecurityPrivacy, 
+                DepartmentId = Departments.Parks.Id, 
+                Department = Departments.Parks, 
+                IsServiceAdmin = true 
+            };
         }
         /*public static class MemberTools
         {

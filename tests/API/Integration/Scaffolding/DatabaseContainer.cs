@@ -72,7 +72,8 @@ namespace Integration
             peopleContext.People.AddRange(new List<Person> { 
                 TestEntities.People.RSwanson, 
                 TestEntities.People.LKnope,
-                TestEntities.People.BWyatt
+                TestEntities.People.BWyatt,
+                TestEntities.People.ServiceAdmin
             });  
             
             peopleContext.UnitMembers.AddRange(new List<UnitMember> { 
