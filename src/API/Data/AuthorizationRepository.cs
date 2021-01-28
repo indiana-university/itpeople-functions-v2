@@ -37,42 +37,36 @@ namespace API.Data
                         .Where(p => p.Netid.ToLower() == requestorNetid.ToLower() || p.Id == personId)
                         .ToListAsync();
 
-                    // If we didn't find an entity for the requestor they aren't authorized
-                    // if(persons.Any(p => p.Netid.ToLower() == requestorNetid.ToLower()) == false)
-                    // {
-                    //     result = Pipeline.Success(EntityPermissions.Get);
-                    // }
+                    var requestor = persons.FirstOrDefault(p => p.Netid.ToLower() == requestorNetid.ToLower());
+                    var target = persons.FirstOrDefault(p => p.Id == personId);
 
                     // If we didn't find the target person return a 404
-                    if(persons.Any(p => p.Id == personId) == false)
+                    if(target == null)
                     {
                         return Pipeline.NotFound("No person was found with the ID provided.");
                     }
 
-                    // If requestor and and target person are the same they are authorized.
-                    if(persons.All(p => p.Id == personId))
+                    if (requestor != null)
                     {
-                        result = EntityPermissions.Get | EntityPermissions.Put;
-                    }
+                        var requestorManagedUnits = requestor
+                            .UnitMemberships
+                            .Where(m => m.Permissions == UnitPermissions.Owner || m.Permissions == UnitPermissions.ManageMembers)
+                            .Select(m => m.UnitId)
+                            .ToList();
 
-                    // TODO: Is requestor a service admin? If so they can get/put
+                        var personMemberOfUnits = target
+                            .UnitMemberships
+                            .Select(m => m.UnitId)
+                            .ToList();
+                        
+                        var matches = requestorManagedUnits.Intersect(personMemberOfUnits);
 
-                    // Does the requestor manage a unit that the target person is a member of?
-                    var requestorManagedUnits = persons.First(p => p.Netid.ToLower() == requestorNetid.ToLower())
-                        .UnitMemberships
-                        .Where(m => m.Permissions == UnitPermissions.Owner || m.Permissions == UnitPermissions.ManageMembers)
-                        .Select(m => m.UnitId)
-                        .ToList();
-
-                    var personMemberOfUnits = persons.First(p => p.Id == personId)
-                        .UnitMemberships
-                        .Select(m => m.UnitId)
-                        .ToList();
-                    
-                    var matches = requestorManagedUnits.Intersect(personMemberOfUnits);
-                    if(matches.Count() > 0)
-                    {
-                        result = EntityPermissions.Get | EntityPermissions.Put;
+                        if (requestor.IsServiceAdmin // requestor is a service admin
+                            || requestor.Id == target.Id // requestor and and target person are the same
+                            || matches.Count() > 0)  // requestor manages a unit that the target person is a member of
+                        {
+                            result = EntityPermissions.Get | EntityPermissions.Put;
+                        }   
                     }
 
                     // attach those permission to the response headers.
