@@ -71,6 +71,7 @@ namespace API.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "people/{id}")] HttpRequest req, int id) 
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DeterminePersonPermissions(req, requestor, id))
+                .Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
                 .Bind(_ => Request.DeserializeBody<PersonUpdateRequest>(req))
                 .Bind(body => PeopleRepository.Update(id, body))
                 .Finally(result => Response.Ok(req, result));

@@ -11,7 +11,13 @@ namespace API.Data
 {
     public class AuthorizationRepository
     {
-        public static async Task<Result<bool, Error>> CanModifyPerson(string requestorNetid, int personId)
+        public static Result<bool, Error> AuthorizeModification(EntityPermissions permissions) 
+            => permissions.HasFlag(EntityPermissions.Put)
+                ? Pipeline.Success(true)
+                : Pipeline.Unauthorized();
+
+
+        internal async static Task<Result<EntityPermissions, Error>> DeterminePersonPermissions(HttpRequest req, string requestorNetid, int personId)
         {
             // if requestor is a service admin, they can get/put
             // if requestor manages a person's unit, they can get/put
