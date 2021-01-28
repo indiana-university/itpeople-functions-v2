@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using API.Middleware;
 using Models;
 using NUnit.Framework;
 
@@ -168,7 +169,19 @@ namespace Integration
                 Assert.AreEqual(expected.Id, actual.Department.Id);
                 Assert.AreEqual(expected.Name, actual.Department.Name);
             }
+
+            [TestCase(TestEntities.People.RSwansonId, "Get, Put", Description="I can update my own record")]
+            [TestCase(TestEntities.People.LKnopeId, "Get, Put", Description="I can update a person in a unit I manage")]
+            [TestCase(TestEntities.People.BWyattId, "Get", Description="I cannot update a person in a unit I don't manage")]
+            public async Task ResponseHasCorrectXUserPermissionsHeader(int personId, string expectedHeader)
+            {
+                var resp = await GetAuthenticated($"people/{personId}");
+                var actualHeader = resp.Headers.SingleOrDefault(h => h.Key == Response.Headers.XUserPermissions);
+                Assert.NotNull(actualHeader);
+                Assert.AreEqual(expectedHeader, actualHeader.Value.Single());
+            }
         }
+
         public class GetMemberships : ApiTest
         {
             [TestCase(TestEntities.People.RSwansonId, HttpStatusCode.OK)]

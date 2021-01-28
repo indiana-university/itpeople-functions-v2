@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using API.Middleware;
 using CSharpFunctionalExtensions;
 using Database;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
@@ -12,10 +13,18 @@ namespace API.Data
     {
         public static async Task<Result<bool, Error>> CanModifyPerson(string requestorNetid, int personId)
         {
+            // if requestor is a service admin, they can get/put
+            // if requestor manages a person's unit, they can get/put
+            // if requestor is person, they can get/put
+            // otherwise, get only
+
             try
             {
                 using (var db = PeopleContext.Create())
                 {
+                    //By default a user can only "get"
+                    var result = EntityPermissions.Get;
+                    
                     // Fetch the person entity for the requestor and target person.
                     var persons = await db.People
                         .Include(p => p.UnitMemberships)
@@ -23,10 +32,10 @@ namespace API.Data
                         .ToListAsync();
 
                     // If we didn't find an entity for the requestor they aren't authorized
-                    if(persons.Any(p => p.Netid.ToLower() == requestorNetid.ToLower()) == false)
-                    {
-                        return Pipeline.Unauthorized();
-                    }
+                    // if(persons.Any(p => p.Netid.ToLower() == requestorNetid.ToLower()) == false)
+                    // {
+                    //     result = Pipeline.Success(EntityPermissions.Get);
+                    // }
 
                     // If we didn't find the target person return a 404
                     if(persons.Any(p => p.Id == personId) == false)
@@ -37,8 +46,10 @@ namespace API.Data
                     // If requestor and and target person are the same they are authorized.
                     if(persons.All(p => p.Id == personId))
                     {
-                        return Pipeline.Success(true);
+                        result = EntityPermissions.Get | EntityPermissions.Put;
                     }
+
+                    // TODO: Is requestor a service admin? If so they can get/put
 
                     // Does the requestor manage a unit that the target person is a member of?
                     var requestorManagedUnits = persons.First(p => p.Netid.ToLower() == requestorNetid.ToLower())
@@ -55,11 +66,14 @@ namespace API.Data
                     var matches = requestorManagedUnits.Intersect(personMemberOfUnits);
                     if(matches.Count() > 0)
                     {
-                        return Pipeline.Success(true);
+                        result = EntityPermissions.Get | EntityPermissions.Put;
                     }
 
-                    // If the requestor and target person combo didn't satisfy any of the above conditions they are not authorized.
-                    return Pipeline.Unauthorized();
+                    // attach those permission to the response headers.
+                    req.HttpContext.Response.Headers[Response.Headers.XUserPermissions] = result.ToString();
+                    
+                    // return the entity permissions to the next step of the pipeline.
+                    return Pipeline.Success(result);
                 }
             }
             catch (System.Exception ex)
@@ -68,5 +82,4 @@ namespace API.Data
             }
         }
     }
-
 }

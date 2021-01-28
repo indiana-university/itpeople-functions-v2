@@ -43,6 +43,7 @@ namespace API.Functions
         public static Task<IActionResult> GetOne(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}")] HttpRequest req, int id) 
             => Security.Authenticate(req)
+                .Bind(requestor => AuthorizationRepository.DeterminePersonPermissions(req, requestor, id))
                 .Bind(_ => PeopleRepository.GetOne(id))
                 .Finally(result => Response.Ok(req, result));
 
@@ -69,7 +70,7 @@ namespace API.Functions
         public static Task<IActionResult> Update(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "people/{id}")] HttpRequest req, int id) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.CanModifyPerson(requestor, id))
+                .Bind(requestor => AuthorizationRepository.DeterminePersonPermissions(req, requestor, id))
                 .Bind(_ => Request.DeserializeBody<PersonUpdateRequest>(req))
                 .Bind(body => PeopleRepository.Update(id, body))
                 .Finally(result => Response.Ok(req, result));

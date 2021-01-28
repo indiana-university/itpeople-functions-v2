@@ -8,6 +8,11 @@ namespace API.Middleware
 {
     public static class Response
     {
+        public class Headers
+        {
+            public const string XUserPermissions = "x-user-permissions";
+        }
+        
         /// <summary>Return an HTTP 200 response with content, or an appropriate HTTP error response.</summary>
         public static IActionResult Ok<T>(HttpRequest req, Result<T, Error> result)
         {
