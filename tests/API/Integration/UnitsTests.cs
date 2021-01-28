@@ -32,8 +32,13 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<List<Unit>>();
                 Assert.AreEqual(1, actual.Count);
                 var expected = TestEntities.Units.ParksAndRecUnit;
-                Assert.AreEqual(expected.Id, actual.Single().Id);
-                Assert.AreEqual(expected.Name, actual.Single().Name);
+                var actualUnit = actual.Single();
+                Assert.AreEqual(expected.Id, actualUnit.Id);
+                Assert.AreEqual(expected.Name, actualUnit.Name);
+                Assert.AreEqual(expected.ParentId, actualUnit.ParentId);
+                Assert.NotNull(actualUnit.Parent);
+                Assert.AreEqual(expected.Parent.Id, actualUnit.Parent.Id);
+                Assert.AreEqual(expected.Parent.Name, actualUnit.Parent.Name);
             }
 
             [Test]

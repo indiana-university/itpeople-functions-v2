@@ -15,7 +15,7 @@ namespace API.Data
     {
 		internal static Task<Result<List<Unit>, Error>> GetAll(UnitSearchParameters query)
             => ExecuteDbPipeline("search all units", async db => {
-                    IQueryable<Unit> queryable = db.Units;
+                    IQueryable<Unit> queryable = db.Units.Include(u => u.Parent);
                     if(string.IsNullOrWhiteSpace(query.Q))
                     {   // return all top-level units if there's no query string
                         queryable = queryable.Where(u => u.Parent == null);
