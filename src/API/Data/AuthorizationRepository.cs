@@ -26,12 +26,8 @@ namespace API.Data
         
         private static async Task<Result<(Person requestor, Person target),Error>> FetchPeople(PeopleContext db, string requestorNetid, int personId)
         {
-            var persons = await db.People
-                .Include(p => p.UnitMemberships)
-                .Where(p => p.Netid.ToLower() == requestorNetid.ToLower() || p.Id == personId)
-                .ToListAsync();
-            var target = persons.FirstOrDefault(p => p.Id == personId);
-            var requestor = persons.FirstOrDefault(p => p.Netid.ToLower() == requestorNetid.ToLower());
+            var requestor = await FindRequestorOrDefault(db, requestorNetid);
+            var target = await db.People.SingleOrDefaultAsync(p => p.Id == personId);
             return target == null
                 ? Pipeline.NotFound("No person was found with the ID provided.")
                 : Pipeline.Success((requestor, target));
@@ -83,19 +79,14 @@ namespace API.Data
 
         private static async Task<Result<Person,Error>> FetchPersonAndMembership(PeopleContext db, string requestorNetid)
         {
-            var requestor = await db.People
-                .SingleOrDefaultAsync(p => p.Netid.ToLower() == requestorNetid.ToLower());
+            var requestor = await FindRequestorOrDefault(db, requestorNetid);
             return Pipeline.Success(requestor);
         }
 
         private static async Task<Result<Person,Error>> FetchPersonAndMembership(PeopleContext db, string requestorNetid, int unitId)
         {
-            var requestor = await db.People
-                .Include(p => p.UnitMemberships)
-                .SingleOrDefaultAsync(p => p.Netid.ToLower() == requestorNetid.ToLower());
-            
+            var requestor = await FindRequestorOrDefault(db, requestorNetid);
             var unit = await db.Units.SingleOrDefaultAsync(u => u.Id == unitId);
-            
             return unit == null
                 ? Pipeline.NotFound("No unit was found with the ID provided.")
                 : Pipeline.Success(requestor);
@@ -123,6 +114,10 @@ namespace API.Data
             return Pipeline.Success(result);
         }
 
+        private static Task<Person> FindRequestorOrDefault(PeopleContext db, string requestorNetid) 
+            => db.People
+                .Include(p => p.UnitMemberships)
+                .SingleOrDefaultAsync(p => p.Netid.ToLower() == requestorNetid.ToLower());
 
         private static void AddResponseHeaders(HttpRequest req, EntityPermissions permissions)
         {
