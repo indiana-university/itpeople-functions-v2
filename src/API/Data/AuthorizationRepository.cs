@@ -71,6 +71,8 @@ namespace API.Data
         private static void AddResponseHeaders(HttpRequest req, EntityPermissions permissions)
         {
             req.HttpContext.Response.Headers[Response.Headers.XUserPermissions] = permissions.ToString();
+            // TODO: CORS stuff...
+            req.HttpContext.Response.Headers[Response.Headers.AccessControlExposeHeaders] = Response.Headers.XUserPermissions;
         }
     }
 

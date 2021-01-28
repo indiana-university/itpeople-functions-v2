@@ -11,6 +11,7 @@ namespace API.Middleware
         public class Headers
         {
             public const string XUserPermissions = "x-user-permissions";
+            public const string AccessControlExposeHeaders = "Access-Control-Expose-Headers";
         }
         
         /// <summary>Return an HTTP 200 response with content, or an appropriate HTTP error response.</summary>
