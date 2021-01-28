@@ -11,22 +11,9 @@ using System;
 
 namespace API.Data
 {
-    public class PeopleRepository
+
+    public class PeopleRepository : DataRepository
     {
-        private static async Task<Result<T,Error>> ExecuteDbPipeline<T>(string description, Func<PeopleContext, Task<Result<T,Error>>> pipeline)
-        {
-            try
-            {
-                using (var db = PeopleContext.Create())
-                {                    
-                    return await pipeline(db);
-                }
-            }
-            catch (System.Exception ex)
-            {
-                return Pipeline.InternalServerError($"Failed to {description}", ex);
-            }
-        }
 
         internal static Task<Result<List<Person>, Error>> GetAll(PeopleSearchParameters query)
             => ExecuteDbPipeline("search all people", async db => {
@@ -82,19 +69,19 @@ namespace API.Data
 
         public static Task<Result<Person, Error>> GetOne(int id) 
             => ExecuteDbPipeline("get a person by ID", db => 
-                tryFindPerson(db, id));
+                TryFindPerson(db, id));
 
         public static Task<Result<List<UnitMember>, Error>> GetMemberships(int id) 
             => ExecuteDbPipeline("fetch unit memberships", db =>
-                tryFindPerson(db, id)
+                TryFindPerson(db, id)
                 .Bind(person => Pipeline.Success(person.UnitMemberships)));
 
         public static Task<Result<Person, Error>> Update(int id, PersonUpdateRequest body)
             => ExecuteDbPipeline("update person", db =>
-                tryFindPerson(db, id)
-                .Bind(person => tryUpdatePerson(db, body, person)));
+                TryFindPerson(db, id)
+                .Bind(person => TryUpdatePerson(db, body, person)));
 
-        private static async Task<Result<Person,Error>> tryFindPerson (PeopleContext db, int id)
+        private static async Task<Result<Person,Error>> TryFindPerson (PeopleContext db, int id)
         {
             var person = await db.People
                 .Include(p => p.Department)
@@ -105,7 +92,7 @@ namespace API.Data
                 : Pipeline.Success(person);
         }
 
-        private static async Task<Result<Person,Error>> tryUpdatePerson (PeopleContext db, PersonUpdateRequest body, Person record)
+        private static async Task<Result<Person,Error>> TryUpdatePerson (PeopleContext db, PersonUpdateRequest body, Person record)
         {
             // update the props
             record.Location = body.Location;
