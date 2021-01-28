@@ -9,12 +9,56 @@ using System.Linq;
 
 namespace API.Functions
 {
-    public class PeopleSearchParameters
+    public class BaseSearchParameters
+    {
+        public string Q { get; }
+        public BaseSearchParameters(string q)
+        {
+            Q = q;
+        }
+
+        protected static T[] ParseEnumList<T>(string str, string typeDescription) where T : struct, IComparable 
+            => string.IsNullOrWhiteSpace(str)
+                ? new T[0]
+                : ParseCommaSeparatedList(str)
+                    .Select(r =>
+                    {
+                        if (!Enum.TryParse<T>(r, true, out T value))
+                            throw new Exception($"{typeDescription} not recognized: '{r}'");
+                        return value;
+                    })
+                    .ToArray();
+
+        // " ,  ,"  😩  => [" ", "  "]
+        protected static string[] ParseCommaSeparatedList(string str) 
+            => string.IsNullOrWhiteSpace(str)
+                ? new string[0]
+                : str.Split(",", StringSplitOptions.RemoveEmptyEntries)
+                    .Select(i => i.Trim())
+                    .Where(i => !string.IsNullOrWhiteSpace(i))
+                    .ToArray();
+
+    }
+
+    public class UnitSearchParameters : BaseSearchParameters
+    {
+        public UnitSearchParameters(string q) : base(q)
+        {}
+
+        public static Result<UnitSearchParameters, Error> Parse(HttpRequest req) 
+        {
+            var queryParms = req.GetQueryParameterDictionary();
+            queryParms.TryGetValue("q", out string q);
+            return Pipeline.Success(new UnitSearchParameters(q));
+        }
+    }
+
+    public class PeopleSearchParameters : BaseSearchParameters
     {
 
         public PeopleSearchParameters(string q, Responsibilities responsibilities, string[] expertise, string[] campus, Role[] role, UnitPermissions[] permissions, Area[] areas)
+            : base(q)
         {
-            Q = q;
             Responsibilities = responsibilities;
             Expertise = expertise;
             Campus = campus;         
@@ -23,7 +67,6 @@ namespace API.Functions
             Areas = areas;
         }
         
-        public string Q { get; }
         public Responsibilities Responsibilities { get; }
         public string[] Expertise { get; }
         public string[] Campus { get; }        
@@ -55,26 +98,5 @@ namespace API.Functions
 
             return Pipeline.Success(result);
         }
-
-        private static T[] ParseEnumList<T>(string str, string typeDescription) where T : struct, IComparable 
-            => string.IsNullOrWhiteSpace(str)
-                ? new T[0]
-                : ParseCommaSeparatedList(str)
-                    .Select(r =>
-                    {
-                        if (!Enum.TryParse<T>(r, true, out T value))
-                            throw new Exception($"{typeDescription} not recognized: '{r}'");
-                        return value;
-                    })
-                    .ToArray();
-
-        // " ,  ,"  😩  => [" ", "  "]
-        private static string[] ParseCommaSeparatedList(string str) 
-            => string.IsNullOrWhiteSpace(str)
-                ? new string[0]
-                : str.Split(",", StringSplitOptions.RemoveEmptyEntries)
-                    .Select(i => i.Trim())
-                    .Where(i => !string.IsNullOrWhiteSpace(i))
-                    .ToArray();
     }
 }
