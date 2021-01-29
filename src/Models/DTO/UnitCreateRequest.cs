@@ -12,6 +12,15 @@ namespace Models
         public string Email { get; set; }
 		/// The Unit Id for the this Unit's parent Unit
 		public int ParentId {get; set;}
+
+        public UnitCreateRequest(string name, string description, string url, string email, Unit parent = null)
+        {
+            Name = name;
+            Description = description;
+            Url = url;
+            Email = email;
+            ParentId = parent?.Id ?? 0;
+        }
     }
     
 }
