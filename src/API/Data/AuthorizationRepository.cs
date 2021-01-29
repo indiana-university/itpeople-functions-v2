@@ -27,7 +27,7 @@ namespace API.Data
         private static async Task<Result<(Person requestor, Person target),Error>> FetchPeople(PeopleContext db, string requestorNetid, int personId)
         {
             var requestor = await FindRequestorOrDefault(db, requestorNetid);
-            var target = await db.People.SingleOrDefaultAsync(p => p.Id == personId);
+            var target = await db.People.Include(p => p.UnitMemberships).SingleOrDefaultAsync(p => p.Id == personId);
             return target == null
                 ? Pipeline.NotFound("No person was found with the ID provided.")
                 : Pipeline.Success((requestor, target));
