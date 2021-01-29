@@ -43,15 +43,15 @@ namespace API.Functions
                 .Finally(result => Response.Ok(req, result));
         
         [FunctionName(nameof(Units.CreateUnit))]
-        [OpenApiOperation(nameof(Units.CreateUnit), nameof(Units), Summary = "Create a unit")]
+        [OpenApiOperation(nameof(Units.CreateUnit), nameof(Units), Summary = "Create a unit", Description = "_Authorization_: Unit creation is restricted to service administrators.")]
         [OpenApiParameter("name", Type = typeof(string), In = ParameterLocation.Query, Required = true, Description = "")]
         [OpenApiParameter("description", Type = typeof(string), In = ParameterLocation.Query, Required = false, Description = "")]
         [OpenApiParameter("url", Type = typeof(string), In = ParameterLocation.Query, Required = false, Description = "")]
         [OpenApiParameter("email", Type = typeof(string), In = ParameterLocation.Query, Required = false, Description = "")]
         [OpenApiParameter("parentId", Type = typeof(int), In = ParameterLocation.Query, Required = false, Description = "The Unit Id of the parent Unit.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Unit))]
-        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(Error), Description = UnitsRepository.MalformedRequest)]
-        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(Error), Description = UnitsRepository.ParentNotFound)]
+        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = UnitsRepository.MalformedRequest)]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(ApiError), Description = UnitsRepository.ParentNotFound)]
         public static Task<IActionResult> CreateUnit(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "units")] HttpRequest req) 
             => Security.Authenticate(req)
