@@ -88,5 +88,71 @@ namespace Integration
                 AssertPermissions(resp, expectedPermissions);
             }            
         }
+
+        public class UnitCreate : ApiTest
+        {
+            private Unit MayorsOffice = new Unit(){
+                Name = "Pawnee Mayor's Office",
+                Description = "The Office of the Mayor",
+                Url = "http://gunderson.geocities.com",
+                Email = "mayor@example.com",
+                ParentId = TestEntities.Units.CityOfPawnee.Id,
+                Parent = TestEntities.Units.CityOfPawnee
+            };
+
+            //201 returns new unit
+            [Test]
+            public async Task CreateMayorsOffice()
+            {
+                var resp = await PostAuthenticated("units", MayorsOffice, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.Created);
+                var actual = await resp.Content.ReadAsAsync<Unit>();
+
+                Assert.NotZero(actual.Id);
+                Assert.AreEqual(MayorsOffice.Name, actual.Name);
+                Assert.AreEqual(MayorsOffice.Description, actual.Description);
+                Assert.AreEqual(MayorsOffice.Url, actual.Url);
+                Assert.AreEqual(MayorsOffice.Email, actual.Email);
+                Assert.NotNull(actual.Parent);
+                Assert.AreEqual(MayorsOffice.Parent.Id, actual.Parent.Id);
+            }
+
+            //403 unauthorized
+            [Test]
+            public async Task UnauthorizedCannotCreate()
+            {
+                var resp = await PostAuthenticated("units", MayorsOffice, ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.Unauthorized);
+            }
+
+            //400 The request body is malformed or missing
+            [Test]
+            public async Task CannotCreateMalformedUnit()
+            {
+                MayorsOffice.Name = "";
+                var resp = await PostAuthenticated("units", MayorsOffice, ValidAdminJwt);
+                var actual = await resp.Content.ReadAsAsync<Error>();
+
+                Assert.AreEqual(actual.StatusCode, HttpStatusCode.BadRequest);
+                Assert.AreEqual(1, actual.Messages);
+                Assert.Contains(UnitsRepository.MalformedRequest, actual.Messages.ToList());
+                Assert.IsNull(actual.Exception);
+            }
+
+            //404 The specified unit parent does not exist
+            [Test]
+            public async Task CannotCreateUnitWithInvalidParentId()
+            {
+                MayorsOffice.Parent = null;
+                MayorsOffice.ParentId = 9999;
+                var resp = await PostAuthenticated("units", MayorsOffice, ValidAdminJwt);
+                var actual = await resp.Content.ReadAsAsync<Error>();
+
+                Assert.AreEqual(actual.StatusCode, HttpStatusCode.NotFound);
+                Assert.AreEqual(1, actual.Messages);
+                Assert.Contains(UnitsRepository.ParentNotFound, actual.Messages.ToList());
+                Assert.IsNull(actual.Exception);
+            }
+        }
     }
 }

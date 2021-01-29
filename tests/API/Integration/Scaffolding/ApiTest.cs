@@ -28,6 +28,14 @@ namespace Integration
             BaseAddress = new System.Uri("http://localhost:8080/")
         };
 
+        public Task<HttpResponseMessage> PostAuthenticated(string url, object body, string token = ValidRswansonJwt)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("bearer", token);
+            request.Content = new StringContent(JsonConvert.SerializeObject(body), System.Text.Encoding.UTF8, "application/json");
+            return Http.SendAsync(request);
+        }
+
         public Task<HttpResponseMessage> GetAuthenticated(string url, string token = ValidRswansonJwt)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -40,6 +48,13 @@ namespace Integration
             var request = new HttpRequestMessage(HttpMethod.Put, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("bearer", token);
             request.Content = new StringContent(JsonConvert.SerializeObject(body), System.Text.Encoding.UTF8, "application/json");
+            return Http.SendAsync(request);
+        }
+
+        public Task<HttpResponseMessage> DeleteAuthenticated(string url, string token = ValidRswansonJwt)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Delete, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("bearer", token);
             return Http.SendAsync(request);
         }
 

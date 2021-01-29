@@ -29,5 +29,20 @@ namespace API.Middleware
                 return result.Error.ToActionResult();
             }
         }
+
+        public static IActionResult Created<T>(string baseUrl, Result<T, Error> result) where T : Models.Entity
+		{
+            // var logger = Logging.GetApiLogger(req, principal);
+            if (result.IsSuccess)
+            {
+                return new CreatedResult($"{baseUrl}/{result.Value.Id}", result.Value);
+            }
+            else 
+            {
+                // logger.FailureResult<T>("Fetch", result.Error);
+                System.Console.WriteLine($"[{result.Error.StatusCode}] {result.Error.Messages}");
+                return result.Error.ToActionResult();
+            }
+        }
     }
 }

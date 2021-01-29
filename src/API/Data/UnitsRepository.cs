@@ -8,11 +8,15 @@ using Microsoft.EntityFrameworkCore;
 using Models;
 using API.Functions;
 using System;
+using Microsoft.AspNetCore.Http;
 
 namespace API.Data
 {
     public class UnitsRepository : DataRepository
     {
+        public const string ParentNotFound = "The specified unit parent does not exist";
+        public const string MalformedRequest = "The request body is malformed or missing";
+
 		internal static Task<Result<List<Unit>, Error>> GetAll(UnitSearchParameters query)
             => ExecuteDbPipeline("search all units", async db => {
                     IQueryable<Unit> queryable = db.Units.Include(u => u.Parent);
@@ -34,14 +38,38 @@ namespace API.Data
             => ExecuteDbPipeline("get a unit by ID", db => 
                 TryFindUnit(db, id));
 
+        internal static async Task<Result<Unit, Error>> CreateUnit(UnitCreateRequest body)
+		    => await ExecuteDbPipeline("create a unit", db =>
+                (body.ParendId > 0 ? TryFindUnit(db, body.ParendId) : Task.FromResult(Pipeline.Success((Unit) null)))// 😬If body has parent try to fetch it, otherwise return a null parent.
+                .Bind(parent => TryCreateUnit(db, body, parent)));
+
         private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id)
         {
-            var person = await db.Units
+            var unit = await db.Units
                 .Include(u => u.Parent)
                 .SingleOrDefaultAsync(p => p.Id == id);
-            return person == null
+            return unit == null
                 ? Pipeline.NotFound("No unit found with that ID.")
-                : Pipeline.Success(person);
+                : Pipeline.Success(unit);
         }
-    }
+
+        private static async Task<Result<Unit,Error>> TryCreateUnit (PeopleContext db, UnitCreateRequest body, Unit parent)
+        {
+            var unit = new Unit
+            {
+                Name = body.Name,
+                Description = body.Description,
+                Url = body.Url,
+                Email = body.Email,
+                Parent = parent
+            };
+
+            // add the unit
+            db.Units.Add(unit);
+            
+            // save changes
+            await db.SaveChangesAsync();
+            return Pipeline.Success(unit);
+        }
+	}
 }

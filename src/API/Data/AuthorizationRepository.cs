@@ -17,6 +17,10 @@ namespace API.Data
                 ? Pipeline.Success(true)
                 : Pipeline.Unauthorized();
 
+        public static Result<bool, Error> AuthorizeCreate(EntityPermissions permissions) 
+            => permissions.HasFlag(EntityPermissions.Post)
+                ? Pipeline.Success(true)
+                : Pipeline.Unauthorized();
 
         internal static Task<Result<EntityPermissions, Error>> DeterminePersonPermissions(HttpRequest req, string requestorNetid, int personId)
             => ExecuteDbPipeline("resolve person permissions", db =>
