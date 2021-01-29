@@ -133,12 +133,12 @@ namespace Integration
             {
                 var req = new Unit("", ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
-                var actual = await resp.Content.ReadAsAsync<Error>();
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-                Assert.AreEqual(HttpStatusCode.BadRequest, actual.StatusCode);
-                Assert.AreEqual(1, actual.Messages);
-                Assert.Contains(UnitsRepository.MalformedRequest, actual.Messages.ToList());
-                Assert.IsNull(actual.Exception);
+                Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+                Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains(UnitsRepository.MalformedRequest, actual.Errors);
+                Assert.AreEqual("(none)", actual.Details);
             }
 
             //404 The specified unit parent does not exist
@@ -149,12 +149,12 @@ namespace Integration
                 req.ParentId = 9999;
 
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
-                var actual = await resp.Content.ReadAsAsync<Error>();
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-                Assert.AreEqual(HttpStatusCode.NotFound, actual.StatusCode);
-                Assert.AreEqual(1, actual.Messages);
-                Assert.Contains(UnitsRepository.ParentNotFound, actual.Messages.ToList());
-                Assert.IsNull(actual.Exception);
+                Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+                Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains(UnitsRepository.ParentNotFound, actual.Errors);
+                Assert.AreEqual("(none)", actual.Details);
             }
         }
     }

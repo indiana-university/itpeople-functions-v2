@@ -65,8 +65,6 @@ namespace API.Middleware
         public IEnumerable<string> Messages { get; private set; }
         public Exception Exception { get; private set; }
 
-        public Error(){}
-
         public IActionResult ToActionResult()// => new StatusCodeResult((int)StatusCode);        
         {
             var content = new ApiError()
