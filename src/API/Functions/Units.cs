@@ -57,7 +57,7 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor))// Set headers saying what the requestor can do to this unit
                 .Bind(perms => AuthorizationRepository.AuthorizeCreate(perms))
-                .Bind(_ => Request.DeserializeBody<UnitCreateRequest>(req))
+                .Bind(_ => Request.DeserializeBody<Unit>(req))
                 .Bind(body => UnitsRepository.CreateUnit(body))
                 .Finally(result => Response.Created("units", result));
     }

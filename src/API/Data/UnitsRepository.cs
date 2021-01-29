@@ -38,9 +38,9 @@ namespace API.Data
             => ExecuteDbPipeline("get a unit by ID", db => 
                 TryFindUnit(db, id));
 
-        internal static async Task<Result<Unit, Error>> CreateUnit(UnitCreateRequest body)
+        internal static async Task<Result<Unit, Error>> CreateUnit(Unit body)
 		    => await ExecuteDbPipeline("create a unit", db =>
-                (body.ParentId > 0 ? TryFindUnit(db, body.ParentId) : Task.FromResult(Pipeline.Success((Unit) null)))// 😬If body has parent try to fetch it, otherwise return a null parent.
+                (body.ParentId > 0 ? TryFindUnit(db, (int)body.ParentId) : Task.FromResult(Pipeline.Success((Unit) null)))// 😬If body has parent try to fetch it, otherwise return a null parent.
                 .Bind(parent => TryCreateUnit(db, body, parent)));
 
         private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id)
@@ -53,16 +53,10 @@ namespace API.Data
                 : Pipeline.Success(unit);
         }
 
-        private static async Task<Result<Unit,Error>> TryCreateUnit (PeopleContext db, UnitCreateRequest body, Unit parent)
+        private static async Task<Result<Unit,Error>> TryCreateUnit (PeopleContext db, Unit unit, Unit parent)
         {
-            var unit = new Unit
-            {
-                Name = body.Name,
-                Description = body.Description,
-                Url = body.Url,
-                Email = body.Email,
-                Parent = parent
-            };
+            // Setup the parent relationship on the new Unit.
+            unit.Parent = parent;
 
             // add the unit
             db.Units.Add(unit);

@@ -103,7 +103,7 @@ namespace Integration
             [Test]
             public async Task CreateMayorsOffice()
             {
-                var req = new UnitCreateRequest(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
+                var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.Created);
                 var actual = await resp.Content.ReadAsAsync<Unit>();
@@ -121,7 +121,7 @@ namespace Integration
             [Test]
             public async Task UnauthorizedCannotCreate()
             {
-                var req = new UnitCreateRequest(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
+                var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
                 var resp = await PostAuthenticated("units", req, ValidRswansonJwt);
                 AssertStatusCode(resp, HttpStatusCode.Unauthorized);
             }
@@ -131,11 +131,11 @@ namespace Integration
             [Test]
             public async Task CannotCreateMalformedUnit()
             {
-                var req = new UnitCreateRequest("", ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
+                var req = new Unit("", ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
                 var actual = await resp.Content.ReadAsAsync<Error>();
 
-                Assert.AreEqual(actual.StatusCode, HttpStatusCode.BadRequest);
+                Assert.AreEqual(HttpStatusCode.BadRequest, actual.StatusCode);
                 Assert.AreEqual(1, actual.Messages);
                 Assert.Contains(UnitsRepository.MalformedRequest, actual.Messages.ToList());
                 Assert.IsNull(actual.Exception);
@@ -145,13 +145,13 @@ namespace Integration
             [Test]
             public async Task CannotCreateUnitWithInvalidParentId()
             {
-                var req = new UnitCreateRequest(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email);
+                var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email);
                 req.ParentId = 9999;
-                
+
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
                 var actual = await resp.Content.ReadAsAsync<Error>();
 
-                Assert.AreEqual(actual.StatusCode, HttpStatusCode.NotFound);
+                Assert.AreEqual(HttpStatusCode.NotFound, actual.StatusCode);
                 Assert.AreEqual(1, actual.Messages);
                 Assert.Contains(UnitsRepository.ParentNotFound, actual.Messages.ToList());
                 Assert.IsNull(actual.Exception);
