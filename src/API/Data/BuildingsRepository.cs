@@ -15,12 +15,16 @@ namespace API.Data
     {
 		internal static Task<Result<List<Building>, Error>> GetAll(BuildingSearchParameters query)
             => ExecuteDbPipeline("search all buildings", async db => {
-                    IQueryable<Building> queryable = db.Buildings;
-                    queryable = queryable.Where(b=>
+                    var queryNoDash = query?.Q?.Replace("-","");
+                    var result = await db.Buildings.Where(b =>
                         EF.Functions.ILike(b.Address, $"%{query.Q}%")
                         || EF.Functions.ILike(b.Code, $"%{query.Q}%")
-                        || EF.Functions.ILike(b.Name, $"%{query.Q}%"));
-                    var result = await queryable.AsNoTracking().ToListAsync();
+                        || EF.Functions.ILike(b.Code, $"%{queryNoDash}%")
+                        || EF.Functions.ILike(b.Name, $"%{query.Q}%"))
+                        .OrderBy(b => b.Name)
+                        .Take(25)
+                        .AsNoTracking()
+                        .ToListAsync();
                     return Pipeline.Success(result);
                 });
 

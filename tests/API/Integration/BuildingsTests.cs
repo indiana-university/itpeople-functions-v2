@@ -39,6 +39,7 @@ namespace Integration
 
 			[TestCase("RC123", Description = "Code match")]
 			[TestCase("RC", Description = "Partial code match")]
+			[TestCase("RC-123", Description = "Code with optional dash match")]
 			public async Task CanSearchByCode(string code)
 			{
 				var resp = await GetAuthenticated($"buildings?q={code}");
