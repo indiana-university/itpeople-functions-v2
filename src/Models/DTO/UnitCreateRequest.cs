@@ -11,7 +11,7 @@ namespace Models
         /// Email for contacting this Unit
         public string Email { get; set; }
 		/// The Unit Id for the this Unit's parent Unit
-		public int ParendId {get; set;}
+		public int ParentId {get; set;}
     }
     
 }

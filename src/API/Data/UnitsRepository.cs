@@ -40,7 +40,7 @@ namespace API.Data
 
         internal static async Task<Result<Unit, Error>> CreateUnit(UnitCreateRequest body)
 		    => await ExecuteDbPipeline("create a unit", db =>
-                (body.ParendId > 0 ? TryFindUnit(db, body.ParendId) : Task.FromResult(Pipeline.Success((Unit) null)))// 😬If body has parent try to fetch it, otherwise return a null parent.
+                (body.ParentId > 0 ? TryFindUnit(db, body.ParentId) : Task.FromResult(Pipeline.Success((Unit) null)))// 😬If body has parent try to fetch it, otherwise return a null parent.
                 .Bind(parent => TryCreateUnit(db, body, parent)));
 
         private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id)

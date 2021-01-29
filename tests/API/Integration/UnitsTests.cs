@@ -91,13 +91,12 @@ namespace Integration
 
         public class UnitCreate : ApiTest
         {
-            private Unit MayorsOffice = new Unit(){
+            private UnitCreateRequest MayorsOffice = new UnitCreateRequest(){
                 Name = "Pawnee Mayor's Office",
                 Description = "The Office of the Mayor",
                 Url = "http://gunderson.geocities.com",
                 Email = "mayor@example.com",
-                ParentId = TestEntities.Units.CityOfPawnee.Id,
-                Parent = TestEntities.Units.CityOfPawnee
+                ParentId = TestEntities.Units.CityOfPawnee.Id
             };
 
             //201 returns new unit
@@ -114,7 +113,7 @@ namespace Integration
                 Assert.AreEqual(MayorsOffice.Url, actual.Url);
                 Assert.AreEqual(MayorsOffice.Email, actual.Email);
                 Assert.NotNull(actual.Parent);
-                Assert.AreEqual(MayorsOffice.Parent.Id, actual.Parent.Id);
+                Assert.AreEqual(MayorsOffice.ParentId, actual.Parent.Id);
             }
 
             //403 unauthorized
@@ -143,7 +142,6 @@ namespace Integration
             [Test]
             public async Task CannotCreateUnitWithInvalidParentId()
             {
-                MayorsOffice.Parent = null;
                 MayorsOffice.ParentId = 9999;
                 var resp = await PostAuthenticated("units", MayorsOffice, ValidAdminJwt);
                 var actual = await resp.Content.ReadAsAsync<Error>();
