@@ -40,15 +40,15 @@ namespace API.Functions
                 .Bind(_ => BuildingsRepository.GetOne(buildingId))
                 .Finally(result => Response.Ok(req, result));
 
-        [FunctionName(nameof(Buildings.BuildingRelationshipsGetAll))]
-        [OpenApiOperation(nameof(Buildings.BuildingRelationshipsGetAll), nameof(BuildingRelationship), Summary = "List a buildings's supporting units")]
+        [FunctionName(nameof(Buildings.BuildingsGetSupportingUnits))]
+        [OpenApiOperation(nameof(Buildings.BuildingsGetSupportingUnits), nameof(BuildingRelationship), Summary = "List a buildings's supporting units")]
         [OpenApiParameter("buildingId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<BuildingRelationship>))]
         [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No building relationships were found with the buildingId provided.")]
-        public static Task<IActionResult> BuildingRelationshipsGetAll(
+        public static Task<IActionResult> BuildingsGetSupportingUnits(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildings/{buildingId}/supportingunits")] HttpRequest req, int buildingId) 
             => Security.Authenticate(req)
-                .Bind(_ => BuildingsRepository.GetOne(buildingId))
+                .Bind(_ => BuildingsRepository.GetSupportingUnits(buildingId))
                 .Finally(result => Response.Ok(req, result));
     }
 }

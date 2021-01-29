@@ -5,6 +5,52 @@ namespace Integration
 {
     public static class TestEntities
     {
+
+        public static class Buildings {
+            public const int CityHallId = 1;
+
+            public static readonly Building CityHall = new Building() {
+                Id=1,
+                Name="Pawnee City Hall",
+                Code="PA123",
+                Address="123 Main St",
+                City="Pawnee",
+                State="IN",
+                Country="USA",
+                PostCode="47501"
+            };
+            public static readonly Building RonsCabin = new Building() {
+                Id=2,
+                Name="Ron's Cabin",
+                Code="RC123",
+                Address="Out in the woods",
+                City="Swansonville",
+                State="IN",
+                Country="USA",
+                PostCode="47501"
+            };
+            public static readonly Building SmallPark = new Building() {
+                Id=3,
+                Name="Smallest Park",
+                Code="PA1231",
+                Address="321 Main St",
+                City="Pawnee",
+                State="IN",
+                Country="USA",
+                PostCode="47501"
+            };
+        }
+
+        public static class BuildingRelationships {
+            public static readonly BuildingRelationship CityHallCityOfPawnee = new BuildingRelationship() {
+                Id=1,
+                UnitId = TestEntities.Units.CityOfPawnee.Id,
+                BuildingId=TestEntities.Buildings.CityHall.Id,
+                Unit=TestEntities.Units.CityOfPawnee,
+                Building=TestEntities.Buildings.CityHall
+            };
+        }
+
         public static class Departments
         {
             public static readonly Department Parks = new Department() { 

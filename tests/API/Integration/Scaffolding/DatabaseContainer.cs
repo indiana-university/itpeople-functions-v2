@@ -51,14 +51,26 @@ namespace Integration
         {
             peopleContext.Database.ExecuteSqlRaw(@"
                 TRUNCATE 
-                    public.people, 
+                    public.buildings, 
+                    public.building_relationships, 
                     public.departments,
+                    public.people, 
                     public.units,
                     public.unit_members,
                     public.unit_member_tools
                 RESTART IDENTITY
                 CASCADE;
             ");
+
+            peopleContext.Buildings.AddRange(new List<Building> {
+                TestEntities.Buildings.CityHall,
+                TestEntities.Buildings.RonsCabin,
+                TestEntities.Buildings.SmallPark,
+            });
+
+            peopleContext.BuildingRelationships.AddRange(new List<BuildingRelationship> {
+                TestEntities.BuildingRelationships.CityHallCityOfPawnee
+            });
 
             peopleContext.Departments.AddRange(new List<Department> {
                 TestEntities.Departments.Parks
