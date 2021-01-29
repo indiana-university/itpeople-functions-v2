@@ -157,5 +157,74 @@ namespace Integration
                 Assert.AreEqual("(none)", actual.Details);
             }
         }
+
+        public class UnitEdit : ApiTest
+        {
+            // 200
+            [Test]
+            public async Task UpdatePawnee()
+            {
+                var req = new Unit("Eagleton", "Gated Community of Eagleton, Indiana", null, "hoa@eagleton.biz");
+                req.Id = TestEntities.Units.CityOfPawnee.Id;
+
+                var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidAdminJwt);
+                var actual = await resp.Content.ReadAsAsync<Unit>();
+
+                Assert.AreEqual(TestEntities.Units.CityOfPawnee.Id, actual.Id);
+                Assert.AreEqual(req.Name, actual.Name);
+                Assert.AreEqual(req.Description, actual.Description);
+                Assert.AreEqual(req.Url, actual.Url);
+                Assert.AreEqual(req.Email, actual.Email);
+                Assert.IsNull(actual.Parent);
+            }
+            // 400 The request body is malformed, or the unit name is missing.
+            [Test]
+            public async Task CannotUpdateWithMalformedUnit()
+            {
+                var req = new Unit("Eagleton", "Gated Community of Eagleton, Indiana", null, "hoa@eagleton.biz");
+                req.Id = TestEntities.Units.CityOfPawnee.Id;
+
+                var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidAdminJwt);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+                Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains("The request body is malformed, or the unit name is missing.", actual.Errors);
+                Assert.AreEqual("(none)", actual.Details);
+            }
+
+            // 403 You do not have permission to modify this unit.
+            [Test]
+            public async Task UnauthorizedCannotUpdateUnit()
+            {
+                var req = new Unit("Freehold of Pawnee", "The Independent Free City of Pawnee", "http://pawnee.i2p", null);
+                req.Id = TestEntities.Units.CityOfPawnee.Id;
+
+                var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidRswansonJwt);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual((int)HttpStatusCode.Unauthorized, actual.StatusCode);
+                Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains("You do not have permission to modify this unit.", actual.Errors);
+                Assert.AreEqual("(none)", actual.Details);
+            }
+            
+            // 404 No unit was found with the ID provided, or the specified unit parent does not exist.
+            [Test]
+            public async Task CannotUpdateUnitWithInvalidParentId()
+            {
+                var req = new Unit(TestEntities.Units.CityOfPawnee.Name, TestEntities.Units.CityOfPawnee.Description, TestEntities.Units.CityOfPawnee.Url, TestEntities.Units.CityOfPawnee.Email);
+                req.Id = TestEntities.Units.CityOfPawnee.Id;
+                req.ParentId = 9999;
+
+                var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidAdminJwt);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+                Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains("No unit was found with the ID provided, or the specified unit parent does not exist.", actual.Errors);
+                Assert.AreEqual("(none)", actual.Details);
+            }
+        }
     }
 }
