@@ -16,17 +16,17 @@ namespace Models
         /// The unique ID of the parent unit of this unit.
         public int? ParentId { get; set; }
         
-		/// The parent unit of this unit
-		private Unit Parent;
+        /// The parent unit of this unit
+        private Unit Parent;
 
         public const string MalformedRequest = "The request body is malformed or missing. The Name field is required.";
 
-		public UnitRequest()
-		{
-			ParentId = null;
-		}
+        public UnitRequest()
+        {
+            ParentId = null;
+        }
 
-		public Unit GetParent() => Parent;
-		public void SetParent(Unit unit) => Parent = unit;
+        public Unit GetParent() => Parent;
+        public void SetParent(Unit unit) => Parent = unit;
     }
 }

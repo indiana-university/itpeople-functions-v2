@@ -44,7 +44,7 @@ namespace API.Data
         {
             return await ExecuteDbPipeline($"update unit {unitId}", db =>
                 TrySetRequestedParent(db, body)
-                .Bind(_ => TryFindUnit(db, unitId))//Make sure to use requested unitId, and not trust the provided body.
+                .Bind(_ => TryFindUnit(db, unitId))
                 .Bind(existing => TryUpdateUnit(db, existing, body))
             );
         }
@@ -93,8 +93,8 @@ namespace API.Data
         }
 
         private static async Task<Result<Unit, Error>> TryUpdateUnit(PeopleContext db, Unit existing, UnitRequest body)
-		{
-			existing.Name = body.Name;
+        {
+            existing.Name = body.Name;
             existing.Description = body.Description;
             existing.Url = body.Url;
             existing.Email = body.Email;
@@ -103,7 +103,7 @@ namespace API.Data
             // TODO: Do we need to manually validate the model?  EF doesn't do that for free any more.
             await db.SaveChangesAsync();
             return Pipeline.Success(existing);
-		}
+        }
 
         private static async Task<Result<bool,Error>> TryDeleteUnit (PeopleContext db, Unit unit)
         {

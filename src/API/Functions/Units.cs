@@ -19,7 +19,7 @@ namespace API.Functions
     {
         private const string NotFoundError = "No unit found with ID (`unitId`).\\\n **or**\\\n No parent unit found with ID (`parentId`).";
 
-		[FunctionName(nameof(Units.UnitsGetAll))]
+        [FunctionName(nameof(Units.UnitsGetAll))]
         [OpenApiOperation(nameof(Units.UnitsGetAll), nameof(Units), Summary="List all IT units", Description = @"Search for IT units by name and/or description. If no search term is provided, lists all top-level IT units." )]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<Unit>))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description="The search query was malformed or incorrect. See response content for additional information.")]
