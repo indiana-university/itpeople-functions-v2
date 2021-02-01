@@ -7,8 +7,6 @@ copy *.sln .
 copy src/API/*.csproj ./src/API/
 copy src/Database/*.csproj ./src/Database/
 copy src/Models/*.csproj ./src/Models/
-copy tests/API/Integration/*.csproj ./tests/API/Integration/
-copy tests/API/Unit/*.csproj ./tests/API/Unit/
 
 RUN dotnet restore
 
