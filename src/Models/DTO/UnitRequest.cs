@@ -4,9 +4,8 @@ namespace Models
 {
     public class UnitRequest
     {
-
         /// The name of this unit.
-        [Required]
+        [Required(ErrorMessage = MalformedRequest)]
         public string Name { get; set; }
         /// A description of this unit.
         public string Description { get; set; }
@@ -19,6 +18,8 @@ namespace Models
         
 		/// The parent unit of this unit
 		private Unit Parent;
+
+        public const string MalformedRequest = "The request body is malformed or missing. The Name field is required.";
 
 		public UnitRequest()
 		{

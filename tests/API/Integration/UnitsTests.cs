@@ -137,7 +137,7 @@ namespace Integration
 
                 Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
                 Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains(UnitsRepository.MalformedRequest, actual.Errors);
+                Assert.Contains(UnitRequest.MalformedRequest, actual.Errors);
                 Assert.AreEqual("(none)", actual.Details);
             }
 
@@ -192,7 +192,7 @@ namespace Integration
 
                 Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
                 Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains("The request body is malformed, or the unit name is missing.", actual.Errors);
+                Assert.Contains(UnitRequest.MalformedRequest, actual.Errors);
                 Assert.AreEqual("(none)", actual.Details);
             }
 

@@ -50,7 +50,7 @@ namespace API.Functions
         [OpenApiParameter("email", Type = typeof(string), In = ParameterLocation.Query, Required = false, Description = "")]
         [OpenApiParameter("parentId", Type = typeof(int), In = ParameterLocation.Query, Required = false, Description = "The Unit Id of the parent Unit.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Unit))]
-        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = UnitsRepository.MalformedRequest)]
+        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = UnitRequest.MalformedRequest)]
         [OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You do not have permission to create a unit.")]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(ApiError), Description = UnitsRepository.ParentNotFound)]
         public static Task<IActionResult> CreateUnit(
@@ -71,7 +71,7 @@ namespace API.Functions
         [OpenApiParameter("email", Type = typeof(string), In = ParameterLocation.Query, Required = false, Description = "")]
         [OpenApiParameter("parentId", Type = typeof(int), In = ParameterLocation.Query, Required = false, Description = "The Unit Id of the parent Unit.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Unit))]
-        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = UnitsRepository.MalformedRequest)]
+        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = UnitRequest.MalformedRequest)]
         [OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You do not have permission to modify this unit.")]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(ApiError), Description = UnitsRepository.ParentNotFound)]
         public static Task<IActionResult> UpdateUnit(
