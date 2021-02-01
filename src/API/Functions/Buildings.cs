@@ -19,7 +19,7 @@ namespace API.Functions
     {
 		[FunctionName(nameof(Buildings.BuildingsGetAll))]
         [OpenApiOperation(nameof(Buildings.BuildingsGetAll), nameof(Buildings), Summary="List all buildings", Description = @"Get a list of university buildings." )]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<Building>))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<Building>), Description="A collection of building records")]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description="The search query was malformed or incorrect. See response content for additional information.")]
         [OpenApiParameter("q", In=ParameterLocation.Query, Description="filter by building address/code/name, ex: 'ballantine'")]
         public static Task<IActionResult> BuildingsGetAll(
@@ -32,7 +32,7 @@ namespace API.Functions
         [FunctionName(nameof(Buildings.BuildingsGetOne))]
         [OpenApiOperation(nameof(Buildings.BuildingsGetOne), nameof(Buildings), Summary = "Find a building by ID")]
         [OpenApiParameter("buildingId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building record.")]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Building))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Building), Description="A building record")]
         [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No building was found with the ID provided.")]
         public static Task<IActionResult> BuildingsGetOne(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildings/{buildingId}")] HttpRequest req, int buildingId) 
@@ -43,7 +43,7 @@ namespace API.Functions
         [FunctionName(nameof(Buildings.BuildingsGetSupportingUnits))]
         [OpenApiOperation(nameof(Buildings.BuildingsGetSupportingUnits), nameof(Buildings), Summary = "List a building's supporting units", Description = @"A supporting unit provides IT services for the building.")]
         [OpenApiParameter("buildingId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building record.")]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<BuildingRelationship>))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<BuildingRelationship>), Description="A collection of building relationship records")]
         [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No building relationships were found with the buildingId provided.")]
         public static Task<IActionResult> BuildingsGetSupportingUnits(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildings/{buildingId}/supportingUnits")] HttpRequest req, int buildingId) 
