@@ -17,7 +17,8 @@ namespace API.Data
             => ExecuteDbPipeline("search all buildings", async db => {
                     var queryNoDash = query?.Q?.Replace("-","");
                     var result = await db.Buildings.Where(b =>
-                        EF.Functions.ILike(b.Address, $"%{query.Q}%")
+                        string.IsNullOrWhiteSpace(query.Q) 
+                        || EF.Functions.ILike(b.Address, $"%{query.Q}%")
                         || EF.Functions.ILike(b.Code, $"%{query.Q}%")
                         || EF.Functions.ILike(b.Code, $"%{queryNoDash}%")
                         || EF.Functions.ILike(b.Name, $"%{query.Q}%"))
