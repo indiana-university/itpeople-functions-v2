@@ -123,7 +123,7 @@ namespace Integration
             {
                 var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
                 var resp = await PostAuthenticated("units", req, ValidRswansonJwt);
-                AssertStatusCode(resp, HttpStatusCode.Unauthorized);
+                AssertStatusCode(resp, HttpStatusCode.Forbidden);
             }
 
             
@@ -205,12 +205,6 @@ namespace Integration
 
                 var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidRswansonJwt);
                 AssertStatusCode(resp, HttpStatusCode.Forbidden);
-                var actual = await resp.Content.ReadAsAsync<ApiError>();
-
-                Assert.AreEqual((int)HttpStatusCode.Unauthorized, actual.StatusCode);
-                Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains("You do not have permission to modify this unit.", actual.Errors);
-                Assert.AreEqual("(none)", actual.Details);
             }
             
             // 404 No unit was found with the ID provided, or the specified unit parent does not exist.

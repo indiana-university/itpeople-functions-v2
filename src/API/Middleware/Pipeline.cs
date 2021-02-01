@@ -19,6 +19,7 @@ namespace API.Middleware
             switch (statusCode)
             {
                 case HttpStatusCode.Unauthorized: return Unauthorized();
+                case HttpStatusCode.Forbidden: return Forbidden();
                 case HttpStatusCode.BadRequest: return BadRequest(msg);
                 case HttpStatusCode.NotFound: return NotFound(msg);
                 case HttpStatusCode.Conflict: return Conflict(msg);
@@ -29,6 +30,8 @@ namespace API.Middleware
         public static Error Unauthorized()
             => new Error(HttpStatusCode.Unauthorized, "You are not authorized to make this request.");
 
+        public static Error Forbidden()
+            => new Error(HttpStatusCode.Forbidden, "You are not authorized to make this request.");
 
         public static Error BadRequest(string message)
             => new Error(HttpStatusCode.BadRequest, message);
@@ -77,6 +80,7 @@ namespace API.Middleware
             switch (StatusCode)
             {
                 case HttpStatusCode.Unauthorized: return new UnauthorizedResult();
+                case HttpStatusCode.Forbidden: return new StatusCodeResult(403);
                 case HttpStatusCode.BadRequest: return new BadRequestObjectResult(content);
                 case HttpStatusCode.NotFound: return new NotFoundObjectResult(content);
                 case HttpStatusCode.Conflict: return new ConflictObjectResult(content);

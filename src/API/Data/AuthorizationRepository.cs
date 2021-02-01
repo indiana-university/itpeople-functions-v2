@@ -15,12 +15,12 @@ namespace API.Data
         public static Result<bool, Error> AuthorizeModification(EntityPermissions permissions) 
             => permissions.HasFlag(EntityPermissions.Put)
                 ? Pipeline.Success(true)
-                : Pipeline.Unauthorized();
+                : Pipeline.Forbidden();
 
         public static Result<bool, Error> AuthorizeCreate(EntityPermissions permissions) 
             => permissions.HasFlag(EntityPermissions.Post)
                 ? Pipeline.Success(true)
-                : Pipeline.Unauthorized();
+                : Pipeline.Forbidden();
 
         internal static Task<Result<EntityPermissions, Error>> DeterminePersonPermissions(HttpRequest req, string requestorNetid, int personId)
             => ExecuteDbPipeline("resolve person permissions", db =>

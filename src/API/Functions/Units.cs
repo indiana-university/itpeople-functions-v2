@@ -51,7 +51,7 @@ namespace API.Functions
         [OpenApiParameter("parentId", Type = typeof(int), In = ParameterLocation.Query, Required = false, Description = "The Unit Id of the parent Unit.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Unit))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = UnitsRepository.MalformedRequest)]
-        [OpenApiResponseWithBody(HttpStatusCode.Forbidden, "application/json", typeof(ApiError), Description = UnitsRepository.Forbidden)]
+        [OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You do not have permission to create a unit.")]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(ApiError), Description = UnitsRepository.ParentNotFound)]
         public static Task<IActionResult> CreateUnit(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "units")] HttpRequest req) 
@@ -72,7 +72,7 @@ namespace API.Functions
         [OpenApiParameter("parentId", Type = typeof(int), In = ParameterLocation.Query, Required = false, Description = "The Unit Id of the parent Unit.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Unit))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = UnitsRepository.MalformedRequest)]
-        [OpenApiResponseWithBody(HttpStatusCode.Forbidden, "application/json", typeof(ApiError), Description = UnitsRepository.Forbidden)]
+        [OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You do not have permission to modify this unit.")]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(ApiError), Description = UnitsRepository.ParentNotFound)]
         public static Task<IActionResult> UpdateUnit(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "units/{unitId}")] HttpRequest req, int unitId)
