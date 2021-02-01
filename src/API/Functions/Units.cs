@@ -60,5 +60,25 @@ namespace API.Functions
                 .Bind(_ => Request.DeserializeBody<Unit>(req))
                 .Bind(body => UnitsRepository.CreateUnit(body))
                 .Finally(result => Response.Created("units", result));
+        
+        [FunctionName(nameof(Units.UpdateUnit))]
+        [OpenApiOperation(nameof(Units.UpdateUnit), nameof(Units), Summary = "Update a unit", Description = "_Authorization_: Units can be modified by any unit member that has either the `Owner` or `ManageMembers` permission on their membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
+        [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
+        [OpenApiParameter("name", Type = typeof(string), In = ParameterLocation.Query, Required = true, Description = "")]
+        [OpenApiParameter("description", Type = typeof(string), In = ParameterLocation.Query, Required = false, Description = "")]
+        [OpenApiParameter("url", Type = typeof(string), In = ParameterLocation.Query, Required = false, Description = "")]
+        [OpenApiParameter("email", Type = typeof(string), In = ParameterLocation.Query, Required = false, Description = "")]
+        [OpenApiParameter("parentId", Type = typeof(int), In = ParameterLocation.Query, Required = false, Description = "The Unit Id of the parent Unit.")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Unit))]
+        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = UnitsRepository.MalformedRequest)]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(ApiError), Description = UnitsRepository.ParentNotFound)]
+        public static Task<IActionResult> UpdateUnit(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "units/{unitId}")] HttpRequest req, int unitId)
+            => Security.Authenticate(req)
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
+                .Bind(_ => Request.DeserializeBody<Unit>(req))
+                .Bind(body => UnitsRepository.UpdateUnit(body, unitId))
+                .Finally(result => Response.Ok(req, result));
     }
 }
