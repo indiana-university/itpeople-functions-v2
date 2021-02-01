@@ -46,11 +46,18 @@ namespace API.Data
 
         internal static async Task<Result<Unit, Error>> UpdateUnit(UnitRequest body, int unitId)
         {
-            return await ExecuteDbPipeline("update unit", db =>
+            return await ExecuteDbPipeline($"update unit {unitId}", db =>
                 TrySetRequestedParent(db, body)
                 .Bind(_ => TryFindUnit(db, unitId))//Make sure to use requested unitId, and not trust the provided body.
                 .Bind(existing => TryUpdateUnit(db, existing, body))
             );
+        }
+
+        internal static async Task<Result<bool, Error>> DeleteUnit(int unitId)
+        {
+            return await ExecuteDbPipeline($"delte unit {unitId}", db =>
+                TryFindUnit(db, unitId)
+                .Bind(unit => TryDeleteUnit(db, unit)));
         }
 
         private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id)
@@ -100,6 +107,35 @@ namespace API.Data
             // TODO: Do we need to manually validate the model?  EF doesn't do that for free any more.
             await db.SaveChangesAsync();
             return Pipeline.Success(existing);
-		}        
+		}
+
+        private static async Task<Result<bool,Error>> TryDeleteUnit (PeopleContext db, Unit unit)
+        {
+            // Check for child Units
+            var childUnitIds = db.Units
+                .Include(c => c.Parent)
+                .Where(c => c.ParentId == unit.Id)
+                .Select(c => c.Id)
+                .ToList();
+            if(childUnitIds.Count > 0)
+            {
+                return Pipeline.Conflict($"Unit {unit.Id} has child units ({string.Join(", ", childUnitIds)}) These must be reassigned prior to deletion.");
+            }
+            else
+            {
+                var unitMembers = db.UnitMembers
+                    .Include(um => um.Unit)
+                    .Where(um => um.UnitId == unit.Id);
+                
+                //Remove UnitMembers for unit
+                db.UnitMembers.RemoveRange(unitMembers);
+
+                // Remove unit from the database.
+                db.Units.Remove(unit);
+                // save changes
+                await db.SaveChangesAsync();
+                return Pipeline.Success(true);
+            }
+        }
     }
 }

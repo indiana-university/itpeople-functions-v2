@@ -21,6 +21,11 @@ namespace API.Data
             => permissions.HasFlag(EntityPermissions.Post)
                 ? Pipeline.Success(true)
                 : Pipeline.Forbidden();
+        
+        public static Result<bool, Error> AuthorizeDeletion(EntityPermissions permissions) 
+            => permissions.HasFlag(EntityPermissions.Delete)
+                ? Pipeline.Success(true)
+                : Pipeline.Forbidden();
 
         internal static Task<Result<EntityPermissions, Error>> DeterminePersonPermissions(HttpRequest req, string requestorNetid, int personId)
             => ExecuteDbPipeline("resolve person permissions", db =>
