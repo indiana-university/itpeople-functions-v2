@@ -225,5 +225,19 @@ namespace Integration
                 Assert.AreEqual("(none)", actual.Details);
             }
         }
+
+        public class UnitDelete : ApiTest
+        {
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin may delete a unit that has no children.")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Non-Admin cannot delete a unit.")]
+            [TestCase(9999, ValidAdminJwt, HttpStatusCode.NotFound, Description = "Cannot delete a unit that does not exist.")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, ValidAdminJwt, HttpStatusCode.Conflict, Description = "Cannot delete a unit that has children.")]
+            public async Task ServiceAdminCanDeleteUnit(int unitId, string jwt, HttpStatusCode expectedCode)
+            {
+                var resp = await DeleteAuthenticated($"units/{unitId}", jwt);
+                AssertStatusCode(resp, expectedCode);
+            }
+            
+        }
     }
 }
