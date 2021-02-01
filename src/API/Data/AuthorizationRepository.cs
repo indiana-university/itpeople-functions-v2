@@ -105,7 +105,7 @@ namespace API.Data
         {
             var result = EntityPermissions.Get;
             // service admins: get post put delete
-            if (requestor.IsServiceAdmin)
+            if (requestor?.IsServiceAdmin == true)
             {
                 result = EntityPermissions.All;
             }   
