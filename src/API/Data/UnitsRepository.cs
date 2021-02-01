@@ -17,7 +17,7 @@ namespace API.Data
         public const string ParentNotFound = "The specified unit parent does not exist";
         public const string MalformedRequest = "The request body is malformed or missing";
 
-		internal static Task<Result<List<Unit>, Error>> GetAll(UnitSearchParameters query)
+        internal static Task<Result<List<Unit>, Error>> GetAll(UnitSearchParameters query)
             => ExecuteDbPipeline("search all units", async db => {
                     IQueryable<Unit> queryable = db.Units.Include(u => u.Parent);
                     if(string.IsNullOrWhiteSpace(query.Q))
@@ -39,9 +39,18 @@ namespace API.Data
                 TryFindUnit(db, id));
 
         internal static async Task<Result<Unit, Error>> CreateUnit(Unit body)
-		    => await ExecuteDbPipeline("create a unit", db =>
-                (body.ParentId > 0 ? TryFindUnit(db, (int)body.ParentId) : Task.FromResult(Pipeline.Success((Unit) null)))// 😬If body has parent try to fetch it, otherwise return a null parent.
+            => await ExecuteDbPipeline("create a unit", db =>
+                TrySetRequestedParent(db, body)
                 .Bind(parent => TryCreateUnit(db, body, parent)));
+
+        internal static async Task<Result<Unit, Error>> UpdateUnit(Unit body, int unitId)
+        {
+            return await ExecuteDbPipeline("update unit", db =>
+                TrySetRequestedParent(db, body)
+                .Bind(_ => TryFindUnit(db, unitId))//Make sure to use requested unitId, and not trust the provided body.
+                .Bind(existing => TryUpdateUnit(db, existing, body))
+            );
+        }
 
         private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id)
         {
@@ -51,6 +60,20 @@ namespace API.Data
             return unit == null
                 ? Pipeline.NotFound("No unit found with that ID.")
                 : Pipeline.Success(unit);
+        }
+
+        private static async Task<Result<Unit,Error>> TrySetRequestedParent (PeopleContext db, Unit body)
+        {
+            if(body.ParentId.HasValue && body.ParentId != 0)
+            {
+                return await TryFindUnit(db, (int)body.ParentId)
+                    .Tap(p => body.Parent = p);
+            }
+            else
+            {
+                body.Parent = null;
+                return Pipeline.Success(body);
+            }
         }
 
         private static async Task<Result<Unit,Error>> TryCreateUnit (PeopleContext db, Unit unit, Unit parent)
@@ -65,5 +88,18 @@ namespace API.Data
             await db.SaveChangesAsync();
             return Pipeline.Success(unit);
         }
-	}
+
+        private static async Task<Result<Unit, Error>> TryUpdateUnit(PeopleContext db, Unit existing, Unit body)
+		{
+			existing.Name = body.Name;
+            existing.Description = body.Description;
+            existing.Url = body.Url;
+            existing.Email = body.Email;
+            existing.Parent = body.Parent;
+
+            // TODO: Do we need to manually validate the model?  EF doesn't do that for free any more.
+            await db.SaveChangesAsync();
+            return Pipeline.Success(existing);
+		}        
+    }
 }
