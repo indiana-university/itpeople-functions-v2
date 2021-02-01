@@ -25,7 +25,7 @@ namespace Models
             Description = description;
             Url = url;
             Email = email;
-            ParentId = parent?.Id ?? 0;
+            ParentId = parent?.Id;
             Parent = parent;
         }
     }

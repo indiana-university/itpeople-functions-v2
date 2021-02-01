@@ -68,7 +68,7 @@ namespace API.Data
             {
                 return await TryFindUnit(db, (int)body.ParentId)
                     .Tap(p => body.SetParent(p))
-                    .Finally(_ => body);
+                    .Bind(_ => Pipeline.Success(body));
             }
             else
             {

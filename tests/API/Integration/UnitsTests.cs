@@ -149,6 +149,7 @@ namespace Integration
                 req.ParentId = 9999;
 
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.NotFound);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
                 Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
