@@ -5,13 +5,13 @@ namespace Models
     {
         
         /// The ID of the unit in this relationship
-        public int UnitId { get; }
+        public int UnitId { get; set; }
         /// The ID of the department in this relationship
-        public int BuildingId { get; }
+        public int BuildingId { get; set; }
         /// The unit in this relationship.
-        public Unit Unit { get; }
+        public Unit Unit { get; set; }
         /// The building in this relationship.
-        public Building Building { get; }
+        public Building Building { get; set; }
   
     }
         
