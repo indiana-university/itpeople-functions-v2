@@ -183,7 +183,7 @@ namespace Integration
             [Test]
             public async Task CannotUpdateWithMalformedUnit()
             {
-                var req = new Unit("Eagleton", "Gated Community of Eagleton, Indiana", null, "hoa@eagleton.biz");
+                var req = new Unit("", "Gated Community of Eagleton, Indiana", null, "hoa@eagleton.biz");
                 req.Id = TestEntities.Units.CityOfPawnee.Id;
 
                 var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidAdminJwt);
