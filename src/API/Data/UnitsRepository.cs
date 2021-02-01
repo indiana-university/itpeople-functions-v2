@@ -15,6 +15,7 @@ namespace API.Data
     public class UnitsRepository : DataRepository
     {
         public const string ParentNotFound = "The specified unit parent does not exist";
+        public const string Forbidden = "You do not have the permission required to use this resource.";
         public const string MalformedRequest = "The request body is malformed or missing";
 
         internal static Task<Result<List<Unit>, Error>> GetAll(UnitSearchParameters query)
