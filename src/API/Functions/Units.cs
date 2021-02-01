@@ -84,8 +84,8 @@ namespace API.Functions
                 .Finally(result => Response.Ok(req, result));
         
         [FunctionName(nameof(Units.UnitDelete))]
-        [OpenApiOperation(nameof(Units.UnitDelete), nameof(Units), Summary = "Delete a unit")]
-        [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "_Authorization_: Unit deletion is restricted to service administrators.")]
+        [OpenApiOperation(nameof(Units.UnitDelete), nameof(Units), Summary = "Delete a unit", Description = "_Authorization_: Unit deletion is restricted to service administrators.")]
+        [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
         [OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]
         [OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You do not have permission to modify this unit.")]
         [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No unit was found with the provided ID.")]
