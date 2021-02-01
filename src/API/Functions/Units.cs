@@ -17,6 +17,8 @@ namespace API.Functions
 {
     public static class Units
     {
+        private const string NotFoundError = "No unit found with ID (`unitId`).\\\n **or**\\\n No parent unit found with ID (`parentId`).";
+
 		[FunctionName(nameof(Units.UnitsGetAll))]
         [OpenApiOperation(nameof(Units.UnitsGetAll), nameof(Units), Summary="List all IT units", Description = @"Search for IT units by name and/or description. If no search term is provided, lists all top-level IT units." )]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<Unit>))]
@@ -52,7 +54,7 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Unit))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = UnitRequest.MalformedRequest)]
         [OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You do not have permission to create a unit.")]
-        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(ApiError), Description = UnitsRepository.ParentNotFound)]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(ApiError), Description = NotFoundError)]
         public static Task<IActionResult> CreateUnit(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "units")] HttpRequest req) 
             => Security.Authenticate(req)
@@ -73,7 +75,7 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Unit))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = UnitRequest.MalformedRequest)]
         [OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You do not have permission to modify this unit.")]
-        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(ApiError), Description = UnitsRepository.ParentNotFound)]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "application/json", typeof(ApiError), Description = NotFoundError)]
         public static Task<IActionResult> UpdateUnit(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "units/{unitId}")] HttpRequest req, int unitId)
             => Security.Authenticate(req)

@@ -14,9 +14,6 @@ namespace API.Data
 {
     public class UnitsRepository : DataRepository
     {
-        public const string ParentNotFound = "The specified unit parent does not exist";
-        public const string Forbidden = "You do not have the permission required to use this resource.";
-
         internal static Task<Result<List<Unit>, Error>> GetAll(UnitSearchParameters query)
             => ExecuteDbPipeline("search all units", async db => {
                     IQueryable<Unit> queryable = db.Units.Include(u => u.Parent);
@@ -59,13 +56,13 @@ namespace API.Data
                 .Bind(unit => TryDeleteUnit(db, unit)));
         }
 
-        private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id)
+        private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id, bool findingParent = false)
         {
             var unit = await db.Units
                 .Include(u => u.Parent)
                 .SingleOrDefaultAsync(p => p.Id == id);
             return unit == null
-                ? Pipeline.NotFound("No unit found with that ID.")
+                ? Pipeline.NotFound($"No {(findingParent ? "parent" : "")} unit found with ID ({id}).")
                 : Pipeline.Success(unit);
         }
 
@@ -73,7 +70,7 @@ namespace API.Data
         {
             if(body.ParentId.HasValue && body.ParentId != 0)
             {
-                return await TryFindUnit(db, (int)body.ParentId)
+                return await TryFindUnit(db, (int)body.ParentId, true)
                     .Tap(p => body.SetParent(p))
                     .Bind(_ => Pipeline.Success(body));
             }

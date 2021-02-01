@@ -154,7 +154,7 @@ namespace Integration
 
                 Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
                 Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains(UnitsRepository.ParentNotFound, actual.Errors);
+                Assert.Contains($"No parent unit found with ID ({req.ParentId}).", actual.Errors);
                 Assert.AreEqual("(none)", actual.Details);
             }
         }
@@ -221,7 +221,7 @@ namespace Integration
 
                 Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
                 Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains("No unit was found with the ID provided, or the specified unit parent does not exist.", actual.Errors);
+                Assert.Contains($"No parent unit found with ID ({req.ParentId}).", actual.Errors);
                 Assert.AreEqual("(none)", actual.Details);
             }
         }
