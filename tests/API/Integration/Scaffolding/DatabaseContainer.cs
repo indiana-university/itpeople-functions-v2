@@ -73,7 +73,9 @@ namespace Integration
             });
 
             peopleContext.Departments.AddRange(new List<Department> {
-                TestEntities.Departments.Parks
+                TestEntities.Departments.Parks,
+                TestEntities.Departments.Fire,
+                TestEntities.Departments.Health
             });
             
             peopleContext.Units.AddRange(new List<Unit> {

@@ -58,6 +58,16 @@ namespace Integration
                 Name = "Parks Department", 
                 Description = "Your local Parks department." 
             };
+            public static readonly Department Fire = new Department() { 
+                Id = 2, 
+                Name = "Fire Department", 
+                Description = "Your local fire department." 
+            };
+            public static readonly Department Health = new Department() { 
+                Id = 3, 
+                Name = "Health Department", 
+                Description = "Your local health department." 
+            };
         }
 
         public static class People
