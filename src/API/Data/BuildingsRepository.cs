@@ -54,10 +54,9 @@ namespace API.Data
                 .Include(b => b.Building)
                 .Include(b => b.Unit)
                 .Where(b => b.BuildingId == buildingId)
-                .AsNoTracking().ToListAsync();
-            return result.Count == 0
-                ? Pipeline.NotFound("No building relationships were found with the buildingId provided.")
-                : Pipeline.Success(result);
+                .AsNoTracking()
+                .ToListAsync();
+            return Pipeline.Success(result);
         }
     }
 }
