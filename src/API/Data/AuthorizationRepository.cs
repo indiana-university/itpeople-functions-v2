@@ -17,7 +17,7 @@ namespace API.Data
                 ? Pipeline.Success(true)
                 : Pipeline.Forbidden();
 
-        public static Result<bool, Error> AuthorizeCreate(EntityPermissions permissions) 
+        public static Result<bool, Error> AuthorizeCreation(EntityPermissions permissions) 
             => permissions.HasFlag(EntityPermissions.Post)
                 ? Pipeline.Success(true)
                 : Pipeline.Forbidden();

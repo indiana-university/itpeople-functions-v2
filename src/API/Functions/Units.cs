@@ -57,7 +57,7 @@ namespace API.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "units")] HttpRequest req) 
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor))// Set headers saying what the requestor can do to this unit
-                .Bind(perms => AuthorizationRepository.AuthorizeCreate(perms))
+                .Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
                 .Bind(_ => Request.DeserializeBody<UnitRequest>(req))
                 .Bind(body => UnitsRepository.CreateUnit(body))
                 .Finally(result => Response.Created("units", result));
