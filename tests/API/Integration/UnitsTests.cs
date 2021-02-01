@@ -232,12 +232,24 @@ namespace Integration
             [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Non-Admin cannot delete a unit.")]
             [TestCase(9999, ValidAdminJwt, HttpStatusCode.NotFound, Description = "Cannot delete a unit that does not exist.")]
             [TestCase(TestEntities.Units.CityOfPawneeUnitId, ValidAdminJwt, HttpStatusCode.Conflict, Description = "Cannot delete a unit that has children.")]
-            public async Task ServiceAdminCanDeleteUnit(int unitId, string jwt, HttpStatusCode expectedCode)
+            public async Task CanDeleteUnit(int unitId, string jwt, HttpStatusCode expectedCode)
             {
                 var resp = await DeleteAuthenticated($"units/{unitId}", jwt);
                 AssertStatusCode(resp, expectedCode);
             }
             
+            [Test]
+            public async Task CannotDeleteUnitWithChildren()
+            {
+                var resp = await DeleteAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.Conflict);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains("Unit 1 has child units, with ids: 2. These must be reassigned prior to deletion.", actual.Errors);
+                Assert.AreEqual("(none)", actual.Details);
+            }
+
         }
     }
 }

@@ -89,7 +89,7 @@ namespace API.Functions
         [OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]
         [OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You do not have permission to modify this unit.")]
         [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No unit was found with the provided ID.")]
-        [OpenApiResponseWithoutBody(HttpStatusCode.Conflict, Description = "The unit has children.  These must be reassigned prior to deletion.")]
+        [OpenApiResponseWithBody(HttpStatusCode.Conflict, "application/json", typeof(ApiError), Description = "Unit `unitId` has child units, with ids: `list of child unitIds`. These must be reassigned prior to deletion.")]
         public static Task<IActionResult> UnitDelete(
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "units/{unitId}")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)

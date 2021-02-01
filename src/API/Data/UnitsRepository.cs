@@ -119,7 +119,7 @@ namespace API.Data
                 .ToList();
             if(childUnitIds.Count > 0)
             {
-                return Pipeline.Conflict($"Unit {unit.Id} has child units ({string.Join(", ", childUnitIds)}) These must be reassigned prior to deletion.");
+                return Pipeline.Conflict($"Unit {unit.Id} has child units, with ids: {string.Join(", ", childUnitIds)}. These must be reassigned prior to deletion.");
             }
             else
             {
