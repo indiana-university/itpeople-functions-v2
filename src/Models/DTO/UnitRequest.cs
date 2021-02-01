@@ -2,8 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Models
 {
-    public class Unit : Entity
+    public class UnitRequest
     {
+
         /// The name of this unit.
         [Required]
         public string Name { get; set; }
@@ -15,19 +16,11 @@ namespace Models
         public string Email { get; set; }
         /// The unique ID of the parent unit of this unit.
         public int? ParentId { get; set; } 
-        /// The parent unit of this unit
-        public Unit Parent { get; set; }
+        
+		/// The parent unit of this unit
+		private Unit Parent;
 
-        public Unit() {}
-        public Unit(string name, string description, string url, string email, Unit parent = null)
-        {
-            Name = name;
-            Description = description;
-            Url = url;
-            Email = email;
-            ParentId = parent?.Id ?? 0;
-            Parent = parent;
-        }
+		public Unit GetParent() => Parent;
+		public void SetParent(Unit unit) => Parent = unit;
     }
-    
 }

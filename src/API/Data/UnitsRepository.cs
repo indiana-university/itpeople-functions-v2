@@ -38,12 +38,12 @@ namespace API.Data
             => ExecuteDbPipeline("get a unit by ID", db => 
                 TryFindUnit(db, id));
 
-        internal static async Task<Result<Unit, Error>> CreateUnit(Unit body)
+        internal static async Task<Result<Unit, Error>> CreateUnit(UnitRequest body)
             => await ExecuteDbPipeline("create a unit", db =>
                 TrySetRequestedParent(db, body)
-                .Bind(parent => TryCreateUnit(db, body, parent)));
+                .Bind(parent => TryCreateUnit(db, body)));
 
-        internal static async Task<Result<Unit, Error>> UpdateUnit(Unit body, int unitId)
+        internal static async Task<Result<Unit, Error>> UpdateUnit(UnitRequest body, int unitId)
         {
             return await ExecuteDbPipeline("update unit", db =>
                 TrySetRequestedParent(db, body)
@@ -62,40 +62,39 @@ namespace API.Data
                 : Pipeline.Success(unit);
         }
 
-        private static async Task<Result<Unit,Error>> TrySetRequestedParent (PeopleContext db, Unit body)
+        private static async Task<Result<UnitRequest,Error>> TrySetRequestedParent (PeopleContext db, UnitRequest body)
         {
             if(body.ParentId.HasValue && body.ParentId != 0)
             {
                 return await TryFindUnit(db, (int)body.ParentId)
-                    .Tap(p => body.Parent = p);
+                    .Tap(p => body.SetParent(p))
+                    .Finally(_ => body);
             }
             else
             {
-                body.Parent = null;
                 return Pipeline.Success(body);
             }
         }
 
-        private static async Task<Result<Unit,Error>> TryCreateUnit (PeopleContext db, Unit unit, Unit parent)
+        private static async Task<Result<Unit,Error>> TryCreateUnit (PeopleContext db, UnitRequest body)
         {
-            // Setup the parent relationship on the new Unit.
-            unit.Parent = parent;
+            var unit = new Unit(body.Name, body.Description, body.Url, body.Email, body.GetParent());
 
             // add the unit
             db.Units.Add(unit);
-            
+            // TODO: We might need to force the validation of unit before EF saves it to the DB.
             // save changes
             await db.SaveChangesAsync();
             return Pipeline.Success(unit);
         }
 
-        private static async Task<Result<Unit, Error>> TryUpdateUnit(PeopleContext db, Unit existing, Unit body)
+        private static async Task<Result<Unit, Error>> TryUpdateUnit(PeopleContext db, Unit existing, UnitRequest body)
 		{
 			existing.Name = body.Name;
             existing.Description = body.Description;
             existing.Url = body.Url;
             existing.Email = body.Email;
-            existing.Parent = body.Parent;
+            existing.Parent = body.GetParent();
 
             // TODO: Do we need to manually validate the model?  EF doesn't do that for free any more.
             await db.SaveChangesAsync();

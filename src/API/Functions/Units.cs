@@ -57,7 +57,7 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor))// Set headers saying what the requestor can do to this unit
                 .Bind(perms => AuthorizationRepository.AuthorizeCreate(perms))
-                .Bind(_ => Request.DeserializeBody<Unit>(req))
+                .Bind(_ => Request.DeserializeBody<UnitRequest>(req))
                 .Bind(body => UnitsRepository.CreateUnit(body))
                 .Finally(result => Response.Created("units", result));
         
@@ -77,7 +77,7 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
-                .Bind(_ => Request.DeserializeBody<Unit>(req))
+                .Bind(_ => Request.DeserializeBody<UnitRequest>(req))
                 .Bind(body => UnitsRepository.UpdateUnit(body, unitId))
                 .Finally(result => Response.Ok(req, result));
     }
