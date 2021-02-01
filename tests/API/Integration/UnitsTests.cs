@@ -168,6 +168,7 @@ namespace Integration
                 req.Id = TestEntities.Units.CityOfPawnee.Id;
 
                 var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<Unit>();
 
                 Assert.AreEqual(TestEntities.Units.CityOfPawnee.Id, actual.Id);
@@ -185,6 +186,7 @@ namespace Integration
                 req.Id = TestEntities.Units.CityOfPawnee.Id;
 
                 var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
                 Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
@@ -201,6 +203,7 @@ namespace Integration
                 req.Id = TestEntities.Units.CityOfPawnee.Id;
 
                 var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.Forbidden);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
                 Assert.AreEqual((int)HttpStatusCode.Unauthorized, actual.StatusCode);
@@ -218,6 +221,7 @@ namespace Integration
                 req.ParentId = 9999;
 
                 var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.NotFound);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
                 Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
