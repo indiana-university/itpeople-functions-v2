@@ -12,6 +12,7 @@ using System.Net;
 using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
+using System.Net.Mime;
 
 namespace API.Functions
 {
