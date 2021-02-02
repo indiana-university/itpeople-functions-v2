@@ -18,6 +18,7 @@
     <PackageReference Include="BouncyCastle.NetCore" Version="1.8.8" />
     <PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="3.1.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
+    <PackageReference Include="Serilog.Sinks.PostgreSQL" Version="2.1.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
