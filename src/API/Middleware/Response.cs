@@ -25,6 +25,7 @@ namespace API.Middleware
                 // TODO:
                 // if a get, don't log the value.
                 // if a put, do log the value.
+                logger.SuccessResult(HttpStatusCode.OK);
                 return new OkObjectResult(result.Value);      
             }
             else 
@@ -40,7 +41,7 @@ namespace API.Middleware
             var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
-                logger.SuccessResult(result.Value);
+                logger.SuccessResult(HttpStatusCode.Created);
                 return new CreatedResult($"{req.Path}/{result.Value.Id}", result.Value);
             }
             else 
@@ -56,7 +57,7 @@ namespace API.Middleware
             var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
-                logger.SuccessResult(new Entity());
+                logger.SuccessResult(HttpStatusCode.NoContent);
                 return new NoContentResult();
             }
             else 
@@ -66,18 +67,16 @@ namespace API.Middleware
             }
         }
 
-        // TODO: What to do when there's not a response value? E.g. 204 No Content?
-        private static void SuccessResult<T>(this Serilog.ILogger logger, T value) where T : Entity
+        private static void SuccessResult(this Serilog.ILogger logger, HttpStatusCode statusCode)
         {
-            logger
-                .ForContext(LogProps.ItemProperties, JsonConvert.SerializeObject(value, Formatting.Indented))
-                .Information($"{{{LogProps.ItemType}}} with ID {{{LogProps.ItemId}}} and properties {{{LogProps.ItemProperties}}}", typeof(T).Name, value.Id);
+            logger.Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}} {{{LogProps.RequestParameters}}} ", 
+                (int)statusCode);
         }
 
         private static void FailureResult<T>(this Serilog.ILogger logger, Error error)
         {
-            logger.Error($"Hard fail. {{{LogProps.ItemType}}}: ({{{LogProps.StatusCode}}}) {{{LogProps.ErrorInfo}}}.",
-                typeof(T).Name, error.StatusCode, error.Messages);
+            logger.Error($"[{{{LogProps.StatusCode}}}] {{{LogProps.ItemType}}}: {{{LogProps.ErrorInfo}}}.",
+                (int)error.StatusCode, typeof(T).Name, error.Messages);
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Serilog.Sinks.PostgreSQL;
 using NpgsqlTypes;
 using System.Linq;
+using System;
 
 namespace API.Middleware
 {
@@ -34,7 +35,7 @@ namespace API.Middleware
         private static string Env(string key) 
             => System.Environment.GetEnvironmentVariable(key);
 
-        private static void TryAddAzureAppInsightsSink(LoggerConfiguration logger)
+        private static LoggerConfiguration TryAddAzureAppInsightsSink(this LoggerConfiguration logger)
         {
             var appInsightsKey = Env("APPINSIGHTS_INSTRUMENTATIONKEY");
             if (!string.IsNullOrWhiteSpace(appInsightsKey))
@@ -42,6 +43,8 @@ namespace API.Middleware
                 logger.WriteTo.ApplicationInsights(
                     TelemetryConfiguration.CreateDefault(), TelemetryConverter.Traces);
             }
+
+            return logger;
         }
         
         private static IDictionary<string, ColumnWriterBase> columnWriters = new Dictionary<string, ColumnWriterBase>
@@ -63,7 +66,7 @@ namespace API.Middleware
             {"exception", new ExceptionColumnWriter(NpgsqlDbType.Text) } // exception details
         };
 
-        private static void TryAddPostgresqlDatabaseSink(LoggerConfiguration logger)
+        private static LoggerConfiguration TryAddPostgresqlDatabaseSink(this LoggerConfiguration logger)
         {
             var tableName = "logs";
             var connectionString = Env("DatabaseConnectionString");
@@ -73,25 +76,28 @@ namespace API.Middleware
                 logger.WriteTo.PostgreSQL(
                     connectionString, tableName, columnWriters);
             }
-        }
-
-        private static ILogger CreateLogger()
-        {
-            var logger =
-                new LoggerConfiguration()
-                .Enrich.FromLogContext()
-                .WriteTo.Console();
-
-            TryAddAzureAppInsightsSink(logger);
-            TryAddPostgresqlDatabaseSink(logger);
-
-            return logger.CreateLogger();
+            return logger;
         }
 
         public static ILogger GetLogger(HttpRequest req)
         {
-            var pathParts = req.Path.Value.Split("/", System.StringSplitOptions.RemoveEmptyEntries);
-            return CreateLogger()
+            var pathParts = req.Path.HasValue
+                ? req.Path.Value.Split("/", System.StringSplitOptions.RemoveEmptyEntries)
+                : new[]{string.Empty};
+
+            var elapsed = 
+                req.HttpContext.Items.ContainsKey(LogProps.ElapsedTime)
+                ? (DateTime.UtcNow - (DateTime)req.HttpContext.Items[LogProps.ElapsedTime]).TotalMilliseconds
+                : -1;
+
+            return 
+                new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .TryAddAzureAppInsightsSink()
+                .TryAddPostgresqlDatabaseSink()
+                .CreateLogger()
+                .ForContext(LogProps.ElapsedTime, elapsed)
                 .ForContext(LogProps.RequestIPAddress, req.HttpContext.Connection.RemoteIpAddress)
                 .ForContext(LogProps.RequestMethod, req.Method)
                 .ForContext(LogProps.Function, pathParts.First())
