@@ -67,11 +67,10 @@ namespace API.Middleware
             }
         }
 
-        private static void SuccessResult(this Serilog.ILogger logger, HttpStatusCode statusCode)
-        {
-            logger.Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}} {{{LogProps.RequestParameters}}} ", 
-                (int)statusCode);
-        }
+        private static void SuccessResult(this Serilog.ILogger logger, HttpStatusCode statusCode) 
+            => logger
+                .ForContext(LogProps.StatusCode, (int)statusCode)
+                .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
 
         private static void FailureResult<T>(this Serilog.ILogger logger, Error error)
         {
