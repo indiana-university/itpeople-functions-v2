@@ -250,6 +250,24 @@ namespace Integration
                 Assert.AreEqual("(none)", actual.Details);
             }
 
+            [Test]
+            public async Task ChangeUnitParent()
+            {
+                //Create a unit to test.
+                var createReq = new Unit("Test", "test", null, null, TestEntities.Units.ParksAndRecUnitId);
+                var createResp = await PostAuthenticated("units", createReq, ValidAdminJwt);
+                AssertStatusCode(createResp, HttpStatusCode.Created);
+                var createResult = await createResp.Content.ReadAsAsync<Unit>();
+
+                //Change the unit's parent from parks & rec to city.
+                createResult.ParentId = TestEntities.Units.CityOfPawneeUnitId;
+                var resp = await PutAuthenticated($"units/{createResult.Id}", createResult, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<Unit>();
+
+                Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.ParentId);
+                Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Parent.Id);
+            }
         }
     }
 }
