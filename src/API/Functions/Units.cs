@@ -59,7 +59,7 @@ namespace API.Functions
                 .Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
                 .Bind(_ => Request.DeserializeBody<UnitRequest>(req))
                 .Bind(body => UnitsRepository.CreateUnit(body))
-                .Finally(result => Response.Created("units", result));
+                .Finally(result => Response.Created(req, result));
         
         [FunctionName(nameof(Units.UpdateUnit))]
         [OpenApiOperation(nameof(Units.UpdateUnit), nameof(Units), Summary = "Update a unit", Description = "_Authorization_: Units can be modified by any unit member that has either the `Owner` or `ManageMembers` permission on their membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
