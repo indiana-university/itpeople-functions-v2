@@ -26,7 +26,7 @@ namespace API.Middleware
         public const string ItemProperties = "ItemProperties";
 
         public const string StatusCode = "StatusCode";
-        public const string ErrorInfo = "ErrorInfo";
+        public const string ErrorMessages = "ErrorMessages";
         public const string ErrorStackTrace = "ErrorStackTrace";
     }
 
@@ -57,7 +57,7 @@ namespace API.Middleware
             {"function", new SinglePropertyColumnWriter(LogProps.Function, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // first part of path
             {"parameters", new SinglePropertyColumnWriter(LogProps.RequestParameters, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // subsequent parts of path
             {"query", new SinglePropertyColumnWriter(LogProps.RequestQuery, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // query string
-            {"detail", new SinglePropertyColumnWriter("Detail", PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // error message details
+            {"detail", new SinglePropertyColumnWriter(LogProps.ErrorMessages, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // error message details
             {"content", new SinglePropertyColumnWriter("Content", PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // serialized request body (as text)
             // TODO: some column that expresses the request body as JSON
             // TODO: some column that expresses the "before" state of a record as JSON

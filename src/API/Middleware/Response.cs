@@ -72,10 +72,10 @@ namespace API.Middleware
                 .ForContext(LogProps.StatusCode, (int)statusCode)
                 .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
 
-        private static void FailureResult<T>(this Serilog.ILogger logger, Error error)
-        {
-            logger.Error($"[{{{LogProps.StatusCode}}}] {{{LogProps.ItemType}}}: {{{LogProps.ErrorInfo}}}.",
-                (int)error.StatusCode, typeof(T).Name, error.Messages);
-        }
+        private static void FailureResult<T>(this Serilog.ILogger logger, Error error) 
+            => logger
+                .ForContext(LogProps.StatusCode, (int)error.StatusCode)
+                .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(error.Messages))
+                .Error(error.Exception, $"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}:\nErrors: {{{LogProps.ErrorMessages}}}.");
     }
 }
