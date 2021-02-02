@@ -37,15 +37,18 @@ namespace API.Data
 
         internal static async Task<Result<Unit, Error>> CreateUnit(UnitRequest body)
             => await ExecuteDbPipeline("create a unit", db =>
-                TrySetRequestedParent(db, body)
-                .Bind(parent => TryCreateUnit(db, body)));
+                TryValidateParentExists(db, body)
+                .Bind(_ => TryCreateUnit(db, body))
+                .Bind(created => TryFindUnit(db, created.Id))
+            );
 
         internal static async Task<Result<Unit, Error>> UpdateUnit(UnitRequest body, int unitId)
         {
             return await ExecuteDbPipeline($"update unit {unitId}", db =>
-                TrySetRequestedParent(db, body)
+                TryValidateParentExists(db, body)
                 .Bind(_ => TryFindUnit(db, unitId))
                 .Bind(existing => TryUpdateUnit(db, existing, body))
+                .Bind(_ => TryFindUnit(db, unitId))
             );
         }
 
@@ -66,12 +69,11 @@ namespace API.Data
                 : Pipeline.Success(unit);
         }
 
-        private static async Task<Result<UnitRequest,Error>> TrySetRequestedParent (PeopleContext db, UnitRequest body)
+        private static async Task<Result<UnitRequest,Error>> TryValidateParentExists (PeopleContext db, UnitRequest body)
         {
             if(body.ParentId.HasValue && body.ParentId != 0)
             {
                 return await TryFindUnit(db, (int)body.ParentId, true)
-                    .Tap(p => body.SetParent(p))
                     .Bind(_ => Pipeline.Success(body));
             }
             else
@@ -82,7 +84,7 @@ namespace API.Data
 
         private static async Task<Result<Unit,Error>> TryCreateUnit (PeopleContext db, UnitRequest body)
         {
-            var unit = new Unit(body.Name, body.Description, body.Url, body.Email, body.GetParent());
+            var unit = new Unit(body.Name, body.Description, body.Url, body.Email, body.ParentId);
 
             // add the unit
             db.Units.Add(unit);
@@ -98,7 +100,7 @@ namespace API.Data
             existing.Description = body.Description;
             existing.Url = body.Url;
             existing.Email = body.Email;
-            existing.Parent = body.GetParent();
+            existing.ParentId = body.ParentId;
 
             // TODO: Do we need to manually validate the model?  EF doesn't do that for free any more.
             await db.SaveChangesAsync();

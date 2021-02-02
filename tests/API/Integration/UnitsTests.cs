@@ -103,7 +103,7 @@ namespace Integration
             [Test]
             public async Task CreateMayorsOffice()
             {
-                var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
+                var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent.Id);
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.Created);
                 var actual = await resp.Content.ReadAsAsync<Unit>();
@@ -121,7 +121,7 @@ namespace Integration
             [Test]
             public async Task UnauthorizedCannotCreate()
             {
-                var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
+                var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent.Id);
                 var resp = await PostAuthenticated("units", req, ValidRswansonJwt);
                 AssertStatusCode(resp, HttpStatusCode.Forbidden);
             }
@@ -131,7 +131,7 @@ namespace Integration
             [Test]
             public async Task CannotCreateMalformedUnit()
             {
-                var req = new Unit("", ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent);
+                var req = new Unit("", ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent.Id);
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 

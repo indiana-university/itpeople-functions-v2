@@ -19,14 +19,13 @@ namespace Models
         public Unit Parent { get; set; }
 
         public Unit() {}
-        public Unit(string name, string description, string url, string email, Unit parent = null)
+        public Unit(string name, string description, string url, string email, int? parentId = null)
         {
             Name = name;
             Description = description;
             Url = url;
             Email = email;
-            ParentId = parent?.Id;
-            Parent = parent;
+            ParentId = parentId;
         }
     }
     
