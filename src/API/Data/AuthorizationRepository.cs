@@ -15,8 +15,17 @@ namespace API.Data
         public static Result<bool, Error> AuthorizeModification(EntityPermissions permissions) 
             => permissions.HasFlag(EntityPermissions.Put)
                 ? Pipeline.Success(true)
-                : Pipeline.Unauthorized();
+                : Pipeline.Forbidden();
 
+        public static Result<bool, Error> AuthorizeCreation(EntityPermissions permissions) 
+            => permissions.HasFlag(EntityPermissions.Post)
+                ? Pipeline.Success(true)
+                : Pipeline.Forbidden();
+        
+        public static Result<bool, Error> AuthorizeDeletion(EntityPermissions permissions) 
+            => permissions.HasFlag(EntityPermissions.Delete)
+                ? Pipeline.Success(true)
+                : Pipeline.Forbidden();
 
         internal static Task<Result<EntityPermissions, Error>> DeterminePersonPermissions(HttpRequest req, string requestorNetid, int personId)
             => ExecuteDbPipeline("resolve person permissions", db =>
@@ -101,7 +110,7 @@ namespace API.Data
         {
             var result = EntityPermissions.Get;
             // service admins: get post put delete
-            if (requestor.IsServiceAdmin)
+            if (requestor?.IsServiceAdmin == true)
             {
                 result = EntityPermissions.All;
             }   

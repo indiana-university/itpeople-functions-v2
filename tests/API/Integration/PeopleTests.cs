@@ -242,7 +242,7 @@ namespace Integration
             {
                 // Ben belongs to a unit that Ron doesn't manage. Ron shouln't be able to modify Ben's record.
                 var resp = await PutAuthenticated($"people/{TestEntities.People.BWyattId}", TestUpdateRequest);
-                AssertStatusCode(resp, HttpStatusCode.Unauthorized);
+                AssertStatusCode(resp, HttpStatusCode.Forbidden);
             }
         }
     }
