@@ -26,5 +26,19 @@ namespace API.Data
                     return Pipeline.Success(result);
                 });
 
+        public static Task<Result<Department, Error>> GetOne(int id) 
+            => ExecuteDbPipeline("get a department by ID", db => 
+                TryFindDepartment(db, id));
+
+        
+        private static async Task<Result<Department,Error>> TryFindDepartment (PeopleContext db, int id)
+        {
+            var result = await db.Departments
+                .SingleOrDefaultAsync(b => b.Id == id);
+            return result == null
+                ? Pipeline.NotFound("No department was found with the ID provided.")
+                : Pipeline.Success(result);
+        }
+
     }
 }

@@ -29,6 +29,16 @@ namespace API.Functions
                 .Bind(query => DepartmentsRepository.GetAll(query))
                 .Finally(Departments => Response.Ok(req, Departments));
 
-        
+        [FunctionName(nameof(Departments.DepartmentsGetOne))]
+        [OpenApiOperation(nameof(Departments.DepartmentsGetOne), nameof(Departments), Summary = "Find a department by ID")]
+        [OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Department), Description="A department record")]
+        [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No department was found with the ID provided.")]
+        public static Task<IActionResult> DepartmentsGetOne(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments/{departmentId}")] HttpRequest req, int departmentId) 
+            => Security.Authenticate(req)
+                .Bind(_ => DepartmentsRepository.GetOne(departmentId))
+                .Finally(result => Response.Ok(req, result));
+
     }
 }

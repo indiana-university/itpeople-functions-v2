@@ -53,6 +53,7 @@ namespace Integration
 
         public static class Departments
         {
+            public const int ParksId = 1;
             public static readonly Department Parks = new Department() { 
                 Id = 1, 
                 Name = "Parks Department", 
