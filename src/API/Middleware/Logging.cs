@@ -17,6 +17,8 @@ namespace API.Middleware
         public const string RequestorNetid = "RequestorNetid";
         public const string RequestQuery = "RequestQuery";
         public const string RequestParameters = "RequestParameters";
+        public const string RequestBody = "RequestBody";
+        public const string RecordBody = "RecordBody";
         
         public const string ElapsedTime = "ElapsedTime";
         
@@ -58,9 +60,8 @@ namespace API.Middleware
             {"parameters", new SinglePropertyColumnWriter(LogProps.RequestParameters, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // subsequent parts of path
             {"query", new SinglePropertyColumnWriter(LogProps.RequestQuery, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // query string
             {"detail", new SinglePropertyColumnWriter(LogProps.ErrorMessages, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // error message details
-            {"content", new SinglePropertyColumnWriter("Content", PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // serialized request body (as text)
-            // TODO: some column that expresses the request body as JSON
-            // TODO: some column that expresses the "before" state of a record as JSON
+            {"content", new SinglePropertyColumnWriter(LogProps.RequestBody, PropertyWriteMethod.Raw, NpgsqlDbType.Json) }, // request body
+            {"record", new SinglePropertyColumnWriter(LogProps.RecordBody, PropertyWriteMethod.Raw, NpgsqlDbType.Json) }, // existing record body
             {"ip_address", new SinglePropertyColumnWriter(LogProps.RequestIPAddress, PropertyWriteMethod.Raw, NpgsqlDbType.Text) },
             {"netid", new SinglePropertyColumnWriter(LogProps.RequestorNetid, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // requestor netid
             {"exception", new ExceptionColumnWriter(NpgsqlDbType.Text) } // exception details

@@ -9,6 +9,7 @@ using Models;
 using API.Functions;
 using System;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 
 namespace API.Data
 {
@@ -42,11 +43,12 @@ namespace API.Data
                 .Bind(created => TryFindUnit(db, created.Id))
             );
 
-        internal static async Task<Result<Unit, Error>> UpdateUnit(UnitRequest body, int unitId)
+        internal static async Task<Result<Unit, Error>> UpdateUnit(HttpRequest req, UnitRequest body, int unitId)
         {
             return await ExecuteDbPipeline($"update unit {unitId}", db =>
                 TryValidateParentExists(db, body)
                 .Bind(_ => TryFindUnit(db, unitId))
+                .Tap(existing => req.HttpContext.Items[LogProps.RecordBody] = JsonConvert.SerializeObject(existing))
                 .Bind(existing => TryUpdateUnit(db, existing, body))
                 .Bind(_ => TryFindUnit(db, unitId))
             );

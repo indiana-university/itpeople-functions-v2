@@ -5,6 +5,7 @@ using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Models;
+using Microsoft.Azure.WebJobs.Extensions.Http;
 
 namespace API.Middleware
 {
@@ -25,12 +26,12 @@ namespace API.Middleware
                 // TODO:
                 // if a get, don't log the value.
                 // if a put, do log the value.
-                logger.SuccessResult(HttpStatusCode.OK);
+                logger.SuccessResult(req, HttpStatusCode.OK);
                 return new OkObjectResult(result.Value);      
             }
             else 
             {
-                logger.FailureResult<T>(result.Error);
+                logger.FailureResult<T>(req, result.Error);
                 return result.Error.ToActionResult();
             }
         }
@@ -41,12 +42,12 @@ namespace API.Middleware
             var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
-                logger.SuccessResult(HttpStatusCode.Created);
+                logger.SuccessResult(req, HttpStatusCode.Created);
                 return new CreatedResult($"{req.Path}/{result.Value.Id}", result.Value);
             }
             else 
             {
-                logger.FailureResult<T>(result.Error);
+                logger.FailureResult<T>(req, result.Error);
                 return result.Error.ToActionResult();
             }
         }
@@ -57,24 +58,28 @@ namespace API.Middleware
             var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
-                logger.SuccessResult(HttpStatusCode.NoContent);
+                logger.SuccessResult(req, HttpStatusCode.NoContent);
                 return new NoContentResult();
             }
             else 
             {
-                logger.FailureResult<T>(result.Error);
+                logger.FailureResult<T>(req, result.Error);
                 return result.Error.ToActionResult();
             }
         }
 
-        private static void SuccessResult(this Serilog.ILogger logger, HttpStatusCode statusCode) 
+        private static void SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode) 
             => logger
                 .ForContext(LogProps.StatusCode, (int)statusCode)
+                .ForContext(LogProps.RequestBody, request.ReadAsStringAsync().Result)
+                .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
                 .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
 
-        private static void FailureResult<T>(this Serilog.ILogger logger, Error error) 
+        private static void FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error) 
             => logger
                 .ForContext(LogProps.StatusCode, (int)error.StatusCode)
+                .ForContext(LogProps.RequestBody, request.ReadAsStringAsync().Result)
+                .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
                 .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(error.Messages))
                 .Error(error.Exception, $"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}:\nErrors: {{{LogProps.ErrorMessages}}}.");
     }

@@ -74,7 +74,7 @@ namespace API.Functions
                 .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
                 .Bind(_ => Request.DeserializeBody<UnitRequest>(req))
-                .Bind(body => UnitsRepository.UpdateUnit(body, unitId))
+                .Bind(body => UnitsRepository.UpdateUnit(req, body, unitId))
                 .Finally(result => Response.Ok(req, result));
         
         [FunctionName(nameof(Units.DeleteUnit))]
