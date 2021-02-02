@@ -97,6 +97,7 @@ namespace API.Middleware
                 .ForContext(LogProps.Function, pathParts.First())
                 .ForContext(LogProps.RequestParameters, string.Join('/', pathParts.Skip(1)))
                 .ForContext(LogProps.RequestQuery, req.QueryString)
+                .ForContext(LogProps.RequestorNetid, req.HttpContext.Items[LogProps.RequestorNetid]);
         }
     }
 }
