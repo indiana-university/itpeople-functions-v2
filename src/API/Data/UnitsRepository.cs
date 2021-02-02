@@ -51,7 +51,7 @@ namespace API.Data
 
         internal static async Task<Result<bool, Error>> DeleteUnit(int unitId)
         {
-            return await ExecuteDbPipeline($"delte unit {unitId}", db =>
+            return await ExecuteDbPipeline($"delete unit {unitId}", db =>
                 TryFindUnit(db, unitId)
                 .Bind(unit => TryDeleteUnit(db, unit)));
         }
