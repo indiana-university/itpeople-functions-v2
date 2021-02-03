@@ -55,6 +55,7 @@ namespace Integration
                     public.building_relationships, 
                     public.departments,
                     public.people, 
+                    public.support_relationships, 
                     public.units,
                     public.unit_members,
                     public.unit_member_tools
@@ -75,12 +76,13 @@ namespace Integration
             peopleContext.Departments.AddRange(new List<Department> {
                 TestEntities.Departments.Parks,
                 TestEntities.Departments.Fire,
-                TestEntities.Departments.Health
+                TestEntities.Departments.Auditor
             });
             
             peopleContext.Units.AddRange(new List<Unit> {
                 TestEntities.Units.CityOfPawnee,
-                TestEntities.Units.ParksAndRecUnit
+                TestEntities.Units.ParksAndRecUnit,
+                TestEntities.Units.Auditor,
             });
 
             peopleContext.People.AddRange(new List<Person> { 
@@ -90,6 +92,10 @@ namespace Integration
                 TestEntities.People.ServiceAdmin
             });  
             
+            peopleContext.SupportRelationships.AddRange(new List<SupportRelationship> {
+                TestEntities.SupportRelationships.ParksAndRecRelationship
+            });
+
             peopleContext.UnitMembers.AddRange(new List<UnitMember> { 
                 TestEntities.UnitMembers.RSwansonDirector,
                 TestEntities.UnitMembers.LkNopeSublead,

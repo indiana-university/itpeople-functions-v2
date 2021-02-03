@@ -15,11 +15,11 @@ namespace API.Data
     {
 		internal static Task<Result<List<Department>, Error>> GetAll(DepartmentSearchParameters query)
             => ExecuteDbPipeline("search all departments", async db => {
-                    var result = await db.Departments.Where(b =>
+                    var result = await db.Departments.Where(d =>
                         string.IsNullOrWhiteSpace(query.Q) 
-                        || EF.Functions.ILike(b.Name, $"%{query.Q}%")
-                        || EF.Functions.ILike(b.Description, $"%{query.Q}%"))
-                        .OrderBy(b => b.Name)
+                        || EF.Functions.ILike(d.Name, $"%{query.Q}%")
+                        || EF.Functions.ILike(d.Description, $"%{query.Q}%"))
+                        .OrderBy(d => d.Name)
                         .Take(25)
                         .AsNoTracking()
                         .ToListAsync();
@@ -34,11 +34,41 @@ namespace API.Data
         private static async Task<Result<Department,Error>> TryFindDepartment (PeopleContext db, int id)
         {
             var result = await db.Departments
-                .SingleOrDefaultAsync(b => b.Id == id);
+                .SingleOrDefaultAsync(d => d.Id == id);
             return result == null
                 ? Pipeline.NotFound("No department was found with the ID provided.")
                 : Pipeline.Success(result);
         }
 
-    }
+        public static Task<Result<List<Unit>, Error>> GetDepartmentUnits(int departmentId) 
+            => ExecuteDbPipeline("fetch units", db =>
+                TryFindDepartmentUnits(db, departmentId)
+                .Bind(d => Pipeline.Success(d)));
+
+        private static async Task<Result<List<Unit>,Error>> TryFindDepartmentUnits (PeopleContext db, int departmentId)
+        {
+            var result = await db.UnitMembers
+                .Include(m => m.Person)
+                .Include(m => m.Unit.Parent)
+                .Where(m => m.Person.DepartmentId == departmentId)
+                .Select(m => m.Unit)
+                .AsNoTracking().ToListAsync();
+            return Pipeline.Success(result);
+        }
+
+        public static Task<Result<List<SupportRelationship>, Error>> GetDepartmentSupportingUnits(int departmentId) 
+            => ExecuteDbPipeline("fetch supporting relationships", db =>
+                TryFindDepartmentSupportingUnits(db, departmentId)
+                .Bind(d => Pipeline.Success(d)));
+                
+        private static async Task<Result<List<SupportRelationship>,Error>> TryFindDepartmentSupportingUnits (PeopleContext db, int departmentId)
+        {
+            var result = await db.SupportRelationships
+                .Include(r => r.Department)
+                .Include(r => r.Unit)
+                .Where(r => r.DepartmentId == departmentId)
+                .AsNoTracking().ToListAsync();
+            return Pipeline.Success(result);
+        }
+	}
 }

@@ -69,7 +69,7 @@ namespace Integration
 			}
 
 			[Test]
-			public async Task ResponseHasCorrectBuildingShape()
+			public async Task ResponseHasCorrectShape()
 			{
 				var resp = await GetAuthenticated($"departments/{TestEntities.Departments.ParksId}");
 				var actual = await resp.Content.ReadAsAsync<Department>();
@@ -80,5 +80,49 @@ namespace Integration
 			}
 		}
 
+		public class GetDepartmentUnits : ApiTest
+		{
+			[TestCase(TestEntities.Departments.ParksId, HttpStatusCode.OK)]
+			[TestCase(9999, HttpStatusCode.NotFound)]
+			public async Task CanGetSupportingUnits(int id, HttpStatusCode expectedStatus)
+			{
+				var resp = await GetAuthenticated($"departments/{id}/memberUnits");
+				AssertStatusCode(resp, expectedStatus);
+			}
+
+			[Test]
+			public async Task GetParksMemberUnits()
+			{
+				var resp = await GetAuthenticated($"departments/{TestEntities.Departments.Auditor.Id}/memberUnits");
+				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
+				var expected = new List<Unit> { TestEntities.Units.Auditor };
+				Assert.That(actual.Count, Is.EqualTo(1));
+				Assert.That(actual.First().Id, Is.EqualTo(expected.First().Id));
+				Assert.That(actual.First().Parent.Id, Is.EqualTo(expected.First().Parent.Id));
+			}
+		}
+
+		public class GetSupportingUnits : ApiTest
+		{
+			[TestCase(TestEntities.Departments.ParksId, HttpStatusCode.OK)]
+			[TestCase(9999, HttpStatusCode.NotFound)]
+			public async Task CanGetSupportingUnits(int id, HttpStatusCode expectedStatus)
+			{
+				var resp = await GetAuthenticated($"departments/{id}/supportingunits");
+				AssertStatusCode(resp, expectedStatus);
+			}
+
+			[Test]
+			public async Task GetParksSupportingUnits()
+			{
+				var resp = await GetAuthenticated($"departments/{TestEntities.Departments.ParksId}/supportingunits");
+				var actual = await resp.Content.ReadAsAsync<List<SupportRelationship>>();
+				var expected = new List<SupportRelationship> {TestEntities.SupportRelationships.ParksAndRecRelationship};
+				Assert.That(actual.Count, Is.EqualTo(1));
+				Assert.That(actual.First().Id, Is.EqualTo(expected.First().Id));
+				Assert.That(actual.First().Department.Id, Is.EqualTo(expected.First().Department.Id));
+				Assert.That(actual.First().Unit.Id, Is.EqualTo(expected.First().Unit.Id));
+			}
+		}
 	}
 }
