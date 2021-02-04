@@ -17,17 +17,25 @@ namespace API.Middleware
             public const string AccessControlExposeHeaders = "Access-Control-Expose-Headers";
         }
         
-        /// <summary>Return an HTTP 200 response with content, or an appropriate HTTP error response.</summary>
-        public static IActionResult Ok<T>(HttpRequest req, Result<T, Error> result)
+        private static IActionResult Generate<T>(HttpRequest req, Result<T, Error> result, HttpStatusCode statusCode)
         {
             var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
-                // TODO:
-                // if a get, don't log the value.
-                // if a put, do log the value.
                 logger.SuccessResult(req, HttpStatusCode.OK);
-                return new OkObjectResult(result.Value);      
+                switch(statusCode)
+                {
+                    case HttpStatusCode.Created:
+                        string id = typeof(T).IsSubclassOf(typeof(Entity))
+                            ? ((int)result.Value?.GetType().GetProperty("Id").GetValue(result.Value)).ToString()
+                            : "";
+                        System.Console.WriteLine($"Created got Id of {id}");
+                        return new CreatedResult($"{req.Path}/{id}", result.Value);
+                    case HttpStatusCode.NoContent:
+                        return new NoContentResult();
+                    default:
+                        return new OkObjectResult(result.Value);
+                }
             }
             else 
             {
@@ -35,38 +43,18 @@ namespace API.Middleware
                 return result.Error.ToActionResult();
             }
         }
+
+        /// <summary>Return an HTTP 200 response with content, or an appropriate HTTP error response.</summary>
+        public static IActionResult Ok<T>(HttpRequest req, Result<T, Error> result)
+            => Generate(req, result, HttpStatusCode.OK);
 
         /// <summary>Return an HTTP 201 response with content, with the URL for the resource and the resource itself.</summary>
         public static IActionResult Created<T>(HttpRequest req, Result<T, Error> result) where T : Models.Entity
-		{
-            var logger = Logging.GetLogger(req);
-            if (result.IsSuccess)
-            {
-                logger.SuccessResult(req, HttpStatusCode.Created);
-                return new CreatedResult($"{req.Path}/{result.Value.Id}", result.Value);
-            }
-            else 
-            {
-                logger.FailureResult<T>(req, result.Error);
-                return result.Error.ToActionResult();
-            }
-        }
+		    => Generate(req, result, HttpStatusCode.Created);
 
         /// <summary>Return an HTTP 204 indicating success, but nothing to return.</summary>
         public static IActionResult NoContent<T>(HttpRequest req, Result<T, Error> result)
-        {
-            var logger = Logging.GetLogger(req);
-            if (result.IsSuccess)
-            {
-                logger.SuccessResult(req, HttpStatusCode.NoContent);
-                return new NoContentResult();
-            }
-            else 
-            {
-                logger.FailureResult<T>(req, result.Error);
-                return result.Error.ToActionResult();
-            }
-        }
+            => Generate(req, result, HttpStatusCode.NoContent);
 
         private static void SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode) 
             => logger
