@@ -71,14 +71,14 @@ namespace API.Middleware
         private static void SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode) 
             => logger
                 .ForContext(LogProps.StatusCode, (int)statusCode)
-                .ForContext(LogProps.RequestBody, request.ReadAsStringAsync().Result)
+                .ForContext(LogProps.RequestBody, request.ContentLength > 0 ? request.ReadAsStringAsync().Result : null)
                 .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
                 .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
 
         private static void FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error) 
             => logger
                 .ForContext(LogProps.StatusCode, (int)error.StatusCode)
-                .ForContext(LogProps.RequestBody, request.ReadAsStringAsync().Result)
+                .ForContext(LogProps.RequestBody, request.ContentLength > 0 ? request.ReadAsStringAsync().Result : null)
                 .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
                 .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(error.Messages))
                 .Error(error.Exception, $"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}:\nErrors: {{{LogProps.ErrorMessages}}}.");
