@@ -49,7 +49,7 @@ namespace API.Functions
 					[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments/{departmentId}/memberUnits")] HttpRequest req, int departmentId)
 					=> Security.Authenticate(req)
 						.Bind(_ => DepartmentsRepository.GetOne(departmentId))
-						.Bind(_ => DepartmentsRepository.GetDepartmentUnits(departmentId))
+						.Bind(_ => DepartmentsRepository.GetMemberUnits(departmentId))
 						.Finally(result => Response.Ok(req, result));
 
 		[FunctionName(nameof(Departments.DepartmentsGetSupportingUnits))]
@@ -61,7 +61,7 @@ namespace API.Functions
 					[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments/{departmentId}/supportingUnits")] HttpRequest req, int departmentId)
 					=> Security.Authenticate(req)
 						.Bind(_ => DepartmentsRepository.GetOne(departmentId))
-						.Bind(_ => DepartmentsRepository.GetDepartmentSupportingUnits(departmentId))
+						.Bind(_ => DepartmentsRepository.GetSupportingUnits(departmentId))
 						.Finally(result => Response.Ok(req, result));
 	}
 }

@@ -40,12 +40,12 @@ namespace API.Data
                 : Pipeline.Success(result);
         }
 
-        public static Task<Result<List<Unit>, Error>> GetDepartmentUnits(int departmentId) 
+        public static Task<Result<List<Unit>, Error>> GetMemberUnits(int departmentId) 
             => ExecuteDbPipeline("fetch units", db =>
-                TryFindDepartmentUnits(db, departmentId)
+                TryFindMemberUnits(db, departmentId)
                 .Bind(d => Pipeline.Success(d)));
 
-        private static async Task<Result<List<Unit>,Error>> TryFindDepartmentUnits (PeopleContext db, int departmentId)
+        private static async Task<Result<List<Unit>,Error>> TryFindMemberUnits (PeopleContext db, int departmentId)
         {
             var result = await db.UnitMembers
                 .Include(m => m.Person)
@@ -56,12 +56,12 @@ namespace API.Data
             return Pipeline.Success(result);
         }
 
-        public static Task<Result<List<SupportRelationship>, Error>> GetDepartmentSupportingUnits(int departmentId) 
+        public static Task<Result<List<SupportRelationship>, Error>> GetSupportingUnits(int departmentId) 
             => ExecuteDbPipeline("fetch supporting relationships", db =>
-                TryFindDepartmentSupportingUnits(db, departmentId)
+                TryFindSupportingUnits(db, departmentId)
                 .Bind(d => Pipeline.Success(d)));
                 
-        private static async Task<Result<List<SupportRelationship>,Error>> TryFindDepartmentSupportingUnits (PeopleContext db, int departmentId)
+        private static async Task<Result<List<SupportRelationship>,Error>> TryFindSupportingUnits (PeopleContext db, int departmentId)
         {
             var result = await db.SupportRelationships
                 .Include(r => r.Department)

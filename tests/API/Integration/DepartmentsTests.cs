@@ -80,7 +80,7 @@ namespace Integration
 			}
 		}
 
-		public class GetDepartmentUnits : ApiTest
+		public class GetMemberUnits : ApiTest
 		{
 			[TestCase(TestEntities.Departments.ParksId, HttpStatusCode.OK)]
 			[TestCase(9999, HttpStatusCode.NotFound)]
