@@ -89,7 +89,7 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor))// Set headers saying what the requestor can do to this unit
                 .Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
-                .Bind(_ => UnitsRepository.DeleteUnit(unitId))
+                .Bind(_ => UnitsRepository.DeleteUnit(req, unitId))
                 .Finally(result => Response.NoContent(req, result));
     }
 }

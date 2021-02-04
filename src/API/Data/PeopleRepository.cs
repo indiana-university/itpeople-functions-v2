@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Models;
 using API.Functions;
 using System;
+using Microsoft.AspNetCore.Http;
 
 namespace API.Data
 {
@@ -76,9 +77,10 @@ namespace API.Data
                 TryFindPerson(db, id)
                 .Bind(person => Pipeline.Success(person.UnitMemberships)));
 
-        public static Task<Result<Person, Error>> Update(int id, PersonUpdateRequest body)
+        public static Task<Result<Person, Error>> Update(HttpRequest req, int id, PersonUpdateRequest body)
             => ExecuteDbPipeline("update person", db =>
                 TryFindPerson(db, id)
+                .Tap(person => LogPrevious(req, person))
                 .Bind(person => TryUpdatePerson(db, body, person)));
 
         private static async Task<Result<Person,Error>> TryFindPerson (PeopleContext db, int id)

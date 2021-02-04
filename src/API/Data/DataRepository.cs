@@ -3,6 +3,9 @@ using API.Middleware;
 using CSharpFunctionalExtensions;
 using Database;
 using System;
+using Microsoft.AspNetCore.Http;
+using Models;
+using Newtonsoft.Json;
 
 namespace API.Data
 {
@@ -21,6 +24,11 @@ namespace API.Data
             {
                 return Pipeline.InternalServerError($"Failed to {description}", ex);
             }
+        }
+
+        protected static void LogPrevious<T>(HttpRequest req, T value) where T : Entity
+        {
+            req.HttpContext.Items[LogProps.RecordBody] = JsonConvert.SerializeObject(value);
         }
     }
 }

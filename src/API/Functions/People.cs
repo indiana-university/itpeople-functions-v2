@@ -74,7 +74,7 @@ namespace API.Functions
                 .Bind(requestor => AuthorizationRepository.DeterminePersonPermissions(req, requestor, id))
                 .Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
                 .Bind(_ => Request.DeserializeBody<PersonUpdateRequest>(req))
-                .Bind(body => PeopleRepository.Update(id, body))
+                .Bind(body => PeopleRepository.Update(req, id, body))
                 .Finally(result => Response.Ok(req, result));
 
     }

@@ -7,9 +7,7 @@ using Database;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using API.Functions;
-using System;
 using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
 
 namespace API.Data
 {
@@ -48,13 +46,13 @@ namespace API.Data
             return await ExecuteDbPipeline($"update unit {unitId}", db =>
                 TryValidateParentExists(db, body)
                 .Bind(_ => TryFindUnit(db, unitId))
-                .Tap(existing => req.HttpContext.Items[LogProps.RecordBody] = JsonConvert.SerializeObject(existing))
+                .Tap(existing => LogPrevious(req, existing))
                 .Bind(existing => TryUpdateUnit(db, existing, body))
                 .Bind(_ => TryFindUnit(db, unitId))
             );
         }
 
-        internal static async Task<Result<bool, Error>> DeleteUnit(int unitId)
+        internal static async Task<Result<bool, Error>> DeleteUnit(HttpRequest req, int unitId)
         {
             return await ExecuteDbPipeline($"delete unit {unitId}", db =>
                 TryFindUnit(db, unitId)
