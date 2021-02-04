@@ -48,6 +48,7 @@ namespace API.Functions
         public static Task<IActionResult> BuildingsGetSupportingUnits(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildings/{buildingId}/supportingUnits")] HttpRequest req, int buildingId) 
             => Security.Authenticate(req)
+                .Bind(_ => BuildingsRepository.GetOne(buildingId)) //make sure the building exists before trying to get its supporting units
                 .Bind(_ => BuildingsRepository.GetSupportingUnits(buildingId))
                 .Finally(result => Response.Ok(req, result));
     }

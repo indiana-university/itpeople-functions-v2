@@ -8,12 +8,13 @@ using Microsoft.EntityFrameworkCore;
 using Models;
 using API.Functions;
 using System;
+using Microsoft.AspNetCore.Http;
 
 namespace API.Data
 {
     public class UnitsRepository : DataRepository
     {
-		internal static Task<Result<List<Unit>, Error>> GetAll(UnitSearchParameters query)
+        internal static Task<Result<List<Unit>, Error>> GetAll(UnitSearchParameters query)
             => ExecuteDbPipeline("search all units", async db => {
                     IQueryable<Unit> queryable = db.Units.Include(u => u.Parent);
                     if(string.IsNullOrWhiteSpace(query.Q))
@@ -34,14 +35,105 @@ namespace API.Data
             => ExecuteDbPipeline("get a unit by ID", db => 
                 TryFindUnit(db, id));
 
-        private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id)
+        internal static async Task<Result<Unit, Error>> CreateUnit(UnitRequest body)
+            => await ExecuteDbPipeline("create a unit", db =>
+                TryValidateParentExists(db, body)
+                .Bind(_ => TryCreateUnit(db, body))
+                .Bind(created => TryFindUnit(db, created.Id))
+            );
+
+        internal static async Task<Result<Unit, Error>> UpdateUnit(UnitRequest body, int unitId)
         {
-            var person = await db.Units
+            return await ExecuteDbPipeline($"update unit {unitId}", db =>
+                TryValidateParentExists(db, body)
+                .Bind(_ => TryFindUnit(db, unitId))
+                .Bind(existing => TryUpdateUnit(db, existing, body))
+                .Bind(_ => TryFindUnit(db, unitId))
+            );
+        }
+
+        internal static async Task<Result<bool, Error>> DeleteUnit(int unitId)
+        {
+            return await ExecuteDbPipeline($"delete unit {unitId}", db =>
+                TryFindUnit(db, unitId)
+                .Bind(unit => TryDeleteUnit(db, unit)));
+        }
+
+        private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id, bool findingParent = false)
+        {
+            var unit = await db.Units
                 .Include(u => u.Parent)
                 .SingleOrDefaultAsync(p => p.Id == id);
-            return person == null
-                ? Pipeline.NotFound("No unit found with that ID.")
-                : Pipeline.Success(person);
+            return unit == null
+                ? Pipeline.NotFound($"No {(findingParent ? "parent" : "")} unit found with ID ({id}).")
+                : Pipeline.Success(unit);
+        }
+
+        private static async Task<Result<UnitRequest,Error>> TryValidateParentExists (PeopleContext db, UnitRequest body)
+        {
+            if(body.ParentId.HasValue && body.ParentId != 0)
+            {
+                return await TryFindUnit(db, (int)body.ParentId, true)
+                    .Bind(_ => Pipeline.Success(body));
+            }
+            else
+            {
+                return Pipeline.Success(body);
+            }
+        }
+
+        private static async Task<Result<Unit,Error>> TryCreateUnit (PeopleContext db, UnitRequest body)
+        {
+            var unit = new Unit(body.Name, body.Description, body.Url, body.Email, body.ParentId);
+
+            // add the unit
+            db.Units.Add(unit);
+            // TODO: We might need to force the validation of unit before EF saves it to the DB.
+            // save changes
+            await db.SaveChangesAsync();
+            return Pipeline.Success(unit);
+        }
+
+        private static async Task<Result<Unit, Error>> TryUpdateUnit(PeopleContext db, Unit existing, UnitRequest body)
+        {
+            existing.Name = body.Name;
+            existing.Description = body.Description;
+            existing.Url = body.Url;
+            existing.Email = body.Email;
+            existing.ParentId = body.ParentId;
+
+            // TODO: Do we need to manually validate the model?  EF doesn't do that for free any more.
+            await db.SaveChangesAsync();
+            return Pipeline.Success(existing);
+        }
+
+        private static async Task<Result<bool,Error>> TryDeleteUnit (PeopleContext db, Unit unit)
+        {
+            // Check for child Units
+            var childUnitIds = db.Units
+                .Include(c => c.Parent)
+                .Where(c => c.ParentId == unit.Id)
+                .Select(c => c.Id)
+                .ToList();
+            if(childUnitIds.Count > 0)
+            {
+                return Pipeline.Conflict($"Unit {unit.Id} has child units, with ids: {string.Join(", ", childUnitIds)}. These must be reassigned prior to deletion.");
+            }
+            else
+            {
+                var unitMembers = db.UnitMembers
+                    .Include(um => um.Unit)
+                    .Where(um => um.UnitId == unit.Id);
+                
+                //Remove UnitMembers for unit
+                db.UnitMembers.RemoveRange(unitMembers);
+
+                // Remove unit from the database.
+                db.Units.Remove(unit);
+                // save changes
+                await db.SaveChangesAsync();
+                return Pipeline.Success(true);
+            }
         }
     }
 }

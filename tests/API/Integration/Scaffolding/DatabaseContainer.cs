@@ -106,6 +106,14 @@ namespace Integration
             // });
             
             peopleContext.SaveChanges();
+
+            // Account for the identities of Units we've already added to the database.  Prevents error:
+            //      duplicate key value violates unique constraint
+            peopleContext.Database.ExecuteSqlRaw(@"
+                SELECT
+                    setval(pg_get_serial_sequence('public.units', 'id'), 
+                    (SELECT MAX(id) FROM public.units));
+                ");
         }
     }
 }

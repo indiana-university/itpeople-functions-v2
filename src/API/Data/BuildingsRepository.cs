@@ -17,7 +17,8 @@ namespace API.Data
             => ExecuteDbPipeline("search all buildings", async db => {
                     var queryNoDash = query?.Q?.Replace("-","");
                     var result = await db.Buildings.Where(b =>
-                        EF.Functions.ILike(b.Address, $"%{query.Q}%")
+                        string.IsNullOrWhiteSpace(query.Q) 
+                        || EF.Functions.ILike(b.Address, $"%{query.Q}%")
                         || EF.Functions.ILike(b.Code, $"%{query.Q}%")
                         || EF.Functions.ILike(b.Code, $"%{queryNoDash}%")
                         || EF.Functions.ILike(b.Name, $"%{query.Q}%"))
@@ -53,10 +54,9 @@ namespace API.Data
                 .Include(b => b.Building)
                 .Include(b => b.Unit)
                 .Where(b => b.BuildingId == buildingId)
-                .AsNoTracking().ToListAsync();
-            return result.Count == 0
-                ? Pipeline.NotFound("No building relationships were found with the buildingId provided.")
-                : Pipeline.Success(result);
+                .AsNoTracking()
+                .ToListAsync();
+            return Pipeline.Success(result);
         }
     }
 }
