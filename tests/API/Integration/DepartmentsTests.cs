@@ -91,7 +91,7 @@ namespace Integration
 			}
 
 			[Test]
-			public async Task GetParksMemberUnits()
+			public async Task GetAuditorParksMemberUnits()
 			{
 				var resp = await GetAuthenticated($"departments/{TestEntities.Departments.Auditor.Id}/memberUnits");
 				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
