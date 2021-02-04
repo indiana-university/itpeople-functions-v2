@@ -106,6 +106,7 @@ namespace Integration
                 var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent.Id);
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.Created);
+                Assert.AreEqual("/units/3", resp.Headers.Location.OriginalString);
                 var actual = await resp.Content.ReadAsAsync<Unit>();
 
                 Assert.NotZero(actual.Id);
