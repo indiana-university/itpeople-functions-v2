@@ -56,6 +56,7 @@ namespace API.Data
         {
             return await ExecuteDbPipeline($"delete unit {unitId}", db =>
                 TryFindUnit(db, unitId)
+                .Tap(unit => LogPrevious(req, unit))
                 .Bind(unit => TryDeleteUnit(db, unit)));
         }
 
@@ -126,6 +127,7 @@ namespace API.Data
                     .Where(um => um.UnitId == unit.Id);
                 
                 //Remove UnitMembers for unit
+                // TODO: It would be nice to record these related items to the log table, in case we ever need to walk it back.
                 db.UnitMembers.RemoveRange(unitMembers);
 
                 // Remove unit from the database.
