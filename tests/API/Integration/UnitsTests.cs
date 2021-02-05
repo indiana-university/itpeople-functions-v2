@@ -8,6 +8,7 @@ using System.Linq;
 using API.Middleware;
 using API.Data;
 using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace Integration
 {
@@ -243,6 +244,32 @@ namespace Integration
 
                 Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.ParentId);
                 Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Parent.Id);
+            }
+
+            [Test]
+            public async Task UnitMembersArePreservedWhenEdited()
+            {
+                System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
+                var db = Database.PeopleContext.Create();
+                var existingParksAndRecUnitMembers = db.UnitMembers
+                    .Where(um => um.UnitId == TestEntities.Units.ParksAndRecUnitId)
+                    .AsNoTracking()
+                    .ToList();
+
+                var req = new Unit("Changed Name", "", "", "", TestEntities.Units.ParksAndRecUnit.Parent.Id);
+                
+                var resp = await PutAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}", req, ValidAdminJwt);
+                
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<Unit>();
+
+                var resultParksAndRecUnitMembers = db.UnitMembers
+                    .Where(um => um.UnitId == TestEntities.Units.ParksAndRecUnitId)
+                    .AsNoTracking()
+                    .ToList();
+                
+                Assert.AreEqual(existingParksAndRecUnitMembers.Count, resultParksAndRecUnitMembers.Count);
+                AssertIdsMatchContent(existingParksAndRecUnitMembers.Select(m => m.Id).ToArray(), resultParksAndRecUnitMembers);
             }
         }
 

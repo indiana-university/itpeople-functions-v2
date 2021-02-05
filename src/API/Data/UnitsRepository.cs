@@ -56,8 +56,7 @@ namespace API.Data
         {
             return await ExecuteDbPipeline($"delete unit {unitId}", db =>
                 TryFindUnit(db, unitId)
-                .Tap(unit => LogPrevious(req, unit))
-                .Bind(unit => TryDeleteUnit(db, unit)));
+                .Bind(unit => TryDeleteUnit(db, req, unit)));
         }
 
         private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id, bool findingParent = false)
@@ -108,7 +107,7 @@ namespace API.Data
             return Pipeline.Success(existing);
         }
 
-        private static async Task<Result<bool,Error>> TryDeleteUnit (PeopleContext db, Unit unit)
+        private static async Task<Result<bool,Error>> TryDeleteUnit (PeopleContext db, HttpRequest req, Unit unit)
         {
             // Check for child Units
             var childUnitIds = db.Units
@@ -122,20 +121,19 @@ namespace API.Data
             }
             else
             {
-                var unitMembers = db.UnitMembers
-                    .Include(um => um.Unit)
-                    .Where(um => um.UnitId == unit.Id);
-                
-                //Remove UnitMembers for unit
-                // TODO: It would be nice to record these related items to the log table, in case we ever need to walk it back.
-                db.UnitMembers.RemoveRange(unitMembers);
+                //Remove, and log, UnitMembers and SupportRelationships for this unit.
+                var unitAndRelated = db.Units
+                    .Include(u => u.Parent)
+                    .Include(u => u.UnitMembers).ThenInclude(um => um.Person)
+                    .Include(u => u.SupportRelationships).ThenInclude(sr => sr.Department)
+                    .Single(u => u.Id == unit.Id);
 
-                var supportRelationships = db.SupportRelationships
-                    .Include(r => r.Unit)
-                    .Where(r => r.UnitId == unit.Id);
-                
+                //Write the logs with the whole enchilada 
+                LogPrevious(req, unitAndRelated);
+                //Remove UnitMembers for unit
+                db.UnitMembers.RemoveRange(unitAndRelated.UnitMembers);
                 //Remove SupportRelationships for unit
-                db.SupportRelationships.RemoveRange(supportRelationships);
+                db.SupportRelationships.RemoveRange(unitAndRelated.SupportRelationships);
 
                 // Remove unit from the database.
                 db.Units.Remove(unit);

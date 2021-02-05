@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Models
@@ -17,6 +18,9 @@ namespace Models
         public int? ParentId { get; set; } 
         /// The parent unit of this unit
         public Unit Parent { get; set; }
+
+        public List<UnitMember> UnitMembers { get; set; }
+        public List<SupportRelationship> SupportRelationships { get; set; }
 
         public Unit() {}
         public Unit(string name, string description, string url, string email, int? parentId = null)
