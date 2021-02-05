@@ -25,8 +25,8 @@ namespace API.Middleware
                 logger.SuccessResult(req, statusCode);
                 switch(statusCode)
                 {
-                    case HttpStatusCode.Created when T is Entity: // just to allow the cast
-                        var id = ((Entity)result.Value).Id;
+                    case HttpStatusCode.Created when result.Value.GetType().IsSubclassOf(typeof(Entity)): // just to allow the cast
+                        var id = ((Entity)(object)result.Value)?.Id.ToString() ?? "";
                         return new CreatedResult($"{req.Path}/{id}", result.Value);
                     case HttpStatusCode.NoContent:
                         return new NoContentResult();
