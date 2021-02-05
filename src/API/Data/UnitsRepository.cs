@@ -130,6 +130,13 @@ namespace API.Data
                 // TODO: It would be nice to record these related items to the log table, in case we ever need to walk it back.
                 db.UnitMembers.RemoveRange(unitMembers);
 
+                var supportRelationships = db.SupportRelationships
+                    .Include(r => r.Unit)
+                    .Where(r => r.UnitId == unit.Id);
+                
+                //Remove SupportRelationships for unit
+                db.SupportRelationships.RemoveRange(supportRelationships);
+
                 // Remove unit from the database.
                 db.Units.Remove(unit);
                 // save changes

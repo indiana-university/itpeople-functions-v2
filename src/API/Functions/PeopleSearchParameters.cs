@@ -66,6 +66,19 @@ namespace API.Functions
         }
     }
 
+    public class DepartmentSearchParameters : BaseSearchParameters
+    {
+        public DepartmentSearchParameters(string q) : base(q)
+        {}
+
+        public static Result<DepartmentSearchParameters, Error> Parse(HttpRequest req) 
+        {
+            var queryParms = req.GetQueryParameterDictionary();
+            queryParms.TryGetValue("q", out string q);
+            return Pipeline.Success(new DepartmentSearchParameters(q));
+        }
+    }
+
     public class PeopleSearchParameters : BaseSearchParameters
     {
 
