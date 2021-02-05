@@ -22,14 +22,11 @@ namespace API.Middleware
             var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
-                logger.SuccessResult(req, HttpStatusCode.OK);
+                logger.SuccessResult(req, statusCode);
                 switch(statusCode)
                 {
-                    case HttpStatusCode.Created:
-                        string id = typeof(T).IsSubclassOf(typeof(Entity))
-                            ? ((int)result.Value?.GetType().GetProperty("Id").GetValue(result.Value)).ToString()
-                            : "";
-                        System.Console.WriteLine($"Created got Id of {id}");
+                    case HttpStatusCode.Created when T is Entity: // just to allow the cast
+                        var id = ((Entity)result.Value).Id;
                         return new CreatedResult($"{req.Path}/{id}", result.Value);
                     case HttpStatusCode.NoContent:
                         return new NoContentResult();
