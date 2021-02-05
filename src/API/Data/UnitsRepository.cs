@@ -128,6 +128,13 @@ namespace API.Data
                 //Remove UnitMembers for unit
                 db.UnitMembers.RemoveRange(unitMembers);
 
+                var supportRelationships = db.SupportRelationships
+                    .Include(r => r.Unit)
+                    .Where(r => r.UnitId == unit.Id);
+                
+                //Remove SupportRelationships for unit
+                db.SupportRelationships.RemoveRange(supportRelationships);
+
                 // Remove unit from the database.
                 db.Units.Remove(unit);
                 // save changes
