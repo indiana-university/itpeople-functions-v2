@@ -29,5 +29,15 @@ namespace API.Functions
                 .Bind(_ => BuildingRelationshipsRepository.GetAll())
                 .Finally(r => Response.Ok(req, r));
 
+        [FunctionName(nameof(BuildingRelationships.BuildingRelationshipsGetOne))]
+        [OpenApiOperation(nameof(BuildingRelationships.BuildingRelationshipsGetOne), BuildingRelationshipsTitle, Summary = "Find a unit-building support relationships by ID")]
+        [OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building support relationship record.")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(BuildingRelationship), Description="A building support relationship record")]
+        [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No support relationship was found with the ID provided.")]
+        public static Task<IActionResult> BuildingRelationshipsGetOne(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildingRelationships/{relationshipId}")] HttpRequest req, int relationshipId) 
+            => Security.Authenticate(req)
+                .Bind(_ => BuildingRelationshipsRepository.GetOne(relationshipId))
+                .Finally(result => Response.Ok(req, result));
     }
 }

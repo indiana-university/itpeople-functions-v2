@@ -41,7 +41,10 @@ namespace Integration
             };
         }
 
-        public static class BuildingRelationships {
+        public static class BuildingRelationships 
+        {
+            public const int CityHallCityOfPawneeId = 1;
+            
             public static readonly BuildingRelationship CityHallCityOfPawnee = new BuildingRelationship() {
                 Id=1,
                 UnitId = TestEntities.Units.CityOfPawnee.Id,
