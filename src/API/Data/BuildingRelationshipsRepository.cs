@@ -36,5 +36,21 @@ namespace API.Data
                 : Pipeline.Success(result);
         }
 
+        internal static async Task<Result<BuildingRelationship, Error>> CreateBuildingRelationship(BuildingRelationshipRequest body)
+            => await ExecuteDbPipeline("create a building relationship", db =>
+                TryCreateBuildingRelationship(db, body)
+                .Bind(created => TryFindBuildingRelationship(db, created.Id))
+            );
+        private static async Task<Result<BuildingRelationship,Error>> TryCreateBuildingRelationship (PeopleContext db, BuildingRelationshipRequest body)
+        {
+            var buildingRelationship = new BuildingRelationship{
+                UnitId = body.UnitId,
+                BuildingId = body.BuildingId
+            };
+            db.BuildingRelationships.Add(buildingRelationship);
+            await db.SaveChangesAsync();
+            return Pipeline.Success(buildingRelationship);
+        }
+
     }
 }
