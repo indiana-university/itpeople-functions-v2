@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models
 {
@@ -14,6 +15,12 @@ namespace Models
         /// A contact email for this unit.
         public string Email { get; set; }
 
+        /// The unique ID of the parent unit of this unit.
+        public int? ParentId { get; set; } 
+        
+        [NotMapped]
+        public UnitResponse Parent { get; set; }
+
         public UnitResponse() {}
         public UnitResponse(Unit unit)
         {
@@ -22,6 +29,7 @@ namespace Models
             Description = unit.Description;
             Url = unit.Url;
             Email = unit.Email;
+            Parent = (unit.Parent == null ? null : new UnitResponse(unit.Parent));
         }
     }
 }

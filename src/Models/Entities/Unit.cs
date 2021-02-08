@@ -5,10 +5,9 @@ namespace Models
 {
     public class Unit : UnitResponse
     {
-        /// The unique ID of the parent unit of this unit.
-        public int? ParentId { get; set; } 
         /// The parent unit of this unit
-        public Unit Parent { get; set; }
+        public new Unit Parent { get; set; }
+
         public List<UnitMember> UnitMembers { get; set; }
         public List<SupportRelationship> SupportRelationships { get; set; }
 
