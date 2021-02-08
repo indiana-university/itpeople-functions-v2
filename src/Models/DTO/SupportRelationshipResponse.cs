@@ -17,16 +17,16 @@ namespace Models
         /// The unit in this relationship.
         public UnitResponse Unit { get; set; }
     
-		public SupportRelationshipResponse(SupportRelationship sr)
-		{
-			Id = sr.Id;
-			Department = sr.Department;
-			Unit = new UnitResponse(sr.Unit);
-		}
-		
-		public static List<SupportRelationshipResponse> ConvertList(List<SupportRelationship> relationships)
-		{
-			return relationships.Select(sr => new SupportRelationshipResponse(sr)).ToList();
-		}
-	}
+        public SupportRelationshipResponse(SupportRelationship sr)
+        {
+            Id = sr.Id;
+            Department = sr.Department;
+            Unit = new UnitResponse(sr.Unit);
+        }
+        
+        public static List<SupportRelationshipResponse> ConvertList(List<SupportRelationship> relationships)
+        {
+            return relationships.Select(sr => new SupportRelationshipResponse(sr)).ToList();
+        }
+    }
 }

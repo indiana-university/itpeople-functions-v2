@@ -22,8 +22,8 @@ namespace Models
         public Person Person { get; set; }
         /// The ID of the unit class.
         public int UnitId { get; set; }
-		/// The unit related to this membership.
-		public UnitResponse Unit { get; set; }
+        /// The unit related to this membership.
+        public UnitResponse Unit { get; set; }
         /// The tools that can be used by the person in this position as part of this unit.
         public List<MemberTool> MemberTools { get;  set; }
 
