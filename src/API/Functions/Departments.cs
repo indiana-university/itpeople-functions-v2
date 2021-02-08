@@ -62,6 +62,7 @@ namespace API.Functions
 					=> Security.Authenticate(req)
 						.Bind(_ => DepartmentsRepository.GetOne(departmentId))
 						.Bind(_ => DepartmentsRepository.GetSupportingUnits(departmentId))
+						.Bind(sr => Pipeline.Success(SupportRelationshipResponse.ConvertList(sr)))
 						.Finally(result => Response.Ok(req, result));
 	}
 }
