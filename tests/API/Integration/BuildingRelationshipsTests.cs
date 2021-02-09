@@ -74,7 +74,7 @@ namespace Integration
             public async Task CannotCreateMalformedBuildingRelationship()
             {
                 var req = new {
-					UnitId = 1
+					UnitId = TestEntities.Units.CityOfPawneeUnitId
 				};
                 var resp = await PostAuthenticated("buildingRelationships", req, ValidAdminJwt);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
@@ -98,7 +98,7 @@ namespace Integration
             public async Task NotFoundUnitIdCannotCreateBuildingRelationship()
             {
                 var req = new {
-					UnitId = 100
+					UnitId = 99999
 				};
                 var resp = await PostAuthenticated("buildingRelationships", req, ValidAdminJwt);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
@@ -109,7 +109,7 @@ namespace Integration
             public async Task NotFoundBuildingIdCannotCreateBuildingRelationship()
             {
                 var req = new {
-					BuildingId = 100
+					BuildingId = 99999
 				};
                 var resp = await PostAuthenticated("buildingRelationships", req, ValidAdminJwt);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
@@ -130,6 +130,70 @@ namespace Integration
                 Assert.Contains("The provided unit already has a support relationship with the provided building.", actual.Errors);
                 
 			}
+        }
+
+		public class BuildingRelationshipEdit : ApiTest
+        {
+            [Test]
+            public async Task UpdateCityHallCityOfPawnee()
+            {
+                var req = new BuildingRelationshipRequest {
+					UnitId = TestEntities.BuildingRelationships.CityHallCityOfPawnee.UnitId,
+					BuildingId = TestEntities.Buildings.RonsCabin.Id
+				};
+
+                var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<BuildingRelationship>();
+
+                Assert.AreEqual(TestEntities.BuildingRelationships.CityHallCityOfPawneeId, actual.Id);
+                Assert.AreEqual(req.BuildingId, actual.Building.Id);
+                Assert.AreEqual(req.UnitId, actual.Unit.Id);
+            }
+
+            [Test]
+            public async Task BadRequestCannotUpdateWithMalformedBuildingRelationship()
+            {
+                var req = new {
+					UnitId = TestEntities.Units.CityOfPawneeUnitId
+				};
+
+                var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+                Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains("The request body was malformed, the unitId and/or buildingId field was missing.", actual.Errors);
+                Assert.AreEqual("(none)", actual.Details);
+            }
+
+            [Test]
+            public async Task UnauthorizedCannotUpdateBuildingRelationship()
+            {
+                var req = new BuildingRelationshipRequest {
+					UnitId = TestEntities.BuildingRelationships.CityHallCityOfPawnee.UnitId,
+					BuildingId = TestEntities.Buildings.RonsCabin.Id
+				};
+                var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}", req, ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.Forbidden);
+            }
+            
+            [TestCase(TestEntities.BuildingRelationships.CityHallCityOfPawneeId,99999,TestEntities.Buildings.RonsCabinId,Description="Unit Id not found")]
+            [TestCase(TestEntities.BuildingRelationships.CityHallCityOfPawneeId,TestEntities.Units.CityOfPawneeUnitId,99999,Description="Building Id not found")]
+            [TestCase(99999, TestEntities.Units.CityOfPawneeUnitId,99999,Description="Building Relationship Id not found")]
+            public async Task NotFoundCannotUpdateBuildingRelationship(int relationshipid, int unitId, int buildingId)
+            {
+				var req = new BuildingRelationshipRequest {
+					UnitId = unitId,
+					BuildingId = buildingId
+				};
+                var resp = await PutAuthenticated($"buildingRelationships/{relationshipid}", req, ValidAdminJwt);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+            }
+			
         }
 	}
 }
