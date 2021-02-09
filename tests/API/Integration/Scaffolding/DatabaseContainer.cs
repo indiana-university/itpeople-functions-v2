@@ -106,6 +106,11 @@ namespace Integration
                     setval(pg_get_serial_sequence('public.units', 'id'), 
                     (SELECT MAX(id) FROM public.units));
                 ");
+            peopleContext.Database.ExecuteSqlRaw(@"
+                SELECT
+                    setval(pg_get_serial_sequence('public.building_relationships', 'id'), 
+                    (SELECT MAX(id) FROM public.building_relationships));
+                ");
         }
     }
 }

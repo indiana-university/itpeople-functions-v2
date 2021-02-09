@@ -47,5 +47,89 @@ namespace Integration
 				Assert.AreEqual(expected.Unit.Id, actual.Unit.Id);
 			}
 		}
+
+		public class BuildingRelationshipCreate : ApiTest
+        {
+            private BuildingRelationshipRequest CityHallParksAndRec = new BuildingRelationshipRequest {
+				UnitId = TestEntities.Units.ParksAndRecUnitId,
+				BuildingId = TestEntities.Buildings.CityHallId
+			};
+
+            //201 returns new unit
+            [Test]
+            public async Task CreateBuildingRelationship()
+            {
+				var resp = await PostAuthenticated("buildingRelationships", CityHallParksAndRec, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.Created);
+                var actual = await resp.Content.ReadAsAsync<BuildingRelationship>();
+
+                Assert.NotZero(actual.Id);
+				Assert.AreEqual(CityHallParksAndRec.UnitId, actual.Unit.Id);
+				Assert.AreEqual(CityHallParksAndRec.BuildingId, actual.Building.Id);
+            }
+
+
+            //400 The request body is malformed or missing
+            [Test]
+            public async Task CannotCreateMalformedBuildingRelationship()
+            {
+                var req = new {
+					UnitId = 1
+				};
+                var resp = await PostAuthenticated("buildingRelationships", req, ValidAdminJwt);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+                Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains("The request body was malformed, the unitId and/or buildingId field was missing.", actual.Errors);
+                Assert.AreEqual("(none)", actual.Details);
+            }
+
+            //403 unauthorized
+            [Test]
+            public async Task UnauthorizedCannotCreate()
+            {
+                var resp = await PostAuthenticated("buildingRelationships", CityHallParksAndRec, ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.Forbidden);
+            }
+
+            //404 The specified unit parent does not exist
+			[Test]
+            public async Task NotFoundUnitIdCannotCreateBuildingRelationship()
+            {
+                var req = new {
+					UnitId = 100
+				};
+                var resp = await PostAuthenticated("buildingRelationships", req, ValidAdminJwt);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+            }
+			[Test]
+            public async Task NotFoundBuildingIdCannotCreateBuildingRelationship()
+            {
+                var req = new {
+					BuildingId = 100
+				};
+                var resp = await PostAuthenticated("buildingRelationships", req, ValidAdminJwt);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+            }
+
+            //409
+			[Test]
+            public async Task CannotCreateDuplicateBuildingRelationship()
+            {
+                
+                var resp = await PostAuthenticated("buildingRelationships", TestEntities.BuildingRelationships.CityHallCityOfPawnee, ValidAdminJwt);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
+             	Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains("The provided unit already has a support relationship with the provided building.", actual.Errors);
+                
+			}
+        }
 	}
 }

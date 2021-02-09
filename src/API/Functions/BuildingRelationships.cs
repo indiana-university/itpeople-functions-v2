@@ -46,23 +46,23 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.Created, MediaTypeNames.Application.Json, typeof(BuildingRelationship), Description = "The newly created building support relationship record")]
 		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The request body was malformed, the unitId and/or buildingId field was missing.")]
 		[OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You are not authorized to modify this unit.")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "The specified unit and/or building does not exist.")]
+		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No unit was found with the unitId provided.")]
+		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No building was found with the buildingId provided.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit already has a support relationship with the provided building.")]
 
 		public static Task<IActionResult> CreateBuildingRelationship(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "buildingRelationships")] HttpRequest req)
 		{
 			string requestorNetId = null;
+			BuildingRelationshipRequest buildingRelationshipRequest = null;
 			return Security.Authenticate(req)
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(requestor => Request.DeserializeBody<BuildingRelationshipRequest>(req))
+			.Tap(brr => buildingRelationshipRequest = brr)
 			.Bind(brr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, brr.UnitId))// Set headers saying what the requestor can do to this unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
-			.Bind(_ => Request.DeserializeBody<BuildingRelationshipRequest>(req))
-			.Bind(body => BuildingRelationshipsRepository.CreateBuildingRelationship(body))
+			.Bind(authorized => BuildingRelationshipsRepository.CreateBuildingRelationship(buildingRelationshipRequest))
 			.Finally(result => Response.Created("buildingRelationships", result));
-
-
 		}
 
 	}
