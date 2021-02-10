@@ -55,6 +55,7 @@ namespace Integration
                     public.building_relationships, 
                     public.departments,
                     public.people, 
+                    public.support_relationships, 
                     public.units,
                     public.unit_members,
                     public.unit_member_tools
@@ -88,11 +89,16 @@ namespace Integration
                 TestEntities.People.ServiceAdmin
             });  
             
+            peopleContext.SupportRelationships.AddRange(new List<SupportRelationship> {
+                TestEntities.SupportRelationships.CityOfPawneeParks
+            });
+
             peopleContext.UnitMembers.AddRange(new List<UnitMember> { 
                 TestEntities.UnitMembers.RSwansonDirector,
                 TestEntities.UnitMembers.LkNopeSublead,
                 TestEntities.UnitMembers.BWyattAditor
             });
+            
             // peopleContext.MemberTools.AddRange(new List<MemberTool> { 
             //     TestEntities.MemberTools.MemberTool
             // });

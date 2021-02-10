@@ -145,6 +145,17 @@ namespace Integration
                 IsServiceAdmin = true 
             };
         }
+
+        public static class SupportRelationships {
+            public static readonly SupportRelationship CityOfPawneeParks = new SupportRelationship() {
+                Id=1,
+                UnitId = TestEntities.Units.CityOfPawnee.Id,
+                DepartmentId=TestEntities.Departments.Parks.Id,
+                Unit=TestEntities.Units.CityOfPawnee,
+                Department=TestEntities.Departments.Parks
+            };
+        }
+
         /*public static class MemberTools
         {
             public static readonly MemberTool MemberTool = new MemberTool() { 
