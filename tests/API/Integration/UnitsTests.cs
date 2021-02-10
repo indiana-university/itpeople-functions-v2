@@ -295,7 +295,39 @@ namespace Integration
                 Assert.AreEqual(1, actual.Errors.Count);
                 Assert.Contains("Unit 1 has child units, with ids: 2, 3. These must be reassigned prior to deletion.", actual.Errors);
                 Assert.AreEqual("(none)", actual.Details);
-            }   
+            }
+
+            [Test]
+            public async Task DeleteUnitDoesNotCreateOrphans()
+            {
+                var resp = await DeleteAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.NoContent);
+                
+                System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
+                var db = Database.PeopleContext.Create();
+
+                // You can use this block of code to induce one of the problems we are testing for.
+                /*
+                var ron = db.People.Include(p => p.UnitMemberships).Single(p => p.Id.Equals(TestEntities.People.RSwansonId));
+                var um = ron.UnitMemberships.First();
+                ron.UnitMemberships.Remove(um);
+                await db.SaveChangesAsync();
+                */
+
+                var unitMembers = db.UnitMembers
+                    .Include(um => um.Unit)
+                    .Include(um => um.Person);
+                
+                Assert.IsEmpty(unitMembers.Where(um => um.Unit == null));
+                Assert.IsEmpty(unitMembers.Where(um => um.Person == null));
+                
+                var supportRelationships = db.SupportRelationships
+                    .Include(sr => sr.Unit)
+                    .Include(sr => sr.Department);
+
+                Assert.IsEmpty(supportRelationships.Where(um => um.Unit == null));
+                Assert.IsEmpty(supportRelationships.Where(um => um.Department == null));
+            }
         }
     }
 }
