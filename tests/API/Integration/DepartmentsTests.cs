@@ -72,6 +72,7 @@ namespace Integration
 			public async Task ResponseHasCorrectShape()
 			{
 				var resp = await GetAuthenticated($"departments/{TestEntities.Departments.ParksId}");
+				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<Department>();
 				var expected = TestEntities.Departments.Parks;
 				Assert.AreEqual(expected.Id, actual.Id);
@@ -94,6 +95,7 @@ namespace Integration
 			public async Task GetAuditorParksMemberUnits()
 			{
 				var resp = await GetAuthenticated($"departments/{TestEntities.Departments.Auditor.Id}/memberUnits");
+				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
 				var expected = new List<Unit> { TestEntities.Units.Auditor };
 				Assert.That(actual.Count, Is.EqualTo(1));
@@ -116,12 +118,14 @@ namespace Integration
 			public async Task GetParksSupportingUnits()
 			{
 				var resp = await GetAuthenticated($"departments/{TestEntities.Departments.ParksId}/supportingunits");
+				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<SupportRelationship>>();
 				var expected = new List<SupportRelationship> {TestEntities.SupportRelationships.ParksAndRecRelationship};
 				Assert.That(actual.Count, Is.EqualTo(1));
 				Assert.That(actual.First().Id, Is.EqualTo(expected.First().Id));
 				Assert.That(actual.First().Department.Id, Is.EqualTo(expected.First().Department.Id));
 				Assert.That(actual.First().Unit.Id, Is.EqualTo(expected.First().Unit.Id));
+				Assert.That(expected.First().Unit.Parent.ParentId, Is.EqualTo(actual.First().Unit.Parent.ParentId));
 			}
 		}
 	}
