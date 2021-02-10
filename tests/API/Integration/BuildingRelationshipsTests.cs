@@ -195,5 +195,17 @@ namespace Integration
             }
 			
         }
+
+        public class BuildingRelationshipDelete : ApiTest
+        {
+            [TestCase(TestEntities.BuildingRelationships.CityHallCityOfPawneeId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin can delete a building relationship.")]
+            [TestCase(TestEntities.BuildingRelationships.CityHallCityOfPawneeId, ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Non-Admin cannot delete a building relationship.")]
+            [TestCase(9999, ValidAdminJwt, HttpStatusCode.NotFound, Description = "Cannot delete a building relationship that does not exist.")]
+            public async Task CanBuildingRelationshipUnit(int relationshipId, string jwt, HttpStatusCode expectedCode)
+            {
+                var resp = await DeleteAuthenticated($"buildingRelationships/{relationshipId}", jwt);
+                AssertStatusCode(resp, expectedCode);
+            }
+        }
 	}
 }

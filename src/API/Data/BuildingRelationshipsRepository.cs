@@ -28,12 +28,21 @@ namespace API.Data
                 TryCreateBuildingRelationship(db, body)
                 .Bind(created => TryFindBuildingRelationship(db, created.Id))
             );
+
 		internal static async Task<Result<BuildingRelationship, Error>> UpdateBuildingRelationship(BuildingRelationshipRequest body, int relationshipId)
         {
             return await ExecuteDbPipeline($"update building relationship {relationshipId}", db =>
                 TryFindBuildingRelationship(db, relationshipId)
                 .Bind(existing => TryUpdateBuildingRelationship(db, existing, body))
                 .Bind(_ => TryFindBuildingRelationship(db, relationshipId))
+            );
+        }
+
+		internal static async Task<Result<bool, Error>> DeleteBuildingRelationship(int relationshipId)
+        {
+            return await ExecuteDbPipeline($"delete building relationship {relationshipId}", db =>
+                TryFindBuildingRelationship(db, relationshipId)
+                .Bind(existing => TryDeleteBuildingRelationship(db, existing))
             );
         }
 
@@ -47,6 +56,7 @@ namespace API.Data
                 ? Pipeline.NotFound("No building support relationship was found with the ID provided.")
                 : Pipeline.Success(result);
         }
+        
         private static async Task<Result<BuildingRelationship,Error>> TryCreateBuildingRelationship (PeopleContext db, BuildingRelationshipRequest body)
         {
             var buildingRelationship = new BuildingRelationship{
@@ -95,6 +105,13 @@ namespace API.Data
 
             await db.SaveChangesAsync();
             return Pipeline.Success(existing);
+        }
+
+        private static async Task<Result<bool, Error>> TryDeleteBuildingRelationship(PeopleContext db, BuildingRelationship buildingRelationship)
+        {
+            db.BuildingRelationships.Remove(buildingRelationship);
+            await db.SaveChangesAsync();
+            return Pipeline.Success(true);
         }
 
     }
