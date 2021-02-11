@@ -65,7 +65,7 @@ namespace API.Data
         {
             var result = await db.SupportRelationships
                 .Include(r => r.Department)
-                .Include(r => r.Unit)
+                .Include(r => r.Unit.Parent)
                 .Where(r => r.DepartmentId == departmentId)
                 .AsNoTracking().ToListAsync();
             return Pipeline.Success(result);

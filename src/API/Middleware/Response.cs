@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Http;
 using System.Net;
 using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Models;
+using Microsoft.Azure.WebJobs.Extensions.Http;
 
 namespace API.Middleware
 {
@@ -14,52 +17,55 @@ namespace API.Middleware
             public const string AccessControlExposeHeaders = "Access-Control-Expose-Headers";
         }
         
-        /// <summary>Return an HTTP 200 response with content, or an appropriate HTTP error response.</summary>
-        public static IActionResult Ok<T>(HttpRequest req, Result<T, Error> result)
+        private static IActionResult Generate<T>(HttpRequest req, Result<T, Error> result, HttpStatusCode statusCode)
         {
-            // var logger = Logging.GetApiLogger(req, principal);
+            var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
-                return new OkObjectResult(result.Value);      
+                logger.SuccessResult(req, statusCode);
+                switch(statusCode)
+                {
+                    case HttpStatusCode.Created when result.Value.GetType().IsSubclassOf(typeof(Entity)): // just to allow the cast
+                        var id = ((Entity)(object)result.Value)?.Id.ToString() ?? "";
+                        return new CreatedResult($"{req.Path}/{id}", result.Value);
+                    case HttpStatusCode.NoContent:
+                        return new NoContentResult();
+                    default:
+                        return new OkObjectResult(result.Value);
+                }
             }
             else 
             {
-                // logger.FailureResult<T>("Fetch", result.Error);
-                System.Console.WriteLine($"[{result.Error.StatusCode}] {result.Error.Messages}");
+                logger.FailureResult<T>(req, result.Error);
                 return result.Error.ToActionResult();
             }
         }
 
+        /// <summary>Return an HTTP 200 response with content, or an appropriate HTTP error response.</summary>
+        public static IActionResult Ok<T>(HttpRequest req, Result<T, Error> result)
+            => Generate(req, result, HttpStatusCode.OK);
+
         /// <summary>Return an HTTP 201 response with content, with the URL for the resource and the resource itself.</summary>
-        public static IActionResult Created<T>(string baseUrl, Result<T, Error> result) where T : Models.Entity
-		{
-            // var logger = Logging.GetApiLogger(req, principal);
-            if (result.IsSuccess)
-            {
-                return new CreatedResult($"{baseUrl}/{result.Value.Id}", result.Value);
-            }
-            else 
-            {
-                // logger.FailureResult<T>("Fetch", result.Error);
-                System.Console.WriteLine($"[{result.Error.StatusCode}] {result.Error.Messages}");
-                return result.Error.ToActionResult();
-            }
-        }
+        public static IActionResult Created<T>(HttpRequest req, Result<T, Error> result) where T : Models.Entity
+		    => Generate(req, result, HttpStatusCode.Created);
 
         /// <summary>Return an HTTP 204 indicating success, but nothing to return.</summary>
         public static IActionResult NoContent<T>(HttpRequest req, Result<T, Error> result)
-        {
-            // var logger = Logging.GetApiLogger(req, principal);
-            if (result.IsSuccess)
-            {
-                return new NoContentResult();
-            }
-            else 
-            {
-                // logger.FailureResult<T>("Fetch", result.Error);
-                System.Console.WriteLine($"[{result.Error.StatusCode}] {result.Error.Messages}");
-                return result.Error.ToActionResult();
-            }
-        }
+            => Generate(req, result, HttpStatusCode.NoContent);
+
+        private static void SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode) 
+            => logger
+                .ForContext(LogProps.StatusCode, (int)statusCode)
+                .ForContext(LogProps.RequestBody, request.ContentLength > 0 ? request.ReadAsStringAsync().Result : null)
+                .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
+                .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
+
+        private static void FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error) 
+            => logger
+                .ForContext(LogProps.StatusCode, (int)error.StatusCode)
+                .ForContext(LogProps.RequestBody, request.ContentLength > 0 ? request.ReadAsStringAsync().Result : null)
+                .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
+                .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(error.Messages))
+                .Error(error.Exception, $"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}:\nErrors: {{{LogProps.ErrorMessages}}}.");
     }
 }
