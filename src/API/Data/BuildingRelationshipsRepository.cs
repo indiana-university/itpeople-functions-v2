@@ -83,7 +83,7 @@ namespace API.Data
             //Unit is already being checked/found in the Authorization step
 			if (await db.Buildings.AnyAsync(b => b.Id == body.BuildingId) == false)
             {
-                return Pipeline.NotFound("No building was found with the buildingId provided.");
+                return Pipeline.NotFound("The specified unit and/or building does not exist.");
             }
             if (await db.BuildingRelationships.AnyAsync(r => r.BuildingId == body.BuildingId && r.UnitId == body.UnitId))
             {

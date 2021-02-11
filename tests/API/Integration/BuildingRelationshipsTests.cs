@@ -93,25 +93,15 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.Forbidden);
             }
 
-            //404 The specified unit parent does not exist
-			[Test]
-            public async Task NotFoundUnitIdCannotCreateBuildingRelationship()
+            [TestCase(99999,TestEntities.Buildings.RonsCabinId,Description="Unit Id not found")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId,99999,Description="Building Id not found")]
+            public async Task NotFoundCannotCreateBuildingRelationship(int unitId, int buildingId)
             {
-                var req = new {
-					UnitId = 99999
+				var req = new BuildingRelationshipRequest {
+					UnitId = unitId,
+					BuildingId = buildingId
 				};
-                var resp = await PostAuthenticated("buildingRelationships", req, ValidAdminJwt);
-                var actual = await resp.Content.ReadAsAsync<ApiError>();
-
-                Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
-            }
-			[Test]
-            public async Task NotFoundBuildingIdCannotCreateBuildingRelationship()
-            {
-                var req = new {
-					BuildingId = 99999
-				};
-                var resp = await PostAuthenticated("buildingRelationships", req, ValidAdminJwt);
+                var resp = await PostAuthenticated($"buildingRelationships", req, ValidAdminJwt);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
                 Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
@@ -128,7 +118,6 @@ namespace Integration
                 Assert.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
              	Assert.AreEqual(1, actual.Errors.Count);
                 Assert.Contains("The provided unit already has a support relationship with the provided building.", actual.Errors);
-                
 			}
         }
 

@@ -46,8 +46,7 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.Created, MediaTypeNames.Application.Json, typeof(BuildingRelationship), Description = "The newly created building support relationship record")]
 		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The request body was malformed, the unitId and/or buildingId field was missing.")]
 		[OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You are not authorized to modify this building support relationship.")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No unit was found with the unitId provided.")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No building was found with the buildingId provided.")]
+		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "The specified unit and/or building does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit already has a support relationship with the provided building.")]
 
 		public static Task<IActionResult> CreateBuildingRelationship(
@@ -71,8 +70,6 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(BuildingRelationship))]
 		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The request body was malformed, the unitId and/or buildingId field was missing.")]
 		[OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You are not authorized to modify this building support relationship.")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No unit was found with the unitId provided.")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No building was found with the buildingId provided.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No building support relationship was found with the relationshipId provided.")]
 		public static Task<IActionResult> UpdateBuildingRelationship(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "buildingRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
