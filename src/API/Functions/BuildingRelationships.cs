@@ -61,7 +61,7 @@ namespace API.Functions
 			.Bind(brr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, brr.UnitId))// Set headers saying what the requestor can do to this unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => BuildingRelationshipsRepository.CreateBuildingRelationship(buildingRelationshipRequest))
-			.Finally(result => Response.Created("buildingRelationships", result));
+			.Finally(result => Response.Created(req, result));
 		}
 
 		[FunctionName(nameof(BuildingRelationships.UpdateBuildingRelationship))]
