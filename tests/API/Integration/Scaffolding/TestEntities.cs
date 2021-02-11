@@ -58,10 +58,21 @@ namespace Integration
 
         public static class Departments
         {
+            public const int ParksId = 1;
             public static readonly Department Parks = new Department() { 
                 Id = 1, 
                 Name = "Parks Department", 
                 Description = "Your local Parks department." 
+            };
+            public static readonly Department Fire = new Department() { 
+                Id = 2, 
+                Name = "Fire Department", 
+                Description = "Your local fire department." 
+            };
+            public static readonly Department Auditor = new Department() { 
+                Id = 3, 
+                Name = "Auditor", 
+                Description = "Your local auditor's department." 
             };
         }
 
@@ -124,8 +135,8 @@ namespace Integration
                 Notes = "", 
                 PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg", 
                 Responsibilities = Responsibilities.ItProjectMgt, 
-                DepartmentId = Departments.Parks.Id, 
-                Department = Departments.Parks, 
+                DepartmentId = Departments.Auditor.Id, 
+                Department = Departments.Auditor, 
                 IsServiceAdmin = false 
             };
 
@@ -159,6 +170,18 @@ namespace Integration
             };
             
         }*/
+        
+        public static class SupportRelationships
+        {
+             public static readonly SupportRelationship ParksAndRecRelationship = new SupportRelationship() {
+                Id=1,
+                UnitId = TestEntities.Units.ParksAndRecUnit.Id,
+                DepartmentId=TestEntities.Departments.Parks.Id,
+                Unit=TestEntities.Units.ParksAndRecUnit,
+                Department=TestEntities.Departments.Parks
+            };
+
+        }
 
         public static class Units
         {
@@ -179,6 +202,17 @@ namespace Integration
                 Description = "Parks and Recreation",
                 Url = "http://pawneeindiana.com/parks-and-recreation/",
                 Email = "unit@example.com",
+                ParentId = CityOfPawnee.Id,
+                Parent = CityOfPawnee
+            };
+            public const int AuditorId = 3;
+
+            public static readonly Unit Auditor = new Unit(){
+                Id = AuditorId,
+                Name = "Auditor",
+                Description = "City Auditors",
+                Url = "http://pawneeindiana.com/auditor/",
+                Email = "auditor@example.com",
                 ParentId = CityOfPawnee.Id,
                 Parent = CityOfPawnee
             };
@@ -231,7 +265,7 @@ namespace Integration
                 Notes = "",
                 //Netid = People.BWyatt.Netid,
                 Person = People.BWyatt,
-                Unit = Units.CityOfPawnee,
+                Unit = Units.Auditor,
                 MemberTools = null
             };
             
