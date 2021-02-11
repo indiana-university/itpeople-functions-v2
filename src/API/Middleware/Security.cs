@@ -17,9 +17,22 @@ namespace API.Middleware
     public static class Security
     {
         public static Result<string, Error> Authenticate(HttpRequest request)
-            => ExtractJWT(request)
+            => SetStartTime(request)
+                .Bind(ExtractJWT)
                 .Bind(DecodeJWT)
-                .Bind(ValidateJWT);
+                .Bind(ValidateJWT)
+                .Tap(netid => SetPrincipal(request, netid));
+
+        private static Result<HttpRequest, Error> SetStartTime(HttpRequest request)
+        {
+            request.HttpContext.Items[LogProps.ElapsedTime] = System.DateTime.UtcNow;
+            return Pipeline.Success(request);
+        }
+
+        private static void SetPrincipal(HttpRequest request, string netid)
+        {
+            request.HttpContext.Items[LogProps.RequestorNetid] = netid;
+        }
 
         public const string ErrorRequestMissingAuthorizationHeader = "Request is missing an Authorization header.";
         public const string ErrorRequestEmptyAuthorizationHeader = "Request contains empty Authorization header.";

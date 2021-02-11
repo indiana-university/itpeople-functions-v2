@@ -43,7 +43,7 @@ namespace API.Functions
         [FunctionName(nameof(Buildings.BuildingsGetSupportingUnits))]
         [OpenApiOperation(nameof(Buildings.BuildingsGetSupportingUnits), nameof(Buildings), Summary = "List a building's supporting units", Description = @"A supporting unit provides IT services for the building.")]
         [OpenApiParameter("buildingId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building record.")]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<BuildingRelationship>), Description="A collection of building relationship records")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<BuildingRelationshipResponse>), Description="A collection of building relationship records")]
         [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No building relationships were found with the buildingId provided.")]
         public static Task<IActionResult> BuildingsGetSupportingUnits(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildings/{buildingId}/supportingUnits")] HttpRequest req, int buildingId) 
