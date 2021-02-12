@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using API.Middleware;
 using CSharpFunctionalExtensions;
 using Database;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
@@ -32,11 +33,12 @@ namespace API.Data
 				.Bind(created => TryFindBuildingRelationship(db, created.Id))
 			);
 
-		internal static async Task<Result<BuildingRelationship, Error>> UpdateBuildingRelationship(BuildingRelationshipRequest body, int relationshipId)
+		internal static async Task<Result<BuildingRelationship, Error>> UpdateBuildingRelationship(HttpRequest req,BuildingRelationshipRequest body, int relationshipId)
 		{
 			return await ExecuteDbPipeline($"update building relationship {relationshipId}", db =>
 				ValidateRequest(db, body)
 				.Bind(_ => TryFindBuildingRelationship(db, relationshipId))
+                .Tap(existing => LogPrevious(req, existing))
 				.Bind(existing => TryUpdateBuildingRelationship(db, existing, body))
 				.Bind(_ => TryFindBuildingRelationship(db, relationshipId))
 			);

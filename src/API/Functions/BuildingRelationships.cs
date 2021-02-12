@@ -84,7 +84,7 @@ namespace API.Functions
 				.Tap(brr => buildingRelationshipRequest = brr)
 				.Bind(brr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, brr.UnitId))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
-				.Bind(authorized => BuildingRelationshipsRepository.UpdateBuildingRelationship(buildingRelationshipRequest, relationshipId))
+				.Bind(authorized => BuildingRelationshipsRepository.UpdateBuildingRelationship(req, buildingRelationshipRequest, relationshipId))
 				.Finally(result => Response.Ok(req, result));
 		}
 
