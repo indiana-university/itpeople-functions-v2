@@ -26,14 +26,16 @@ namespace API.Data
 
 		internal static async Task<Result<BuildingRelationship, Error>> CreateBuildingRelationship(BuildingRelationshipRequest body)
 			=> await ExecuteDbPipeline("create a building relationship", db =>
-				TryCreateBuildingRelationship(db, body)
+				ValidateRequest(db, body)
+				.Bind(_ => TryCreateBuildingRelationship(db, body))
 				.Bind(created => TryFindBuildingRelationship(db, created.Id))
 			);
 
 		internal static async Task<Result<BuildingRelationship, Error>> UpdateBuildingRelationship(BuildingRelationshipRequest body, int relationshipId)
 		{
 			return await ExecuteDbPipeline($"update building relationship {relationshipId}", db =>
-				TryFindBuildingRelationship(db, relationshipId)
+				ValidateRequest(db, body)
+				.Bind(_ => TryFindBuildingRelationship(db, relationshipId))
 				.Bind(existing => TryUpdateBuildingRelationship(db, existing, body))
 				.Bind(_ => TryFindBuildingRelationship(db, relationshipId))
 			);
@@ -66,18 +68,12 @@ namespace API.Data
 				BuildingId = body.BuildingId
 			};
 
-			var createValidationResult = await GetCreateValidationResult(db, buildingRelationship);
-			if (createValidationResult.IsFailure)
-			{
-				return createValidationResult;
-			}
-
 			db.BuildingRelationships.Add(buildingRelationship);
 			await db.SaveChangesAsync();
 			return Pipeline.Success(buildingRelationship);
 		}
 
-		private static async Task<Result<BuildingRelationship, Error>> GetCreateValidationResult(PeopleContext db, BuildingRelationship body)
+		private static async Task<Result<BuildingRelationshipRequest, Error>> ValidateRequest(PeopleContext db, BuildingRelationshipRequest body)
 		{
 			if (body.UnitId == 0 || body.BuildingId == 0)
 			{
@@ -104,11 +100,6 @@ namespace API.Data
 			}
 			existing.UnitId = body.UnitId;
 			existing.BuildingId = body.BuildingId;
-			var createValidationResult = await GetCreateValidationResult(db, existing);
-			if (createValidationResult.IsFailure)
-			{
-				return createValidationResult;
-			}
 
 			await db.SaveChangesAsync();
 			return Pipeline.Success(existing);
