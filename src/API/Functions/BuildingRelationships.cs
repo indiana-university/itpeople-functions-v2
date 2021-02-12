@@ -33,7 +33,7 @@ namespace API.Functions
 		[OpenApiOperation(nameof(BuildingRelationships.BuildingRelationshipsGetOne), BuildingRelationshipsTitle, Summary = "Find a unit-building support relationships by ID")]
 		[OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building support relationship record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(BuildingRelationshipResponse), Description = "A building support relationship record")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No support relationship was found with the ID provided.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No support relationship was found with the ID provided.")]
 		public static Task<IActionResult> BuildingRelationshipsGetOne(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildingRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
 			=> Security.Authenticate(req)
@@ -69,7 +69,7 @@ namespace API.Functions
 		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(BuildingRelationshipRequest), Required = true)]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(BuildingRelationshipResponse))]
 		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The request body was malformed, the unitId and/or buildingId field was missing.")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You are not authorized to modify this building support relationship.")]
+		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError),  Description = "You are not authorized to modify this building support relationship.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No building support relationship was found with the relationshipId provided.")]
 		public static Task<IActionResult> UpdateBuildingRelationship(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "buildingRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
@@ -90,8 +90,8 @@ namespace API.Functions
 		[OpenApiOperation(nameof(BuildingRelationships.DeleteBuildingRelationship), BuildingRelationshipsTitle, Summary = "Delete a unit-building support relationship", Description = "Authorization: Support relationships can be deleted by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
 		[OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building support relationship record.")]
 		[OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.Forbidden, Description = "You do not have permission to modify this unit.")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No building support relationship was found with the ID provided.")]
+		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You do not have permission to modify this unit.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No building support relationship was found with the ID provided.")]
 		public static Task<IActionResult> DeleteBuildingRelationship(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "buildingRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
 		{
