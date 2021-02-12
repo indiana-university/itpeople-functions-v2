@@ -95,9 +95,12 @@ namespace API.Data
 
         private static async Task<Result<BuildingRelationship, Error>> TryUpdateBuildingRelationship(PeopleContext db, BuildingRelationship existing, BuildingRelationshipRequest body)
         {
+            if(existing.UnitId == body.UnitId || existing.BuildingId == body.BuildingId)
+            {
+                Pipeline.Conflict("The provided unit already has a support relationship with the provided building.");
+            }
             existing.UnitId = body.UnitId;
             existing.BuildingId = body.BuildingId;
-
             var createValidationResult = await GetCreateValidationResult(db, existing);
             if(createValidationResult.IsFailure) {
                 return createValidationResult;

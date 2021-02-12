@@ -183,6 +183,17 @@ namespace Integration
                 Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
             }
 			
+            [Test]
+            public async Task ConflictUpdateBuildingRelationship()
+            {
+                var req = new BuildingRelationshipRequest {
+					UnitId = TestEntities.BuildingRelationships.CityHallCityOfPawnee.UnitId,
+					BuildingId = TestEntities.BuildingRelationships.CityHallCityOfPawnee.BuildingId
+				};
+
+                var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.Conflict);
+            }
         }
 
         public class BuildingRelationshipDelete : ApiTest
