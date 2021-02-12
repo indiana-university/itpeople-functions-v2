@@ -44,11 +44,11 @@ namespace API.Data
 			);
 		}
 
-		internal static async Task<Result<bool, Error>> DeleteBuildingRelationship(int relationshipId)
+		internal static async Task<Result<bool, Error>> DeleteBuildingRelationship(HttpRequest req, int relationshipId)
 		{
 			return await ExecuteDbPipeline($"delete building relationship {relationshipId}", db =>
 				TryFindBuildingRelationship(db, relationshipId)
-				.Bind(existing => TryDeleteBuildingRelationship(db, existing))
+				.Bind(existing => TryDeleteBuildingRelationship(db, req, existing))
 			);
 		}
 
@@ -104,8 +104,10 @@ namespace API.Data
 			return Pipeline.Success(existing);
 		}
 
-		private static async Task<Result<bool, Error>> TryDeleteBuildingRelationship(PeopleContext db, BuildingRelationship buildingRelationship)
+		private static async Task<Result<bool, Error>> TryDeleteBuildingRelationship(PeopleContext db, HttpRequest req, BuildingRelationship buildingRelationship)
 		{
+            LogPrevious(req, buildingRelationship);
+
 			db.BuildingRelationships.Remove(buildingRelationship);
 			await db.SaveChangesAsync();
 			return Pipeline.Success(true);

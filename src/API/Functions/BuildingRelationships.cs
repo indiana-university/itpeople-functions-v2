@@ -103,7 +103,7 @@ namespace API.Functions
 					.Bind(requestor => BuildingRelationshipsRepository.GetOne(relationshipId))
 					.Bind(br => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, br.UnitId))// Set headers saying what the requestor can do to this unit
 					.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
-					.Bind(_ => BuildingRelationshipsRepository.DeleteBuildingRelationship(relationshipId))
+					.Bind(_ => BuildingRelationshipsRepository.DeleteBuildingRelationship(req, relationshipId))
 					.Finally(result => Response.NoContent(req, result));
 		}
 	}
