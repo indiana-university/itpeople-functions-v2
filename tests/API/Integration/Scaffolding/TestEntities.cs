@@ -10,7 +10,7 @@ namespace Integration
             public const int CityHallId = 1;
 
             public static readonly Building CityHall = new Building() {
-                Id=1,
+                Id=CityHallId,
                 Name="Pawnee City Hall",
                 Code="PA123",
                 Address="123 Main St",
@@ -19,8 +19,10 @@ namespace Integration
                 Country="USA",
                 PostCode="47501"
             };
+            public const int RonsCabinId = 2;
+
             public static readonly Building RonsCabin = new Building() {
-                Id=2,
+                Id=RonsCabinId,
                 Name="Ron's Cabin",
                 Code="RC123",
                 Address="Out in the woods",
@@ -29,8 +31,11 @@ namespace Integration
                 Country="USA",
                 PostCode="47501"
             };
+
+            public const int SmallParkId = 3;
+
             public static readonly Building SmallPark = new Building() {
-                Id=3,
+                Id=SmallParkId,
                 Name="Smallest Park",
                 Code="PA1231",
                 Address="321 Main St",
@@ -41,22 +46,45 @@ namespace Integration
             };
         }
 
-        public static class BuildingRelationships {
+        public static class BuildingRelationships 
+        {
+            public const int CityHallCityOfPawneeId = 1;
+            
             public static readonly BuildingRelationship CityHallCityOfPawnee = new BuildingRelationship() {
-                Id=1,
+                Id=CityHallCityOfPawneeId,
                 UnitId = TestEntities.Units.CityOfPawnee.Id,
                 BuildingId=TestEntities.Buildings.CityHall.Id,
                 Unit=TestEntities.Units.CityOfPawnee,
                 Building=TestEntities.Buildings.CityHall
             };
+            public const int RonsCabinCityOfPawneeId = 2;
+            
+            public static readonly BuildingRelationship RonsCabinCityOfPawnee = new BuildingRelationship() {
+                Id=RonsCabinCityOfPawneeId,
+                UnitId = TestEntities.Units.CityOfPawnee.Id,
+                BuildingId=TestEntities.Buildings.RonsCabin.Id,
+                Unit=TestEntities.Units.CityOfPawnee,
+                Building=TestEntities.Buildings.RonsCabin
+            };
         }
 
         public static class Departments
         {
+            public const int ParksId = 1;
             public static readonly Department Parks = new Department() { 
                 Id = 1, 
                 Name = "Parks Department", 
                 Description = "Your local Parks department." 
+            };
+            public static readonly Department Fire = new Department() { 
+                Id = 2, 
+                Name = "Fire Department", 
+                Description = "Your local fire department." 
+            };
+            public static readonly Department Auditor = new Department() { 
+                Id = 3, 
+                Name = "Auditor", 
+                Description = "Your local auditor's department." 
             };
         }
 
@@ -119,8 +147,8 @@ namespace Integration
                 Notes = "", 
                 PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg", 
                 Responsibilities = Responsibilities.ItProjectMgt, 
-                DepartmentId = Departments.Parks.Id, 
-                Department = Departments.Parks, 
+                DepartmentId = Departments.Auditor.Id, 
+                Department = Departments.Auditor, 
                 IsServiceAdmin = false 
             };
 
@@ -147,14 +175,22 @@ namespace Integration
         }
 
         public static class SupportRelationships {
-            public static readonly SupportRelationship CityOfPawneeParks = new SupportRelationship() {
+            public static readonly SupportRelationship CityOfPawneeFire = new SupportRelationship() {
                 Id=1,
                 UnitId = TestEntities.Units.CityOfPawnee.Id,
-                DepartmentId=TestEntities.Departments.Parks.Id,
+                DepartmentId=TestEntities.Departments.Fire.Id,
                 Unit=TestEntities.Units.CityOfPawnee,
+                Department=TestEntities.Departments.Fire
+            };
+
+            public static readonly SupportRelationship ParksAndRecRelationship = new SupportRelationship() {
+                Id=2,
+                UnitId = TestEntities.Units.ParksAndRecUnit.Id,
+                DepartmentId=TestEntities.Departments.Parks.Id,
+                Unit=TestEntities.Units.ParksAndRecUnit,
                 Department=TestEntities.Departments.Parks
             };
-        }
+        }        
 
         /*public static class MemberTools
         {
@@ -165,6 +201,7 @@ namespace Integration
             };
             
         }*/
+
 
         public static class Units
         {
@@ -185,6 +222,17 @@ namespace Integration
                 Description = "Parks and Recreation",
                 Url = "http://pawneeindiana.com/parks-and-recreation/",
                 Email = "unit@example.com",
+                ParentId = CityOfPawnee.Id,
+                Parent = CityOfPawnee
+            };
+            public const int AuditorId = 3;
+
+            public static readonly Unit Auditor = new Unit(){
+                Id = AuditorId,
+                Name = "Auditor",
+                Description = "City Auditors",
+                Url = "http://pawneeindiana.com/auditor/",
+                Email = "auditor@example.com",
                 ParentId = CityOfPawnee.Id,
                 Parent = CityOfPawnee
             };
@@ -237,7 +285,7 @@ namespace Integration
                 Notes = "",
                 //Netid = People.BWyatt.Netid,
                 Person = People.BWyatt,
-                Unit = Units.CityOfPawnee,
+                Unit = Units.Auditor,
                 MemberTools = null
             };
             

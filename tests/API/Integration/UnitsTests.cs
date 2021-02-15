@@ -8,6 +8,7 @@ using System.Linq;
 using API.Middleware;
 using API.Data;
 using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace Integration
 {
@@ -106,6 +107,7 @@ namespace Integration
                 var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent.Id);
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.Created);
+                Assert.AreEqual("/units/4", resp.Headers.Location.OriginalString);
                 var actual = await resp.Content.ReadAsAsync<Unit>();
 
                 Assert.NotZero(actual.Id);
@@ -224,6 +226,51 @@ namespace Integration
                 Assert.Contains($"No parent unit found with ID ({req.ParentId}).", actual.Errors);
                 Assert.AreEqual("(none)", actual.Details);
             }
+
+            [Test]
+            public async Task ChangeUnitParent()
+            {
+                //Create a unit to test.
+                var createReq = new Unit("Test", "test", null, null, TestEntities.Units.ParksAndRecUnitId);
+                var createResp = await PostAuthenticated("units", createReq, ValidAdminJwt);
+                AssertStatusCode(createResp, HttpStatusCode.Created);
+                var createResult = await createResp.Content.ReadAsAsync<Unit>();
+
+                //Change the unit's parent from parks & rec to city.
+                createResult.ParentId = TestEntities.Units.CityOfPawneeUnitId;
+                var resp = await PutAuthenticated($"units/{createResult.Id}", createResult, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<Unit>();
+
+                Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.ParentId);
+                Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Parent.Id);
+            }
+
+            [Test]
+            public async Task UnitMembersArePreservedWhenEdited()
+            {
+                System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
+                var db = Database.PeopleContext.Create();
+                var existingParksAndRecUnitMembers = db.UnitMembers
+                    .Where(um => um.UnitId == TestEntities.Units.ParksAndRecUnitId)
+                    .AsNoTracking()
+                    .ToList();
+
+                var req = new Unit("Changed Name", "", "", "", TestEntities.Units.ParksAndRecUnit.Parent.Id);
+                
+                var resp = await PutAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}", req, ValidAdminJwt);
+                
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<Unit>();
+
+                var resultParksAndRecUnitMembers = db.UnitMembers
+                    .Where(um => um.UnitId == TestEntities.Units.ParksAndRecUnitId)
+                    .AsNoTracking()
+                    .ToList();
+                
+                Assert.AreEqual(existingParksAndRecUnitMembers.Count, resultParksAndRecUnitMembers.Count);
+                AssertIdsMatchContent(existingParksAndRecUnitMembers.Select(m => m.Id).ToArray(), resultParksAndRecUnitMembers);
+            }
         }
 
         public class UnitDelete : ApiTest
@@ -246,27 +293,40 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
                 Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains("Unit 1 has child units, with ids: 2. These must be reassigned prior to deletion.", actual.Errors);
+                Assert.Contains("Unit 1 has child units, with ids: 2, 3. These must be reassigned prior to deletion.", actual.Errors);
                 Assert.AreEqual("(none)", actual.Details);
             }
 
             [Test]
-            public async Task ChangeUnitParent()
+            public async Task DeleteUnitDoesNotCreateOrphans()
             {
-                //Create a unit to test.
-                var createReq = new Unit("Test", "test", null, null, TestEntities.Units.ParksAndRecUnitId);
-                var createResp = await PostAuthenticated("units", createReq, ValidAdminJwt);
-                AssertStatusCode(createResp, HttpStatusCode.Created);
-                var createResult = await createResp.Content.ReadAsAsync<Unit>();
+                var resp = await DeleteAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.NoContent);
+                
+                System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
+                var db = Database.PeopleContext.Create();
 
-                //Change the unit's parent from parks & rec to city.
-                createResult.ParentId = TestEntities.Units.CityOfPawneeUnitId;
-                var resp = await PutAuthenticated($"units/{createResult.Id}", createResult, ValidAdminJwt);
-                AssertStatusCode(resp, HttpStatusCode.OK);
-                var actual = await resp.Content.ReadAsAsync<Unit>();
+                // You can use this block of code to induce one of the problems we are testing for.
+                /*
+                var ron = db.People.Include(p => p.UnitMemberships).Single(p => p.Id.Equals(TestEntities.People.RSwansonId));
+                var um = ron.UnitMemberships.First();
+                ron.UnitMemberships.Remove(um);
+                await db.SaveChangesAsync();
+                */
 
-                Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.ParentId);
-                Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Parent.Id);
+                var unitMembers = db.UnitMembers
+                    .Include(um => um.Unit)
+                    .Include(um => um.Person);
+                
+                Assert.IsEmpty(unitMembers.Where(um => um.Unit == null));
+                Assert.IsEmpty(unitMembers.Where(um => um.Person == null));
+                
+                var supportRelationships = db.SupportRelationships
+                    .Include(sr => sr.Unit)
+                    .Include(sr => sr.Department);
+
+                Assert.IsEmpty(supportRelationships.Where(um => um.Unit == null));
+                Assert.IsEmpty(supportRelationships.Where(um => um.Department == null));
             }
         }
     }

@@ -12,6 +12,7 @@ using System.Net;
 using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
+using System.Net.Mime;
 
 namespace API.Functions
 {
@@ -33,7 +34,7 @@ namespace API.Functions
         [OpenApiOperation(nameof(Buildings.BuildingsGetOne), nameof(Buildings), Summary = "Find a building by ID")]
         [OpenApiParameter("buildingId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Building), Description="A building record")]
-        [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No building was found with the ID provided.")]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No building was found with the ID provided.")]
         public static Task<IActionResult> BuildingsGetOne(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildings/{buildingId}")] HttpRequest req, int buildingId) 
             => Security.Authenticate(req)
@@ -43,8 +44,8 @@ namespace API.Functions
         [FunctionName(nameof(Buildings.BuildingsGetSupportingUnits))]
         [OpenApiOperation(nameof(Buildings.BuildingsGetSupportingUnits), nameof(Buildings), Summary = "List a building's supporting units", Description = @"A supporting unit provides IT services for the building.")]
         [OpenApiParameter("buildingId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building record.")]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<BuildingRelationship>), Description="A collection of building relationship records")]
-        [OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No building relationships were found with the buildingId provided.")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<BuildingRelationshipResponse>), Description="A collection of building relationship records")]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No building relationships were found with the buildingId provided.")]
         public static Task<IActionResult> BuildingsGetSupportingUnits(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildings/{buildingId}/supportingUnits")] HttpRequest req, int buildingId) 
             => Security.Authenticate(req)

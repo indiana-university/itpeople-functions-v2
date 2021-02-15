@@ -22,7 +22,7 @@ namespace Integration
 				var resp = await GetAuthenticated("supportRelationships");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<SupportRelationship>>();
-				Assert.AreEqual(1, actual.Count);
+				Assert.AreEqual(2, actual.Count);
 			}
 		}
 	}

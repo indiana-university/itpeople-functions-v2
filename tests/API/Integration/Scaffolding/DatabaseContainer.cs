@@ -70,16 +70,20 @@ namespace Integration
             });
 
             peopleContext.BuildingRelationships.AddRange(new List<BuildingRelationship> {
-                TestEntities.BuildingRelationships.CityHallCityOfPawnee
+                TestEntities.BuildingRelationships.CityHallCityOfPawnee,
+                TestEntities.BuildingRelationships.RonsCabinCityOfPawnee,
             });
 
             peopleContext.Departments.AddRange(new List<Department> {
-                TestEntities.Departments.Parks
+                TestEntities.Departments.Parks,
+                TestEntities.Departments.Fire,
+                TestEntities.Departments.Auditor
             });
             
             peopleContext.Units.AddRange(new List<Unit> {
                 TestEntities.Units.CityOfPawnee,
-                TestEntities.Units.ParksAndRecUnit
+                TestEntities.Units.ParksAndRecUnit,
+                TestEntities.Units.Auditor,
             });
 
             peopleContext.People.AddRange(new List<Person> { 
@@ -90,7 +94,8 @@ namespace Integration
             });  
             
             peopleContext.SupportRelationships.AddRange(new List<SupportRelationship> {
-                TestEntities.SupportRelationships.CityOfPawneeParks
+                TestEntities.SupportRelationships.CityOfPawneeFire,
+                TestEntities.SupportRelationships.ParksAndRecRelationship
             });
 
             peopleContext.UnitMembers.AddRange(new List<UnitMember> { 
@@ -111,6 +116,11 @@ namespace Integration
                 SELECT
                     setval(pg_get_serial_sequence('public.units', 'id'), 
                     (SELECT MAX(id) FROM public.units));
+                ");
+            peopleContext.Database.ExecuteSqlRaw(@"
+                SELECT
+                    setval(pg_get_serial_sequence('public.building_relationships', 'id'), 
+                    (SELECT MAX(id) FROM public.building_relationships));
                 ");
         }
     }
