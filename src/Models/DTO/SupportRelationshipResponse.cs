@@ -16,7 +16,11 @@ namespace Models
         public Department Department { get; set; }
         /// The unit in this relationship.
         public UnitResponse Unit { get; set; }
-    
+        
+        public SupportRelationshipResponse()
+        {
+        }
+
         public SupportRelationshipResponse(SupportRelationship sr)
         {
             Id = sr.Id;
