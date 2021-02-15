@@ -70,7 +70,8 @@ namespace Integration
             });
 
             peopleContext.BuildingRelationships.AddRange(new List<BuildingRelationship> {
-                TestEntities.BuildingRelationships.CityHallCityOfPawnee
+                TestEntities.BuildingRelationships.CityHallCityOfPawnee,
+                TestEntities.BuildingRelationships.RonsCabinCityOfPawnee,
             });
 
             peopleContext.Departments.AddRange(new List<Department> {
@@ -113,6 +114,11 @@ namespace Integration
                 SELECT
                     setval(pg_get_serial_sequence('public.units', 'id'), 
                     (SELECT MAX(id) FROM public.units));
+                ");
+            peopleContext.Database.ExecuteSqlRaw(@"
+                SELECT
+                    setval(pg_get_serial_sequence('public.building_relationships', 'id'), 
+                    (SELECT MAX(id) FROM public.building_relationships));
                 ");
         }
     }

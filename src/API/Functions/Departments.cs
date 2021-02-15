@@ -12,6 +12,7 @@ using System.Net;
 using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
+using System.Net.Mime;
 
 namespace API.Functions
 {
@@ -33,7 +34,7 @@ namespace API.Functions
 		[OpenApiOperation(nameof(Departments.DepartmentsGetOne), nameof(Departments), Summary = "Find a department by ID")]
 		[OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Department), Description = "A department record")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No department was found with the ID provided.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department was found with the ID provided.")]
 		public static Task<IActionResult> DepartmentsGetOne(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments/{departmentId}")] HttpRequest req, int departmentId)
 			=> Security.Authenticate(req)
@@ -44,7 +45,7 @@ namespace API.Functions
 		[OpenApiOperation(nameof(Departments.DepartmentsGetMemberUnits), nameof(Departments), Summary = "List a department's member units", Description="A member unit contains people that have an HR relationship with the department.")]
 		[OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<UnitResponse>), Description = "A collection of unit records")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No department was found with the ID provided.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department was found with the ID provided.")]
 		public static Task<IActionResult> DepartmentsGetMemberUnits(
 					[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments/{departmentId}/memberUnits")] HttpRequest req, int departmentId)
 					=> Security.Authenticate(req)
@@ -56,7 +57,7 @@ namespace API.Functions
 		[OpenApiOperation(nameof(Departments.DepartmentsGetSupportingUnits), nameof(Departments), Summary = "List a department's supporting units", Description="A supporting unit provides IT services for the department.")]
 		[OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<SupportRelationshipResponse>), Description = "A collection of support relationship records")]
-		[OpenApiResponseWithoutBody(HttpStatusCode.NotFound, Description = "No department was found with the ID provided.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department was found with the ID provided.")]
 		public static Task<IActionResult> DepartmentsGetSupportingUnits(
 					[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments/{departmentId}/supportingUnits")] HttpRequest req, int departmentId)
 					=> Security.Authenticate(req)
