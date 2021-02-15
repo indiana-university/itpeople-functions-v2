@@ -22,7 +22,7 @@ namespace Integration
 				var resp = await GetAuthenticated("buildingRelationships");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<BuildingRelationship>>();
-				Assert.AreEqual(1, actual.Count);
+				Assert.AreEqual(2, actual.Count);
 			}
 		}
 
@@ -126,13 +126,14 @@ namespace Integration
 
 		public class BuildingRelationshipEdit : ApiTest
 		{
-			[Test]
-			public async Task UpdateCityHallCityOfPawnee()
+			[TestCase(TestEntities.Buildings.SmallParkId, Description="Update with new Building Id and same Unit Id")]
+			[TestCase(TestEntities.Buildings.CityHallId,Description="Update with same Building Id and same Unit Id")]
+			public async Task UpdateCityHallCityOfPawnee(int buildingId)
 			{
 				var req = new BuildingRelationshipRequest
 				{
 					UnitId = TestEntities.BuildingRelationships.CityHallCityOfPawnee.UnitId,
-					BuildingId = TestEntities.Buildings.RonsCabin.Id
+					BuildingId = buildingId
 				};
 
 				var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}", req, ValidAdminJwt);
@@ -199,7 +200,7 @@ namespace Integration
 					BuildingId = TestEntities.BuildingRelationships.CityHallCityOfPawnee.BuildingId
 				};
 
-				var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}", req, ValidAdminJwt);
+				var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.RonsCabinCityOfPawneeId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
 		}

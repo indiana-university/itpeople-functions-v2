@@ -36,7 +36,7 @@ namespace API.Data
 		internal static async Task<Result<BuildingRelationship, Error>> UpdateBuildingRelationship(HttpRequest req,BuildingRelationshipRequest body, int relationshipId)
 		{
 			return await ExecuteDbPipeline($"update building relationship {relationshipId}", db =>
-				ValidateRequest(db, body)
+				ValidateRequest(db, body, relationshipId)
 				.Bind(_ => TryFindBuildingRelationship(db, relationshipId))
                 .Tap(existing => LogPrevious(req, existing))
 				.Bind(existing => TryUpdateBuildingRelationship(db, existing, body))
@@ -48,6 +48,7 @@ namespace API.Data
 		{
 			return await ExecuteDbPipeline($"delete building relationship {relationshipId}", db =>
 				TryFindBuildingRelationship(db, relationshipId)
+                .Tap(existing => LogPrevious(req, existing))
 				.Bind(existing => TryDeleteBuildingRelationship(db, req, existing))
 			);
 		}
@@ -76,7 +77,7 @@ namespace API.Data
 			return Pipeline.Success(buildingRelationship);
 		}
 
-		private static async Task<Result<BuildingRelationshipRequest, Error>> ValidateRequest(PeopleContext db, BuildingRelationshipRequest body)
+		private static async Task<Result<BuildingRelationshipRequest, Error>> ValidateRequest(PeopleContext db, BuildingRelationshipRequest body, int? existingRelationshipId = null)
 		{
 			if (body.UnitId == 0 || body.BuildingId == 0)
 			{
@@ -87,7 +88,7 @@ namespace API.Data
 			{
 				return Pipeline.NotFound("The specified unit and/or building does not exist.");
 			}
-			if (await db.BuildingRelationships.AnyAsync(r => r.BuildingId == body.BuildingId && r.UnitId == body.UnitId))
+			if (await db.BuildingRelationships.AnyAsync(r => r.BuildingId == body.BuildingId && r.UnitId == body.UnitId && r.Id != existingRelationshipId))
 			{
 				return Pipeline.Conflict("The provided unit already has a support relationship with the provided building.");
 			}
@@ -106,8 +107,6 @@ namespace API.Data
 
 		private static async Task<Result<bool, Error>> TryDeleteBuildingRelationship(PeopleContext db, HttpRequest req, BuildingRelationship buildingRelationship)
 		{
-            LogPrevious(req, buildingRelationship);
-
 			db.BuildingRelationships.Remove(buildingRelationship);
 			await db.SaveChangesAsync();
 			return Pipeline.Success(true);

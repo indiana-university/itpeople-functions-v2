@@ -70,7 +70,8 @@ namespace Integration
             });
 
             peopleContext.BuildingRelationships.AddRange(new List<BuildingRelationship> {
-                TestEntities.BuildingRelationships.CityHallCityOfPawnee
+                TestEntities.BuildingRelationships.CityHallCityOfPawnee,
+                TestEntities.BuildingRelationships.RonsCabinCityOfPawnee,
             });
 
             peopleContext.Departments.AddRange(new List<Department> {

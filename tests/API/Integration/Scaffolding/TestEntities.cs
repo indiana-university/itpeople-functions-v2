@@ -31,8 +31,11 @@ namespace Integration
                 Country="USA",
                 PostCode="47501"
             };
+
+            public const int SmallParkId = 3;
+
             public static readonly Building SmallPark = new Building() {
-                Id=3,
+                Id=SmallParkId,
                 Name="Smallest Park",
                 Code="PA1231",
                 Address="321 Main St",
@@ -48,11 +51,20 @@ namespace Integration
             public const int CityHallCityOfPawneeId = 1;
             
             public static readonly BuildingRelationship CityHallCityOfPawnee = new BuildingRelationship() {
-                Id=1,
+                Id=CityHallCityOfPawneeId,
                 UnitId = TestEntities.Units.CityOfPawnee.Id,
                 BuildingId=TestEntities.Buildings.CityHall.Id,
                 Unit=TestEntities.Units.CityOfPawnee,
                 Building=TestEntities.Buildings.CityHall
+            };
+            public const int RonsCabinCityOfPawneeId = 2;
+            
+            public static readonly BuildingRelationship RonsCabinCityOfPawnee = new BuildingRelationship() {
+                Id=RonsCabinCityOfPawneeId,
+                UnitId = TestEntities.Units.CityOfPawnee.Id,
+                BuildingId=TestEntities.Buildings.RonsCabin.Id,
+                Unit=TestEntities.Units.CityOfPawnee,
+                Building=TestEntities.Buildings.RonsCabin
             };
         }
 
