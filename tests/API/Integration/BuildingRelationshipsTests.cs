@@ -17,7 +17,7 @@ namespace Integration
 		public class GetAll : ApiTest
 		{
 			[Test]
-			public async Task HasCorrectNumber()
+			public async Task BuildingRelationshipsGetAllHasCorrectNumber()
 			{
 				var resp = await GetAuthenticated("buildingRelationships");
 				AssertStatusCode(resp, HttpStatusCode.OK);
@@ -30,16 +30,16 @@ namespace Integration
 		{
 			[TestCase(TestEntities.BuildingRelationships.CityHallCityOfPawneeId, HttpStatusCode.OK)]
 			[TestCase(9999, HttpStatusCode.NotFound)]
-			public async Task HasCorrectStatusCode(int id, HttpStatusCode expectedStatus)
+			public async Task BuildingRelationshipsGetOneHasCorrectStatusCode(int id, HttpStatusCode expectedStatus)
 			{
 				var resp = await GetAuthenticated($"buildingRelationships/{id}");
 				AssertStatusCode(resp, expectedStatus);
 			}
 
 			[Test]
-			public async Task ResponseHasCorrectShape()
+			public async Task BuildingRelationshipsGetOneResponseHasCorrectShape()
 			{
-				var resp = await GetAuthenticated($"buildingRelationships/{TestEntities.Buildings.CityHallId}");
+				var resp = await GetAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}");
 				var actual = await resp.Content.ReadAsAsync<BuildingRelationship>();
 				var expected = TestEntities.BuildingRelationships.CityHallCityOfPawnee;
 				Assert.AreEqual(expected.Id, actual.Id);
@@ -89,7 +89,7 @@ namespace Integration
 
 			//403 unauthorized
 			[Test]
-			public async Task UnauthorizedCannotCreate()
+			public async Task BuildingRelationshipsUnauthorizedCannotCreate()
 			{
 				var resp = await PostAuthenticated("buildingRelationships", CityHallParksAndRec, ValidRswansonJwt);
 				AssertStatusCode(resp, HttpStatusCode.Forbidden);

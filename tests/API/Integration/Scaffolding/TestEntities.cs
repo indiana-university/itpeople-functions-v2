@@ -174,17 +174,23 @@ namespace Integration
             };
         }
 
-        public static class SupportRelationships {
+        public static class SupportRelationships 
+        {
+
+            public const int CityOfPawneeFireId = 1;
+
             public static readonly SupportRelationship CityOfPawneeFire = new SupportRelationship() {
-                Id=1,
+                Id=CityOfPawneeFireId,
                 UnitId = TestEntities.Units.CityOfPawnee.Id,
                 DepartmentId=TestEntities.Departments.Fire.Id,
                 Unit=TestEntities.Units.CityOfPawnee,
                 Department=TestEntities.Departments.Fire
             };
 
+            public const int ParksAndRecRelationshipId = 2;
+
             public static readonly SupportRelationship ParksAndRecRelationship = new SupportRelationship() {
-                Id=2,
+                Id=ParksAndRecRelationshipId,
                 UnitId = TestEntities.Units.ParksAndRecUnit.Id,
                 DepartmentId=TestEntities.Departments.Parks.Id,
                 Unit=TestEntities.Units.ParksAndRecUnit,
