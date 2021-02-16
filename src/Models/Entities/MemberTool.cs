@@ -12,6 +12,11 @@ namespace Models
         /// The ID of the tool in this relationship
         [Required]
         public int ToolId { get; set; }
+
+        [ForeignKey(nameof(MembershipId))]
+        public UnitMember UnitMember { get; set; }
+
+        public Tool Tool { get; set; }
     }
         
 }
