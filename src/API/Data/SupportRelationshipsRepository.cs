@@ -84,7 +84,7 @@ namespace API.Data
 			//Unit is already being checked/found in the Authorization step
 			if (await db.Departments.AnyAsync(d => d.Id == body.DepartmentId) == false)
 			{
-				return Pipeline.NotFound("The specified unit and/or department does not exist.");
+				return Pipeline.NotFound("The specified department does not exist.");
 			}
 			if (await db.SupportRelationships.AnyAsync(r => r.DepartmentId == body.DepartmentId && r.UnitId == body.UnitId && r.Id != existingRelationshipId))
 			{
