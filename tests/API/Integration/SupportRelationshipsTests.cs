@@ -127,5 +127,86 @@ namespace Integration
 				Assert.Contains("The provided unit already has a support relationship with the provided department.", actual.Errors);
 			}
 		}
+	
+		public class SupportRelationshipEdit : ApiTest
+		{
+			[TestCase(TestEntities.Departments.AuditorId, Description="Update with new Department Id and same Unit Id")]
+			[TestCase(TestEntities.Departments.ParksId,Description="Update with same Department Id and same Unit Id")]
+			public async Task UpdateParksAndRecRelationship(int departmentId)
+			{
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = TestEntities.SupportRelationships.ParksAndRecRelationship.UnitId,
+					DepartmentId = departmentId
+				};
+
+				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecRelationshipId}", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				var actual = await resp.Content.ReadAsAsync<SupportRelationshipResponse>();
+
+				Assert.AreEqual(TestEntities.SupportRelationships.ParksAndRecRelationshipId, actual.Id);
+				Assert.AreEqual(req.DepartmentId, actual.Department.Id);
+				Assert.AreEqual(req.UnitId, actual.Unit.Id);
+			}
+
+			[Test]
+			public async Task BadRequestCannotUpdateWithMalformedSupportRelationship()
+			{
+				var req = new
+				{
+					UnitId = TestEntities.Units.CityOfPawneeUnitId
+				};
+
+				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecRelationshipId}", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains("The request body was malformed, the unitId and/or departmentId field was missing.", actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
+			}
+
+			[Test]
+			public async Task UnauthorizedCannotUpdateSupportRelationship()
+			{
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = TestEntities.Units.Auditor.Id,
+					DepartmentId = TestEntities.Departments.FireId
+				};
+				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecRelationshipId}", req, ValidRswansonJwt);
+				AssertStatusCode(resp, HttpStatusCode.Forbidden);
+			}
+
+			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, 99999, TestEntities.Departments.FireId, Description = "Unit Id not found")]
+			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Department Id not found")]
+			[TestCase(99999, TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Department Support Relationship Id not found")]
+			public async Task NotFoundCannotUpdateSupportRelationship(int relationshipid, int unitId, int departmentId)
+			{
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = unitId,
+					DepartmentId = departmentId
+				};
+				var resp = await PutAuthenticated($"supportRelationships/{relationshipid}", req, ValidAdminJwt);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+			}
+
+			[Test]
+			public async Task ConflictUpdateSupportRelationship()
+			{
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = TestEntities.SupportRelationships.ParksAndRecRelationship.UnitId,
+					DepartmentId = TestEntities.SupportRelationships.ParksAndRecRelationship.DepartmentId
+				};
+
+				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecUnitFireId}", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.Conflict);
+			}
+		}
 	}
 }

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Models;
 using Database;
 using System;
+using Microsoft.AspNetCore.Http;
 
 namespace API.Data
 {
@@ -33,6 +34,17 @@ namespace API.Data
 				.Bind(_ => TryCreateSupportRelationship(db, body))
 				.Bind(created => TryFindSupportRelationship(db, created.Id))
 			);
+
+		internal static async Task<Result<SupportRelationship, Error>> UpdateSupportRelationship(HttpRequest req,SupportRelationshipRequest body, int relationshipId)
+		{
+			return await ExecuteDbPipeline($"update support relationship {relationshipId}", db =>
+				ValidateRequest(db, body, relationshipId)
+				.Bind(_ => TryFindSupportRelationship(db, relationshipId))
+                .Tap(existing => LogPrevious(req, existing))
+				.Bind(existing => TryUpdateSupportRelationship(db, existing, body))
+				.Bind(_ => TryFindSupportRelationship(db, relationshipId))
+			);
+		}	
 
 		private static async Task<Result<SupportRelationship, Error>> TryFindSupportRelationship(PeopleContext db, int id)
 		{
@@ -73,6 +85,15 @@ namespace API.Data
 				return Pipeline.Conflict("The provided unit already has a support relationship with the provided department.");
 			}
 			return Pipeline.Success(body);
+		}
+		
+		private static async Task<Result<SupportRelationship, Error>> TryUpdateSupportRelationship(PeopleContext db, SupportRelationship existing, SupportRelationshipRequest body)
+		{
+			existing.UnitId = body.UnitId;
+			existing.DepartmentId = body.DepartmentId;
+
+			await db.SaveChangesAsync();
+			return Pipeline.Success(existing);
 		}
 	}
 }
