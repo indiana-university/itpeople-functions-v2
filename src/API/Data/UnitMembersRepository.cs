@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using API.Middleware;
 using CSharpFunctionalExtensions;
+using Database;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
@@ -21,5 +22,18 @@ namespace API.Data
                         .ToListAsync();
                     return Pipeline.Success(result);
                 });
+        
+        public static Task<Result<UnitMember, Error>> GetOne(int id) 
+            => ExecuteDbPipeline("get a membership by ID", db => 
+                TryFindMembership(db, id));
+
+        private static async Task<Result<UnitMember,Error>> TryFindMembership (PeopleContext db, int id)
+        {
+            var result = await db.UnitMembers
+                .SingleOrDefaultAsync(d => d.Id == id);
+            return result == null
+                ? Pipeline.NotFound("No unit membership was found with the ID provided.")
+                : Pipeline.Success(result);
+        }
     }
 }

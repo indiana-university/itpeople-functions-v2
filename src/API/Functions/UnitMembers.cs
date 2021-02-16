@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
+using System.Linq;
 
 namespace API.Functions
 {
@@ -27,5 +28,17 @@ namespace API.Functions
                 .Bind(_ => UnitMembersRepository.GetAll())
                 .Bind(res => Pipeline.Success(res.Select(e=>e.ToUnitMemberResponse())))
                 .Finally(dtos => Response.Ok(req, dtos));    
+
+        [FunctionName(nameof(UnitMembers.UnitMembersGetOne))]
+		[OpenApiOperation(nameof(UnitMembers.UnitMembersGetOne), nameof(UnitMembers), Summary = "Find a unit membership by ID")]
+		[OpenApiParameter("membershipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit membership record.")]
+		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(UnitMemberResponse), Description = "A unit membership record")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit membership was found with the ID provided.")]
+		public static Task<IActionResult> UnitMembersGetOne(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
+			=> Security.Authenticate(req)
+				.Bind(_ => UnitMembersRepository.GetOne(membershipId))
+                .Bind(res => Pipeline.Success(res.ToUnitMemberResponse()))
+				.Finally(result => Response.Ok(req, result));
     }
 }
