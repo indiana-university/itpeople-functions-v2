@@ -1,12 +1,10 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using API.Middleware;
 using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using Database;
-using System;
 using Microsoft.AspNetCore.Http;
 
 namespace API.Data
@@ -45,6 +43,14 @@ namespace API.Data
 				.Bind(_ => TryFindSupportRelationship(db, relationshipId))
 			);
 		}	
+		internal static async Task<Result<bool, Error>> DeleteSupportRelationship(HttpRequest req, int relationshipId)
+		{
+			return await ExecuteDbPipeline($"delete support relationship {relationshipId}", db =>
+				TryFindSupportRelationship(db, relationshipId)
+                .Tap(existing => LogPrevious(req, existing))
+				.Bind(existing => TryDeleteSupportRelationship(db, req, existing))
+			);
+		}
 
 		private static async Task<Result<SupportRelationship, Error>> TryFindSupportRelationship(PeopleContext db, int id)
 		{
@@ -94,6 +100,12 @@ namespace API.Data
 
 			await db.SaveChangesAsync();
 			return Pipeline.Success(existing);
+		}
+		private static async Task<Result<bool, Error>> TryDeleteSupportRelationship(PeopleContext db, HttpRequest req, SupportRelationship supportRelationship)
+		{
+			db.SupportRelationships.Remove(supportRelationship);
+			await db.SaveChangesAsync();
+			return Pipeline.Success(true);
 		}
 	}
 }

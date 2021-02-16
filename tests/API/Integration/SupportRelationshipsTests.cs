@@ -208,5 +208,16 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
 		}
+		public class SupportRelationshipDelete : ApiTest
+		{
+			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin can delete a support relationship.")]
+			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Non-Admin cannot delete a support relationship.")]
+			[TestCase(9999, ValidAdminJwt, HttpStatusCode.NotFound, Description = "Cannot delete a support relationship that does not exist.")]
+			public async Task CanDeleteSupportRelationship(int relationshipId, string jwt, HttpStatusCode expectedCode)
+			{
+				var resp = await DeleteAuthenticated($"supportRelationships/{relationshipId}", jwt);
+				AssertStatusCode(resp, expectedCode);
+			}
+		}
 	}
 }
