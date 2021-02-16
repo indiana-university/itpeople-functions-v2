@@ -27,6 +27,12 @@ namespace API.Data
 			=> ExecuteDbPipeline("get a support relationship by ID", db =>
 				TryFindSupportRelationship(db, id));
 
+		internal static async Task<Result<SupportRelationship, Error>> CreateSupportRelationship(SupportRelationshipRequest body)
+			=> await ExecuteDbPipeline("create a support relationship", db =>
+				ValidateRequest(db, body)
+				.Bind(_ => TryCreateSupportRelationship(db, body))
+				.Bind(created => TryFindSupportRelationship(db, created.Id))
+			);
 
 		private static async Task<Result<SupportRelationship, Error>> TryFindSupportRelationship(PeopleContext db, int id)
 		{
@@ -37,6 +43,36 @@ namespace API.Data
 			return result == null
 				? Pipeline.NotFound("No support relationship was found with the ID provided.")
 				: Pipeline.Success(result);
+		}
+		private static async Task<Result<SupportRelationship, Error>> TryCreateSupportRelationship(PeopleContext db, SupportRelationshipRequest body)
+		{
+			var relationship = new SupportRelationship
+			{
+				UnitId = body.UnitId,
+				DepartmentId = body.DepartmentId
+			};
+
+			db.SupportRelationships.Add(relationship);
+			await db.SaveChangesAsync();
+			return Pipeline.Success(relationship);
+		}
+
+		private static async Task<Result<SupportRelationshipRequest, Error>> ValidateRequest(PeopleContext db, SupportRelationshipRequest body, int? existingRelationshipId = null)
+		{
+			if (body.UnitId == 0 || body.DepartmentId == 0)
+			{
+				return Pipeline.BadRequest("The request body was malformed, the unitId and/or departmentId field was missing.");
+			}
+			//Unit is already being checked/found in the Authorization step
+			if (await db.Departments.AnyAsync(d => d.Id == body.DepartmentId) == false)
+			{
+				return Pipeline.NotFound("The specified unit and/or department does not exist.");
+			}
+			if (await db.SupportRelationships.AnyAsync(r => r.DepartmentId == body.DepartmentId && r.UnitId == body.UnitId && r.Id != existingRelationshipId))
+			{
+				return Pipeline.Conflict("The provided unit already has a support relationship with the provided department.");
+			}
+			return Pipeline.Success(body);
 		}
 	}
 }
