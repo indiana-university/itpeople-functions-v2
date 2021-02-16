@@ -10,7 +10,7 @@ namespace API.Data
 {
     public class UnitMembersRepository : DataRepository
     {
-        internal static Task<Result<List<UnitMemberResponse>, Error>> GetAll()
+        internal static Task<Result<List<UnitMember>, Error>> GetAll()
             => ExecuteDbPipeline("get all unit members", async db => {
                     var result = await db.UnitMembers
                         .Include(u => u.Unit)
@@ -19,8 +19,7 @@ namespace API.Data
                         .Include(u => u.MemberTools)
                         .AsNoTracking()
                         .ToListAsync();
-                    var dtos = result.Select(r => r.ToUnitMemberResponse()).ToList();
-                    return Pipeline.Success(dtos);
+                    return Pipeline.Success(result);
                 });
     }
 }

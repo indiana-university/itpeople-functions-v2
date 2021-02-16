@@ -19,12 +19,13 @@ namespace API.Functions
     public static class UnitMembers
     {
         [FunctionName(nameof(UnitMembers.UnitMembersGetAll))]
-        [OpenApiOperation(nameof(UnitMembers.UnitMembersGetAll), nameof(UnitMembers), Summary="List all IT units", Description = @"Search for IT units by name and/or description. If no search term is provided, lists all top-level IT units." )]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>))]
+        [OpenApiOperation(nameof(UnitMembers.UnitMembersGetAll), nameof(UnitMembers), Summary="List all IT unit memberships" )]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>), Description = "A collection of unit membership record")]
         public static Task<IActionResult> UnitMembersGetAll(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships")] HttpRequest req) 
             => Security.Authenticate(req)
                 .Bind(_ => UnitMembersRepository.GetAll())
-                .Finally(members => Response.Ok(req, members));        
+                .Bind(res => Pipeline.Success(res.Select(e=>e.ToUnitMemberResponse())))
+                .Finally(dtos => Response.Ok(req, dtos));    
     }
 }
