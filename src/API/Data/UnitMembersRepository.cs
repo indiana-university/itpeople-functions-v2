@@ -30,7 +30,12 @@ namespace API.Data
         private static async Task<Result<UnitMember,Error>> TryFindMembership (PeopleContext db, int id)
         {
             var result = await db.UnitMembers
+                .Include(u => u.Unit)
+                .Include(u => u.Unit.Parent)
+                .Include(u => u.Person)
+                .Include(u => u.MemberTools)
                 .SingleOrDefaultAsync(d => d.Id == id);
+                
             return result == null
                 ? Pipeline.NotFound("No unit membership was found with the ID provided.")
                 : Pipeline.Success(result);
