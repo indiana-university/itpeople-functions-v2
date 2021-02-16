@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Models
 {
@@ -28,6 +29,20 @@ namespace Models
         /// The tools that can be used by the person in this position as part of this unit.
         public List<MemberTool> MemberTools { get;  set; }
 
+        public UnitMemberResponse ToUnitMemberResponse() 
+        => new UnitMemberResponse()
+            {
+                Id = Id,
+                Role = Role,
+                Permissions = Permissions,
+                PersonId = PersonId,
+                Title = Title,
+                Percentage = Percentage,
+                Notes = Notes,
+                Person = Person,
+                UnitId = UnitId,
+                Unit = new UnitResponse(Unit),
+                MemberTools = MemberTools.Select(mt => mt.ToMemberToolResponse()).ToList()
+            };
     }
-    
 }

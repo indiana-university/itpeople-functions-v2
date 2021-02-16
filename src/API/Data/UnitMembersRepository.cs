@@ -19,7 +19,7 @@ namespace API.Data
                         .Include(u => u.MemberTools)
                         .AsNoTracking()
                         .ToListAsync();
-                    var dtos = result.Select(r => new UnitMemberResponse(r)).ToList();
+                    var dtos = result.Select(r => r.ToUnitMemberResponse()).ToList();
                     return Pipeline.Success(dtos);
                 });
     }

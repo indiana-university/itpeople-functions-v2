@@ -4,25 +4,6 @@ namespace Models
 {
     public class UnitMemberResponse : Entity
     {
-        public UnitMemberResponse()
-        {
-        }
-
-        public UnitMemberResponse(UnitMember member)
-        {
-            Id = member.Id;
-            Role = member.Role;
-            Permissions = member.Permissions;
-            PersonId = member.PersonId;
-            Title = member.Title;
-            Percentage = member.Percentage;
-            Notes = member.Notes;
-            Person = member.Person;
-            UnitId = member.UnitId;
-            Unit = new UnitResponse(member.Unit);
-            MemberTools = member.MemberTools;
-        }
-
         /// The role of the person in this membership as part of the unit.
         public Role Role { get; set; }
         /// The permissions of the person in this membership as part of the unit. Defaults to 'viewer'.
