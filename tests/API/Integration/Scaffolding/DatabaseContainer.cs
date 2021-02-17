@@ -94,7 +94,9 @@ namespace Integration
             });  
             
             peopleContext.SupportRelationships.AddRange(new List<SupportRelationship> {
-                TestEntities.SupportRelationships.ParksAndRecRelationship
+                TestEntities.SupportRelationships.ParksAndRecRelationship,
+                TestEntities.SupportRelationships.ParksAndRecUnitFire
+
             });
 
             peopleContext.UnitMembers.AddRange(new List<UnitMember> { 
@@ -102,6 +104,7 @@ namespace Integration
                 TestEntities.UnitMembers.LkNopeSublead,
                 TestEntities.UnitMembers.BWyattAditor
             });
+            
             // peopleContext.MemberTools.AddRange(new List<MemberTool> { 
             //     TestEntities.MemberTools.MemberTool
             // });
@@ -119,6 +122,11 @@ namespace Integration
                 SELECT
                     setval(pg_get_serial_sequence('public.building_relationships', 'id'), 
                     (SELECT MAX(id) FROM public.building_relationships));
+                ");
+            peopleContext.Database.ExecuteSqlRaw(@"
+                SELECT
+                    setval(pg_get_serial_sequence('public.support_relationships', 'id'), 
+                    (SELECT MAX(id) FROM public.support_relationships));
                 ");
         }
     }

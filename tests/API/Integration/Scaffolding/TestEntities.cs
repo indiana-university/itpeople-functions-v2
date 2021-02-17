@@ -72,17 +72,19 @@ namespace Integration
         {
             public const int ParksId = 1;
             public static readonly Department Parks = new Department() { 
-                Id = 1, 
+                Id = ParksId, 
                 Name = "Parks Department", 
                 Description = "Your local Parks department." 
             };
+            public const int FireId = 2;
             public static readonly Department Fire = new Department() { 
-                Id = 2, 
+                Id = FireId, 
                 Name = "Fire Department", 
                 Description = "Your local fire department." 
             };
+            public const int AuditorId = 3;
             public static readonly Department Auditor = new Department() { 
-                Id = 3, 
+                Id = AuditorId, 
                 Name = "Auditor", 
                 Description = "Your local auditor's department." 
             };
@@ -173,6 +175,29 @@ namespace Integration
                 IsServiceAdmin = true 
             };
         }
+
+        public static class SupportRelationships 
+        {
+            public const int ParksAndRecRelationshipId = 1;
+
+            public static readonly SupportRelationship ParksAndRecRelationship = new SupportRelationship() {
+                Id=ParksAndRecRelationshipId,
+                UnitId = TestEntities.Units.ParksAndRecUnit.Id,
+                DepartmentId=TestEntities.Departments.Parks.Id,
+                Unit=TestEntities.Units.ParksAndRecUnit,
+                Department=TestEntities.Departments.Parks
+            };
+            public const int ParksAndRecUnitFireId = 2;
+
+            public static readonly SupportRelationship ParksAndRecUnitFire = new SupportRelationship() {
+                Id=ParksAndRecUnitFireId,
+                UnitId = TestEntities.Units.ParksAndRecUnit.Id,
+                DepartmentId=TestEntities.Departments.Fire.Id,
+                Unit=TestEntities.Units.ParksAndRecUnit,
+                Department=TestEntities.Departments.Fire
+            };
+        }        
+
         /*public static class MemberTools
         {
             public static readonly MemberTool MemberTool = new MemberTool() { 
@@ -182,18 +207,6 @@ namespace Integration
             };
             
         }*/
-        
-        public static class SupportRelationships
-        {
-             public static readonly SupportRelationship ParksAndRecRelationship = new SupportRelationship() {
-                Id=1,
-                UnitId = TestEntities.Units.ParksAndRecUnit.Id,
-                DepartmentId=TestEntities.Departments.Parks.Id,
-                Unit=TestEntities.Units.ParksAndRecUnit,
-                Department=TestEntities.Departments.Parks
-            };
-
-        }
 
         public static class Units
         {
