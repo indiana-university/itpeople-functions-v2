@@ -18,7 +18,7 @@ namespace Models
         /// Notes about this person (for admins/reporting eyes only.)
         public string Notes { get; set; }
         /// The netid of the person related to this membership.       
-        public string Netid { get => this.Person.Netid; }
+        public string Netid { get => this.Person?.Netid; }
         /// The person related to this membership.
         public Person Person { get; set; }
         /// The ID of the unit class.

@@ -90,6 +90,25 @@ namespace Integration
             };
         }
 
+        public static class HrPeople 
+        {
+            public const int Tammy1Id = 1;
+
+            public static readonly HrPerson Tammy1 = new HrPerson() {
+                Id = Tammy1Id, 
+                Netid = "tswanson1", 
+                Name="Swanson, Tammy1", 
+                NameFirst = "Tammy1", 
+                NameLast = "Swanson", 
+                Position = "Ron's 1st ex-wife", 
+                Campus = "Pawnee", 
+                CampusPhone = "", 
+                CampusEmail = "tswanson1@pawnee.in.us", 
+                HrDepartment = TestEntities.Departments.Auditor.Name,
+                HrDepartmentDescription = TestEntities.Departments.Auditor.Description
+            };
+        }
+
         public static class People
         {
             public const int RSwansonId = 1;

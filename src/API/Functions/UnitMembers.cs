@@ -17,20 +17,23 @@ using System.Linq;
 
 namespace API.Functions
 {
-    public static class UnitMembers
-    {
-        [FunctionName(nameof(UnitMembers.UnitMembersGetAll))]
-        [OpenApiOperation(nameof(UnitMembers.UnitMembersGetAll), nameof(UnitMembers), Summary="List all IT unit memberships" )]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>), Description = "A collection of unit membership record")]
-        public static Task<IActionResult> UnitMembersGetAll(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships")] HttpRequest req) 
-            => Security.Authenticate(req)
-                .Bind(_ => UnitMembersRepository.GetAll())
-                .Bind(res => Pipeline.Success(res.Select(e=>e.ToUnitMemberResponse())))
-                .Finally(dtos => Response.Ok(req, dtos));    
+	public static class UnitMembers
+	{
+		public const string UnitMembersTitle = "Unit Memberships";
 
-        [FunctionName(nameof(UnitMembers.UnitMembersGetOne))]
-		[OpenApiOperation(nameof(UnitMembers.UnitMembersGetOne), nameof(UnitMembers), Summary = "Find a unit membership by ID")]
+
+		[FunctionName(nameof(UnitMembers.UnitMembersGetAll))]
+		[OpenApiOperation(nameof(UnitMembers.UnitMembersGetAll), UnitMembersTitle, Summary = "List all IT unit memberships")]
+		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>), Description = "A collection of unit membership record")]
+		public static Task<IActionResult> UnitMembersGetAll(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships")] HttpRequest req)
+			=> Security.Authenticate(req)
+				.Bind(_ => UnitMembersRepository.GetAll())
+				.Bind(res => Pipeline.Success(res.Select(e => e.ToUnitMemberResponse())))
+				.Finally(dtos => Response.Ok(req, dtos));
+
+		[FunctionName(nameof(UnitMembers.UnitMembersGetOne))]
+		[OpenApiOperation(nameof(UnitMembers.UnitMembersGetOne), UnitMembersTitle, Summary = "Find a unit membership by ID")]
 		[OpenApiParameter("membershipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit membership record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(UnitMemberResponse), Description = "A unit membership record")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit membership was found with the ID provided.")]
@@ -38,7 +41,30 @@ namespace API.Functions
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
 			=> Security.Authenticate(req)
 				.Bind(_ => UnitMembersRepository.GetOne(membershipId))
-                .Bind(res => Pipeline.Success(res.ToUnitMemberResponse()))
+				.Bind(res => Pipeline.Success(res.ToUnitMemberResponse()))
 				.Finally(result => Response.Ok(req, result));
-    }
+
+		[FunctionName(nameof(UnitMembers.CreateUnitMembers))]
+		[OpenApiOperation(nameof(UnitMembers.CreateUnitMembers), UnitMembersTitle, Summary = "Create a unit membership", Description = "Authorization: Unit memberships can be created by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
+		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(UnitMemberRequest), Required = true)]
+		[OpenApiResponseWithBody(HttpStatusCode.Created, MediaTypeNames.Application.Json, typeof(UnitMemberResponse), Description = "The newly created unit membership record")]
+		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to modify this unit.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified unit and/or person does not exist.")]
+		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided person is already a member of the provided unit.")]
+		public static Task<IActionResult> CreateUnitMembers(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "memberships")] HttpRequest req)
+		{
+			string requestorNetId = null;
+			UnitMemberRequest unitMemberRequest = null;
+			return Security.Authenticate(req)
+			.Tap(requestor => requestorNetId = requestor)
+			.Bind(requestor => Request.DeserializeBody<UnitMemberRequest>(req))
+			.Tap(umr => unitMemberRequest = umr)
+			.Bind(umr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
+			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
+			.Bind(authorized => UnitMembersRepository.CreateMembership(unitMemberRequest))
+			.Bind(res => Pipeline.Success(res.ToUnitMemberResponse()))
+			.Finally(result => Response.Created(req, result));
+		}
+	}
 }

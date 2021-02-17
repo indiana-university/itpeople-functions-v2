@@ -75,5 +75,86 @@ namespace Integration
                 Assert.NotNull(actual.MemberTools);
             }
         }
+
+        public class UnitMemberCreate : ApiTest
+		{
+			//201 
+			[TestCase(null, Description = "Create UnitMember with vacancy")]
+			[TestCase(TestEntities.People.RSwansonId, Description = "Create UnitMember with existing person")]
+			[TestCase(TestEntities.HrPeople.Tammy1Id, Description = "Create UnitMember with hr person")]
+			public async Task CreatedUnitMembershipWithVacancy(int? personId)
+			{
+                var req = new UnitMemberRequest
+                {
+                    UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                    Role = Role.Member,
+                    Permissions = UnitPermissions.Viewer,
+                    PersonId = personId,
+                    Title = "Title",
+                    Percentage = 100,
+                    Notes = ""
+                };
+				var resp = await PostAuthenticated("memberships", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.Created);
+				var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
+
+				Assert.NotZero(actual.Id);
+				Assert.AreEqual(req.UnitId, actual.Unit.Id);
+				Assert.AreEqual(req.Role, actual.Role);
+				Assert.AreEqual(req.Permissions, actual.Permissions);
+				Assert.AreEqual(req.PersonId, actual.PersonId);
+				Assert.AreEqual(req.Title, actual.Title);
+				Assert.AreEqual(req.Percentage, actual.Percentage);
+			}
+
+			//403 unauthorized
+			[Test]
+			public async Task UnitMembersUnauthorizedCannotCreate()
+			{
+                var req = new UnitMemberRequest
+                {
+                    UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                };
+				var resp = await PostAuthenticated("memberships", req, ValidRswansonJwt);
+				AssertStatusCode(resp, HttpStatusCode.Forbidden);
+			}
+
+			[TestCase(99999, TestEntities.People.RSwansonId, Description = "Unit Id not found")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Person does not exist")]
+			public async Task NotFoundCannotCreateUnitMember(int unitId, int personId)
+			{
+				var req = new UnitMemberRequest
+				{
+					UnitId = unitId,
+					PersonId = personId
+				};
+				var resp = await PostAuthenticated($"memberships", req, ValidAdminJwt);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+			}
+
+			//409
+			[Test]
+			public async Task CannotCreateUnitMember()
+			{
+				var req = new UnitMemberRequest
+                {
+                    UnitId = TestEntities.Units.ParksAndRecUnitId,
+                    Role = Role.Member,
+                    Permissions = UnitPermissions.Viewer,
+                    PersonId = TestEntities.People.RSwansonId,
+                    Title = "Title",
+                    Percentage = 100,
+                    Notes = ""
+                };
+				var resp = await PostAuthenticated("memberships", req, ValidAdminJwt);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains("The provided person is already a member of the provided unit.", actual.Errors);
+			}
+		}
     }
 }

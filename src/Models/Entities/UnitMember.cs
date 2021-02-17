@@ -30,7 +30,8 @@ namespace Models
         public List<MemberTool> MemberTools { get;  set; }
 
         public UnitMemberResponse ToUnitMemberResponse() 
-        => new UnitMemberResponse()
+        {
+            return new UnitMemberResponse()
             {
                 Id = Id,
                 Role = Role,
@@ -44,5 +45,6 @@ namespace Models
                 Unit = new UnitResponse(Unit),
                 MemberTools = MemberTools.Select(mt => mt.ToMemberToolResponse()).ToList()
             };
+        }
     }
 }

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Models
 {
     /// A person doing or supporting IT work
@@ -23,6 +25,7 @@ namespace Models
         /// The short name of the person's HR department (e.g. UA-VPIT).
         public string HrDepartment { get; set; }
         /// The long name / description of the person's HR department.
+        [Column("hr_department_desc")]
         public string HrDepartmentDescription { get; set; }
     
     }
