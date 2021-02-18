@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using API.Middleware;
 using CSharpFunctionalExtensions;
 using Database;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
@@ -36,6 +36,20 @@ namespace API.Data
 				.Bind(created => TryFindMembership(db, created.Id))
 			);
 
+		internal static async Task<Result<UnitMember, Error>> UpdateMembership(HttpRequest req, UnitMemberRequest body, int membershipId)
+		{
+			Person person = null;
+			return await ExecuteDbPipeline($"update membership {membershipId}", db =>
+				ValidateRequest(db, body, membershipId)
+				.Bind(_ => FindOrCreatePerson(db, body))
+				.Tap(existingPerson => person = existingPerson)
+				.Bind(_ => TryFindMembership(db, membershipId))
+				.Tap(existingRequest => LogPrevious(req, existingRequest))
+				.Bind(existingRequest => TryUpdateMembership(db, existingRequest, body, person))
+				.Bind(_ => TryFindMembership(db, membershipId))
+			);
+		}
+
 		private static async Task<Result<UnitMember, Error>> TryFindMembership(PeopleContext db, int id)
 		{
 			var result = await db.UnitMembers
@@ -51,16 +65,7 @@ namespace API.Data
 
 		private static async Task<Result<UnitMember, Error>> TryCreateMembership(PeopleContext db, UnitMemberRequest body, Person person)
 		{
-			var member = new UnitMember
-			{
-				UnitId = body.UnitId,
-				Role = body.Role,
-				Permissions = body.Permissions,
-				Person = person,
-				Title = body.Title,
-				Percentage = body.Percentage,
-				Notes = body.Notes
-			};
+			var member = GetUpdatedUnitMember(new UnitMember(), body, person);
 			db.UnitMembers.Add(member);
 			await db.SaveChangesAsync();
 			return Pipeline.Success(member);
@@ -109,6 +114,25 @@ namespace API.Data
 				return Pipeline.Conflict("The provided person is already a member of the provided unit.");
 			}
 			return Pipeline.Success(body);
+		}
+		private static async Task<Result<UnitMember, Error>> TryUpdateMembership(PeopleContext db, UnitMember existing, UnitMemberRequest body, Person person)
+		{
+			existing = GetUpdatedUnitMember(existing, body, person);
+			await db.SaveChangesAsync();
+			return Pipeline.Success(existing);
+		}
+
+
+		private static UnitMember GetUpdatedUnitMember(UnitMember unitMember, UnitMemberRequest body, Person person)
+		{
+			unitMember.UnitId = body.UnitId;
+			unitMember.Role = body.Role;
+			unitMember.Permissions = body.Permissions;
+			unitMember.PersonId = person?.Id;
+			unitMember.Title = body.Title;
+			unitMember.Percentage = body.Percentage;
+			unitMember.Notes = body.Notes;
+			return unitMember;
 		}
 	}
 }
