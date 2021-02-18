@@ -49,6 +49,14 @@ namespace API.Data
 				.Bind(_ => TryFindMembership(db, membershipId))
 			);
 		}
+		internal static async Task<Result<bool, Error>> DeleteMembership(HttpRequest req, int membershipId)
+		{
+			return await ExecuteDbPipeline($"delete membership {membershipId}", db =>
+				TryFindMembership(db, membershipId)
+                .Tap(existing => LogPrevious(req, existing))
+				.Bind(existing => TryDeleteMembership(db, req, existing))
+			);
+		}
 
 		private static async Task<Result<UnitMember, Error>> TryFindMembership(PeopleContext db, int id)
 		{
@@ -133,6 +141,12 @@ namespace API.Data
 			unitMember.Percentage = body.Percentage;
 			unitMember.Notes = body.Notes;
 			return unitMember;
+		}
+		private static async Task<Result<bool, Error>> TryDeleteMembership(PeopleContext db, HttpRequest req, UnitMember unitMember)
+		{
+			db.UnitMembers.Remove(unitMember);
+			await db.SaveChangesAsync();
+			return Pipeline.Success(true);
 		}
 	}
 }

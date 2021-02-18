@@ -314,6 +314,13 @@ namespace Integration
                 await db.SaveChangesAsync();
                 */
 
+                var memberTools = db.MemberTools
+                    .Include(mt => mt.UnitMember)
+                    .Include(mt => mt.Tool);
+                
+                Assert.IsEmpty(memberTools.Where(mt => mt.UnitMember == null));
+                Assert.IsEmpty(memberTools.Where(mt => mt.Tool == null));
+
                 var unitMembers = db.UnitMembers
                     .Include(um => um.Unit)
                     .Include(um => um.Person);

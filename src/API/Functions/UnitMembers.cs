@@ -92,5 +92,24 @@ namespace API.Functions
 				.Bind(um => Pipeline.Success(um.ToUnitMemberResponse()))
 				.Finally(result => Response.Ok(req, result));
 		}
+
+		[FunctionName(nameof(UnitMembers.DeleteUnitMembership))]
+		[OpenApiOperation(nameof(UnitMembers.DeleteUnitMembership), UnitMembersTitle, Summary = "Delete a unit membership", Description = "Authorization: Unit memberships can be deleted by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
+		[OpenApiParameter("membershipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit membership record.")]
+		[OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]
+		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No membership was found with the ID provided.")]
+		public static Task<IActionResult> DeleteUnitMembership(
+	[HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
+		{
+			string requestorNetId = null;
+			return Security.Authenticate(req)
+				.Tap(requestor => requestorNetId = requestor)
+				.Bind(requestor => UnitMembersRepository.GetOne(membershipId))
+				.Bind(um => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, um.UnitId))// Set headers saying what the requestor can do to this unit
+				.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
+				.Bind(_ => UnitMembersRepository.DeleteMembership(req, membershipId))
+				.Finally(result => Response.NoContent(req, result));
+		}
 	}
 }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Models;
 using NUnit.Framework;
 
@@ -253,6 +254,34 @@ namespace Integration
 				var resp = await PutAuthenticated($"memberships/{TestEntities.UnitMembers.LkNopeSubleadId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
+		}
+        public class UnitMembersDelete : ApiTest
+		{
+			[TestCase(TestEntities.UnitMembers.RSwansonLeaderId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin can delete a membership")]
+			[TestCase(TestEntities.UnitMembers.RSwansonLeaderId, ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Non-Admin cannot delete a membership")]
+			[TestCase(9999, ValidAdminJwt, HttpStatusCode.NotFound, Description = "Cannot delete a membership that does not exist.")]
+			public async Task CanDeleteUnitMember(int membershipId, string jwt, HttpStatusCode expectedCode)
+			{
+				var resp = await DeleteAuthenticated($"memberships/{membershipId}", jwt);
+				AssertStatusCode(resp, expectedCode);
+			}
+
+            [Test]
+            public async Task DeleteUnitMemberDoesNotCreateOrphans()
+            {
+                var resp = await DeleteAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.NoContent);
+                
+                System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
+                var db = Database.PeopleContext.Create();
+                
+                var memberTools = db.MemberTools
+                    .Include(mt => mt.Tool)
+                    .Include(mt => mt.UnitMember);
+                Assert.AreEqual(0, db.MemberTools.Count());
+                Assert.IsEmpty(memberTools.Where(mt => mt.Tool == null));
+                Assert.IsEmpty(memberTools.Where(mt => mt.UnitMember == null));
+            }
 		}
 	}
 }

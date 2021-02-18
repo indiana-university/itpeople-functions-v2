@@ -125,11 +125,14 @@ namespace API.Data
                 var unitAndRelated = db.Units
                     .Include(u => u.Parent)
                     .Include(u => u.UnitMembers).ThenInclude(um => um.Person)
+                    .Include(u => u.UnitMembers).ThenInclude(um => um.MemberTools)
                     .Include(u => u.SupportRelationships).ThenInclude(sr => sr.Department)
                     .Single(u => u.Id == unit.Id);
 
                 //Write the logs with the whole enchilada 
                 LogPrevious(req, unitAndRelated);
+                //Remove MemberTools for unit
+                db.MemberTools.RemoveRange(unitAndRelated.UnitMembers.SelectMany(um => um.MemberTools));
                 //Remove UnitMembers for unit
                 db.UnitMembers.RemoveRange(unitAndRelated.UnitMembers);
                 //Remove SupportRelationships for unit
