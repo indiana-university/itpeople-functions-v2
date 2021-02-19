@@ -23,7 +23,8 @@ namespace API.Data
 
         private static async Task<Result<LspInfoArray, Error>> MapLegacyLsps(PeopleContext db)
         {
-            var lspList = await db.People.FromSqlRaw(GetLspListSql)
+            var lspList = await db.People
+                .FromSqlRaw(GetLspListSql)
                 .Select(p => new LspInfo(p.Netid, p.IsServiceAdmin))
                 .AsNoTracking()
                 .ToArrayAsync();
