@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Models
 {
@@ -17,7 +18,7 @@ namespace Models
         /// Notes about this person (for admins/reporting eyes only.)
         public string Notes { get; set; }
         /// The netid of the person related to this membership.       
-        public string Netid { get => this.Person.Netid; }
+        public string Netid { get => this.Person?.Netid; }
         /// The person related to this membership.
         public Person Person { get; set; }
         /// The ID of the unit class.
@@ -25,8 +26,6 @@ namespace Models
         /// The unit related to this membership.
         public UnitResponse Unit { get; set; }
         /// The tools that can be used by the person in this position as part of this unit.
-        public List<MemberTool> MemberTools { get;  set; }
-
+        public List<MemberToolResponse> MemberTools { get;  set; }
     }
-    
 }

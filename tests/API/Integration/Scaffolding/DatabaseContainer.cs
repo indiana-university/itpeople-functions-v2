@@ -56,6 +56,7 @@ namespace Integration
                     public.departments,
                     public.people, 
                     public.support_relationships, 
+                    public.tools,
                     public.units,
                     public.unit_members,
                     public.unit_member_tools
@@ -105,9 +106,13 @@ namespace Integration
                 TestEntities.UnitMembers.BWyattAditor
             });
             
-            // peopleContext.MemberTools.AddRange(new List<MemberTool> { 
-            //     TestEntities.MemberTools.MemberTool
-            // });
+            peopleContext.Tools.AddRange(new List<Tool> { 
+                TestEntities.Tools.Hammer
+            });
+
+            peopleContext.MemberTools.AddRange(new List<MemberTool> { 
+                TestEntities.MemberTools.MemberTool
+            });
             
             peopleContext.SaveChanges();
 
@@ -127,6 +132,11 @@ namespace Integration
                 SELECT
                     setval(pg_get_serial_sequence('public.support_relationships', 'id'), 
                     (SELECT MAX(id) FROM public.support_relationships));
+                ");
+            peopleContext.Database.ExecuteSqlRaw(@"
+                SELECT
+                    setval(pg_get_serial_sequence('public.unit_members', 'id'), 
+                    (SELECT MAX(id) FROM public.unit_members));
                 ");
         }
     }

@@ -6,13 +6,13 @@ using Models;
 using NUnit.Framework;
 using System.Linq;
 using API.Middleware;
-using API.Data;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
+using Models.Enums;
 
 namespace Integration
 {
-    public class UnitsTests
+	public class UnitsTests
     {
         public class GetAll : ApiTest
         {
@@ -313,6 +313,13 @@ namespace Integration
                 ron.UnitMemberships.Remove(um);
                 await db.SaveChangesAsync();
                 */
+
+                var memberTools = db.MemberTools
+                    .Include(mt => mt.UnitMember)
+                    .Include(mt => mt.Tool);
+                
+                Assert.IsEmpty(memberTools.Where(mt => mt.UnitMember == null));
+                Assert.IsEmpty(memberTools.Where(mt => mt.Tool == null));
 
                 var unitMembers = db.UnitMembers
                     .Include(um => um.Unit)
