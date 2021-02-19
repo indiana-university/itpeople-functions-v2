@@ -7,10 +7,11 @@ using Database;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Models;
+using Models.Enums;
 
 namespace API.Data
 {
-    public class AuthorizationRepository : DataRepository
+	public class AuthorizationRepository : DataRepository
     {
         public static Result<bool, Error> AuthorizeModification(EntityPermissions permissions) 
             => permissions.HasFlag(EntityPermissions.Put)

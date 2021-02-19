@@ -4,14 +4,14 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using API.Data;
 using API.Middleware;
 using Models;
+using Models.Enums;
 using NUnit.Framework;
 
 namespace Integration
 {
-    public class PeopleTests
+	public class PeopleTests
     {
         public class GetAll : ApiTest
         {
