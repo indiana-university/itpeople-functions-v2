@@ -54,6 +54,16 @@ namespace Integration
 			}
 
 			[Test]
+			public async Task DoesNotSeeNotesWithoutProperEntityPermissionsUnitMember()
+			{
+				var resp = await GetAuthenticated($"memberships/{TestEntities.UnitMembers.BWyattMemberId}");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
+				var expected = TestEntities.UnitMembers.RSwansonDirector;
+				Assert.AreEqual("", actual.Notes);
+			}
+
+			[Test]
 			public async Task ResponseHasCorrectShape()
 			{
 				var resp = await GetAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}");

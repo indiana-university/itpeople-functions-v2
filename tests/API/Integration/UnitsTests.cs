@@ -6,13 +6,13 @@ using Models;
 using NUnit.Framework;
 using System.Linq;
 using API.Middleware;
-using API.Data;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
+using Models.Enums;
 
 namespace Integration
 {
-    public class UnitsTests
+	public class UnitsTests
     {
         public class GetAll : ApiTest
         {

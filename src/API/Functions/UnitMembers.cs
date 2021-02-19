@@ -14,6 +14,7 @@ using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
 using System.Linq;
+using Models.Enums;
 
 namespace API.Functions
 {
@@ -29,7 +30,7 @@ namespace API.Functions
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships")] HttpRequest req)
 			=> Security.Authenticate(req)
 				.Bind(_ => UnitMembersRepository.GetAll())
-				.Bind(res => Pipeline.Success(res.Select(e => e.ToUnitMemberResponse())))
+				.Bind(res => Pipeline.Success(res.Select(e => e.ToUnitMemberResponse(EntityPermissions.Get))))
 				.Finally(dtos => Response.Ok(req, dtos));
 
 		[FunctionName(nameof(UnitMembers.UnitMembersGetOne))]
@@ -39,11 +40,18 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit membership was found with the ID provided.")]
 		public static Task<IActionResult> UnitMembersGetOne(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
-			=> Security.Authenticate(req)
+		{	
+			string requestorNetId = null;
+			UnitMember unitMember = null;
+			return Security.Authenticate(req)
+				.Tap(requestor => requestorNetId = requestor)
 				.Bind(_ => UnitMembersRepository.GetOne(membershipId))
-				.Bind(res => Pipeline.Success(res.ToUnitMemberResponse()))
+				.Tap(um => unitMember = um)
+				.Bind(um => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, um.UnitId))// Set headers saying what the requestor can do to this unit
+				.Bind(perms => Pipeline.Success(unitMember.ToUnitMemberResponse(perms)))
 				.Finally(result => Response.Ok(req, result));
-
+		}
+		
 		[FunctionName(nameof(UnitMembers.CreateUnitMembers))]
 		[OpenApiOperation(nameof(UnitMembers.CreateUnitMembers), UnitMembersTitle, Summary = "Create a unit membership", Description = "Authorization: Unit memberships can be created by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
 		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(UnitMemberRequest), Required = true)]
@@ -64,7 +72,7 @@ namespace API.Functions
 			.Bind(umr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => UnitMembersRepository.CreateMembership(unitMemberRequest))
-			.Bind(res => Pipeline.Success(res.ToUnitMemberResponse()))
+			.Bind(res => Pipeline.Success(res.ToUnitMemberResponse(EntityPermissions.Post)))
 			.Finally(result => Response.Created(req, result));
 		}
 
@@ -89,7 +97,7 @@ namespace API.Functions
 				.Bind(umr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
 				.Bind(authorized => UnitMembersRepository.UpdateMembership(req, unitMemberRequest, membershipId))
-				.Bind(um => Pipeline.Success(um.ToUnitMemberResponse()))
+				.Bind(um => Pipeline.Success(um.ToUnitMemberResponse(EntityPermissions.Put)))
 				.Finally(result => Response.Ok(req, result));
 		}
 

@@ -340,7 +340,7 @@ namespace Integration
 				PersonId = People.BWyattId,
 				Title = "Auditor",
 				Percentage = 100,
-				Notes = "",
+				Notes = "notes about Ben",
 				//Netid = People.BWyatt.Netid,
 				Person = People.BWyatt,
 				Unit = Units.Auditor,
