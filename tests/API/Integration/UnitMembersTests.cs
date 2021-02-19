@@ -47,29 +47,19 @@ namespace Integration
 		{
 			[TestCase(TestEntities.UnitMembers.RSwansonLeaderId, HttpStatusCode.OK)]
 			[TestCase(9999, HttpStatusCode.NotFound)]
-			public async Task HasCorrectStatusCode(int id, HttpStatusCode expectedStatus)
+			public async Task UnitMemberHasCorrectStatusCode(int id, HttpStatusCode expectedStatus)
 			{
 				var resp = await GetAuthenticated($"memberships/{id}");
 				AssertStatusCode(resp, expectedStatus);
 			}
 
 			[Test]
-			public async Task DoesNotSeeNotesWithoutProperEntityPermissionsUnitMember()
+			public async Task UnitMemberResponseHasCorrectShape()
 			{
-				var resp = await GetAuthenticated($"memberships/{TestEntities.UnitMembers.BWyattMemberId}");
+				var resp = await GetAuthenticated($"memberships/{TestEntities.UnitMembers.LkNopeSubleadId}");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
-				var expected = TestEntities.UnitMembers.RSwansonDirector;
-				Assert.AreEqual("", actual.Notes);
-			}
-
-			[Test]
-			public async Task ResponseHasCorrectShape()
-			{
-				var resp = await GetAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}");
-				AssertStatusCode(resp, HttpStatusCode.OK);
-				var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
-				var expected = TestEntities.UnitMembers.RSwansonDirector;
+				var expected = TestEntities.UnitMembers.LkNopeSublead;
 				Assert.AreEqual(expected.Id, actual.Id);
 				Assert.AreEqual(expected.UnitId, actual.UnitId);
 				Assert.AreEqual(expected.Role, actual.Role);
@@ -77,7 +67,7 @@ namespace Integration
 				Assert.AreEqual(expected.PersonId, actual.PersonId);
 				Assert.AreEqual(expected.Title, actual.Title);
 				Assert.AreEqual(expected.Percentage, actual.Percentage);
-				Assert.AreEqual(expected.Notes, actual.Notes);
+				Assert.AreEqual("", actual.Notes); //Notes are stripped on membership getters
 				// relations
 				Assert.NotNull(actual.Person);
 				Assert.AreEqual(expected.Person.Id, actual.Person.Id);

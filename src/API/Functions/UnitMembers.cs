@@ -40,18 +40,11 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit membership was found with the ID provided.")]
 		public static Task<IActionResult> UnitMembersGetOne(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
-		{	
-			string requestorNetId = null;
-			UnitMember unitMember = null;
-			return Security.Authenticate(req)
-				.Tap(requestor => requestorNetId = requestor)
+			=> Security.Authenticate(req)
 				.Bind(_ => UnitMembersRepository.GetOne(membershipId))
-				.Tap(um => unitMember = um)
-				.Bind(um => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, um.UnitId))// Set headers saying what the requestor can do to this unit
-				.Bind(perms => Pipeline.Success(unitMember.ToUnitMemberResponse(perms)))
+				.Bind(um => Pipeline.Success(um.ToUnitMemberResponse(EntityPermissions.Get)))
 				.Finally(result => Response.Ok(req, result));
-		}
-		
+
 		[FunctionName(nameof(UnitMembers.CreateUnitMembers))]
 		[OpenApiOperation(nameof(UnitMembers.CreateUnitMembers), UnitMembersTitle, Summary = "Create a unit membership", Description = "Authorization: Unit memberships can be created by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
 		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(UnitMemberRequest), Required = true)]
