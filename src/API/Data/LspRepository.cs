@@ -16,10 +16,11 @@ namespace API.Data
         /// one or more departmens. "LA" = "local administrator" = unit leader.
         /// Exclude "related" people from result. </Remarks>
         internal static Task<Result<LspInfoArray,Error>> GetLspList()
-            => ExecuteDbPipeline("Get legacy LSP list", MapLegacyLsps);
+            => ExecuteDbPipeline("Get LSP list", MapLegacyLsps);
 
         internal static Task<Result<LspDepartmentArray,Error>> GetLspDepartments(string netid)
-            => ExecuteDbPipeline("Get legacy LSP departments", db => MapLspDepartments(netid, db));
+            => ExecuteDbPipeline("Get LSP departments", db => MapLspDepartments(netid, db));
+
         internal static Task<Result<LspContactArray,Error>> GetDepartmentLsps(string department)
             => ExecuteDbPipeline("Get department LSPs", db => MapDepartmentLsps(department, db));
 
