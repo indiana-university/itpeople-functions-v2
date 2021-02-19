@@ -52,10 +52,31 @@ namespace API.Middleware
         public static IActionResult NoContent<T>(HttpRequest req, Result<T, Error> result)
             => Generate(req, result, HttpStatusCode.NoContent, val => new NoContentResult());
 
+
+        /// <summary>Return an HTTP 200 response with XML content, or an appropriate HTTP error response.</summary>
+        public static IActionResult OkXml<T>(HttpRequest req, Result<T, Error> result)
+            => Generate(req, result, HttpStatusCode.NoContent, val => OkXmlResult(val));
+
         private static IActionResult CreatedJsonResult<T>(HttpRequest req, T value) 
             => typeof(T).IsSubclassOf(typeof(Entity))
                 ? new CreatedResult($"{req.Path}/{(value as Entity).Id}", value)
                 : new CreatedResult("", value);
+        
+        private class Utf8StringWriter : StringWriter
+        {
+            public override Encoding Encoding => Encoding.UTF8;
+        }
+
+        private static IActionResult OkXmlResult<T>(T value)
+        {
+            var serializer = new XmlSerializer(typeof(T));
+            var writer = new Utf8StringWriter();
+            serializer.Serialize(writer, value);
+            return new ContentResult(){
+                ContentType="application/xml",
+                Content=writer.ToString(),
+            };
+        }
 
         private static void SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode) 
             => logger
