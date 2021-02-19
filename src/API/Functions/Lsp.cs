@@ -26,5 +26,13 @@ namespace API.Functions
 			string netid)
 			=> LspRepository.GetLspDepartments(netid)
 				.Finally(result => Response.OkXml(req, result));		
+
+		[FunctionName(nameof(Lsp.DepartmentLsps))]
+		[OpenApiIgnore]
+		public static Task<IActionResult> DepartmentLsps(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "LspdbWebService.svc/LspsInDept/{department}")] HttpRequest req, 
+			string department)
+			=> LspRepository.GetDepartmentLsps(department)
+				.Finally(result => Response.OkXml(req, result));		
 	}
 }

@@ -30,6 +30,7 @@ namespace Integration
         [TestCase("lknope", new string[]{TestEntities.Departments.ParksName, TestEntities.Departments.FireName})]
         [TestCase("rswanson", new string[]{TestEntities.Departments.ParksName, TestEntities.Departments.FireName})]
         [TestCase("bwyatt", new string[0])]
+        [TestCase("bad username", new string[0])]
         public async Task GetLspDepartments(string netid, string[] expectedDepartments)
         {
             var resp = await GetAuthenticated($"LspdbWebService.svc/LspDepartments/{netid}");
@@ -53,6 +54,42 @@ namespace Integration
             Assert.AreEqual("lknope", actual.NetworkID);
             Assert.AreEqual(2, actual.DeptCodeLists.Count());
         }
+
+        [TestCase(TestEntities.Departments.ParksName, new string[]{"rswanson", "lknope"})]
+        [TestCase(TestEntities.Departments.FireName, new string[]{"rswanson", "lknope"})]
+        [TestCase("  firE DePartMENT  ", new string[]{"rswanson", "lknope"})]
+        [TestCase(TestEntities.Departments.AuditorName, new string[0])]
+        [TestCase("bad department", new string[0])]
+        public async Task GetDepartmentLSPs(string department, string[] expectedDepartments)
+        {
+            var resp = await GetAuthenticated($"LspdbWebService.svc/LspsInDept/{department}");
+            AssertStatusCode(resp, HttpStatusCode.OK);
+            var actual = await DeserializeXml<LspContactArray>(resp);
+            Assert.NotNull(actual);
+            Assert.NotNull(actual.LspContacts);
+            Assert.AreEqual(expectedDepartments.Length, actual.LspContacts.Count());
+            var actualDepartments = actual.LspContacts.Select(c => c.NetworkID);
+            CollectionAssert.AreEquivalent(expectedDepartments, actualDepartments);
+        }
+
+        [Test]
+        public async Task GetDepartmentLSPs_Properties()
+        {
+            var resp = await GetAuthenticated($"LspdbWebService.svc/LspsInDept/{TestEntities.Departments.ParksName}");
+            AssertStatusCode(resp, HttpStatusCode.OK);
+            var arr = await DeserializeXml<LspContactArray>(resp);
+            Assert.NotNull(arr);
+            Assert.NotNull(arr.LspContacts);
+            var expected = TestEntities.People.RSwanson; 
+            var actual = arr.LspContacts.SingleOrDefault(c => c.NetworkID == expected.Netid);            
+            Assert.AreEqual(expected.CampusPhone, actual.Phone);
+            Assert.AreEqual(expected.CampusEmail, actual.Email);
+            Assert.AreEqual(expected.CampusEmail, actual.PreferredEmail);
+            Assert.AreEqual(expected.Name, actual.FullName);
+            Assert.AreEqual(TestEntities.Units.ParksAndRecUnit.Email, actual.GroupInternalEmail);
+            Assert.True(actual.IsLSPAdmin);
+        }
+
 
         private static async Task<T> DeserializeXml<T>(HttpResponseMessage resp) where T : class
         {

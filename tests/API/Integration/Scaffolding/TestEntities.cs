@@ -85,9 +85,10 @@ namespace Integration
                 Description = "Your local fire department." 
             };
             public const int AuditorId = 3;
+            public const string AuditorName = "Auditor";
             public static readonly Department Auditor = new Department() { 
                 Id = AuditorId, 
-                Name = "Auditor", 
+                Name = AuditorName, 
                 Description = "Your local auditor's department." 
             };
         }
