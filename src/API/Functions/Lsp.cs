@@ -18,5 +18,13 @@ namespace API.Functions
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "LspdbWebService.svc/LspList")] HttpRequest req)
 			=> LspRepository.GetLspList()
 				.Finally(result => Response.OkXml(req, result));		
+
+		[FunctionName(nameof(Lsp.LspDepartments))]
+		[OpenApiIgnore]
+		public static Task<IActionResult> LspDepartments(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "LspdbWebService.svc/LspDepartments/{netid}")] HttpRequest req, 
+			string netid)
+			=> LspRepository.GetLspDepartments(netid)
+				.Finally(result => Response.OkXml(req, result));		
 	}
 }

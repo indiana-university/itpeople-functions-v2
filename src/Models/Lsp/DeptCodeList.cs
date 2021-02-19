@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace Models
@@ -6,8 +7,17 @@ namespace Models
     [Serializable]
     public class DeptCodeList
     {
-        [XmlElement(ElementName = "a")]
-        public string[] Values { get; }
+        public DeptCodeList()
+        {
+        }
+
+        public DeptCodeList(List<string> values)
+        {
+            Values = values;
+        }
+
+        [XmlElement(ElementName = "a", IsNullable=false)]
+        public List<string> Values { get; set; }
     }
     
 }

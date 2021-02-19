@@ -71,15 +71,17 @@ namespace Integration
         public static class Departments
         {
             public const int ParksId = 1;
+            public const string ParksName = "Parks Department";
             public static readonly Department Parks = new Department() { 
                 Id = ParksId, 
-                Name = "Parks Department", 
+                Name = ParksName, 
                 Description = "Your local Parks department." 
             };
             public const int FireId = 2;
+            public const string FireName = "Fire Department";
             public static readonly Department Fire = new Department() { 
                 Id = FireId, 
-                Name = "Fire Department", 
+                Name = FireName, 
                 Description = "Your local fire department." 
             };
             public const int AuditorId = 3;

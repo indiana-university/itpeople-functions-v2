@@ -18,6 +18,9 @@ namespace API.Data
         internal static Task<Result<LspInfoArray,Error>> GetLspList()
             => ExecuteDbPipeline("Get legacy LSP list", MapLegacyLsps);
 
+        internal static Task<Result<LspDepartmentArray,Error>> GetLspDepartments(string netid)
+            => ExecuteDbPipeline("Get legacy LSP departments", db => MapLspDepartments(netid, db));
+
         private static async Task<Result<LspInfoArray, Error>> MapLegacyLsps(PeopleContext db)
         {
             var lspList = await db.People.FromSqlRaw(GetLspListSql)
@@ -36,5 +39,26 @@ namespace API.Data
                 AND um.role <> 1
             GROUP BY p.netid
             ORDER BY p.netid";
+
+        private static async Task<Result<LspDepartmentArray, Error>> MapLspDepartments(string netid, PeopleContext db)
+        {
+            var netidClean = netid.Trim().ToLowerInvariant();
+            var deptCodeList = await db.Departments
+                .FromSqlRaw(GetLspDepartmentSql, netidClean)
+                .Select(d => new DeptCodeList(new List<string>(){d.Name}))
+                .AsNoTracking()
+                .ToListAsync();
+            var result = new LspDepartmentArray(netidClean, deptCodeList);
+            return Pipeline.Success(result);
+        }
+
+        private const string GetLspDepartmentSql = @"
+            SELECT DISTINCT d.name
+            FROM departments d
+            JOIN support_relationships sr ON sr.department_id = d.id
+            JOIN unit_members um ON um.unit_id = sr.unit_id
+            JOIN people p ON um.person_id = p.id
+            WHERE p.netid ILIKE {0}
+                AND um.role <> 1";
     }
 }

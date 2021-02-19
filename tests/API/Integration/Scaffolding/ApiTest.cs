@@ -28,6 +28,12 @@ namespace Integration
             BaseAddress = new System.Uri("http://localhost:8080/")
         };
 
+        public Task<HttpResponseMessage> GetAnonymous(string url)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            return Http.SendAsync(request);
+        }
+
         public Task<HttpResponseMessage> PostAuthenticated(string url, object body, string token = ValidRswansonJwt)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, url);
