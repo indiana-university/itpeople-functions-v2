@@ -45,7 +45,7 @@ namespace Integration
         }
 
         [Test]
-        public async Task GetLspDepartments_StringFormatting()
+        public async Task GetLspDepartments_Properties()
         {
             var resp = await GetAuthenticated($"LspdbWebService.svc/LspDepartments/ lKnOPe  ");
             AssertStatusCode(resp, HttpStatusCode.OK);
