@@ -50,6 +50,7 @@ namespace Integration
 			};
 		}
 
+        
 		public static class BuildingRelationships
 		{
 			public const int CityHallCityOfPawneeId = 1;
@@ -75,29 +76,29 @@ namespace Integration
 		}
 
 		public static class Departments
-		{
-			public const int ParksId = 1;
-			public static readonly Department Parks = new Department()
-			{
-				Id = ParksId,
-				Name = "Parks Department",
-				Description = "Your local Parks department."
-			};
-			public const int FireId = 2;
-			public static readonly Department Fire = new Department()
-			{
-				Id = FireId,
-				Name = "Fire Department",
-				Description = "Your local fire department."
-			};
-			public const int AuditorId = 3;
-			public static readonly Department Auditor = new Department()
-			{
-				Id = AuditorId,
-				Name = "Auditor",
-				Description = "Your local auditor's department."
-			};
-		}
+        {
+            public const int ParksId = 1;
+            public const string ParksName = "Parks Department";
+            public static readonly Department Parks = new Department() { 
+                Id = ParksId, 
+                Name = ParksName, 
+                Description = "Your local Parks department." 
+            };
+            public const int FireId = 2;
+            public const string FireName = "Fire Department";
+            public static readonly Department Fire = new Department() { 
+                Id = FireId, 
+                Name = FireName, 
+                Description = "Your local fire department." 
+            };
+            public const int AuditorId = 3;
+            public const string AuditorName = "Auditor";
+            public static readonly Department Auditor = new Department() { 
+                Id = AuditorId, 
+                Name = AuditorName, 
+                Description = "Your local auditor's department." 
+            };
+        }
 
 		public static class HrPeople
 		{
