@@ -15,7 +15,7 @@ namespace Integration
         [Test]
         public async Task GetLspList()
         {
-            var resp = await GetAuthenticated("LspdbWebService.svc/LspList");
+            var resp = await GetAnonymous("LspdbWebService.svc/LspList");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var actual = await DeserializeXml<LspInfoArray>(resp);
             Assert.NotNull(actual);
@@ -33,7 +33,7 @@ namespace Integration
         [TestCase("bad username", new string[0])]
         public async Task GetLspDepartments(string netid, string[] expectedDepartments)
         {
-            var resp = await GetAuthenticated($"LspdbWebService.svc/LspDepartments/{netid}");
+            var resp = await GetAnonymous($"LspdbWebService.svc/LspDepartments/{netid}");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var actual = await DeserializeXml<LspDepartmentArray>(resp);
             Assert.NotNull(actual);
@@ -47,7 +47,7 @@ namespace Integration
         [Test]
         public async Task GetLspDepartments_Properties()
         {
-            var resp = await GetAuthenticated($"LspdbWebService.svc/LspDepartments/ lKnOPe  ");
+            var resp = await GetAnonymous($"LspdbWebService.svc/LspDepartments/ lKnOPe  ");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var actual = await DeserializeXml<LspDepartmentArray>(resp);
             Assert.NotNull(actual);
@@ -62,7 +62,7 @@ namespace Integration
         [TestCase("bad department", new string[0])]
         public async Task GetDepartmentLSPs(string department, string[] expectedDepartments)
         {
-            var resp = await GetAuthenticated($"LspdbWebService.svc/LspsInDept/{department}");
+            var resp = await GetAnonymous($"LspdbWebService.svc/LspsInDept/{department}");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var actual = await DeserializeXml<LspContactArray>(resp);
             Assert.NotNull(actual);
@@ -75,7 +75,7 @@ namespace Integration
         [Test]
         public async Task GetDepartmentLSPs_Properties()
         {
-            var resp = await GetAuthenticated($"LspdbWebService.svc/LspsInDept/{TestEntities.Departments.ParksName}");
+            var resp = await GetAnonymous($"LspdbWebService.svc/LspsInDept/{TestEntities.Departments.ParksName}");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var arr = await DeserializeXml<LspContactArray>(resp);
             Assert.NotNull(arr);
