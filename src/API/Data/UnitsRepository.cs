@@ -148,7 +148,7 @@ namespace API.Data
         }
 
         internal static Task<Result<List<Unit>, Error>> GetChildren(HttpRequest req, int unitId) =>
-            ExecuteDbPipeline($"delete unit {unitId}", db =>
+            ExecuteDbPipeline($"get unit {unitId} children", db =>
                 TryFindUnit(db, unitId)
                 .Bind(u => TryGetChildren(db, u.Id)));
 
