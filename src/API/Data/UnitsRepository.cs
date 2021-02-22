@@ -161,5 +161,23 @@ namespace API.Data
                 .ToListAsync();
             return Pipeline.Success(children);
         }
+
+        internal static Task<Result<List<UnitMember>, Error>> GetMembers(HttpRequest req, int unitId) =>
+            ExecuteDbPipeline($"get unit {unitId} members", db =>
+                TryFindUnit(db, unitId)
+                .Bind(u => TryGetMembers(db, u.Id)));
+
+        private static async Task<Result<List<UnitMember>, Error>> TryGetMembers(PeopleContext db, int unitId)
+        {
+            var members = await db.UnitMembers
+                .Include(u => u.Person)
+                .Include(u => u.Unit)
+                .Include(u => u.MemberTools)
+                .Where(u => u.UnitId == unitId)
+                .AsNoTracking()
+                .ToListAsync();
+            
+            return Pipeline.Success(members);
+        }
     }
 }

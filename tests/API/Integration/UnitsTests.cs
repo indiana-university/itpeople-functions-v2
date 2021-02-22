@@ -368,5 +368,46 @@ namespace Integration
                 Assert.True(actual.All(a => a.Parent.Id == unitId));
             }
         }
+
+        [TestFixture]
+        public class UnitGetMembers : ApiTest
+        {
+            [Test]
+            public async Task AuthRequired()
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}/members", "bad token");
+                AssertStatusCode(resp, HttpStatusCode.Unauthorized);
+            }
+
+            [Test]
+            public async Task UnitMustExist()
+            {
+                var resp = await GetAuthenticated($"units/9999/members");
+                AssertStatusCode(resp, HttpStatusCode.NotFound);
+            }
+
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new int[0])]
+            [TestCase(TestEntities.Units.AuditorId, new []{TestEntities.UnitMembers.BWyattMemberId})]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new []{TestEntities.UnitMembers.RSwansonLeaderId, TestEntities.UnitMembers.LkNopeSubleadId})]
+            public async Task CanGetExpectedChildren(int unitId, int[] expectedMemberIds)
+            {
+                var resp = await GetAuthenticated($"units/{unitId}/members");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<UnitMemberResponse>>();
+                AssertIdsMatchContent(expectedMemberIds, actual);
+            }
+
+            [TestCase(ValidRswansonJwt, TestEntities.Units.ParksAndRecUnitId, false, Description="Ron sees notes for unit he manages.")]
+            [TestCase(ValidRswansonJwt, TestEntities.Units.AuditorId, true, Description="Ron doesn't see notes for unit he doesn't manage.")]
+            [TestCase(ValidAdminJwt, TestEntities.Units.ParksAndRecUnitId, false)]
+            [TestCase(ValidAdminJwt, TestEntities.Units.AuditorId, false)]
+            public async Task NotesAreHidden(string requestor, int unitId, bool expectNotesHidden)
+            {
+                var resp = await GetAuthenticated($"units/{unitId}/members", requestor);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<UnitMemberResponse>>();
+                Assert.AreEqual(expectNotesHidden, actual.All(a => string.IsNullOrWhiteSpace(a.Notes)));
+            }
+        }
     }
 }

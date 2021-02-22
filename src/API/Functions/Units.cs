@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
+using System.Linq;
+using Models.Enums;
 
 namespace API.Functions
 {
@@ -104,5 +106,17 @@ namespace API.Functions
                 .Bind(_ => UnitsRepository.GetChildren(req, unitId))
                 .Finally(result => Response.Ok(req, result));
 
+        [FunctionName(nameof(Units.GetUnitMembers))]
+        [OpenApiOperation(nameof(Units.GetUnitMembers), nameof(Units), Summary = "List all unit members", Description = "List all people who do IT work for this unit along with any vacant positions.")]
+        [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>))]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit was found with the provided ID.")]
+        public static Task<IActionResult> GetUnitMembers(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/members")] HttpRequest req, int unitId) 
+            => Security.Authenticate(req)
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(_ => UnitsRepository.GetMembers(req, unitId))
+				.Bind(ms => Pipeline.Success(ms.Select(e => e.ToUnitMemberResponse(req.GetEntityPermissions()))))
+                .Finally(result => Response.Ok(req, result));
     }
 }
