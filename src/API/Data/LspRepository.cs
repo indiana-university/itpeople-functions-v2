@@ -12,9 +12,6 @@ namespace API.Data
 {
     public class LspRepository : DataRepository
     {
-        /// <Remarks> LSPs are any member of a unit that has a support relationship with
-        /// one or more departmens. "LA" = "local administrator" = unit leader.
-        /// Exclude "related" people from result. </Remarks>
         internal static Task<Result<LspInfoArray,Error>> GetLspList()
             => ExecuteDbPipeline("Get LSP list", MapLegacyLsps);
 
