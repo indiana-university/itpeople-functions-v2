@@ -336,5 +336,37 @@ namespace Integration
                 Assert.IsEmpty(supportRelationships.Where(um => um.Department == null));
             }
         }
+
+        [TestFixture]
+        public class UnitGetChildren : ApiTest
+        {
+            [Test]
+            public async Task AuthRequired()
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}/children", "bad token");
+                AssertStatusCode(resp, HttpStatusCode.Unauthorized);
+            }
+
+            [Test]
+            public async Task UnitMustExist()
+            {
+                var resp = await GetAuthenticated($"units/9999/children");
+                AssertStatusCode(resp, HttpStatusCode.NotFound);
+            }
+
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new[]{TestEntities.Units.AuditorId, TestEntities.Units.ParksAndRecUnitId})]
+            [TestCase(TestEntities.Units.AuditorId, new int[0])]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new int[0])]
+            public async Task CanGetExpectedChildren(int unitId, int[] expectedChildIds)
+            {
+                var resp = await GetAuthenticated($"units/{unitId}/children");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<UnitResponse>>();
+                AssertIdsMatchContent(expectedChildIds, actual);
+                Assert.True(actual.All(a => a.ParentId == unitId));
+                Assert.True(actual.All(a => a.Parent != null));
+                Assert.True(actual.All(a => a.Parent.Id == unitId));
+            }
+        }
     }
 }

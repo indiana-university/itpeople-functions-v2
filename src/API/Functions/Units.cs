@@ -87,9 +87,22 @@ namespace API.Functions
         public static Task<IActionResult> DeleteUnit(
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "units/{unitId}")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
                 .Bind(_ => UnitsRepository.DeleteUnit(req, unitId))
                 .Finally(result => Response.NoContent(req, result));
+
+        [FunctionName(nameof(Units.GetUnitChildren))]
+        [OpenApiOperation(nameof(Units.GetUnitChildren), nameof(Units), Summary = "List all unit children ", Description = "List all units that fall below this unit in an organizational hierarchy.")]
+        [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitResponse>))]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit was found with the provided ID.")]
+        public static Task<IActionResult> GetUnitChildren(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/children")] HttpRequest req, int unitId) 
+            => Security.Authenticate(req)
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(_ => UnitsRepository.GetChildren(req, unitId))
+                .Finally(result => Response.Ok(req, result));
+
     }
 }

@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Models;
 using API.Functions;
 using Microsoft.AspNetCore.Http;
+using System;
 
 namespace API.Data
 {
@@ -144,6 +145,21 @@ namespace API.Data
                 await db.SaveChangesAsync();
                 return Pipeline.Success(true);
             }
+        }
+
+        internal static Task<Result<List<Unit>, Error>> GetChildren(HttpRequest req, int unitId) =>
+            ExecuteDbPipeline($"delete unit {unitId}", db =>
+                TryFindUnit(db, unitId)
+                .Bind(u => TryGetChildren(db, u.Id)));
+
+        private static async Task<Result<List<Unit>, Error>> TryGetChildren(PeopleContext db, int unitId)
+        {
+            var children = await db.Units
+                .Include(u => u.Parent)
+                .Where(u => u.ParentId == unitId)
+                .AsNoTracking()
+                .ToListAsync();
+            return Pipeline.Success(children);
         }
     }
 }
