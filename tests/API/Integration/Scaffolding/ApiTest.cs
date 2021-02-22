@@ -4,15 +4,15 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using API.Data;
 using API.Middleware;
 using Models;
+using Models.Enums;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Integration
 {
-    public abstract class ApiTest
+	public abstract class ApiTest
     {
         // valid from 1/1/2000 - 1/19/2038 💥
         public const string ValidRswansonJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoicnN3YW5zb24iLCJleHAiOjIxNDc0ODM2NDh9.HFziMgrIblB2dwn3po6D_C0zLCCHgPRwn7LcZ7i0K24ihdXtNGwlhOaens5Z97D0mS1qSYpK5oiqNsivaUNJGq6jQMWV6Rgbxddaid2H4PcrZOCIFRLqkmgl_Wyk2TTlDWtKXruMQEPS_hbEttDFP0Dr6Ii2x5KQTupqYspaKqdXggXjrV4GAk22x5Zz5KSKrZSmvFNCRciaCrqycPGpLrPlBG_CTztdIF_ycWVOsuNPKQr9ds80T3xXO87pP2x1W3AAO_d5UYCLRBLxhjzoDO6OndVm5LG9xHpZMRyUADbN2MjV1a7XJECSuHrPxOwV6DXZ-74W4Tl7n_6N0jYEhg";

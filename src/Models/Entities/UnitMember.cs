@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
+using Models.Enums;
 
 namespace Models
 {
-    public class UnitMember : Entity
+	public class UnitMember : Entity
     {
         
         /// The ID of the unit class.
@@ -28,6 +30,22 @@ namespace Models
         /// The tools that can be used by the person in this position as part of this unit.
         public List<MemberTool> MemberTools { get;  set; }
 
+        public UnitMemberResponse ToUnitMemberResponse(EntityPermissions perms) 
+        {
+            return new UnitMemberResponse()
+            {
+                Id = Id,
+                Role = Role,
+                Permissions = Permissions,
+                PersonId = PersonId,
+                Title = Title,
+                Percentage = Percentage,
+                Notes = (perms.HasFlag(EntityPermissions.Post) || perms.HasFlag(EntityPermissions.Put) || perms.HasFlag(EntityPermissions.Delete)) ? Notes : "",
+                Person = Person,
+                UnitId = UnitId,
+                Unit = new UnitResponse(Unit),
+                MemberTools = MemberTools.Select(mt => mt.ToMemberToolResponse()).ToList()
+            };
+        }
     }
-    
 }
