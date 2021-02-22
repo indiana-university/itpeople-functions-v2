@@ -32,7 +32,7 @@ namespace API.Data
             => ExecuteDbPipeline("resolve person permissions", db =>
                 FetchPeople(db, requestorNetid, personId)
                 .Bind(tup => ResolvePersonPermissions(tup.requestor, tup.target))
-                .Tap(perms => AddResponseHeaders(req, perms)));
+                .Tap(perms => req.SetEntityPermissions(perms)));
         
         private static async Task<Result<(Person requestor, Person target),Error>> FetchPeople(PeopleContext db, string requestorNetid, int personId)
         {
@@ -79,13 +79,13 @@ namespace API.Data
             => ExecuteDbPipeline("resolve unit permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId)
                 .Bind(person => ResolveUnitPermissions(person))
-                .Tap(perms => AddResponseHeaders(req, perms)));
+                .Tap(perms => req.SetEntityPermissions(perms)));
 
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitPermissions(HttpRequest req, string requestorNetId, int unitId) 
             => ExecuteDbPipeline("resolve unit permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId, unitId)
                 .Bind(person => ResolveUnitPermissions(person, unitId))
-                .Tap(perms => AddResponseHeaders(req, perms)));
+                .Tap(perms => req.SetEntityPermissions(perms)));
 
         private static async Task<Result<Person,Error>> FetchPersonAndMembership(PeopleContext db, string requestorNetid)
         {
@@ -128,14 +128,5 @@ namespace API.Data
             => db.People
                 .Include(p => p.UnitMemberships)
                 .SingleOrDefaultAsync(p => p.Netid.ToLower() == requestorNetid.ToLower());
-
-        private static void AddResponseHeaders(HttpRequest req, EntityPermissions permissions)
-        {
-            req.HttpContext.Response.Headers[Response.Headers.XUserPermissions] = permissions.ToString();
-            // TODO: CORS stuff...
-            req.HttpContext.Response.Headers[Response.Headers.AccessControlExposeHeaders] = Response.Headers.XUserPermissions;
-        }
     }
-
-
 }

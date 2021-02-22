@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 using System.Linq;
+using Models.Enums;
 
 namespace API.Middleware
 {
@@ -41,5 +42,19 @@ namespace API.Middleware
             ? Pipeline.BadRequest(results.Select(r => r.ErrorMessage))
             : Pipeline.Success(body);
         }
+    }
+
+    public static class HttpRequestExtensions
+    {
+        public static void SetEntityPermissions(this HttpRequest req, EntityPermissions permissions)
+        {
+            req.HttpContext.Items[Response.Headers.XUserPermissions] = permissions;
+            req.HttpContext.Response.Headers[Response.Headers.XUserPermissions] = permissions.ToString();
+            // TODO: CORS stuff...
+            req.HttpContext.Response.Headers[Response.Headers.AccessControlExposeHeaders] = Response.Headers.XUserPermissions;
+        }
+
+        public static EntityPermissions GetEntityPermissions(this HttpRequest req) 
+            => (EntityPermissions)req.HttpContext.Items[Response.Headers.XUserPermissions];
     }
 }
