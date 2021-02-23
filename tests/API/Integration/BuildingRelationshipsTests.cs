@@ -21,7 +21,7 @@ namespace Integration
 			{
 				var resp = await GetAuthenticated("buildingRelationships");
 				AssertStatusCode(resp, HttpStatusCode.OK);
-				var actual = await resp.Content.ReadAsAsync<List<BuildingRelationship>>();
+				var actual = await resp.Content.ReadAsAsync<List<BuildingRelationshipResponse>>();
 				Assert.AreEqual(2, actual.Count);
 			}
 		}
@@ -40,7 +40,7 @@ namespace Integration
 			public async Task BuildingRelationshipsGetOneResponseHasCorrectShape()
 			{
 				var resp = await GetAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}");
-				var actual = await resp.Content.ReadAsAsync<BuildingRelationship>();
+				var actual = await resp.Content.ReadAsAsync<BuildingRelationshipResponse>();
 				var expected = TestEntities.BuildingRelationships.CityHallCityOfPawnee;
 				Assert.AreEqual(expected.Id, actual.Id);
 				Assert.AreEqual(expected.Building.Id, actual.Building.Id);
@@ -62,7 +62,7 @@ namespace Integration
 			{
 				var resp = await PostAuthenticated("buildingRelationships", CityHallParksAndRec, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Created);
-				var actual = await resp.Content.ReadAsAsync<BuildingRelationship>();
+				var actual = await resp.Content.ReadAsAsync<BuildingRelationshipResponse>();
 
 				Assert.NotZero(actual.Id);
 				Assert.AreEqual(CityHallParksAndRec.UnitId, actual.Unit.Id);
@@ -142,7 +142,7 @@ namespace Integration
 
 				var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.OK);
-				var actual = await resp.Content.ReadAsAsync<BuildingRelationship>();
+				var actual = await resp.Content.ReadAsAsync<BuildingRelationshipResponse>();
 
 				Assert.AreEqual(TestEntities.BuildingRelationships.CityHallCityOfPawneeId, actual.Id);
 				Assert.AreEqual(req.BuildingId, actual.Building.Id);

@@ -129,6 +129,7 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetSupportedBuildings(req, unitId))
+                .Bind(sr => Pipeline.Success(sr.Select(srx => new BuildingRelationshipResponse(srx)).ToList()))
                 .Finally(result => Response.Ok(req, result));
 
         [FunctionName(nameof(Units.GetUnitSupportedDepartments))]
@@ -141,7 +142,7 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetSupportedDepartments(req, unitId))
-                .Bind(sr => Pipeline.Success(sr.Select(srx => new SupportRelationshipResponse(srx))))
+                .Bind(sr => Pipeline.Success(sr.Select(srx => new SupportRelationshipResponse(srx)).ToList()))
                 .Finally(result => Response.Ok(req, result));
 
         [FunctionName(nameof(Units.GetUnitTools))]
