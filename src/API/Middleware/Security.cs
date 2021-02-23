@@ -7,21 +7,98 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Security;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace API.Middleware
 {
     public static class Security
     {
+        private static HttpClient TokenClient = new HttpClient();
+
+        private static string Env(string key) {
+            var value = System.Environment.GetEnvironmentVariable(key);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new Exception($"Missing required environment variable: {key}");
+            }
+            return value;
+        }
         public static Result<string, Error> Authenticate(HttpRequest request)
             => SetStartTime(request)
                 .Bind(ExtractJWT)
                 .Bind(DecodeJWT)
                 .Bind(ValidateJWT)
-                .Tap(netid => SetPrincipal(request, netid));
+                .Bind(netid => SetPrincipal(request, netid));
+
+        public static Task<Result<UaaJwt, Error>> ExhangeOAuthCodeForToken(HttpRequest request, string code) 
+            => SetStartTime(request)
+                .Bind(_ => CreateUaaTokenRequest(code))
+                .Bind(PostUaaTokenRequest)
+                .Bind(ParseUaaTokenResponse)
+                .Bind(DecodeJWT)
+                .Bind(jwt => SetPrincipal(request, jwt));
+
+        private static Result<FormUrlEncodedContent, Error> CreateUaaTokenRequest(string code)
+        {
+            try
+            {
+                var dict = new Dictionary<string, string>()
+                {
+                    {"grant_type", "authorization_code"},
+                    {"code", code},
+                    {"client_id", Env("OAuth2ClientId")},
+                    {"client_secret", Env("OAuth2ClientSecret")},
+                    {"redirect_uri", Env("OAuth2RedirectUrl")},
+                };
+                var content = new FormUrlEncodedContent(dict);
+                return Pipeline.Success(content);
+            }
+            catch (Exception ex)
+            {
+                return Pipeline.InternalServerError("Failed to create OAuth2 token exchange request", ex);
+            }
+        }
+
+        private static async Task<Result<HttpContent, Error>> PostUaaTokenRequest(FormUrlEncodedContent content)
+        {
+            try
+            {
+                var req = new HttpRequestMessage(HttpMethod.Post, Env("OAuth2TokenUrl")) {Content = content};
+                var resp = await TokenClient.SendAsync(req);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    var error = await resp.Content.ReadAsStringAsync();
+                    return Pipeline.BadRequest($"Failed to exchange OAuth2 code for access token: {resp.StatusCode} {error}");
+                }
+                else
+                {
+                    return Pipeline.Success(resp.Content);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Pipeline.InternalServerError("Failed to exchange OAuth2 code for access token", ex);
+            }
+        }
+
+        private static async Task<Result<string, Error>> ParseUaaTokenResponse(HttpContent content)
+        {
+            try
+            {
+                var uaaJwt = await content.ReadAsAsync<UaaJwtResponse>();
+                return Pipeline.Success(uaaJwt.access_token);
+            }
+            catch (Exception ex)
+            {
+                return Pipeline.InternalServerError("Failed to parse UAA response as access token.", ex);
+            }
+        }
 
         private static Result<HttpRequest, Error> SetStartTime(HttpRequest request)
         {
@@ -29,9 +106,16 @@ namespace API.Middleware
             return Pipeline.Success(request);
         }
 
-        private static void SetPrincipal(HttpRequest request, string netid)
+        internal static Result<UaaJwt,Error> SetPrincipal(HttpRequest request, UaaJwt uaaJwt)
+        {
+            request.HttpContext.Items[LogProps.RequestorNetid] = uaaJwt.user_name;
+            return Pipeline.Success(uaaJwt);
+        }
+
+        internal static Result<string,Error> SetPrincipal(HttpRequest request, string netid)
         {
             request.HttpContext.Items[LogProps.RequestorNetid] = netid;
+            return Pipeline.Success(netid);
         }
 
         public const string ErrorRequestMissingAuthorizationHeader = "Request is missing an Authorization header.";
@@ -130,12 +214,17 @@ namespace API.Middleware
 
         static DateTime Epoch = new DateTime(1970,1,1,0,0,0,0,System.DateTimeKind.Utc);
 
-		class UaaJwt{
+		public class UaaJwt{
 			public string user_name { get; set; }
 			// when this token expires, as a Unix timestamp
             public long exp { get; set; }
             // when this token becomes valid, as a Unix timestamp
             public long nbf { get; set; }
 		}
+
+        public class UaaJwtResponse {
+            /// The OAuth JSON Web Token (JWT) that represents the logged-in user. The JWT must be passed in an HTTP Authentication header in the form: 'Bearer <JWT>'
+            public string access_token { get; set; }
+        }
     }
 }
