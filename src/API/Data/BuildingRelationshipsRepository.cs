@@ -16,6 +16,8 @@ namespace API.Data
 			=> ExecuteDbPipeline("search all building support relationships", async db =>
 			{
 				var result = await db.BuildingRelationships
+					.Include(br => br.Unit)
+					.Include(br => br.Building)
 					.AsNoTracking()
 					.ToListAsync();
 				return Pipeline.Success(result);

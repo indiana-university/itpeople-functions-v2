@@ -10,6 +10,7 @@ namespace Models
 
         public List<UnitMember> UnitMembers { get; set; }
         public List<SupportRelationship> SupportRelationships { get; set; }
+        public List<BuildingRelationship> BuildingRelationships { get; set; }
 
 
         public Unit() {}

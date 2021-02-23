@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
+using System.Linq;
 
 namespace API.Functions
 {
@@ -51,6 +52,7 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(_ => BuildingsRepository.GetOne(buildingId)) //make sure the building exists before trying to get its supporting units
                 .Bind(_ => BuildingsRepository.GetSupportingUnits(buildingId))
+                .Bind(br => Pipeline.Success(br.Select(brx => new BuildingRelationshipResponse(brx)).ToList()))
                 .Finally(result => Response.Ok(req, result));
     }
 }

@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
+using System.Linq;
 
 namespace API.Functions
 {
@@ -27,6 +28,7 @@ namespace API.Functions
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildingRelationships")] HttpRequest req)
 			=> Security.Authenticate(req)
 				.Bind(_ => BuildingRelationshipsRepository.GetAll())
+				.Bind(br => Pipeline.Success(br.Select(brx => new BuildingRelationshipResponse(brx)).ToList()))
 				.Finally(r => Response.Ok(req, r));
 
 		[FunctionName(nameof(BuildingRelationships.BuildingRelationshipsGetOne))]
@@ -38,6 +40,7 @@ namespace API.Functions
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildingRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
 			=> Security.Authenticate(req)
 				.Bind(_ => BuildingRelationshipsRepository.GetOne(relationshipId))
+				.Bind(br => Pipeline.Success(new BuildingRelationshipResponse(br)))
 				.Finally(result => Response.Ok(req, result));
 
 		[FunctionName(nameof(BuildingRelationships.CreateBuildingRelationship))]
@@ -61,6 +64,7 @@ namespace API.Functions
 			.Bind(brr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, brr.UnitId))// Set headers saying what the requestor can do to this unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => BuildingRelationshipsRepository.CreateBuildingRelationship(buildingRelationshipRequest))
+			.Bind(br => Pipeline.Success(new BuildingRelationshipResponse(br)))
 			.Finally(result => Response.Created(req, result));
 		}
 
@@ -85,6 +89,7 @@ namespace API.Functions
 				.Bind(brr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, brr.UnitId))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
 				.Bind(authorized => BuildingRelationshipsRepository.UpdateBuildingRelationship(req, buildingRelationshipRequest, relationshipId))
+				.Bind(br => Pipeline.Success(new BuildingRelationshipResponse(br)))
 				.Finally(result => Response.Ok(req, result));
 		}
 

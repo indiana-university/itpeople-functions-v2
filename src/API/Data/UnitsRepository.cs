@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Models;
 using API.Functions;
 using Microsoft.AspNetCore.Http;
+using System;
 
 namespace API.Data
 {
@@ -127,6 +128,7 @@ namespace API.Data
                     .Include(u => u.UnitMembers).ThenInclude(um => um.Person)
                     .Include(u => u.UnitMembers).ThenInclude(um => um.MemberTools)
                     .Include(u => u.SupportRelationships).ThenInclude(sr => sr.Department)
+                    .Include(u => u.BuildingRelationships).ThenInclude(sr => sr.Building)
                     .Single(u => u.Id == unit.Id);
 
                 //Write the logs with the whole enchilada 
@@ -137,6 +139,8 @@ namespace API.Data
                 db.UnitMembers.RemoveRange(unitAndRelated.UnitMembers);
                 //Remove SupportRelationships for unit
                 db.SupportRelationships.RemoveRange(unitAndRelated.SupportRelationships);
+                //Remove BuildingRelationships for unit
+                db.BuildingRelationships.RemoveRange(unitAndRelated.BuildingRelationships);
 
                 // Remove unit from the database.
                 db.Units.Remove(unit);
@@ -144,6 +148,87 @@ namespace API.Data
                 await db.SaveChangesAsync();
                 return Pipeline.Success(true);
             }
+        }
+
+        internal static Task<Result<List<Unit>, Error>> GetChildren(HttpRequest req, int unitId) =>
+            ExecuteDbPipeline($"get unit {unitId} children", db =>
+                TryFindUnit(db, unitId)
+                .Bind(u => TryGetChildren(db, u.Id)));
+
+        private static async Task<Result<List<Unit>, Error>> TryGetChildren(PeopleContext db, int unitId)
+        {
+            var children = await db.Units
+                .Include(u => u.Parent)
+                .Where(u => u.ParentId == unitId)
+                .AsNoTracking()
+                .ToListAsync();
+            return Pipeline.Success(children);
+        }
+
+        internal static Task<Result<List<UnitMember>, Error>> GetMembers(HttpRequest req, int unitId) =>
+            ExecuteDbPipeline($"get unit {unitId} members", db =>
+                TryFindUnit(db, unitId)
+                .Bind(u => TryGetMembers(db, u.Id)));
+
+        private static async Task<Result<List<UnitMember>, Error>> TryGetMembers(PeopleContext db, int unitId)
+        {
+            var members = await db.UnitMembers
+                .Include(u => u.Person)
+                .Include(u => u.Unit)
+                .Include(u => u.MemberTools)
+                .Where(u => u.UnitId == unitId)
+                .AsNoTracking()
+                .ToListAsync();
+            
+            return Pipeline.Success(members);
+        }
+
+        internal static Task<Result<List<BuildingRelationship>, Error>> GetSupportedBuildings(HttpRequest req, int unitId) =>
+            ExecuteDbPipeline($"get unit {unitId} supported buildings", db =>
+                TryFindUnit(db, unitId)
+                .Bind(u => TryGetSupportedBuildings(db, u.Id)));
+
+        private static async Task<Result<List<BuildingRelationship>, Error>> TryGetSupportedBuildings(PeopleContext db, int unitId)
+        {
+            var relationships = await db.BuildingRelationships
+                .Include(br => br.Unit)
+                .Include(br => br.Building)
+                .Where(br => br.UnitId == unitId)
+                .AsNoTracking()
+                .ToListAsync();
+            
+            return Pipeline.Success(relationships);
+        }
+
+        internal static Task<Result<List<SupportRelationship>, Error>> GetSupportedDepartments(HttpRequest req, int unitId) =>
+            ExecuteDbPipeline($"get unit {unitId} supported departments", db =>
+                TryFindUnit(db, unitId)
+                .Bind(u => TryGetSupportedDepartments(db, u.Id)));
+
+        private static async Task<Result<List<SupportRelationship>, Error>> TryGetSupportedDepartments(PeopleContext db, int unitId)
+        {
+            var relationships = await db.SupportRelationships
+                .Include(br => br.Unit)
+                .Include(br => br.Department)
+                .Where(br => br.UnitId == unitId)
+                .AsNoTracking()
+                .ToListAsync();
+            
+            return Pipeline.Success(relationships);
+        }
+
+        internal static Task<Result<List<Tool>, Error>> GetTools(HttpRequest req, int unitId) =>
+            ExecuteDbPipeline($"get unit {unitId} supported departments", db =>
+                TryFindUnit(db, unitId)
+                .Bind(u => TryGetTools(db, u.Id)));
+
+        private static async Task<Result<List<Tool>, Error>> TryGetTools(PeopleContext db, int unitId)
+        {
+            var tools = await db.Tools
+                .AsNoTracking()
+                .ToListAsync();
+            
+            return Pipeline.Success(tools);
         }
     }
 }

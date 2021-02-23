@@ -24,7 +24,9 @@ namespace Models
         public SupportRelationshipResponse(SupportRelationship sr)
         {
             Id = sr.Id;
+            DepartmentId = sr.DepartmentId;
             Department = sr.Department;
+            UnitId = sr.UnitId;
             Unit = new UnitResponse(sr.Unit);
         }
         
