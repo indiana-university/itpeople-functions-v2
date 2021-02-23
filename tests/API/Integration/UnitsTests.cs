@@ -442,5 +442,39 @@ namespace Integration
                 Assert.True(actual.All(a => a.Building != null));
             }
         }
+
+
+        [TestFixture]
+        public class UnitGetSupportedDepartments : ApiTest
+        {
+            [Test]
+            public async Task AuthRequired()
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}/supportedDepartments", "bad token");
+                AssertStatusCode(resp, HttpStatusCode.Unauthorized);
+            }
+
+            [Test]
+            public async Task UnitMustExist()
+            {
+                var resp = await GetAuthenticated($"units/9999/supportedDepartments");
+                AssertStatusCode(resp, HttpStatusCode.NotFound);
+            }
+
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new[]{TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.SupportRelationships.ParksAndRecUnitFireId})]
+            [TestCase(TestEntities.Units.AuditorId, new int[0])]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new int[0])]
+            public async Task CanGetExpectedRelationships(int unitId, int[] expectedRelationIds)
+            {
+                var resp = await GetAuthenticated($"units/{unitId}/supportedDepartments");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<SupportRelationshipResponse>>();
+                AssertIdsMatchContent(expectedRelationIds, actual);
+                Assert.True(actual.All(a => a.UnitId == unitId));
+                Assert.True(actual.All(a => a.Unit != null));
+                Assert.True(actual.All(a => a.Unit.Id == unitId));
+                Assert.True(actual.All(a => a.Department != null));
+            }
+        }
     }
 }

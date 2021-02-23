@@ -130,5 +130,18 @@ namespace API.Functions
                 .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetSupportedBuildings(req, unitId))
                 .Finally(result => Response.Ok(req, result));
+
+        [FunctionName(nameof(Units.GetUnitSupportedDepartments))]
+        [OpenApiOperation(nameof(Units.GetUnitSupportedDepartments), nameof(Units), Summary = "List all supported departments", Description = "List all departments that receive IT support from this unit.")]
+        [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<SupportRelationshipResponse>))]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit was found with the provided ID.")]
+        public static Task<IActionResult> GetUnitSupportedDepartments(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/supportedDepartments")] HttpRequest req, int unitId) 
+            => Security.Authenticate(req)
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(_ => UnitsRepository.GetSupportedDepartments(req, unitId))
+                .Bind(sr => Pipeline.Success(sr.Select(srx => new SupportRelationshipResponse(srx))))
+                .Finally(result => Response.Ok(req, result));
     }
 }

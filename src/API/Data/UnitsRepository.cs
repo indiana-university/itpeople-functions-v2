@@ -196,5 +196,22 @@ namespace API.Data
             
             return Pipeline.Success(relationships);
         }
+
+        internal static Task<Result<List<SupportRelationship>, Error>> GetSupportedDepartments(HttpRequest req, int unitId) =>
+            ExecuteDbPipeline($"get unit {unitId} supported departments", db =>
+                TryFindUnit(db, unitId)
+                .Bind(u => TryGetSupportedDepartments(db, u.Id)));
+
+        private static async Task<Result<List<SupportRelationship>, Error>> TryGetSupportedDepartments(PeopleContext db, int unitId)
+        {
+            var relationships = await db.SupportRelationships
+                .Include(br => br.Unit)
+                .Include(br => br.Department)
+                .Where(br => br.UnitId == unitId)
+                .AsNoTracking()
+                .ToListAsync();
+            
+            return Pipeline.Success(relationships);
+        }
     }
 }
