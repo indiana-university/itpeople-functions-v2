@@ -128,6 +128,7 @@ namespace API.Data
                     .Include(u => u.UnitMembers).ThenInclude(um => um.Person)
                     .Include(u => u.UnitMembers).ThenInclude(um => um.MemberTools)
                     .Include(u => u.SupportRelationships).ThenInclude(sr => sr.Department)
+                    .Include(u => u.BuildingRelationships).ThenInclude(sr => sr.Building)
                     .Single(u => u.Id == unit.Id);
 
                 //Write the logs with the whole enchilada 
@@ -138,6 +139,8 @@ namespace API.Data
                 db.UnitMembers.RemoveRange(unitAndRelated.UnitMembers);
                 //Remove SupportRelationships for unit
                 db.SupportRelationships.RemoveRange(unitAndRelated.SupportRelationships);
+                //Remove BuildingRelationships for unit
+                db.BuildingRelationships.RemoveRange(unitAndRelated.BuildingRelationships);
 
                 // Remove unit from the database.
                 db.Units.Remove(unit);

@@ -300,7 +300,12 @@ namespace Integration
             [Test]
             public async Task DeleteUnitDoesNotCreateOrphans()
             {
-                var resp = await DeleteAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}", ValidAdminJwt);
+                // Delete all the units to ensure all types of relations are exercised.
+                var resp = await DeleteAuthenticated($"units/{TestEntities.Units.AuditorId}", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.NoContent);
+                resp = await DeleteAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.NoContent);
+                resp = await DeleteAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}", ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.NoContent);
                 
                 System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
@@ -334,6 +339,13 @@ namespace Integration
 
                 Assert.IsEmpty(supportRelationships.Where(um => um.Unit == null));
                 Assert.IsEmpty(supportRelationships.Where(um => um.Department == null));
+
+                var buildingRelationships = db.BuildingRelationships
+                    .Include(sr => sr.Unit)
+                    .Include(sr => sr.Building);
+
+                Assert.IsEmpty(buildingRelationships.Where(um => um.Unit == null));
+                Assert.IsEmpty(buildingRelationships.Where(um => um.Building == null));
             }
         }
 
