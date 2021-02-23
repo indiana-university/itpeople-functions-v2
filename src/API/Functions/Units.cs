@@ -118,5 +118,17 @@ namespace API.Functions
                 .Bind(_ => UnitsRepository.GetMembers(req, unitId))
 				.Bind(ms => Pipeline.Success(ms.Select(e => e.ToUnitMemberResponse(req.GetEntityPermissions()))))
                 .Finally(result => Response.Ok(req, result));
+
+        [FunctionName(nameof(Units.GetUnitSupportedBuildings))]
+        [OpenApiOperation(nameof(Units.GetUnitSupportedBuildings), nameof(Units), Summary = "List all supported buildings", Description = "List all buildings that receive IT support from this unit.")]
+        [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<BuildingRelationshipResponse>))]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit was found with the provided ID.")]
+        public static Task<IActionResult> GetUnitSupportedBuildings(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/supportedBuildings")] HttpRequest req, int unitId) 
+            => Security.Authenticate(req)
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(_ => UnitsRepository.GetSupportedBuildings(req, unitId))
+                .Finally(result => Response.Ok(req, result));
     }
 }
