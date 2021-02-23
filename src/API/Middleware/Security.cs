@@ -21,14 +21,6 @@ namespace API.Middleware
     {
         private static HttpClient TokenClient = new HttpClient();
 
-        private static string Env(string key) {
-            var value = System.Environment.GetEnvironmentVariable(key);
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new Exception($"Missing required environment variable: {key}");
-            }
-            return value;
-        }
         public static Result<string, Error> Authenticate(HttpRequest request)
             => SetStartTime(request)
                 .Bind(ExtractJWT)
@@ -52,9 +44,9 @@ namespace API.Middleware
                 {
                     {"grant_type", "authorization_code"},
                     {"code", code},
-                    {"client_id", Env("OAuth2ClientId")},
-                    {"client_secret", Env("OAuth2ClientSecret")},
-                    {"redirect_uri", Env("OAuth2RedirectUrl")},
+                    {"client_id", Utils.Env("OAuth2ClientId", required: true)},
+                    {"client_secret", Utils.Env("OAuth2ClientSecret", required: true)},
+                    {"redirect_uri", Utils.Env("OAuth2RedirectUrl", required: true)},
                 };
                 var content = new FormUrlEncodedContent(dict);
                 return Pipeline.Success(content);
@@ -69,7 +61,8 @@ namespace API.Middleware
         {
             try
             {
-                var req = new HttpRequestMessage(HttpMethod.Post, Env("OAuth2TokenUrl")) {Content = content};
+                var url = Utils.Env("OAuth2TokenUrl", required: true);
+                var req = new HttpRequestMessage(HttpMethod.Post, url) {Content = content};
                 var resp = await TokenClient.SendAsync(req);
                 if (!resp.IsSuccessStatusCode)
                 {
@@ -146,15 +139,15 @@ namespace API.Middleware
         {
             //https://apps.iu.edu/uaa-prd/oauth/token_key
             // "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp+0OVVhuRqbXeRr9PO1Zo5Az/OCTTK6NKTSPfU87wHvFhl+6vO2h5b9YCdr74edubZ6grPvnHkWFK3SWMVnxB4EUatcnfwLsGwvZz+96QOSa5qEdkaYzCC5oQI6x6VnqT/yzNol9HUKQuT4b6faK8bj7Y86Ku0Bn3msYSYAI4aJxh6KIgO5kbVLMjYHDsABvmJVqG77e8qhJ5aHzHE7voNKAkVBKx3Bqofu9pwT9A5ejBylFrPnhCJK7vQu0SaBB/pHmDb9dD969oWGX6QdoGPbmXuW1FsSsph0bHxiOMLmOTZSFPs2/gFnpSMYwIinRPi3+saiI+GtPbwAf+ZliCQIDAQAB\n-----END PUBLIC KEY-----"
-            var publicKey = System.Environment.GetEnvironmentVariable("JwtPublicKey");
-            if (string.IsNullOrWhiteSpace(publicKey))
-                return Pipeline.InternalServerError($"Missing environment variable: 'JwtPublicKey'");
-
-			try
+            
+            try
 			{
+                var publicKey = Utils.Env("JwtPublicKey", required: false);
+                if (string.IsNullOrWhiteSpace(publicKey))
+                    return Pipeline.InternalServerError($"Missing environment variable: 'JwtPublicKey'");
+
                 var csp = ImportPublicKey(publicKey.Replace("\\n", "\n"));
 				var jwt = JWT.Decode<UaaJwt>(token, csp, JwsAlgorithm.RS256);
-                Console.WriteLine($"Heya lookit {jwt.user_name} is here! 🎸");
                 return Pipeline.Success(jwt);
 			} 
             catch

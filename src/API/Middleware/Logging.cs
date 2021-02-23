@@ -9,6 +9,7 @@ using System;
 
 namespace API.Middleware
 {
+
     public static class LogProps
     {
         public const string Function = "Function";
@@ -34,12 +35,9 @@ namespace API.Middleware
 
     public static class Logging
     {
-        private static string Env(string key) 
-            => System.Environment.GetEnvironmentVariable(key);
-
         private static LoggerConfiguration TryAddAzureAppInsightsSink(this LoggerConfiguration logger)
         {
-            var appInsightsKey = Env("APPINSIGHTS_INSTRUMENTATIONKEY");
+            var appInsightsKey = Utils.Env("APPINSIGHTS_INSTRUMENTATIONKEY");
             if (!string.IsNullOrWhiteSpace(appInsightsKey))
             {
                 logger.WriteTo.ApplicationInsights(
@@ -70,7 +68,7 @@ namespace API.Middleware
         private static LoggerConfiguration TryAddPostgresqlDatabaseSink(this LoggerConfiguration logger)
         {
             var tableName = "logs";
-            var connectionString = Env("DatabaseConnectionString");
+            var connectionString = Utils.Env("DatabaseConnectionString", required:true);
 
             if (!string.IsNullOrWhiteSpace(connectionString))
             {
