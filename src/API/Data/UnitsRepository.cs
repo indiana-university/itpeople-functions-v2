@@ -213,5 +213,19 @@ namespace API.Data
             
             return Pipeline.Success(relationships);
         }
+
+        internal static Task<Result<List<Tool>, Error>> GetTools(HttpRequest req, int unitId) =>
+            ExecuteDbPipeline($"get unit {unitId} supported departments", db =>
+                TryFindUnit(db, unitId)
+                .Bind(u => TryGetTools(db, u.Id)));
+
+        private static async Task<Result<List<Tool>, Error>> TryGetTools(PeopleContext db, int unitId)
+        {
+            var tools = await db.Tools
+                .AsNoTracking()
+                .ToListAsync();
+            
+            return Pipeline.Success(tools);
+        }
     }
 }

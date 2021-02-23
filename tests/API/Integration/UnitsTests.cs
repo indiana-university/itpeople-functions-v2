@@ -476,5 +476,34 @@ namespace Integration
                 Assert.True(actual.All(a => a.Department != null));
             }
         }
+
+        [TestFixture]
+        public class UnitGetTools : ApiTest
+        {
+            [Test]
+            public async Task AuthRequired()
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}/tools", "bad token");
+                AssertStatusCode(resp, HttpStatusCode.Unauthorized);
+            }
+
+            [Test]
+            public async Task UnitMustExist()
+            {
+                var resp = await GetAuthenticated($"units/9999/tools");
+                AssertStatusCode(resp, HttpStatusCode.NotFound);
+            }
+
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new[]{TestEntities.Tools.HammerId})]
+            [TestCase(TestEntities.Units.AuditorId, new[]{TestEntities.Tools.HammerId})]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new[]{TestEntities.Tools.HammerId})]
+            public async Task CanGetExpectedTools(int unitId, int[] expectedToolIds)
+            {
+                var resp = await GetAuthenticated($"units/{unitId}/tools");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<Tool>>();
+                AssertIdsMatchContent(expectedToolIds, actual);
+            }
+        }
     }
 }
