@@ -18,13 +18,19 @@ namespace Integration
         public const string ValidAdminJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiYWRtaW4iLCJleHAiOjIxNDc0ODM2NDh9.OtlelEWHpp_Ybr3uyIKSx-ka3OCgbb-z48Zcapbg0_JFbGmtrtK3tcuDbn1l4_O9q1j-6-t9rV1BC-3qkiZiB_ES4KmpDcmFPQGuQr3zIl5wfLV1TUkeZGC6bfODSBHQIyVvPgSIjFJJbr3akRbVfjQe5j2cpyOHMumy2rOiHZd7YWWi9P4SmJTk9fbnZkcQ7lPpSXNG3S9c8ysGqlqY-I7a-oMBxjsk0a9udHTqvvDou_jwY6ot8LQyNwocMdSn5xiWhZC-rLlwFDfE1VUtUXmwGADrGEufvRMJ7rR_UM12vMud2JMtgrQpTrm9ym_UjaXu6V4SY3kxIOSHJuuXbw";
 
         [SetUp]
-        public void Init()
+        public async Task Init()
         {
-            PostgresContainer.ResetDatabase();
+            var resp = await StateServer.GetAsync("state");
+            AssertStatusCode(resp, HttpStatusCode.OK);
         }
+        
 
         protected static HttpClient Http = new HttpClient(){
             BaseAddress = new System.Uri("http://localhost:8080/")
+        };
+
+        protected static HttpClient StateServer = new HttpClient(){
+            BaseAddress = new System.Uri("http://localhost:8081/")
         };
 
         public Task<HttpResponseMessage> GetAnonymous(string url)
