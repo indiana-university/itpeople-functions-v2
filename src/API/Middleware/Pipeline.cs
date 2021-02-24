@@ -74,11 +74,12 @@ namespace API.Middleware
 
         public IActionResult ToActionResult()// => new StatusCodeResult((int)StatusCode);        
         {
+            var includeStackTrace = !string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable("IncludeStackTraceInError"));
             var content = new ApiError()
             {
                 StatusCode = (int)StatusCode,
                 Errors = Messages?.ToList(),
-                Details = Exception == null ? "(none)" : Exception.ToString()
+                Details = Exception == null ? "(none)" : includeStackTrace ? Exception.ToString() : Exception.Message
             };
 
             switch (StatusCode)
