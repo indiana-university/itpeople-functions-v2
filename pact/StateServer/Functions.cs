@@ -43,7 +43,8 @@ namespace StateServer
                     public.tools,
                     public.units,
                     public.unit_members,
-                    public.unit_member_tools
+                    public.unit_member_tools,
+                    public.logs
                 RESTART IDENTITY
                 CASCADE;
             ");

@@ -104,7 +104,7 @@ namespace Integration
         public static async Task<T> ReadAsAsync<T>(this HttpContent content)
         {
             var str = await content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<T>(str);
+            return JsonConvert.DeserializeObject<T>(str, Json.JsonSerializerSettings);
         }
     }
 }

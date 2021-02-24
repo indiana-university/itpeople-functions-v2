@@ -65,7 +65,7 @@ namespace API.Middleware
                 {
                     StatusCode = (int)status,
                     ContentType = "application/json; charset=utf-8",
-                    Content = JsonConvert.SerializeObject(value),
+                    Content = JsonConvert.SerializeObject(value, Json.JsonSerializerSettings),
                 };
             }
             catch (Exception ex)
