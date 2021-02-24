@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Models;
 
-namespace Integration
+namespace Models
 {
 	public static class TestEntities
 	{
@@ -313,13 +313,13 @@ namespace Integration
 				//Netid = People.RSwanson.Netid,
 				Person = People.RSwanson,
 				Unit = Units.ParksAndRecUnit,
+				UnitId = Units.ParksAndRecUnitId,
 				MemberTools = new List<MemberTool>()
 			};
 			public const int LkNopeSubleadId = 2;
 			public static readonly UnitMember LkNopeSublead = new UnitMember()
 			{
 				Id = LkNopeSubleadId,
-				// UnitId = Units.Unit.Id,
 				Role = Role.Sublead,
 				Permissions = UnitPermissions.Viewer,
 				PersonId = People.LKnopeId,
@@ -329,6 +329,7 @@ namespace Integration
 				//Netid = People.LKnope.Netid,
 				Person = People.LKnope,
 				Unit = Units.ParksAndRecUnit,
+				UnitId = Units.ParksAndRecUnitId,
 				MemberTools = null
 			};
 			public const int BWyattMemberId = 3;
@@ -345,6 +346,7 @@ namespace Integration
 				//Netid = People.BWyatt.Netid,
 				Person = People.BWyatt,
 				Unit = Units.Auditor,
+				UnitId = Units.AuditorId,
 				MemberTools = null
 			};
 
