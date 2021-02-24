@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../../src/Database/Database.csproj" />
+    <ProjectReference Include="../../../src/Models/Models.csproj" />
   </ItemGroup>
 
 </Project>
