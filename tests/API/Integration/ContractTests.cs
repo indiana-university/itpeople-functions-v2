@@ -7,13 +7,14 @@ namespace Integration
 {
     public class ContractTests
     {
-        // [Test] // Ignore this until we get more of the API implemented
+        [Test]
         public void VerifyContract()
         {
             var pactOutputs = new[] { new PactOutput(TestContext.Progress) };
             var config = new PactVerifierConfig() { /* Outputters = pactOutputs */ };
             new PactVerifier(config)
                 .ServiceProvider("API", "http://localhost:8080")
+                .ProviderState("http://localhost:8081/state")
                 .PactUri("https://raw.githubusercontent.com/indiana-university/itpeople-app/develop/contracts/itpeople-app-itpeople-functions.json")
                 .HonoursPactWith("Client")
                 .Verify();
