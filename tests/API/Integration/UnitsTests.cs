@@ -105,7 +105,6 @@ namespace Integration
                 var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent.Id);
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.Created);
-                Assert.AreEqual("/units/4", resp.Headers.Location.OriginalString);
                 var actual = await resp.Content.ReadAsAsync<Unit>();
 
                 Assert.NotZero(actual.Id);
@@ -247,8 +246,7 @@ namespace Integration
             [Test]
             public async Task UnitMembersArePreservedWhenEdited()
             {
-                System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
-                var db = Database.PeopleContext.Create();
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
                 var existingParksAndRecUnitMembers = db.UnitMembers
                     .Where(um => um.UnitId == TestEntities.Units.ParksAndRecUnitId)
                     .AsNoTracking()
@@ -306,8 +304,7 @@ namespace Integration
                 resp = await DeleteAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}", ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.NoContent);
                 
-                System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
-                var db = Database.PeopleContext.Create();
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
 
                 // You can use this block of code to induce one of the problems we are testing for.
                 /*

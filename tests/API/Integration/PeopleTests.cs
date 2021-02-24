@@ -199,10 +199,11 @@ namespace Integration
             public async Task GetRonsMemberships()
             {
                 var resp = await GetAuthenticated($"people/{TestEntities.People.RSwansonId}/memberships");
+                AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<UnitMember>>();
-                var expected = TestEntities.People.RSwanson.UnitMemberships;
+                var expected = TestEntities.UnitMembers.RSwansonDirector;
                 Assert.That(actual.Count, Is.EqualTo(1));
-                Assert.That(actual.First().Id, Is.EqualTo(expected.First().Id));
+                Assert.That(actual.First().Id, Is.EqualTo(expected.Id));
             }
         }
 

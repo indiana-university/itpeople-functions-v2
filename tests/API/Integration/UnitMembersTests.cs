@@ -272,8 +272,7 @@ namespace Integration
                 var resp = await DeleteAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}", ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.NoContent);
                 
-                System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
-                var db = Database.PeopleContext.Create();
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
                 
                 var memberTools = db.MemberTools
                     .Include(mt => mt.Tool)
