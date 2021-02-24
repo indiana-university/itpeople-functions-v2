@@ -39,7 +39,7 @@ namespace Integration
 
         protected abstract DbConnection GetConnection();
 
-        public void ResetDatabase()
+        public static void ResetDatabase()
         {
             using (var peopleContext = PeopleContext.Create(PeopleContext.LocalDatabaseConnectionString))
             {

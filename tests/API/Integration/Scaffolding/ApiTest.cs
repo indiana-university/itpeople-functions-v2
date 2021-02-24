@@ -20,7 +20,7 @@ namespace Integration
         [SetUp]
         public void Init()
         {
-            Harness.DbContainer.ResetDatabase();
+            PostgresContainer.ResetDatabase();
         }
 
         protected static HttpClient Http = new HttpClient(){
