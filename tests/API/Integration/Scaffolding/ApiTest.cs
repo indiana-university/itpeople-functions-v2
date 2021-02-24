@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using API.Middleware;
 using Models;
 using Models.Enums;
 using Newtonsoft.Json;
@@ -82,7 +81,7 @@ namespace Integration
 
         protected static void AssertPermissions(HttpResponseMessage resp, EntityPermissions expectedPermissions)
         {
-            var actualHeader = resp.Headers.SingleOrDefault(h => h.Key == Response.Headers.XUserPermissions);
+            var actualHeader = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions");
             Assert.NotNull(actualHeader, "Permissions header is not present");
             Assert.AreEqual(1, actualHeader.Value.Count(), "Permissions header should have one value");
             Assert.AreEqual(expectedPermissions.ToString(), actualHeader.Value.Single());
@@ -91,6 +90,15 @@ namespace Integration
         protected static void AssertIdsMatchContent<T>(int[] expectedIds, IEnumerable<T> content) where T: Entity
         {
             CollectionAssert.AreEquivalent(expectedIds, content.Select(c => c.Id));
+        }
+    }
+
+    public static class HttpContentExtensions
+    {
+        public static async Task<T> ReadAsAsync<T>(this HttpContent content)
+        {
+            var str = await content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<T>(str);
         }
     }
 }

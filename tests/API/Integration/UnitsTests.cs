@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 using Models;
 using NUnit.Framework;
 using System.Linq;
-using API.Middleware;
-using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using Models.Enums;
 
