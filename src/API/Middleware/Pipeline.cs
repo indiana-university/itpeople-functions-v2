@@ -77,7 +77,7 @@ namespace API.Middleware
             var content = new ApiError()
             {
                 StatusCode = (int)StatusCode,
-                Errors = Messages.ToList(),
+                Errors = Messages?.ToList(),
                 Details = Exception == null ? "(none)" : Exception.ToString()
             };
 
@@ -89,7 +89,12 @@ namespace API.Middleware
                 case HttpStatusCode.BadRequest: return new BadRequestObjectResult(content);
                 case HttpStatusCode.NotFound: return new NotFoundObjectResult(content);
                 case HttpStatusCode.Conflict: return new ConflictObjectResult(content);
-                default: return new ContentResult(){StatusCode=500, ContentType="application/json", Content=JsonConvert.SerializeObject(content)};
+                default: return new ContentResult()
+                    {
+                        StatusCode=500, 
+                        ContentType="application/json; charset=utf-8", 
+                        Content=JsonConvert.SerializeObject(content)
+                    };
             }
         }
     }
