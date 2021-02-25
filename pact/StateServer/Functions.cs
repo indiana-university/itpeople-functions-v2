@@ -81,14 +81,15 @@ namespace StateServer
             
             peopleContext.SupportRelationships.AddRange(new List<SupportRelationship> {
                 TestEntities.SupportRelationships.ParksAndRecRelationship,
-                TestEntities.SupportRelationships.ParksAndRecUnitFire
+                TestEntities.SupportRelationships.PawneeUnitFire
 
             });
 
             peopleContext.UnitMembers.AddRange(new List<UnitMember> { 
                 TestEntities.UnitMembers.RSwansonDirector,
                 TestEntities.UnitMembers.LkNopeSublead,
-                TestEntities.UnitMembers.BWyattAditor
+                TestEntities.UnitMembers.BWyattAditor,
+                TestEntities.UnitMembers.AdminLeader
             });
             
             peopleContext.Tools.AddRange(new List<Tool> { 
@@ -96,7 +97,8 @@ namespace StateServer
             });
 
             peopleContext.MemberTools.AddRange(new List<MemberTool> { 
-                TestEntities.MemberTools.MemberTool
+                TestEntities.MemberTools.MemberTool,
+                TestEntities.MemberTools.AdminMemberTool
             });
             
             peopleContext.SaveChanges();

@@ -130,6 +130,13 @@ namespace Models
 				ToolId = Tools.HammerId
 			};
 
+			public const int AdminMemberToolId = 2;
+			public static readonly MemberTool AdminMemberTool = new MemberTool()
+			{
+				Id = AdminMemberToolId,
+				MembershipId = UnitMembers.AdminMemberId,
+				ToolId = Tools.HammerId
+			};
 		}
 		public static class People
 		{
@@ -137,7 +144,7 @@ namespace Models
 			public static readonly Person RSwanson = new Person()
 			{
 				Id = RSwansonId,
-				Netid = "rswanson",
+				Netid = "rswanso",
 				Name = "Swanson, Ron",
 				NameFirst = "Ron",
 				NameLast = "Swanson",
@@ -203,13 +210,13 @@ namespace Models
 			public static readonly Person ServiceAdmin = new Person()
 			{
 				Id = ServiceAdminId,
-				Netid = "admin",
+				Netid = "johndoe",
 				Name = "Bureaucrat, Faceless",
 				NameFirst = "Faceless",
 				NameLast = "Bureaucrat",
 				Position = "BOH",
 				Location = "",
-				Campus = "Indianapolis",
+				Campus = "Pawnee",
 				CampusPhone = "",
 				CampusEmail = "admin@pawnee.in.us",
 				Expertise = "Guarding the Precious",
@@ -234,14 +241,14 @@ namespace Models
 				Unit = TestEntities.Units.ParksAndRecUnit,
 				Department = TestEntities.Departments.Parks
 			};
-			public const int ParksAndRecUnitFireId = 2;
+			public const int PawneeUnitFireId = 2;
 
-			public static readonly SupportRelationship ParksAndRecUnitFire = new SupportRelationship()
+			public static readonly SupportRelationship PawneeUnitFire = new SupportRelationship()
 			{
-				Id = ParksAndRecUnitFireId,
-				UnitId = TestEntities.Units.ParksAndRecUnit.Id,
+				Id = PawneeUnitFireId,
+				UnitId = TestEntities.Units.CityOfPawnee.Id,
 				DepartmentId = TestEntities.Departments.Fire.Id,
-				Unit = TestEntities.Units.ParksAndRecUnit,
+				Unit = TestEntities.Units.CityOfPawnee,
 				Department = TestEntities.Departments.Fire
 			};
 		}
@@ -344,7 +351,21 @@ namespace Models
 				UnitId = Units.AuditorId,
 				MemberTools = null
 			};
-
+			public const int AdminMemberId = 4;
+			public static readonly UnitMember AdminLeader = new UnitMember()
+			{
+				Id = AdminMemberId,
+				Role = Role.Leader,
+				Permissions = UnitPermissions.ManageMembers,
+				PersonId = People.ServiceAdminId,
+				Title = "Adm",
+				Percentage = 100,
+				Notes = "notes",
+				Person = People.ServiceAdmin,
+				Unit = Units.CityOfPawnee,
+				UnitId = Units.CityOfPawneeUnitId,
+				MemberTools = new List<MemberTool>(){MemberTools.AdminMemberTool}
+			};
 		}
 	}
 }

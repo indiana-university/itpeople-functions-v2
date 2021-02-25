@@ -199,7 +199,7 @@ namespace Integration
 					DepartmentId = TestEntities.SupportRelationships.ParksAndRecRelationship.DepartmentId
 				};
 
-				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecUnitFireId}", req, ValidAdminJwt);
+				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.PawneeUnitFireId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
 		}

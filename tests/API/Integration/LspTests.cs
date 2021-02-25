@@ -22,13 +22,15 @@ namespace Integration
             Assert.NotNull(actual.LspInfos);
             // Parks and Rec has a support relationship with one or more departments, so all Parks and Rec
             // staffers are considered LSPs. They will have the "LA" flag if they are in the Leader or Sublead roles.
-            Assert.AreEqual(2, actual.LspInfos.Length);
+            Assert.AreEqual(3, actual.LspInfos.Length);
             Assert.True(actual.LspInfos.Any(i => i.NetworkID == TestEntities.People.RSwanson.Netid && i.IsLA == true));
             Assert.True(actual.LspInfos.Any(i => i.NetworkID == TestEntities.People.LKnope.Netid && i.IsLA == true));
+            Assert.True(actual.LspInfos.Any(i => i.NetworkID == TestEntities.People.ServiceAdmin.Netid && i.IsLA == true));
         }
 
-        [TestCase("lknope", new string[]{TestEntities.Departments.ParksName, TestEntities.Departments.FireName})]
-        [TestCase("rswanson", new string[]{TestEntities.Departments.ParksName, TestEntities.Departments.FireName})]
+        [TestCase("lknope", new string[]{TestEntities.Departments.ParksName})]
+        [TestCase("rswanso", new string[]{TestEntities.Departments.ParksName})]
+        [TestCase("johndoe", new string[]{TestEntities.Departments.FireName})]
         [TestCase("bwyatt", new string[0])]
         [TestCase("bad username", new string[0])]
         public async Task GetLspDepartments(string netid, string[] expectedDepartments)
@@ -52,12 +54,12 @@ namespace Integration
             var actual = await DeserializeXml<LspDepartmentArray>(resp);
             Assert.NotNull(actual);
             Assert.AreEqual("lknope", actual.NetworkID);
-            Assert.AreEqual(2, actual.DeptCodeLists.Count());
+            Assert.AreEqual(1, actual.DeptCodeLists.Count());
         }
 
-        [TestCase(TestEntities.Departments.ParksName, new string[]{"rswanson", "lknope"})]
-        [TestCase(TestEntities.Departments.FireName, new string[]{"rswanson", "lknope"})]
-        [TestCase("  firE DePartMENT  ", new string[]{"rswanson", "lknope"})]
+        [TestCase(TestEntities.Departments.ParksName, new string[]{"rswanso", "lknope"})]
+        [TestCase(TestEntities.Departments.FireName, new string[]{"johndoe"})]
+        [TestCase("  firE DePartMENT  ", new string[]{"johndoe"})]
         [TestCase(TestEntities.Departments.AuditorName, new string[0])]
         [TestCase("bad department", new string[0])]
         public async Task GetDepartmentLSPs(string department, string[] expectedDepartments)

@@ -20,7 +20,7 @@ namespace Integration
                 var resp = await GetAuthenticated("people");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(3, actual.Count);
+                Assert.AreEqual(4, actual.Count);
             }
 
             [TestCase("rswanso", Description="Exact match of netid")]
@@ -87,10 +87,10 @@ namespace Integration
                 AssertIdsMatchContent(expectedMatches, actual);
             }
 
-            [TestCase("Pawnee", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId}, Description="full match of Pawnee")]
+            [TestCase("Pawnee", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.ServiceAdminId}, Description="full match of Pawnee")]
             [TestCase("Ind", new int[]{TestEntities.People.BWyattId}, Description="start of Indianapolis")]
             [TestCase("Indianapolis", new int[]{TestEntities.People.BWyattId}, Description="full match of Indianapolis")]
-            [TestCase("Pawnee, Indian", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId}, Description="multiple campus")]
+            [TestCase("Pawnee, Indian", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId}, Description="multiple campus")]
             public async Task CanSearchCampus(string campusName, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?campus={campusName}");
@@ -99,11 +99,11 @@ namespace Integration
                 AssertIdsMatchContent(expectedMatches, actual);
             }           
            
-            [TestCase("Leader", new int[]{ TestEntities.People.RSwansonId }, Description = "Return group Leader(s)")]
+            [TestCase("Leader", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.ServiceAdminId }, Description = "Return group Leader(s)")]
             [TestCase("Sublead", new int[]{ TestEntities.People.LKnopeId }, Description = "Return group Subleader(s)")]
             [TestCase("Member", new int[]{ TestEntities.People.BWyattId }, Description = "Return group Member(s)")]
             [TestCase("member", new int[]{ TestEntities.People.BWyattId }, Description = "Return group Member(s) case-insensitive")]
-            [TestCase("leader, member", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.BWyattId }, Description = "Support list of roles")]
+            [TestCase("leader, member", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "Support list of roles")]
             public async Task CanSearchByRole(string roles, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?role={roles}");
@@ -114,10 +114,10 @@ namespace Integration
             
             [TestCase("Owner", new int[]{ TestEntities.People.RSwansonId })]
             [TestCase("Viewer", new int[]{ TestEntities.People.LKnopeId })]
-            [TestCase("ManageMembers", new int[]{ TestEntities.People.BWyattId })]
-            [TestCase("managemembers", new int[]{ TestEntities.People.BWyattId }, Description = "Case insensitive match for Permissions.")]
+            [TestCase("ManageMembers", new int[]{ TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId })]
+            [TestCase("managemembers", new int[]{ TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "Case insensitive match for Permissions.")]
             [TestCase("ManageTools", new int[0])]
-            [TestCase("Viewer, ManageMembers", new int[]{ TestEntities.People.LKnopeId, TestEntities.People.BWyattId }, Description = "Multiple Permissions provided.")]
+            [TestCase("Viewer, ManageMembers", new int[]{ TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "Multiple Permissions provided.")]
             public async Task CanSearchByPermission(string permissions, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?permission={permissions}");
@@ -125,10 +125,10 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
                 AssertIdsMatchContent(expectedMatches, actual);
             }
-            [TestCase("UITS", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId }, Description = "All people in UITS area")]
-            [TestCase("uits", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId})]
+            [TestCase("UITS", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "All people in UITS area")]
+            [TestCase("uits", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId})]
             [TestCase("edge", new int[0])]
-            [TestCase("uits,edge", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId})]
+            [TestCase("uits,edge", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId})]
             public async Task CanSearchByArea(string areas, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?area={areas}");

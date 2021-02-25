@@ -393,7 +393,7 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.NotFound);
             }
 
-            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new int[0])]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new []{TestEntities.UnitMembers.AdminMemberId})]
             [TestCase(TestEntities.Units.AuditorId, new []{TestEntities.UnitMembers.BWyattMemberId})]
             [TestCase(TestEntities.Units.ParksAndRecUnitId, new []{TestEntities.UnitMembers.RSwansonLeaderId, TestEntities.UnitMembers.LkNopeSubleadId})]
             public async Task CanGetExpectedChildren(int unitId, int[] expectedMemberIds)
@@ -468,9 +468,9 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.NotFound);
             }
 
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, new[]{TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.SupportRelationships.ParksAndRecUnitFireId})]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new[]{TestEntities.SupportRelationships.ParksAndRecRelationshipId})]
             [TestCase(TestEntities.Units.AuditorId, new int[0])]
-            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new int[0])]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new int[]{TestEntities.SupportRelationships.PawneeUnitFireId})]
             public async Task CanGetExpectedRelationships(int unitId, int[] expectedRelationIds)
             {
                 var resp = await GetAuthenticated($"units/{unitId}/supportedDepartments");

@@ -85,34 +85,41 @@ namespace API.Data
 			{
 				return Pipeline.Success<Person>(null);
 			}
+			
 			var existing = await db.People.SingleOrDefaultAsync(p => p.Id == body.PersonId || p.Netid == body.Netid);
 			if (existing != null)
 			{
 				return Pipeline.Success(existing);
 			}
+
 			var hrPerson = await db.HrPeople.SingleOrDefaultAsync(p => p.Netid == body.Netid);
-			if (hrPerson != null)
+			if (hrPerson == null)
 			{
-				var matchingDepartment = await db.Departments.SingleOrDefaultAsync(d => d.Name.Equals(hrPerson.HrDepartment));
-				var newPerson = new Person
-				{
-					Netid = hrPerson.Netid,
-					Name = hrPerson.Name,
-					NameFirst = hrPerson.NameFirst,
-					NameLast = hrPerson.NameLast,
-					Position = hrPerson.Position,
-					Campus = hrPerson.Campus,
-					CampusPhone = hrPerson.CampusPhone,
-					CampusEmail = hrPerson.CampusEmail,
-					DepartmentId = matchingDepartment?.Id
-				};
-
-				db.People.Add(newPerson);
-				await db.SaveChangesAsync();
-				return Pipeline.Success(newPerson);
+				return Pipeline.NotFound("The specified person does not exist in the HR directory.");
 			}
-			return Pipeline.NotFound("The specified unit and/or person does not exist.");
+			
+			var matchingDepartment = await db.Departments.SingleOrDefaultAsync(d => d.Name.Equals(hrPerson.HrDepartment));
+			if (matchingDepartment == null)
+			{
+				return Pipeline.NotFound("The specified person's department does not exist in the directory.");
+			}
 
+			var newPerson = new Person
+			{
+				Netid = hrPerson.Netid,
+				Name = hrPerson.Name,
+				NameFirst = hrPerson.NameFirst,
+				NameLast = hrPerson.NameLast,
+				Position = hrPerson.Position,
+				Campus = hrPerson.Campus,
+				CampusPhone = hrPerson.CampusPhone,
+				CampusEmail = hrPerson.CampusEmail,
+				DepartmentId = matchingDepartment?.Id
+			};
+
+			db.People.Add(newPerson);
+			await db.SaveChangesAsync();
+			return Pipeline.Success(newPerson);
 		}
 
 		private static async Task<Result<UnitMemberRequest, Error>> ValidateRequest(PeopleContext db, UnitMemberRequest body, int? existingRelationshipId = null)
@@ -139,11 +146,12 @@ namespace API.Data
 			unitMember.PersonId = person?.Id;
 			unitMember.Title = body.Title;
 			unitMember.Percentage = body.Percentage;
-			unitMember.Notes = body.Notes;
+			unitMember.Notes = body.Notes ?? "";
 			return unitMember;
 		}
 		private static async Task<Result<bool, Error>> TryDeleteMembership(PeopleContext db, HttpRequest req, UnitMember unitMember)
 		{
+			db.MemberTools.RemoveRange(unitMember.MemberTools);
 			db.UnitMembers.Remove(unitMember);
 			await db.SaveChangesAsync();
 			return Pipeline.Success(true);
