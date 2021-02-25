@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace Models
 {
@@ -18,7 +20,9 @@ namespace Models
     }
 
     public class MemberToolResponse : MemberToolSlim
-    {        
+    {
+        public static List<MemberToolResponse> ConvertList(List<MemberTool> source)
+            => source.Select(mt => mt.ToMemberToolResponse()).ToList();
     }
 
     [Table("unit_member_tools")]
@@ -32,6 +36,7 @@ namespace Models
         public MemberToolResponse ToMemberToolResponse() 
         => new MemberToolResponse()
             {
+                Id = Id,
                 MembershipId = MembershipId,
                 ToolId = ToolId
             };

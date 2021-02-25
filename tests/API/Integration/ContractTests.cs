@@ -7,7 +7,7 @@ namespace Integration
 {
     public class ContractTests
     {
-        [Test]
+        // [Test]
         public void VerifyContract()
         {
             var pactOutputs = new[] { new PactOutput(TestContext.Progress) };

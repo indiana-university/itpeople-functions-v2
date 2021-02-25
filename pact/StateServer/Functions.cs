@@ -125,6 +125,11 @@ namespace StateServer
                     setval(pg_get_serial_sequence('public.unit_members', 'id'), 
                     (SELECT MAX(id) FROM public.unit_members));
                 ");
+            peopleContext.Database.ExecuteSqlRaw(@"
+                SELECT
+                    setval(pg_get_serial_sequence('public.unit_member_tools', 'id'), 
+                    (SELECT MAX(id) FROM public.unit_member_tools));
+                ");
         }
     }
 }
