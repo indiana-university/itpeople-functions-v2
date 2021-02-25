@@ -5,7 +5,6 @@ namespace Models
 {
 	public static class TestEntities
 	{
-
 		public static class Buildings
 		{
 			public const int CityHallId = 1;
@@ -151,7 +150,7 @@ namespace Models
 				Position = "Parks and Rec Director",
 				Location = "",
 				Campus = "Pawnee",
-				CampusPhone = "",
+				CampusPhone = "812.856.1111",
 				CampusEmail = "rswanso@pawnee.in.us",
 				Expertise = "Woodworking; Honor",
 				Notes = "",
@@ -173,7 +172,7 @@ namespace Models
 				Position = "Parks and Rec Deputy Director",
 				Location = "",
 				Campus = "Pawnee",
-				CampusPhone = "",
+				CampusPhone = "812.856.2222",
 				CampusEmail = "lknope@pawnee.in.us",
 				Expertise = "Canvassing; Waffles",
 				Notes = "",
@@ -195,7 +194,7 @@ namespace Models
 				Position = "Auditor",
 				Location = "",
 				Campus = "Indianapolis",
-				CampusPhone = "",
+				CampusPhone = "317.441.3333",
 				CampusEmail = "bwyatt@pawnee.in.us",
 				Expertise = "Board Games; Comic Books",
 				Notes = "",
@@ -217,7 +216,7 @@ namespace Models
 				Position = "BOH",
 				Location = "",
 				Campus = "Pawnee",
-				CampusPhone = "",
+				CampusPhone = "812.856.4444",
 				CampusEmail = "admin@pawnee.in.us",
 				Expertise = "Guarding the Precious",
 				Notes = "",
@@ -236,9 +235,9 @@ namespace Models
 			public static readonly SupportRelationship ParksAndRecRelationship = new SupportRelationship()
 			{
 				Id = ParksAndRecRelationshipId,
-				UnitId = TestEntities.Units.ParksAndRecUnit.Id,
+				UnitId = TestEntities.Units.CityOfPawnee.Id,
 				DepartmentId = TestEntities.Departments.Parks.Id,
-				Unit = TestEntities.Units.ParksAndRecUnit,
+				Unit = TestEntities.Units.CityOfPawnee,
 				Department = TestEntities.Departments.Parks
 			};
 			public const int PawneeUnitFireId = 2;

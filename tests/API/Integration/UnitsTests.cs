@@ -468,9 +468,9 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.NotFound);
             }
 
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, new[]{TestEntities.SupportRelationships.ParksAndRecRelationshipId})]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new int[0])]
             [TestCase(TestEntities.Units.AuditorId, new int[0])]
-            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new int[]{TestEntities.SupportRelationships.PawneeUnitFireId})]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new int[]{TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.SupportRelationships.PawneeUnitFireId})]
             public async Task CanGetExpectedRelationships(int unitId, int[] expectedRelationIds)
             {
                 var resp = await GetAuthenticated($"units/{unitId}/supportedDepartments");
