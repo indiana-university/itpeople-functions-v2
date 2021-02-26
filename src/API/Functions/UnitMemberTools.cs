@@ -88,5 +88,24 @@ namespace API.Functions
 				.Bind(mr => Pipeline.Success(mr.ToMemberToolResponse()))
 				.Finally(result => Response.Ok(req, result));
 		}
+
+		[FunctionName(nameof(UnitMemberTools.UnitMemberToolDelete))]
+		[OpenApiOperation(nameof(UnitMemberTools.UnitMemberToolDelete), Title, Summary = "Delete a unit member tool", Description = "*Authorization*: Unit tool permissions can be deleted by any unit member that has either the `Owner` or `ManageTools` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitMembersGetAll).")]
+		[OpenApiParameter("memberToolId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit member tool record.")]
+		[OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]
+		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit member tool was found with the ID provided.")]
+		public static Task<IActionResult> UnitMemberToolDelete(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "membertools/{memberToolId}")] HttpRequest req, int memberToolId)
+		{
+			string requestorNetId = null;
+			return Security.Authenticate(req)
+				.Tap(requestor => requestorNetId = requestor)
+				.Bind(requestor => UnitMemberToolsRepository.GetOne(memberToolId))
+				.Bind(mt => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, requestorNetId, mt.MembershipId))// Set headers saying what the requestor can do based on the MemberTool's UnitMember.Unit
+				.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
+				.Bind(_ => UnitMemberToolsRepository.DeleteUnitMemberTool(req, memberToolId))
+				.Finally(result => Response.NoContent(req, result));
+		}
 	}
 }

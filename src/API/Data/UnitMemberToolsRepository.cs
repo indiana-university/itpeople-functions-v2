@@ -48,6 +48,13 @@ namespace API.Data
 				.Bind(updated => TryFindUnitMemberTool(db, updated.Id))
 			);
 
+		internal static async Task<Result<bool, Error>> DeleteUnitMemberTool(HttpRequest req, int memberToolId)
+			=> await ExecuteDbPipeline("Delete a unit member tool", db =>
+				TryFindUnitMemberTool(db, memberToolId)
+				.Tap(existing => LogPrevious(req, existing))
+				.Bind(existing => TryDeleteUnitMemberTool(db, req, existing))
+			);
+
 		private static async Task<Result<MemberToolRequest, Error>> ValidateRequest(PeopleContext db, MemberToolRequest body, int? existingMemberToolId = null)
 		{
 			if (body.MembershipId == 0 || body.ToolId == 0)
@@ -108,6 +115,13 @@ namespace API.Data
 			await db.SaveChangesAsync();
 
 			return existing;
+		}
+
+		private static async Task<Result<bool, Error>> TryDeleteUnitMemberTool(PeopleContext db, HttpRequest req, MemberTool existing)
+		{
+			db.MemberTools.Remove(existing);
+			await db.SaveChangesAsync();
+			return Pipeline.Success(true);
 		}
 	}
 }
