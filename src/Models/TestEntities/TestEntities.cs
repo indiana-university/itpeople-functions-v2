@@ -263,6 +263,16 @@ namespace Models
                 DepartmentScoped = true,
                 ADPath = ""
             };
+
+			public const int SawId = 2;
+			public static readonly Tool Saw = new Tool
+			{
+				Id = SawId,
+				Name = "Ron's Saw",
+				Description = "Ron's prized Golden Guinea push saw.",
+				DepartmentScoped = true,
+				ADPath = "pw-parksrec-carpenters"
+			};
 		}
 
 		public static class Units

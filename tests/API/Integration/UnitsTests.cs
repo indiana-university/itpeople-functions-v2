@@ -501,9 +501,9 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.NotFound);
             }
 
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, new[]{TestEntities.Tools.HammerId})]
-            [TestCase(TestEntities.Units.AuditorId, new[]{TestEntities.Tools.HammerId})]
-            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new[]{TestEntities.Tools.HammerId})]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new[]{TestEntities.Tools.HammerId, TestEntities.Tools.SawId})]
+            [TestCase(TestEntities.Units.AuditorId, new[]{TestEntities.Tools.HammerId, TestEntities.Tools.SawId})]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new[]{TestEntities.Tools.HammerId, TestEntities.Tools.SawId})]
             public async Task CanGetExpectedTools(int unitId, int[] expectedToolIds)
             {
                 var resp = await GetAuthenticated($"units/{unitId}/tools");

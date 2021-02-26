@@ -93,7 +93,8 @@ namespace StateServer
             });
             
             peopleContext.Tools.AddRange(new List<Tool> { 
-                TestEntities.Tools.Hammer
+                TestEntities.Tools.Hammer,
+                TestEntities.Tools.Saw
             });
 
             peopleContext.MemberTools.AddRange(new List<MemberTool> { 

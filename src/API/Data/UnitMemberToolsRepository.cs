@@ -27,6 +27,10 @@ namespace API.Data
 					.ToListAsync();
 				return Pipeline.Success(result);
 			});
+		
+		public static Task<Result<MemberTool, Error>> GetOne(int id)
+			=> ExecuteDbPipeline("get a support relationship by ID", db =>
+				TryFindUnitMemberTool(db, id));
 
 		internal static async Task<Result<MemberTool, Error>> CreateUnitMemberTool(MemberToolRequest body)
 			=> await ExecuteDbPipeline("create a unit member tool", db =>
@@ -35,7 +39,16 @@ namespace API.Data
 				.Bind(created => TryFindUnitMemberTool(db, created.Id))
 			);
 
-		private static async Task<Result<MemberToolRequest, Error>> ValidateRequest(PeopleContext db, MemberToolRequest body, int? existingRelationshipId = null)
+		internal static async Task<Result<MemberTool, Error>> UpdateUnitMemberTool(HttpRequest req, MemberToolRequest memberToolRequest, int memberToolId)
+			=> await ExecuteDbPipeline("Update a unit member tool", db =>
+				ValidateRequest(db, memberToolRequest, memberToolId)
+				.Bind(_ => TryFindUnitMemberTool(db, memberToolId))
+				.Tap(existing => LogPrevious(req, existing))
+				.Bind(existing => TryUpdateUnitMemberTool(db, existing, memberToolRequest))
+				.Bind(updated => TryFindUnitMemberTool(db, updated.Id))
+			);
+
+		private static async Task<Result<MemberToolRequest, Error>> ValidateRequest(PeopleContext db, MemberToolRequest body, int? existingMemberToolId = null)
 		{
 			if (body.MembershipId == 0 || body.ToolId == 0)
 			{
@@ -50,10 +63,16 @@ namespace API.Data
 			{
 				return Pipeline.NotFound(MemberNotFound);
 			}
-			if (await db.MemberTools.AnyAsync(mt => mt.MembershipId == body.MembershipId && mt.ToolId == body.ToolId && mt.Id != existingRelationshipId))
+			if (await db.MemberTools.AnyAsync(mt => mt.MembershipId == body.MembershipId && mt.ToolId == body.ToolId && mt.Id != existingMemberToolId))
 			{
 				return Pipeline.Conflict(MemberToolConflict);
 			}
+
+			if(existingMemberToolId.HasValue && existingMemberToolId != body.Id)
+			{
+				return Pipeline.BadRequest("The memberToolId in the URL does not match the id in the request body.");
+			}
+
 			return Pipeline.Success(body);
 		}
 
@@ -79,6 +98,15 @@ namespace API.Data
 			await db.MemberTools.AddAsync(memberTool);
 			await db.SaveChangesAsync();
 			return Pipeline.Success(memberTool);
+		}
+
+		private static async Task<Result<MemberTool, Error>> TryUpdateUnitMemberTool(PeopleContext db, MemberTool existing, MemberToolRequest body)
+		{
+			existing.MembershipId = body.MembershipId;
+			existing.ToolId = body.ToolId;
+			await db.SaveChangesAsync();
+
+			return existing;
 		}
 	}
 }

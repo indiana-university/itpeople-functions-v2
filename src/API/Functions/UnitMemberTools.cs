@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.OpenApi.Models;
 using Models;
 
 namespace API.Functions
@@ -19,7 +20,7 @@ namespace API.Functions
 		public const string Title = "Unit Member Tools";
 
 		[FunctionName(nameof(UnitMemberTools.UnitMemberToolsGetAll))]
-		[OpenApiOperation(nameof(SupportRelationships.SupportRelationshipsGetAll), Title, Summary = "List all unit member tools")]
+		[OpenApiOperation(nameof(UnitMemberTools.UnitMemberToolsGetAll), Title, Summary = "List all unit member tools")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<MemberToolResponse>), Description = "A collection of unit member tool records")]
 		public static Task<IActionResult> UnitMemberToolsGetAll(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "membertools")] HttpRequest req)
@@ -27,6 +28,18 @@ namespace API.Functions
 				.Bind(query => UnitMemberToolsRepository.GetAll())
 				.Bind(mt => Pipeline.Success(MemberToolResponse.ConvertList(mt)))
 				.Finally(results => Response.Ok(req, results));
+
+		[FunctionName(nameof(UnitMemberTools.UnitMemberToolsGetOne))]
+		[OpenApiOperation(nameof(UnitMemberTools.UnitMemberToolsGetOne), Title, Summary = "Find a unit member tool by ID")]
+		[OpenApiParameter("memberToolId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit member tool record.")]
+		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(MemberToolResponse), Description = "A unit member tool record")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No member tool record was found with the ID provided.")]
+		public static Task<IActionResult> UnitMemberToolsGetOne(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "membertools/{memberToolId}")] HttpRequest req, int memberToolId)
+			=> Security.Authenticate(req)
+				.Bind(_ => UnitMemberToolsRepository.GetOne(memberToolId))
+				.Bind(mt => Pipeline.Success(mt.ToMemberToolResponse()))
+				.Finally(result => Response.Ok(req, result));
 
 		[FunctionName(nameof(UnitMemberTools.UnitMemberToolsCreate))]
 		[OpenApiOperation(nameof(UnitMemberTools.UnitMemberToolsCreate), Title, Summary = "Create a unit member tool.", Description = "*Authorization*: Unit tool permissions can be created by any unit member that has either the `Owner` or `ManageTools` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitMembersGetAll).")]
@@ -44,11 +57,36 @@ namespace API.Functions
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(requestor => Request.DeserializeBody<MemberToolRequest>(req))
 			.Tap(mtr => memberToolRequest = mtr)
-			.Bind(mtr => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, requestorNetId, mtr.MembershipId))// Set headers saying what the requestor can do to the spec
+			.Bind(mtr => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, requestorNetId, mtr.MembershipId))// Set headers saying what the requestor can do based on the MemberTool's UnitMember.Unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => UnitMemberToolsRepository.CreateUnitMemberTool(memberToolRequest))
 			.Bind(mt => Pipeline.Success(mt.ToMemberToolResponse()))
 			.Finally(result => Response.Created(req, result));
+		}
+
+		[FunctionName(nameof(UnitMemberTools.UnitMemberToolsUpdate))]
+		[OpenApiOperation(nameof(UnitMemberTools.UnitMemberToolsUpdate), Title, Summary = "Update a unit member tool", Description = "*Authorization*: Unit tool permissions can be updated by any unit member that has either the `Owner` or `ManageTools` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitMembersGetAll).")]
+		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(MemberToolRequest), Required = true)]
+		[OpenApiParameter("memberToolId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit member tool record.")]
+		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(MemberToolResponse), Description = "The updated unt member tool record")]
+		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = UnitMemberToolsRepository.MalformedBody)]
+		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified tool does not exist. **or** The specified member does not exist.")]
+		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = UnitMemberToolsRepository.MemberToolConflict)]
+		public static Task<IActionResult> UnitMemberToolsUpdate(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "membertools/{memberToolId}")] HttpRequest req, int memberToolId)
+		{
+			string requestorNetId = null;
+			MemberToolRequest memberToolRequest = null;
+			return Security.Authenticate(req)
+				.Tap(requestor => requestorNetId = requestor)
+				.Bind(requestor => Request.DeserializeBody<MemberToolRequest>(req))
+				.Tap(mtr => memberToolRequest = mtr)
+				.Bind(mtr => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, requestorNetId, mtr.MembershipId))// Set headers saying what the requestor can do based on the MemberTool's UnitMember.Unit
+				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
+				.Bind(authorized => UnitMemberToolsRepository.UpdateUnitMemberTool(req, memberToolRequest, memberToolId))
+				.Bind(mr => Pipeline.Success(mr.ToMemberToolResponse()))
+				.Finally(result => Response.Ok(req, result));
 		}
 	}
 }
