@@ -165,65 +165,65 @@ namespace Integration
 
 				Assert.Contains("The memberToolId in the URL does not match the id in the request body.", actual.Errors);
 			}
-			/*
+			
 			[Test]
-			public async Task BadRequestCannotUpdateWithMalformedUnitMember()
+			public async Task BadRequestCannotUpdateWithMalformedUnitMemberTool()
 			{
-				var req = new UnitMemberRequest
+				var req = new MemberToolRequest
 				{
-					UnitId = TestEntities.Units.CityOfPawneeUnitId,
-					Percentage = 101,
+					ToolId = TestEntities.Tools.HammerId
 				};
 
 				var resp = await PutAuthenticated($"membertools/{TestEntities.UnitMembers.RSwansonLeaderId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
 				Assert.AreEqual(1, actual.Errors.Count);
-
 			}
-
+			
 			[Test]
-			public async Task UnauthorizedCannotUpdateUnitMember()
+			public async Task UnauthorizedCannotUpdateUnitMemberTool()
 			{
-				var req = new UnitMemberRequest
+				var req = new MemberToolRequest
 				{
-					UnitId = TestEntities.Units.CityOfPawneeUnitId,
+					MembershipId = TestEntities.UnitMembers.RSwansonLeaderId,
+					ToolId = TestEntities.Tools.HammerId
 				};
-				var resp = await PutAuthenticated($"membertools/{TestEntities.UnitMembers.RSwansonLeaderId}", req, ValidRswansonJwt);
+				var resp = await PutAuthenticated($"membertools/{TestEntities.MemberTools.MemberTool1}", req, ValidLknopeJwt);
 				AssertStatusCode(resp, HttpStatusCode.Forbidden);
 			}
 
-			[TestCase(TestEntities.UnitMembers.RSwansonLeaderId, 99999, TestEntities.People.RSwansonId, Description = "Update Unit Id not found")]
-			[TestCase(TestEntities.UnitMembers.RSwansonLeaderId, TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Update Person Id not found")]
-			[TestCase(99999, TestEntities.Units.CityOfPawneeUnitId, TestEntities.People.RSwansonId, Description = "Update membership Id not found")]
-			public async Task NotFoundCannotUpdateUnitMembers(int membershipId, int unitId, int personId)
+			[TestCase(TestEntities.MemberTools.AdminMemberToolId, 99999, TestEntities.Tools.SawId, "The specified member does not exist.")]
+			[TestCase(TestEntities.MemberTools.AdminMemberToolId, TestEntities.UnitMembers.RSwansonLeaderId, 99999, "The specified tool does not exist.")]
+			[TestCase(99999, TestEntities.UnitMembers.RSwansonLeaderId, TestEntities.Tools.SawId, "The specified member/tool does not exist.")]
+			public async Task NotFoundCannotUpdateUnitMemberTools(int id, int membershipId, int toolId, string expectedError)
 			{
-				var req = new UnitMemberRequest
+				var req = new MemberToolRequest
 				{
-					UnitId = unitId,
-					PersonId = personId
+					Id = id,
+					MembershipId = membershipId,
+					ToolId = toolId
 				};
-				var resp = await PutAuthenticated($"membertools/{membershipId}", req, ValidAdminJwt);
+				var resp = await PutAuthenticated($"membertools/{id}", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.NotFound);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+				Assert.Contains(expectedError, actual.Errors);
 			}
-
+			
 			[Test]
-			public async Task ConflictUpdateUnitMembership()
+			public async Task ConflictUpdateUnitMemberTool()
 			{
-				var req = new UnitMemberRequest
+				var req = new MemberToolRequest
 				{
-					UnitId = TestEntities.UnitMembers.RSwansonDirector.UnitId,
-					PersonId = TestEntities.UnitMembers.RSwansonDirector.PersonId
+					Id = TestEntities.MemberTools.MemberTool1,
+					MembershipId = TestEntities.UnitMembers.AdminMemberId,
+					ToolId = TestEntities.Tools.HammerId
 				};
 
-				var resp = await PutAuthenticated($"membertools/{TestEntities.UnitMembers.LkNopeSubleadId}", req, ValidAdminJwt);
+				var resp = await PutAuthenticated($"membertools/{TestEntities.MemberTools.MemberTool1}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
-			*/
 		}
 	}
 }
