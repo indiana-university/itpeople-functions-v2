@@ -19,5 +19,13 @@ namespace API.Functions
 			=> Request.GetRequiredQueryParam(req, "code")
 				.Bind(code => Security.ExhangeOAuthCodeForToken(req, code))
 				.Finally(jwt => Response.Ok(req, jwt));
+
+		[FunctionName(nameof(Authorization.Options))]
+		[OpenApiIgnore]
+		public HttpResponseMessage Options(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "options", Route = "{*url}")] HttpRequest req)
+			=> Response.Ok(req, Pipeline.Success(String.Empty));
+
+		
 	}
 }
