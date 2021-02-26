@@ -80,6 +80,7 @@ namespace API.Data
 		{
 			var result = await db.MemberTools
 				.Include(mt => mt.UnitMember)
+					.ThenInclude(um => um.Person)
 				.Include(mt => mt.Tool)
 				.SingleOrDefaultAsync(r => r.Id == memberToolId);
 			return result == null
