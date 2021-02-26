@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 
 namespace API.Middleware
 {
@@ -72,31 +73,17 @@ namespace API.Middleware
         public IEnumerable<string> Messages { get; private set; }
         public Exception Exception { get; private set; }
 
-        public IActionResult ToActionResult()// => new StatusCodeResult((int)StatusCode);        
+        public HttpResponseMessage ToResponse(Microsoft.AspNetCore.Http.HttpRequest req)// => new StatusCodeResult((int)StatusCode);        
         {
-            var includeStackTrace = !string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable("IncludeStackTraceInError"));
+            var includeStackTrace = !string.IsNullOrWhiteSpace(Utils.Env("IncludeStackTraceInError"));
             var content = new ApiError()
-            {
-                StatusCode = (int)StatusCode,
-                Errors = Messages?.ToList(),
-                Details = Exception == null ? "(none)" : includeStackTrace ? Exception.ToString() : Exception.Message
-            };
-
-            switch (StatusCode)
-            {
-                case HttpStatusCode.Unauthorized: return new UnauthorizedResult();
-                case HttpStatusCode.Forbidden: return new StatusCodeResult(403);
-                case HttpStatusCode.NoContent: return new NoContentResult();
-                case HttpStatusCode.BadRequest: return new BadRequestObjectResult(content);
-                case HttpStatusCode.NotFound: return new NotFoundObjectResult(content);
-                case HttpStatusCode.Conflict: return new ConflictObjectResult(content);
-                default: return new ContentResult()
-                    {
-                        StatusCode=500, 
-                        ContentType="application/json; charset=utf-8", 
-                        Content=JsonConvert.SerializeObject(content)
-                    };
-            }
+                {
+                    StatusCode = (int)StatusCode,
+                    Errors = Messages?.ToList(),
+                    Details = Exception == null ? "(none)" : includeStackTrace ? Exception.ToString() : Exception.Message
+                };
+            var json = JsonConvert.SerializeObject(content);
+            return Response.HttpResponse(req, StatusCode, "application/json", json);
         }
     }
 }

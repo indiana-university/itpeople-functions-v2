@@ -15,6 +15,7 @@ using Microsoft.OpenApi.Models;
 using System.Net.Mime;
 using System.Linq;
 using Models.Enums;
+using System.Net.Http;
 
 namespace API.Functions
 {
@@ -26,7 +27,7 @@ namespace API.Functions
 		[FunctionName(nameof(UnitMembers.UnitMembersGetAll))]
 		[OpenApiOperation(nameof(UnitMembers.UnitMembersGetAll), UnitMembersTitle, Summary = "List all unit memberships")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>), Description = "A collection of unit membership record")]
-		public static Task<IActionResult> UnitMembersGetAll(
+		public static Task<HttpResponseMessage> UnitMembersGetAll(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships")] HttpRequest req)
 			=> Security.Authenticate(req)
 				.Bind(_ => UnitMembersRepository.GetAll())
@@ -38,7 +39,7 @@ namespace API.Functions
 		[OpenApiParameter("membershipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit membership record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(UnitMemberResponse), Description = "A unit membership record")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit membership was found with the ID provided.")]
-		public static Task<IActionResult> UnitMembersGetOne(
+		public static Task<HttpResponseMessage> UnitMembersGetOne(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
 			=> Security.Authenticate(req)
 				.Bind(_ => UnitMembersRepository.GetOne(membershipId))
@@ -53,7 +54,7 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to modify this unit.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified unit and/or person does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided person is already a member of the provided unit.")]
-		public static Task<IActionResult> CreateUnitMembers(
+		public static Task<HttpResponseMessage> CreateUnitMembers(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "memberships")] HttpRequest req)
 		{
 			string requestorNetId = null;
@@ -78,7 +79,7 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No membership was found with the ID provided or the specified unit and/or person does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided person is already a member of the provided unit.")]
-		public static Task<IActionResult> UpdateUnitMember(
+		public static Task<HttpResponseMessage> UpdateUnitMember(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
 		{
 			string requestorNetId = null;
@@ -100,7 +101,7 @@ namespace API.Functions
 		[OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No membership was found with the ID provided.")]
-		public static Task<IActionResult> DeleteUnitMembership(
+		public static Task<HttpResponseMessage> DeleteUnitMembership(
 	[HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
 		{
 			string requestorNetId = null;

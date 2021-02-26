@@ -6,6 +6,7 @@ using API.Middleware;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using System.Net.Http;
 
 namespace API.Functions
 {
@@ -13,7 +14,7 @@ namespace API.Functions
 	{
 		[FunctionName(nameof(Authorization.ExchangeOAuthCodeForToken))]
 		[OpenApiIgnore]
-		public static Task<IActionResult> ExchangeOAuthCodeForToken(
+		public static Task<HttpResponseMessage> ExchangeOAuthCodeForToken(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "auth")] HttpRequest req)
 			=> Request.GetRequiredQueryParam(req, "code")
 				.Bind(code => Security.ExhangeOAuthCodeForToken(req, code))

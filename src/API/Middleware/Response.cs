@@ -10,6 +10,8 @@ using System;
 using System.Xml.Serialization;
 using System.IO;
 using System.Text;
+using System.Net.Http.Headers;
+using System.Linq;
 
 namespace API.Middleware
 {
@@ -21,11 +23,11 @@ namespace API.Middleware
             public const string AccessControlExposeHeaders = "Access-Control-Expose-Headers";
         }
         
-        private static IActionResult Generate<T>(
+        private static HttpResponseMessage Generate<T>(
             HttpRequest req, 
             Result<T, Error> result, 
             HttpStatusCode statusCode, 
-            Func<T,IActionResult> resultGenerator)
+            Func<T,HttpResponseMessage> resultGenerator)
         {
             var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
@@ -36,41 +38,36 @@ namespace API.Middleware
             else 
             {
                 logger.FailureResult<T>(req, result.Error);
-                return result.Error.ToActionResult();
+                return result.Error.ToResponse(req);
             }
         }
 
         /// <summary>Return an HTTP 200 response with content, or an appropriate HTTP error response.</summary>
-        public static IActionResult Ok<T>(HttpRequest req, Result<T, Error> result)
-            => Generate(req, result, HttpStatusCode.OK, val => JsonResult(val, HttpStatusCode.OK));
+        public static HttpResponseMessage Ok<T>(HttpRequest req, Result<T, Error> result)
+            => Generate(req, result, HttpStatusCode.OK, val => JsonResponse(req, val, HttpStatusCode.OK));
 
         /// <summary>Return an HTTP 201 response with content, with the URL for the resource and the resource itself.</summary>
-        public static IActionResult Created<T>(HttpRequest req, Result<T, Error> result) where T : Models.Entity
-		    => Generate(req, result, HttpStatusCode.Created, val => JsonResult(val, HttpStatusCode.Created));
+        public static HttpResponseMessage Created<T>(HttpRequest req, Result<T, Error> result) where T : Models.Entity
+		    => Generate(req, result, HttpStatusCode.Created, val => JsonResponse(req, val, HttpStatusCode.Created));
 
         /// <summary>Return an HTTP 204 indicating success, but nothing to return.</summary>
-        public static IActionResult NoContent<T>(HttpRequest req, Result<T, Error> result)
-            => Generate(req, result, HttpStatusCode.NoContent, val => new NoContentResult());
+        public static HttpResponseMessage NoContent<T>(HttpRequest req, Result<T, Error> result)
+            => Generate(req, result, HttpStatusCode.NoContent, val => HttpResponse(req, HttpStatusCode.NoContent));
 
 
         /// <summary>Return an HTTP 200 response with XML content, or an appropriate HTTP error response.</summary>
-        public static IActionResult OkXml<T>(HttpRequest req, Result<T, Error> result)
-            => Generate(req, result, HttpStatusCode.OK, val => XmlResult(val, HttpStatusCode.OK));
+        public static HttpResponseMessage OkXml<T>(HttpRequest req, Result<T, Error> result)
+            => Generate(req, result, HttpStatusCode.OK, val => XmlResponse(req, val, HttpStatusCode.OK));
 
-        private static IActionResult JsonResult<T>(T value, HttpStatusCode status)
+        private static HttpResponseMessage JsonResponse<T>(HttpRequest req, T value, HttpStatusCode status)
         {
             try
             {
-                return new ContentResult()
-                {
-                    StatusCode = (int)status,
-                    ContentType = "application/json; charset=utf-8",
-                    Content = JsonConvert.SerializeObject(value, Json.JsonSerializerSettings),
-                };
+                return HttpResponse(req, status, "application/json", JsonConvert.SerializeObject(value, Json.JsonSerializerSettings));
             }
             catch (Exception ex)
             {
-                return Pipeline.InternalServerError($"Failed to serialize {typeof(T).Name} response body as JSON", ex).ToActionResult();
+                return Pipeline.InternalServerError($"Failed to serialize {typeof(T).Name} response body as JSON", ex).ToResponse(req);
             }
         }
 
@@ -79,22 +76,57 @@ namespace API.Middleware
             public override Encoding Encoding => Encoding.UTF8;
         }
 
-        private static IActionResult XmlResult<T>(T value, HttpStatusCode status)
+        private static HttpResponseMessage XmlResponse<T>(HttpRequest req, T value, HttpStatusCode status)
         {
             try
             {
                 var serializer = new XmlSerializer(typeof(T));
                 var writer = new Utf8StringWriter();
                 serializer.Serialize(writer, value);
-                return new ContentResult(){
-                    StatusCode = (int)status,
-                    ContentType="application/xml",
-                    Content=writer.ToString(),
-                };
+                return HttpResponse(req, status, "application/xml", writer.ToString());
             }
             catch (Exception ex)
             {
-                return Pipeline.InternalServerError($"Failed to serialize {typeof(T).Name} response body as XML", ex).ToActionResult();
+                return Pipeline.InternalServerError($"Failed to serialize {typeof(T).Name} response body as XML", ex).ToResponse(req);
+            }
+        }
+
+        public static HttpResponseMessage HttpResponse(HttpRequest req, HttpStatusCode statusCode, string contentType, string content)
+        {
+            var resp = HttpResponse(req, statusCode);
+            resp.Content = new StringContent(content, Encoding.UTF8, contentType);
+            return resp;
+        }
+
+        public static HttpResponseMessage HttpResponse(HttpRequest req, HttpStatusCode statusCode)
+        {
+            var resp = new HttpResponseMessage(statusCode);
+            AddCorsHeaders(req, resp);
+            AddEntityPermissionsHeaders(req, resp);
+            return resp;
+        }
+
+        private static void AddCorsHeaders(HttpRequest req, HttpResponseMessage resp)
+        {
+            // If CorsHosts are specified and the origin matches one of those hosts,
+            // add the Cors Headers
+            var origin = req.Headers.ContainsKey("Origin") ? req.Headers["Origin"].First() : "no origin";
+            var corsHosts = Utils.Env("CorsHosts", required: false) ?? "";
+            if (corsHosts == "*" || corsHosts.Split(",").Contains(origin))
+            {
+                resp.Headers.Add("Access-Control-Allow-Origin", origin);
+                resp.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
+                resp.Headers.Add("Access-Control-Allow-Credentials", "true");
+                resp.Headers.Add("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, HEAD");
+            }
+        }
+
+        private static void AddEntityPermissionsHeaders(HttpRequest req, HttpResponseMessage resp)
+        {
+            if (req.HasEntityPermissions())
+            {
+                resp.Headers.Add(Headers.AccessControlExposeHeaders, Headers.XUserPermissions);
+                resp.Headers.Add(Headers.XUserPermissions, req.GetEntityPermissions().ToString());
             }
         }
 

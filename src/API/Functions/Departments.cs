@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
+using System.Net.Http;
 
 namespace API.Functions
 {
@@ -23,7 +24,7 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<Department>), Description = "A collection of department records")]
 		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = "The search query was malformed or incorrect. See response content for additional information.")]
 		[OpenApiParameter("q", In = ParameterLocation.Query, Description = "filter by department name/description, ex: 'Parks' or 'PA-PARK'")]
-		public static Task<IActionResult> DepartmentsGetAll(
+		public static Task<HttpResponseMessage> DepartmentsGetAll(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments")] HttpRequest req)
 			=> Security.Authenticate(req)
 				.Bind(_ => DepartmentSearchParameters.Parse(req))
@@ -35,7 +36,7 @@ namespace API.Functions
 		[OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Department), Description = "A department record")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department was found with the ID provided.")]
-		public static Task<IActionResult> DepartmentsGetOne(
+		public static Task<HttpResponseMessage> DepartmentsGetOne(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments/{departmentId}")] HttpRequest req, int departmentId)
 			=> Security.Authenticate(req)
 				.Bind(_ => DepartmentsRepository.GetOne(departmentId))
@@ -46,7 +47,7 @@ namespace API.Functions
 		[OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<UnitResponse>), Description = "A collection of unit records")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department was found with the ID provided.")]
-		public static Task<IActionResult> DepartmentsGetMemberUnits(
+		public static Task<HttpResponseMessage> DepartmentsGetMemberUnits(
 					[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments/{departmentId}/memberUnits")] HttpRequest req, int departmentId)
 					=> Security.Authenticate(req)
 						.Bind(_ => DepartmentsRepository.GetOne(departmentId))
@@ -58,7 +59,7 @@ namespace API.Functions
 		[OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<SupportRelationshipResponse>), Description = "A collection of support relationship records")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department was found with the ID provided.")]
-		public static Task<IActionResult> DepartmentsGetSupportingUnits(
+		public static Task<HttpResponseMessage> DepartmentsGetSupportingUnits(
 					[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments/{departmentId}/supportingUnits")] HttpRequest req, int departmentId)
 					=> Security.Authenticate(req)
 						.Bind(_ => DepartmentsRepository.GetOne(departmentId))
