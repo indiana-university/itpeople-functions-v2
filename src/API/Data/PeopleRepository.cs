@@ -38,6 +38,7 @@ namespace API.Data
                                 || p.UnitMemberships.Any(m => query.Roles.Contains(m.Role)))
                         .Where(p => query.Permissions.Length == 0
                                 || p.UnitMemberships.Any(m => query.Permissions.Contains(m.Permissions)))
+                        .Include(p => p.Department)
                         .AsNoTracking()
                         .ToListAsync();
                     return Pipeline.Success(result);
@@ -87,7 +88,7 @@ namespace API.Data
         {
             var person = await db.People
                 .Include(p => p.Department)
-                .Include(p => p.UnitMemberships)
+                .Include(p => p.UnitMemberships).ThenInclude(um => um.Unit)
                 .SingleOrDefaultAsync(p => p.Id == id);
             return person == null
                 ? Pipeline.NotFound("No person found with that netid.")

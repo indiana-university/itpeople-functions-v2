@@ -42,11 +42,11 @@ namespace API.Middleware
 
         /// <summary>Return an HTTP 200 response with content, or an appropriate HTTP error response.</summary>
         public static IActionResult Ok<T>(HttpRequest req, Result<T, Error> result)
-            => Generate(req, result, HttpStatusCode.OK, val => new OkObjectResult(val));
+            => Generate(req, result, HttpStatusCode.OK, val => JsonResult(val, HttpStatusCode.OK));
 
         /// <summary>Return an HTTP 201 response with content, with the URL for the resource and the resource itself.</summary>
         public static IActionResult Created<T>(HttpRequest req, Result<T, Error> result) where T : Models.Entity
-		    => Generate(req, result, HttpStatusCode.Created, val => CreatedJsonResult(req, val));
+		    => Generate(req, result, HttpStatusCode.Created, val => JsonResult(val, HttpStatusCode.Created));
 
         /// <summary>Return an HTTP 204 indicating success, but nothing to return.</summary>
         public static IActionResult NoContent<T>(HttpRequest req, Result<T, Error> result)
@@ -55,27 +55,47 @@ namespace API.Middleware
 
         /// <summary>Return an HTTP 200 response with XML content, or an appropriate HTTP error response.</summary>
         public static IActionResult OkXml<T>(HttpRequest req, Result<T, Error> result)
-            => Generate(req, result, HttpStatusCode.NoContent, val => OkXmlResult(val));
+            => Generate(req, result, HttpStatusCode.OK, val => XmlResult(val, HttpStatusCode.OK));
 
-        private static IActionResult CreatedJsonResult<T>(HttpRequest req, T value) 
-            => typeof(T).IsSubclassOf(typeof(Entity))
-                ? new CreatedResult($"{req.Path}/{(value as Entity).Id}", value)
-                : new CreatedResult("", value);
-        
+        private static IActionResult JsonResult<T>(T value, HttpStatusCode status)
+        {
+            try
+            {
+                return new ContentResult()
+                {
+                    StatusCode = (int)status,
+                    ContentType = "application/json; charset=utf-8",
+                    Content = JsonConvert.SerializeObject(value, Json.JsonSerializerSettings),
+                };
+            }
+            catch (Exception ex)
+            {
+                return Pipeline.InternalServerError($"Failed to serialize {typeof(T).Name} response body as JSON", ex).ToActionResult();
+            }
+        }
+
         private class Utf8StringWriter : StringWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
         }
 
-        private static IActionResult OkXmlResult<T>(T value)
+        private static IActionResult XmlResult<T>(T value, HttpStatusCode status)
         {
-            var serializer = new XmlSerializer(typeof(T));
-            var writer = new Utf8StringWriter();
-            serializer.Serialize(writer, value);
-            return new ContentResult(){
-                ContentType="application/xml",
-                Content=writer.ToString(),
-            };
+            try
+            {
+                var serializer = new XmlSerializer(typeof(T));
+                var writer = new Utf8StringWriter();
+                serializer.Serialize(writer, value);
+                return new ContentResult(){
+                    StatusCode = (int)status,
+                    ContentType="application/xml",
+                    Content=writer.ToString(),
+                };
+            }
+            catch (Exception ex)
+            {
+                return Pipeline.InternalServerError($"Failed to serialize {typeof(T).Name} response body as XML", ex).ToActionResult();
+            }
         }
 
         private static void SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode) 

@@ -174,6 +174,7 @@ namespace API.Data
         {
             var members = await db.UnitMembers
                 .Include(u => u.Person)
+                .ThenInclude(p => p.Department)
                 .Include(u => u.Unit)
                 .Include(u => u.MemberTools)
                 .Where(u => u.UnitId == unitId)

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Models
 {
@@ -10,6 +11,7 @@ namespace Models
     {
         /// <summary>The net id (username) of this person.</summary>
         [Required] 
+        [JsonProperty("netId")]
         public string Netid { get; set; }
         /// <summary>The preferred name of this person.</summary>
         [Required] public string  Name { get; set; }
@@ -34,6 +36,7 @@ namespace Models
         /// <summary>A URL for a photograph (headshot) of this person.</summary>
         public string PhotoUrl { get; set; }
         /// <summary>A collection of IT-related responsibilites of this person.</summary>
+        [JsonConverter(typeof(StringEnumConverter))]
         public Responsibilities Responsibilities { get; set; }
         /// <summary>Whether this person is an administrator of the IT People service.</summary>
         public bool IsServiceAdmin { get; set; }

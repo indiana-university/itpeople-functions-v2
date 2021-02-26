@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using Models;
 
-namespace Integration
+namespace Models
 {
 	public static class TestEntities
 	{
-
 		public static class Buildings
 		{
 			public const int CityHallId = 1;
@@ -130,6 +129,13 @@ namespace Integration
 				ToolId = Tools.HammerId
 			};
 
+			public const int AdminMemberToolId = 2;
+			public static readonly MemberTool AdminMemberTool = new MemberTool()
+			{
+				Id = AdminMemberToolId,
+				MembershipId = UnitMembers.AdminMemberId,
+				ToolId = Tools.HammerId
+			};
 		}
 		public static class People
 		{
@@ -137,14 +143,14 @@ namespace Integration
 			public static readonly Person RSwanson = new Person()
 			{
 				Id = RSwansonId,
-				Netid = "rswanson",
+				Netid = "rswanso",
 				Name = "Swanson, Ron",
 				NameFirst = "Ron",
 				NameLast = "Swanson",
 				Position = "Parks and Rec Director",
 				Location = "",
 				Campus = "Pawnee",
-				CampusPhone = "",
+				CampusPhone = "812.856.1111",
 				CampusEmail = "rswanso@pawnee.in.us",
 				Expertise = "Woodworking; Honor",
 				Notes = "",
@@ -166,7 +172,7 @@ namespace Integration
 				Position = "Parks and Rec Deputy Director",
 				Location = "",
 				Campus = "Pawnee",
-				CampusPhone = "",
+				CampusPhone = "812.856.2222",
 				CampusEmail = "lknope@pawnee.in.us",
 				Expertise = "Canvassing; Waffles",
 				Notes = "",
@@ -188,7 +194,7 @@ namespace Integration
 				Position = "Auditor",
 				Location = "",
 				Campus = "Indianapolis",
-				CampusPhone = "",
+				CampusPhone = "317.441.3333",
 				CampusEmail = "bwyatt@pawnee.in.us",
 				Expertise = "Board Games; Comic Books",
 				Notes = "",
@@ -203,14 +209,14 @@ namespace Integration
 			public static readonly Person ServiceAdmin = new Person()
 			{
 				Id = ServiceAdminId,
-				Netid = "admin",
+				Netid = "johndoe",
 				Name = "Bureaucrat, Faceless",
 				NameFirst = "Faceless",
 				NameLast = "Bureaucrat",
 				Position = "BOH",
 				Location = "",
-				Campus = "Indianapolis",
-				CampusPhone = "",
+				Campus = "Pawnee",
+				CampusPhone = "812.856.4444",
 				CampusEmail = "admin@pawnee.in.us",
 				Expertise = "Guarding the Precious",
 				Notes = "",
@@ -229,19 +235,19 @@ namespace Integration
 			public static readonly SupportRelationship ParksAndRecRelationship = new SupportRelationship()
 			{
 				Id = ParksAndRecRelationshipId,
-				UnitId = TestEntities.Units.ParksAndRecUnit.Id,
+				UnitId = TestEntities.Units.CityOfPawnee.Id,
 				DepartmentId = TestEntities.Departments.Parks.Id,
-				Unit = TestEntities.Units.ParksAndRecUnit,
+				Unit = TestEntities.Units.CityOfPawnee,
 				Department = TestEntities.Departments.Parks
 			};
-			public const int ParksAndRecUnitFireId = 2;
+			public const int PawneeUnitFireId = 2;
 
-			public static readonly SupportRelationship ParksAndRecUnitFire = new SupportRelationship()
+			public static readonly SupportRelationship PawneeUnitFire = new SupportRelationship()
 			{
-				Id = ParksAndRecUnitFireId,
-				UnitId = TestEntities.Units.ParksAndRecUnit.Id,
+				Id = PawneeUnitFireId,
+				UnitId = TestEntities.Units.CityOfPawnee.Id,
 				DepartmentId = TestEntities.Departments.Fire.Id,
-				Unit = TestEntities.Units.ParksAndRecUnit,
+				Unit = TestEntities.Units.CityOfPawnee,
 				Department = TestEntities.Departments.Fire
 			};
 		}
@@ -303,51 +309,62 @@ namespace Integration
 			public static readonly UnitMember RSwansonDirector = new UnitMember()
 			{
 				Id = RSwansonLeaderId,
-				//UnitId = Units.Unit.Id,
 				Role = Role.Leader,
 				Permissions = UnitPermissions.Owner,
 				PersonId = People.RSwansonId,
 				Title = "Director",
 				Percentage = 100,
 				Notes = "",
-				//Netid = People.RSwanson.Netid,
 				Person = People.RSwanson,
 				Unit = Units.ParksAndRecUnit,
+				UnitId = Units.ParksAndRecUnitId,
 				MemberTools = new List<MemberTool>()
 			};
 			public const int LkNopeSubleadId = 2;
 			public static readonly UnitMember LkNopeSublead = new UnitMember()
 			{
 				Id = LkNopeSubleadId,
-				// UnitId = Units.Unit.Id,
 				Role = Role.Sublead,
 				Permissions = UnitPermissions.Viewer,
 				PersonId = People.LKnopeId,
 				Title = "Deputy Director",
 				Percentage = 100,
-				Notes = "Office busy-body.",
-				//Netid = People.LKnope.Netid,
+				Notes = "Definitely going to run for office some day.",
 				Person = People.LKnope,
 				Unit = Units.ParksAndRecUnit,
+				UnitId = Units.ParksAndRecUnitId,
 				MemberTools = null
 			};
 			public const int BWyattMemberId = 3;
 			public static readonly UnitMember BWyattAditor = new UnitMember()
 			{
 				Id = BWyattMemberId,
-				// UnitId = Units.Unit.Id,
 				Role = Role.Member,
 				Permissions = UnitPermissions.ManageMembers,
 				PersonId = People.BWyattId,
 				Title = "Auditor",
 				Percentage = 100,
 				Notes = "notes about Ben",
-				//Netid = People.BWyatt.Netid,
 				Person = People.BWyatt,
 				Unit = Units.Auditor,
+				UnitId = Units.AuditorId,
 				MemberTools = null
 			};
-
+			public const int AdminMemberId = 4;
+			public static readonly UnitMember AdminLeader = new UnitMember()
+			{
+				Id = AdminMemberId,
+				Role = Role.Leader,
+				Permissions = UnitPermissions.ManageMembers,
+				PersonId = People.ServiceAdminId,
+				Title = "Adm",
+				Percentage = 100,
+				Notes = "notes",
+				Person = People.ServiceAdmin,
+				Unit = Units.CityOfPawnee,
+				UnitId = Units.CityOfPawneeUnitId,
+				MemberTools = new List<MemberTool>(){MemberTools.AdminMemberTool}
+			};
 		}
 	}
 }

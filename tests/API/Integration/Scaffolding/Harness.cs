@@ -14,6 +14,7 @@ namespace Integration
         private readonly IDockerClient _client;
         public static PostgresContainer DbContainer { get; private set; }
         public static FunctionAppContainer AppContainer {get; private set; }
+        public static StateServerContainer StateContainer {get; private set; }
 
         public Harness()
         {
@@ -23,6 +24,7 @@ namespace Integration
             _client = new DockerClientConfiguration(uri).CreateClient();
             DbContainer = new PostgresContainer(TestContext.Progress, TestContext.Error);
             AppContainer = new FunctionAppContainer(TestContext.Progress, TestContext.Error);
+            StateContainer = new StateServerContainer(TestContext.Progress, TestContext.Error);
         }
 
         [OneTimeSetUp]
@@ -43,6 +45,13 @@ namespace Integration
             AppContainer.Start(_client).Wait(10 * 1000);
             // Wait for API container to finish starting
             AppContainer.WaitUntilReady().Wait(10 * 1000);
+
+            try { StateContainer.Remove(_client).Wait(60*1000); } catch {}
+            // Build and start API Function app container
+            StateContainer.BuildImage();
+            StateContainer.Start(_client).Wait(10 * 1000);
+            // Wait for API container to finish starting
+            StateContainer.WaitUntilReady().Wait(10 * 1000);
         }
 
         private void EnsureIntegrationTestsNetworkExists()

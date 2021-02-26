@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using API.Middleware;
 using Models;
 using NUnit.Framework;
 
@@ -26,7 +25,7 @@ namespace Integration
             var resp = await Http.GetAsync("people");
             AssertStatusCode(resp, HttpStatusCode.BadRequest);
             var actual = await resp.Content.ReadAsAsync<ApiError>();
-            Assert.AreEqual(actual.Errors.First(), Security.ErrorRequestMissingAuthorizationHeader);
+            Assert.AreEqual(actual.Errors.First(), "Request is missing an Authorization header.");
         }
 
         [Test]
@@ -37,7 +36,7 @@ namespace Integration
             var resp = await Http.SendAsync(request);
             AssertStatusCode(resp, HttpStatusCode.BadRequest);
             var actual = await resp.Content.ReadAsAsync<ApiError>();
-            Assert.AreEqual(actual.Errors.First(), Security.ErrorRequestAuthorizationHeaderMissingBearerScheme);
+            Assert.AreEqual(actual.Errors.First(), "Request Authorization header scheme must be \"Bearer\"");
         }
 
         [TestCase("bearer", Description="scheme should be case-insensitive (lowercase)")]
@@ -49,7 +48,7 @@ namespace Integration
             var resp = await Http.SendAsync(request);
             AssertStatusCode(resp, HttpStatusCode.BadRequest);
             var actual = await resp.Content.ReadAsAsync<ApiError>();
-            Assert.AreEqual(actual.Errors.First(), Security.ErrorRequestAuthorizationHeaderMissingBearerToken);
+            Assert.AreEqual(actual.Errors.First(), "Request Authorization header contains empty \"Bearer\" token.");
         }
 
         [Test]

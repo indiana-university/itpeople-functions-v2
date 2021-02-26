@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../src/API/API.csproj" />
     <ProjectReference Include="../../../src/Database/Database.csproj" />
+    <ProjectReference Include="../../../src/Models/Models.csproj" />
   </ItemGroup>
 
 </Project>
