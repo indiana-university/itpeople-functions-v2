@@ -16,7 +16,7 @@ namespace API.Functions
 		[OpenApiIgnore]
 		public static Task<HttpResponseMessage> ExchangeOAuthCodeForToken(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "auth")] HttpRequest req)
-			=> Request.GetRequiredQueryParam(req, "code")
+			=> Request.GetRequiredQueryParam(req, "oauth_code")
 				.Bind(code => Security.ExhangeOAuthCodeForToken(req, code))
 				.Finally(jwt => Response.Ok(req, jwt));
 
