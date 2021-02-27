@@ -29,8 +29,8 @@ namespace API.Middleware
             }
         }
 
-        public static Error Unauthorized()
-            => new Error(HttpStatusCode.Unauthorized, "You are not authorized to make this request.");
+        public static Error Unauthorized(string message)
+            => new Error(HttpStatusCode.Unauthorized, message);
 
         public static Error Forbidden()
             => new Error(HttpStatusCode.Forbidden, "You are not authorized to make this request.");

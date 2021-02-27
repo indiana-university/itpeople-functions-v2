@@ -160,11 +160,11 @@ namespace API.Middleware
         {
             // check for expired token
             if(DateTime.UtcNow > Epoch.AddSeconds((float)(jwt.exp)))
-                return Pipeline.Unauthorized();
+                return Pipeline.Unauthorized("Access token has expired.");
 
             // check for unripe token
             if(DateTime.UtcNow < Epoch.AddSeconds((float)jwt.nbf))
-                return Pipeline.Unauthorized();
+                return Pipeline.Unauthorized("Access token is not yet valid.");
 
             return Pipeline.Success(jwt.user_name);
         }
