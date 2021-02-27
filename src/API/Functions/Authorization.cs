@@ -24,7 +24,7 @@ namespace API.Functions
 		[OpenApiIgnore]
 		public static HttpResponseMessage Options(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "options", Route = "{*url}")] HttpRequest req)
-			=> Response.Ok(req, Pipeline.Success(String.Empty));
+			=> Response.Ok(req, Pipeline.Success(string.Empty));
 
 		
 	}
