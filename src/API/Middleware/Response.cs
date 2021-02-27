@@ -32,7 +32,7 @@ namespace API.Middleware
             var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
-                if (statusCode != HttpStatusCode.OK)
+                // if (statusCode != HttpStatusCode.OK)
                     logger.SuccessResult(req, statusCode);
                 return resultGenerator(result.Value);
             }
