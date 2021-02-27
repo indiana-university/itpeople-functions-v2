@@ -15,28 +15,11 @@ namespace API.Middleware
     {
         public static Result<T, Error> Success<T>(T value) => Result.Success<T,Error>(value);
     
-        public static Result<T, Error> Failure<T>(HttpStatusCode statusCode, string msg)
-        {
-            switch (statusCode)
-            {
-                case HttpStatusCode.Unauthorized: return Unauthorized();
-                case HttpStatusCode.Forbidden: return Forbidden();
-                case HttpStatusCode.NoContent: return NoContent();
-                case HttpStatusCode.BadRequest: return BadRequest(msg);
-                case HttpStatusCode.NotFound: return NotFound(msg);
-                case HttpStatusCode.Conflict: return Conflict(msg);
-                default: return InternalServerError(msg);
-            }
-        }
-
         public static Error Unauthorized(string message)
             => new Error(HttpStatusCode.Unauthorized, message);
 
         public static Error Forbidden()
             => new Error(HttpStatusCode.Forbidden, "You are not authorized to make this request.");
-
-        public static Error NoContent()
-            => new Error(HttpStatusCode.NoContent, "");
 
         public static Error BadRequest(string message)
             => new Error(HttpStatusCode.BadRequest, message);
