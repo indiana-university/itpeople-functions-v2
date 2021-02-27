@@ -62,8 +62,7 @@ namespace API.Middleware
             try
             {
                 var url = Utils.Env("OAuthTokenUrl", required: true);
-                var req = new HttpRequestMessage(HttpMethod.Post, url) {Content = content};
-                var resp = await TokenClient.SendAsync(req);
+                var resp = await TokenClient.PostAsync(url, content);
                 if (!resp.IsSuccessStatusCode)
                 {
                     var error = await resp.Content.ReadAsStringAsync();
