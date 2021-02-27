@@ -112,7 +112,8 @@ namespace API.Middleware
             // If CorsHosts are specified and the origin matches one of those hosts,
             // add the Cors Headers
             var origin = req.Headers.ContainsKey("Origin") ? req.Headers["Origin"].First() : "no origin";
-            var corsHosts = Utils.Env("CorsHosts", required: false) ?? "";
+            var corsHosts = Utils.Env("CorsHosts", required: false) ?? "no cors hosts";
+            Console.Out.WriteLine($"Origin: '{origin}'; CorsHosts: '{corsHosts}'");
             if (corsHosts == "*" || corsHosts.Split(",").Contains(origin))
             {
                 resp.Headers.Add("Access-Control-Allow-Origin", origin);
