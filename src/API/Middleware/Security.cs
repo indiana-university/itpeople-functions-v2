@@ -44,9 +44,9 @@ namespace API.Middleware
                 {
                     {"grant_type", "authorization_code"},
                     {"code", code},
-                    {"client_id", Utils.Env("OAuth2ClientId", required: true)},
-                    {"client_secret", Utils.Env("OAuth2ClientSecret", required: true)},
-                    {"redirect_uri", Utils.Env("OAuth2RedirectUrl", required: true)},
+                    {"client_id", Utils.Env("OAuthClientId", required: true)},
+                    {"client_secret", Utils.Env("OAuthClientSecret", required: true)},
+                    {"redirect_uri", Utils.Env("OAuthRedirectUrl", required: true)},
                 };
                 var content = new FormUrlEncodedContent(dict);
                 return Pipeline.Success(content);
@@ -61,7 +61,7 @@ namespace API.Middleware
         {
             try
             {
-                var url = Utils.Env("OAuth2TokenUrl", required: true);
+                var url = Utils.Env("OAuthTokenUrl", required: true);
                 var req = new HttpRequestMessage(HttpMethod.Post, url) {Content = content};
                 var resp = await TokenClient.SendAsync(req);
                 if (!resp.IsSuccessStatusCode)
