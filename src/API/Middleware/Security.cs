@@ -150,9 +150,9 @@ namespace API.Middleware
 				var jwt = JWT.Decode<UaaJwt>(token, csp, JwsAlgorithm.RS256);
                 return Pipeline.Success(jwt);
 			} 
-            catch
+            catch (Exception ex)
 			{
-                return Pipeline.Unauthorized();
+                return Pipeline.InternalServerError("Failed to decode JWT", ex);
 			}
         }
 
