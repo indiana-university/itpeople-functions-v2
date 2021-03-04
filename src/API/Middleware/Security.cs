@@ -28,13 +28,18 @@ namespace API.Middleware
                 .Bind(ValidateJWT)
                 .Bind(netid => SetPrincipal(request, netid));
 
-        public static Task<Result<UaaJwt, Error>> ExhangeOAuthCodeForToken(HttpRequest request, string code) 
-            => SetStartTime(request)
+        public static Task<Result<string, Error>> ExhangeOAuthCodeForToken(HttpRequest request, string code) 
+        {
+            var stashedJwt = "";
+            return SetStartTime(request)
                 .Bind(_ => CreateUaaTokenRequest(code))
                 .Bind(PostUaaTokenRequest)
                 .Bind(ParseUaaTokenResponse)
+                .Tap(jwt => stashedJwt = jwt)
                 .Bind(DecodeJWT)
-                .Bind(jwt => SetPrincipal(request, jwt));
+                .Bind(jwt => SetPrincipal(request, jwt.user_name))
+                .Bind(_ => Pipeline.Success(stashedJwt));
+        }
 
         private static Result<FormUrlEncodedContent, Error> CreateUaaTokenRequest(string code)
         {
