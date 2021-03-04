@@ -28,17 +28,17 @@ namespace API.Middleware
                 .Bind(ValidateJWT)
                 .Bind(netid => SetPrincipal(request, netid));
 
-        public static Task<Result<string, Error>> ExhangeOAuthCodeForToken(HttpRequest request, string code) 
+        public static Task<Result<UaaJwtResponse, Error>> ExhangeOAuthCodeForToken(HttpRequest request, string code) 
         {
-            var stashedJwt = "";
+            UaaJwtResponse stashedResp = null;
             return SetStartTime(request)
                 .Bind(_ => CreateUaaTokenRequest(code))
                 .Bind(PostUaaTokenRequest)
                 .Bind(ParseUaaTokenResponse)
-                .Tap(jwt => stashedJwt = jwt)
-                .Bind(DecodeJWT)
+                .Tap(resp => stashedResp = resp)
+                .Bind(jwt => DecodeJWT(jwt.access_token))
                 .Bind(jwt => SetPrincipal(request, jwt.user_name))
-                .Bind(_ => Pipeline.Success(stashedJwt));
+                .Bind(_ => Pipeline.Success(stashedResp));
         }
 
         private static Result<FormUrlEncodedContent, Error> CreateUaaTokenRequest(string code)
@@ -84,12 +84,12 @@ namespace API.Middleware
             }
         }
 
-        private static async Task<Result<string, Error>> ParseUaaTokenResponse(HttpContent content)
+        private static async Task<Result<UaaJwtResponse, Error>> ParseUaaTokenResponse(HttpContent content)
         {
             try
             {
                 var uaaJwt = await content.ReadAsAsync<UaaJwtResponse>();
-                return Pipeline.Success(uaaJwt.access_token);
+                return Pipeline.Success(uaaJwt);
             }
             catch (Exception ex)
             {
