@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.InteropServices;
 using NUnit.Framework;
 using PactNet;
 using PactNet.Infrastructure.Outputters;
@@ -10,6 +11,20 @@ namespace Integration
         [Test]
         public void VerifyContract()
         {
+            /*
+                Pact has some troubles with Windows paths
+                * If the path to the bin folder is more than ~260 characters it will fail unless "long paths" are enabled in the registry . https://github.com/pact-foundation/pact-node/blob/master/README.md#enable-long-paths
+                * Ruby gems can fail if the path contains any spaces. It may blow up with an error like:
+                    /provider_verifier/app.rb:4:in `require': cannot load such file -- pact/provider_verifier/provider_states/remove_provider_states_header_middleware (LoadError)
+            */
+            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                if(System.AppDomain.CurrentDomain.BaseDirectory.Length > 269 || System.AppDomain.CurrentDomain.BaseDirectory.Contains(" "))
+                {
+                    throw new System.Exception("Pact has known issues running from certain paths on Windows.  Please see readme.md about contract tests.");
+                }
+            }
+
             var pactOutputs = new[] { new PactOutput(TestContext.Progress) };
             var config = new PactVerifierConfig() { /* Outputters = pactOutputs */ };
             new PactVerifier(config)
