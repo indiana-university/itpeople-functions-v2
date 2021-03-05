@@ -13,21 +13,6 @@ variables:
   azureSubscription: 'Azure - IU Print'
   # Agent VM image name
   vmImageName: 'ubuntu-20.04'
-  # # Flag for integration test fixture that we're running in a CI environment
-  # ci_build: 'true'
-  imageName: 'integration-test'
-  tagName: 'ci'
-
-# resources:
-#   containers:
-#   - container: 'print-integration-test'
-#     image: 'mcr.microsoft.com/mssql/server:2019-latest'
-#     ports:
-#     - 1433:1433/tcp
-#     env:
-#       ACCEPT_EULA: 'Y'
-#       SA_PASSWORD: 'abcd1234@'
-#       MSSQL_PID: 'Developer'
 
 stages:
 - stage: Build
