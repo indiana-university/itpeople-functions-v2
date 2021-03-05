@@ -9,8 +9,10 @@ parameters:
   default: itpeople-functions-test
 
 variables:
+  - group: ${{ parameters.VariableGroup }}
   # Agent VM image name
-  vmImageName: 'ubuntu-20.04'
+  - name: vmImageName
+    value: 'ubuntu-20.04'
 
 stages:
 - stage: Build
