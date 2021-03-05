@@ -122,7 +122,7 @@ namespace API.Middleware
 
         private static Result<string,Error> ExtractJWT(HttpRequest request)
         {
-			if (!request.Headers.ContainsKey("Authorization")) 
+            if (!request.Headers.ContainsKey("Authorization")) 
                 return Pipeline.BadRequest(ErrorRequestMissingAuthorizationHeader);
             
             var authHeaders = request.Headers["Authorization"].ToArray();
@@ -150,22 +150,22 @@ namespace API.Middleware
 
             RSACryptoServiceProvider csp = null;
             try
-			{
+            {
                 csp = ImportPublicKey(publicKey.Replace("\\n", "\n"));				
-			} 
+            } 
             catch (Exception ex)
-			{
+            {
                 return Pipeline.InternalServerError("Failed to import JWT public key", ex);
-			}
+            }
 
             try
-			{
+            {
                 return Pipeline.Success(JWT.Decode<UaaJwt>(token, csp, JwsAlgorithm.RS256));
-			} 
+            } 
             catch
-			{
+            {
                 return Pipeline.Unauthorized("Failed to decode JWT");
-			}
+            }
         }
 
         private static Result<string,Error> ValidateJWT(UaaJwt jwt)
@@ -208,24 +208,24 @@ namespace API.Middleware
         }
 
         public static RSACryptoServiceProvider ImportPublicKey(string pem)
-		{
-			PemReader pr = new PemReader(new StringReader(pem));
-			AsymmetricKeyParameter publicKey = (AsymmetricKeyParameter)pr.ReadObject();
-			RSAParameters rsaParams = ToRSAParameters((RsaKeyParameters)publicKey);
-			RSACryptoServiceProvider csp = new RSACryptoServiceProvider();
-			csp.ImportParameters(rsaParams);
-			return csp;
-		}
+        {
+            PemReader pr = new PemReader(new StringReader(pem));
+            AsymmetricKeyParameter publicKey = (AsymmetricKeyParameter)pr.ReadObject();
+            RSAParameters rsaParams = ToRSAParameters((RsaKeyParameters)publicKey);
+            RSACryptoServiceProvider csp = new RSACryptoServiceProvider();
+            csp.ImportParameters(rsaParams);
+            return csp;
+        }
 
         static DateTime Epoch = new DateTime(1970,1,1,0,0,0,0,System.DateTimeKind.Utc);
 
-		public class UaaJwt{
-			public string user_name { get; set; }
-			// when this token expires, as a Unix timestamp
+        public class UaaJwt{
+            public string user_name { get; set; }
+            // when this token expires, as a Unix timestamp
             public long exp { get; set; }
             // when this token becomes valid, as a Unix timestamp
             public long nbf { get; set; }
-		}
+        }
 
         public class UaaJwtResponse {
             /// The OAuth JSON Web Token (JWT) that represents the logged-in user. The JWT must be passed in an HTTP Authentication header in the form: 'Bearer <JWT>'
