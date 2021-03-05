@@ -59,18 +59,26 @@ stages:
 - stage: Test
   displayName: Test
   dependsOn: Build
+  condition: succeeded()
 
   jobs: 
-    - job: ApiIntegrationTest
-      displayName: API Integration Test
+    - job: ApiTest
+      displayName: API Tests
       pool:
         vmImage: $(vmImageName)
 
       steps:
         - task: DotNetCoreCLI@2
-          displayName: Run All
+          displayName: Unit Tests
           inputs:
             command: test
+            projects: tests/API/Unit/Unit.csproj
+            
+        - task: DotNetCoreCLI@2
+          displayName: Integration Tests
+          inputs:
+            command: test
+            projects: tests/API/Integration/Integration.csproj
 
   # - job: BuildFunctionApp
   #   displayName: Build Function App
