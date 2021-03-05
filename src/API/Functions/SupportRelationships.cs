@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
-using System.Net.Http;
 
 namespace API.Functions
 {
