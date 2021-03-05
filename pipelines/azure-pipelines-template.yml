@@ -82,7 +82,7 @@ stages:
   
 - stage: Deploy
   displayName: Deploy stage
-  dependsOn: Test
+  dependsOn: Build
   condition: succeeded()
 
   jobs:
