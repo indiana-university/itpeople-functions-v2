@@ -4,11 +4,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Models;
 using NUnit.Framework;
-using System.Linq;
-using API.Middleware;
-using API.Data;
-using Newtonsoft.Json;
-using System;
 
 namespace Integration
 {
@@ -204,7 +199,7 @@ namespace Integration
 					DepartmentId = TestEntities.SupportRelationships.ParksAndRecRelationship.DepartmentId
 				};
 
-				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecUnitFireId}", req, ValidAdminJwt);
+				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.PawneeUnitFireId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
 		}

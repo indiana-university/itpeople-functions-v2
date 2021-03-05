@@ -74,11 +74,12 @@ namespace API.Middleware
 
         public IActionResult ToActionResult()// => new StatusCodeResult((int)StatusCode);        
         {
+            var includeStackTrace = !string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable("IncludeStackTraceInError"));
             var content = new ApiError()
             {
                 StatusCode = (int)StatusCode,
-                Errors = Messages.ToList(),
-                Details = Exception == null ? "(none)" : Exception.ToString()
+                Errors = Messages?.ToList(),
+                Details = Exception == null ? "(none)" : includeStackTrace ? Exception.ToString() : Exception.Message
             };
 
             switch (StatusCode)
@@ -89,7 +90,12 @@ namespace API.Middleware
                 case HttpStatusCode.BadRequest: return new BadRequestObjectResult(content);
                 case HttpStatusCode.NotFound: return new NotFoundObjectResult(content);
                 case HttpStatusCode.Conflict: return new ConflictObjectResult(content);
-                default: return new ContentResult(){StatusCode=500, ContentType="application/json", Content=JsonConvert.SerializeObject(content)};
+                default: return new ContentResult()
+                    {
+                        StatusCode=500, 
+                        ContentType="application/json; charset=utf-8", 
+                        Content=JsonConvert.SerializeObject(content)
+                    };
             }
         }
     }

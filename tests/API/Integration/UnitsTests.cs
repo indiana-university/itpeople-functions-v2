@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 using Models;
 using NUnit.Framework;
 using System.Linq;
-using API.Middleware;
-using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using Models.Enums;
 
@@ -107,7 +105,6 @@ namespace Integration
                 var req = new Unit(ExpectedMayorsOffice.Name, ExpectedMayorsOffice.Description, ExpectedMayorsOffice.Url, ExpectedMayorsOffice.Email, ExpectedMayorsOffice.Parent.Id);
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.Created);
-                Assert.AreEqual("/units/4", resp.Headers.Location.OriginalString);
                 var actual = await resp.Content.ReadAsAsync<Unit>();
 
                 Assert.NotZero(actual.Id);
@@ -249,8 +246,7 @@ namespace Integration
             [Test]
             public async Task UnitMembersArePreservedWhenEdited()
             {
-                System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
-                var db = Database.PeopleContext.Create();
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
                 var existingParksAndRecUnitMembers = db.UnitMembers
                     .Where(um => um.UnitId == TestEntities.Units.ParksAndRecUnitId)
                     .AsNoTracking()
@@ -308,8 +304,7 @@ namespace Integration
                 resp = await DeleteAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}", ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.NoContent);
                 
-                System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
-                var db = Database.PeopleContext.Create();
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
 
                 // You can use this block of code to induce one of the problems we are testing for.
                 /*
@@ -398,7 +393,7 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.NotFound);
             }
 
-            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new int[0])]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new []{TestEntities.UnitMembers.AdminMemberId})]
             [TestCase(TestEntities.Units.AuditorId, new []{TestEntities.UnitMembers.BWyattMemberId})]
             [TestCase(TestEntities.Units.ParksAndRecUnitId, new []{TestEntities.UnitMembers.RSwansonLeaderId, TestEntities.UnitMembers.LkNopeSubleadId})]
             public async Task CanGetExpectedChildren(int unitId, int[] expectedMemberIds)
@@ -473,9 +468,9 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.NotFound);
             }
 
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, new[]{TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.SupportRelationships.ParksAndRecUnitFireId})]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new int[0])]
             [TestCase(TestEntities.Units.AuditorId, new int[0])]
-            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new int[0])]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new int[]{TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.SupportRelationships.PawneeUnitFireId})]
             public async Task CanGetExpectedRelationships(int unitId, int[] expectedRelationIds)
             {
                 var resp = await GetAuthenticated($"units/{unitId}/supportedDepartments");
@@ -506,9 +501,9 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.NotFound);
             }
 
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, new[]{TestEntities.Tools.HammerId})]
-            [TestCase(TestEntities.Units.AuditorId, new[]{TestEntities.Tools.HammerId})]
-            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new[]{TestEntities.Tools.HammerId})]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new[]{TestEntities.Tools.HammerId, TestEntities.Tools.SawId})]
+            [TestCase(TestEntities.Units.AuditorId, new[]{TestEntities.Tools.HammerId, TestEntities.Tools.SawId})]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new[]{TestEntities.Tools.HammerId, TestEntities.Tools.SawId})]
             public async Task CanGetExpectedTools(int unitId, int[] expectedToolIds)
             {
                 var resp = await GetAuthenticated($"units/{unitId}/tools");

@@ -5,9 +5,6 @@ using System.Threading.Tasks;
 using Models;
 using NUnit.Framework;
 using System.Linq;
-using API.Middleware;
-using API.Data;
-using Newtonsoft.Json;
 
 namespace Integration
 {
@@ -125,7 +122,6 @@ namespace Integration
 				Assert.That(actual.First().Id, Is.EqualTo(expected.First().Id));
 				Assert.That(actual.First().Department.Id, Is.EqualTo(expected.First().Department.Id));
 				Assert.That(actual.First().Unit.Id, Is.EqualTo(expected.First().Unit.Id));
-				Assert.That(expected.First().Unit.Parent.ParentId, Is.EqualTo(actual.First().Unit.Parent.ParentId));
 			}
 		}
 	}

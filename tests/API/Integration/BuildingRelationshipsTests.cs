@@ -4,10 +4,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Models;
 using NUnit.Framework;
-using System.Linq;
-using API.Middleware;
-using API.Data;
-using Newtonsoft.Json;
 
 namespace Integration
 {

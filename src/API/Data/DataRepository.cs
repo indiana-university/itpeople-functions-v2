@@ -28,12 +28,7 @@ namespace API.Data
 
         protected static void LogPrevious<T>(HttpRequest req, T value) where T : Entity
         {
-            var settings = new JsonSerializerSettings
-            {
-                PreserveReferencesHandling = PreserveReferencesHandling.Objects,
-                Formatting = Formatting.Indented
-            };
-            req.HttpContext.Items[LogProps.RecordBody] = JsonConvert.SerializeObject(value, settings);
+            req.HttpContext.Items[LogProps.RecordBody] = JsonConvert.SerializeObject(value, Models.Json.JsonSerializerSettings);
         }
     }
 }
