@@ -30,6 +30,32 @@ stages:
       inputs:
         command: build
 
+  - job: PackageFunctionApp
+    displayName: Package API Function App
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Build API
+      inputs:
+        command: 'build'
+        projects: src/API/API.csproj
+        arguments: --output $(System.DefaultWorkingDirectory)/ApiFunctionApp --configuration Release
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive API files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/ApiFunctionApp'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
+        replaceExistingArchive: true
+
+    - publish: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
+      displayName: Publish API Web App Artifacts
+      artifact: FunctionAppDrop
+
 - stage: Test
   displayName: Test
   dependsOn: Build
