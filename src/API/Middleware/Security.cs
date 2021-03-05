@@ -144,19 +144,27 @@ namespace API.Middleware
             //https://apps.iu.edu/uaa-prd/oauth/token_key
             // "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp+0OVVhuRqbXeRr9PO1Zo5Az/OCTTK6NKTSPfU87wHvFhl+6vO2h5b9YCdr74edubZ6grPvnHkWFK3SWMVnxB4EUatcnfwLsGwvZz+96QOSa5qEdkaYzCC5oQI6x6VnqT/yzNol9HUKQuT4b6faK8bj7Y86Ku0Bn3msYSYAI4aJxh6KIgO5kbVLMjYHDsABvmJVqG77e8qhJ5aHzHE7voNKAkVBKx3Bqofu9pwT9A5ejBylFrPnhCJK7vQu0SaBB/pHmDb9dD969oWGX6QdoGPbmXuW1FsSsph0bHxiOMLmOTZSFPs2/gFnpSMYwIinRPi3+saiI+GtPbwAf+ZliCQIDAQAB\n-----END PUBLIC KEY-----"
             
+            var publicKey = Utils.Env("JwtPublicKey", required: false);
+            if (string.IsNullOrWhiteSpace(publicKey))
+                return Pipeline.InternalServerError($"Missing environment variable: 'JwtPublicKey'");
+
+            RSACryptoServiceProvider csp = null;
             try
 			{
-                var publicKey = Utils.Env("JwtPublicKey", required: false);
-                if (string.IsNullOrWhiteSpace(publicKey))
-                    return Pipeline.InternalServerError($"Missing environment variable: 'JwtPublicKey'");
-
-                var csp = ImportPublicKey(publicKey.Replace("\\n", "\n"));
-				var jwt = JWT.Decode<UaaJwt>(token, csp, JwsAlgorithm.RS256);
-                return Pipeline.Success(jwt);
+                csp = ImportPublicKey(publicKey.Replace("\\n", "\n"));				
 			} 
             catch (Exception ex)
 			{
-                return Pipeline.InternalServerError("Failed to decode JWT", ex);
+                return Pipeline.InternalServerError("Failed to import JWT public key", ex);
+			}
+
+            try
+			{
+                return Pipeline.Success(JWT.Decode<UaaJwt>(token, csp, JwsAlgorithm.RS256));
+			} 
+            catch
+			{
+                return Pipeline.Unauthorized("Failed to decode JWT");
 			}
         }
 
