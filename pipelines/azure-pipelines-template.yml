@@ -79,75 +79,29 @@ stages:
           inputs:
             command: test
             projects: tests/API/Integration/Integration.csproj
+  
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: Test
+  condition: succeeded()
 
-  # - job: BuildFunctionApp
-  #   displayName: Build Function App
-  #   pool:
-  #     vmImage: $(vmImageName)
+  jobs:
+  - deployment: DeployAPI
+    displayName: Deploy API
+    environment: 'development'
+    pool:
+      vmImage: $(vmImageName)
 
-  #   steps:
-  #   - task: DotNetCoreCLI@2
-  #     displayName: Build
-  #     inputs:
-  #       command: 'build'
-  #       projects: src/functions/functions.csproj
-  #       arguments: --output $(System.DefaultWorkingDirectory)/FunctionApp --configuration Release
+    strategy:
+      runOnce:
+        deploy:
 
-  #   - task: ArchiveFiles@2
-  #     displayName: 'Archive files'
-  #     inputs:
-  #       rootFolderOrFile: '$(System.DefaultWorkingDirectory)/FunctionApp'
-  #       includeRootFolder: false
-  #       archiveType: zip
-  #       archiveFile: $(Build.ArtifactStagingDirectory)/FunctionApp.zip
-  #       replaceExistingArchive: true
-
-  #   - publish: $(Build.ArtifactStagingDirectory)/FunctionApp.zip
-  #     displayName: Publish Web App Artifacts
-  #     artifact: FunctionAppDrop
-
-  # - job: TestFunctionApp
-  #   displayName: Test Function App
-  #   pool:
-  #     vmImage: $(vmImageName)
-  #   services:
-  #     integrationTestDb: 'print-integration-test'
-
-  #   steps:
-  #   - task: DotNetCoreCLI@2
-  #     displayName: Unit Test
-  #     inputs:
-  #       command: 'test'
-  #       projects: tests/unit/unit.csproj
-
-  #   - task: DotNetCoreCLI@2
-  #     displayName: Integration Tests
-  #     inputs:
-  #       command: 'test'
-  #       projects: tests/integration.api/integration.api.csproj
-
-# - stage: Deploy
-#   displayName: Deploy stage
-#   dependsOn: Build
-#   condition: succeeded()
-
-#   jobs:
-#   - deployment: Deploy
-#     displayName: Deploy
-#     environment: 'development'
-#     pool:
-#       vmImage: $(vmImageName)
-
-#     strategy:
-#       runOnce:
-#         deploy:
-
-#           steps:
-#           - task: AzureFunctionApp@1
-#             displayName: Publish Function App
-#             inputs:
-#               azureSubscription: '$(azureSubscription)'
-#               appType: functionApp
-#               appName: ${{ parameters.functionAppName }}
-#               package: '$(Pipeline.Workspace)/FunctionAppDrop/FunctionApp.zip'
+          steps:
+          - task: AzureFunctionApp@1
+            displayName: Publish API Function App
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: functionApp
+              appName: $(apiFunctionAppName)
+              package: '$(Pipeline.Workspace)/FunctionAppDrop/ApiFunctionApp.zip'
     
