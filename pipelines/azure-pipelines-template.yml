@@ -19,16 +19,16 @@ stages:
   displayName: Build stage  
   
   jobs:
-  - job: BuildSolution
-    displayName: Build Solution
-    pool:
-      vmImage: $(vmImageName)
+  # - job: BuildSolution
+  #   displayName: Build Solution
+  #   pool:
+  #     vmImage: $(vmImageName)
 
-    steps:
-    - task: DotNetCoreCLI@2
-      displayName: Build Solution
-      inputs:
-        command: build
+  #   steps:
+  #   - task: DotNetCoreCLI@2
+  #     displayName: Build Solution
+  #     inputs:
+  #       command: build
 
   - job: PackageFunctionApp
     displayName: Package API Function App
