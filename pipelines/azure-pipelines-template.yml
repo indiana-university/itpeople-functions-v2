@@ -56,29 +56,29 @@ stages:
       displayName: Publish API Web App Artifacts
       artifact: FunctionAppDrop
 
-- stage: Test
-  displayName: Test
-  dependsOn: Build
-  condition: succeeded()
+# - stage: Test
+#   displayName: Test
+#   dependsOn: Build
+#   condition: succeeded()
 
-  jobs: 
-    - job: ApiTest
-      displayName: API Tests
-      pool:
-        vmImage: $(vmImageName)
+#   jobs: 
+#     - job: ApiTest
+#       displayName: API Tests
+#       pool:
+#         vmImage: $(vmImageName)
 
-      steps:
-        - task: DotNetCoreCLI@2
-          displayName: Unit Tests
-          inputs:
-            command: test
-            projects: tests/API/Unit/Unit.csproj
+#       steps:
+#         - task: DotNetCoreCLI@2
+#           displayName: Unit Tests
+#           inputs:
+#             command: test
+#             projects: tests/API/Unit/Unit.csproj
             
-        - task: DotNetCoreCLI@2
-          displayName: Integration Tests
-          inputs:
-            command: test
-            projects: tests/API/Integration/Integration.csproj
+#         - task: DotNetCoreCLI@2
+#           displayName: Integration Tests
+#           inputs:
+#             command: test
+#             projects: tests/API/Integration/Integration.csproj
   
 - stage: Deploy
   displayName: Deploy stage
@@ -102,6 +102,6 @@ stages:
             inputs:
               azureSubscription: '$(azureSubscription)'
               appType: functionApp
-              appName: $(apiFunctionAppName)
+              appName: '$(apiFunctionAppName)'
               package: '$(Pipeline.Workspace)/FunctionAppDrop/ApiFunctionApp.zip'
     
