@@ -12,7 +12,7 @@ namespace API.Functions
     public static class HealthCheck
     {
         [FunctionName(nameof(HealthCheck.Ping))]
-        public static HttpResponseMessage Ping(
+        public static IActionResult Ping(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequest req) 
                 => Response.Ok(req, Pipeline.Success("Pong!"));
     }

@@ -24,7 +24,7 @@ namespace API.Functions
 		[FunctionName(nameof(SupportRelationships.SupportRelationshipsGetAll))]
 		[OpenApiOperation(nameof(SupportRelationships.SupportRelationshipsGetAll), SupportRelationshipsTitle, Summary = "List all unit-department support relationships")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<SupportRelationshipResponse>), Description = "A collection of department support relationship records")]
-		public static Task<HttpResponseMessage> SupportRelationshipsGetAll(
+		public static Task<IActionResult> SupportRelationshipsGetAll(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "supportRelationships")] HttpRequest req)
 			=> Security.Authenticate(req)
 				.Bind(query => SupportRelationshipsRepository.GetAll())
@@ -36,7 +36,7 @@ namespace API.Functions
 		[OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department support relationship record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(SupportRelationshipResponse), Description = "A department support relationship record")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department support relationship was found with the ID provided.")]
-		public static Task<HttpResponseMessage> SupportRelationshipsGetOne(
+		public static Task<IActionResult> SupportRelationshipsGetOne(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "supportRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
 			=> Security.Authenticate(req)
 				.Bind(_ => SupportRelationshipsRepository.GetOne(relationshipId))
@@ -52,7 +52,7 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified unit and/or department does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit already has a support relationship with the provided department.")]
 
-		public static Task<HttpResponseMessage> CreateSupportRelationship(
+		public static Task<IActionResult> CreateSupportRelationship(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "supportRelationships")] HttpRequest req)
 		{
 			string requestorNetId = null;
@@ -77,7 +77,7 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department support relationship was found with the ID provided, or the specified unit and/or department does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit already has a support relationship with the provided department.")]
-		public static Task<HttpResponseMessage> UpdateSupportRelationship(
+		public static Task<IActionResult> UpdateSupportRelationship(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "supportRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
 		{
 			string requestorNetId = null;
@@ -99,7 +99,7 @@ namespace API.Functions
 		[OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department support relationship was found with the ID provided.")]
-		public static Task<HttpResponseMessage> DeleteSupportRelationship(
+		public static Task<IActionResult> DeleteSupportRelationship(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "supportRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
 		{
 			string requestorNetId = null;

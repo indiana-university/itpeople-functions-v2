@@ -30,7 +30,7 @@ namespace API.Functions
         [OpenApiParameter("role", In=ParameterLocation.Query, Type=typeof(Role), Description="filter by unit role, ex: `Leader` or `Leader, Member`")]
         [OpenApiParameter("permission", In=ParameterLocation.Query, Type=typeof(UnitPermissions), Description="filter by unit permissions, ex: `Owner` or `Owner, ManageMembers`")]
         [OpenApiParameter("area", In=ParameterLocation.Query, Type=typeof(Area), Description="filter by unit area, e.g. `uits` or `edge`")]
-        public static Task<HttpResponseMessage> PeopleGetAll(
+        public static Task<IActionResult> PeopleGetAll(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people")] HttpRequest req) 
             => Security.Authenticate(req)
                 .Bind(_ => PeopleSearchParameters.Parse(req))
@@ -42,7 +42,7 @@ namespace API.Functions
         [OpenApiParameter("id", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the person record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(Person))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided ID.")]
-        public static Task<HttpResponseMessage> PeopleGetOne(
+        public static Task<IActionResult> PeopleGetOne(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}")] HttpRequest req, int id) 
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DeterminePersonPermissions(req, requestor, id))
@@ -54,7 +54,7 @@ namespace API.Functions
         [OpenApiParameter("id", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the person record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided ID.")]
-        public static Task<HttpResponseMessage> PeopleGetMemberships(
+        public static Task<IActionResult> PeopleGetMemberships(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}/memberships")] HttpRequest req, int id) 
             => Security.Authenticate(req)
                 .Bind(_ => PeopleRepository.GetMemberships(id))
@@ -69,7 +69,7 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided ID.")]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The request body was missing or malformed.")]
         [OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You do not have permission to modify this person.")]
-        public static Task<HttpResponseMessage> PeopleUpdate(
+        public static Task<IActionResult> PeopleUpdate(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "people/{id}")] HttpRequest req, int id) 
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DeterminePersonPermissions(req, requestor, id))

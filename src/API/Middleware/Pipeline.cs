@@ -56,7 +56,7 @@ namespace API.Middleware
         public IEnumerable<string> Messages { get; private set; }
         public Exception Exception { get; private set; }
 
-        public HttpResponseMessage ToResponse(Microsoft.AspNetCore.Http.HttpRequest req)// => new StatusCodeResult((int)StatusCode);        
+        public IActionResult ToResponse(Microsoft.AspNetCore.Http.HttpRequest req)
         {
             var includeStackTrace = !string.IsNullOrWhiteSpace(Utils.Env("IncludeStackTraceInError"));
             var content = new ApiError()
@@ -66,7 +66,7 @@ namespace API.Middleware
                     Details = Exception == null ? "(none)" : includeStackTrace ? Exception.ToString() : Exception.Message
                 };
             var json = JsonConvert.SerializeObject(content);
-            return Response.HttpResponse(req, StatusCode, "application/json", json);
+            return Response.ContentResponse(req, StatusCode, "application/json", json);
         }
     }
 }
