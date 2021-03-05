@@ -15,21 +15,34 @@ variables:
     value: 'ubuntu-20.04'
 
 stages:
-- stage: Build
-  displayName: Build stage  
-  
+- stage: Test
+  displayName: Test
+
+  jobs: 
+    - job: ApiTest
+      displayName: API Tests
+      pool:
+        vmImage: $(vmImageName)
+
+      steps:
+        - task: DotNetCoreCLI@2
+          displayName: Unit Tests
+          inputs:
+            command: test
+            projects: tests/API/Unit/Unit.csproj
+            
+        - task: DotNetCoreCLI@2
+          displayName: Integration Tests
+          inputs:
+            command: test
+            projects: tests/API/Integration/Integration.csproj  
+
+- stage: Package
+  displayName: Package  
+  dependsOn: Test
+  condition: succeeded()
+
   jobs:
-  # - job: BuildSolution
-  #   displayName: Build Solution
-  #   pool:
-  #     vmImage: $(vmImageName)
-
-  #   steps:
-  #   - task: DotNetCoreCLI@2
-  #     displayName: Build Solution
-  #     inputs:
-  #       command: build
-
   - job: PackageFunctionApp
     displayName: Package API Function App
     pool:
@@ -56,33 +69,9 @@ stages:
       displayName: Publish API Web App Artifacts
       artifact: FunctionAppDrop
 
-# - stage: Test
-#   displayName: Test
-#   dependsOn: Build
-#   condition: succeeded()
-
-#   jobs: 
-#     - job: ApiTest
-#       displayName: API Tests
-#       pool:
-#         vmImage: $(vmImageName)
-
-#       steps:
-#         - task: DotNetCoreCLI@2
-#           displayName: Unit Tests
-#           inputs:
-#             command: test
-#             projects: tests/API/Unit/Unit.csproj
-            
-#         - task: DotNetCoreCLI@2
-#           displayName: Integration Tests
-#           inputs:
-#             command: test
-#             projects: tests/API/Integration/Integration.csproj
-  
 - stage: Deploy
-  displayName: Deploy stage
-  dependsOn: Build
+  displayName: Deploy
+  dependsOn: Package
   condition: succeeded()
 
   jobs:
@@ -104,4 +93,4 @@ stages:
               appType: functionApp
               appName: '$(apiFunctionAppName)'
               package: '$(Pipeline.Workspace)/FunctionAppDrop/ApiFunctionApp.zip'
-    
+              
