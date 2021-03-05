@@ -256,7 +256,7 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
 		}
-        public class UnitMembersDelete : ApiTest
+		public class UnitMembersDelete : ApiTest
 		{
 			[TestCase(TestEntities.UnitMembers.RSwansonLeaderId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin can delete a membership")]
 			[TestCase(TestEntities.UnitMembers.RSwansonLeaderId, ValidRswansonJwt, HttpStatusCode.NoContent, Description = "Owner can delete a membership")]
@@ -268,18 +268,18 @@ namespace Integration
 				AssertStatusCode(resp, expectedCode);
 			}
 
-            [Test]
-            public async Task DeleteUnitMemberDoesNotCreateOrphans()
-            {
-                var resp = await DeleteAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}", ValidAdminJwt);
-                AssertStatusCode(resp, HttpStatusCode.NoContent);
-                
-                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
-                
-                Assert.IsEmpty(db.MemberTools.Where(mt => mt.MembershipId == TestEntities.UnitMembers.RSwansonLeaderId));
-                Assert.IsEmpty(db.MemberTools.Where(mt => mt.Tool == null));
-                Assert.IsEmpty(db.MemberTools.Where(mt => mt.UnitMember == null));
-            }
+			[Test]
+			public async Task DeleteUnitMemberDoesNotCreateOrphans()
+			{
+				var resp = await DeleteAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}", ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.NoContent);
+				
+				var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+				
+				Assert.IsEmpty(db.MemberTools.Where(mt => mt.MembershipId == TestEntities.UnitMembers.RSwansonLeaderId));
+				Assert.IsEmpty(db.MemberTools.Where(mt => mt.Tool == null));
+				Assert.IsEmpty(db.MemberTools.Where(mt => mt.UnitMember == null));
+			}
 		}
 	}
 }

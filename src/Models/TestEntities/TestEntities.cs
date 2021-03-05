@@ -254,7 +254,7 @@ namespace Models
 
 		public static class Tools
 		{
-            public const int HammerId = 1;
+            public const int HammerId = 2;
             public static readonly Tool Hammer = new Tool()
             {
                 Id = HammerId,
@@ -263,6 +263,16 @@ namespace Models
                 DepartmentScoped = true,
                 ADPath = ""
             };
+
+			public const int SawId = 1;
+			public static readonly Tool Saw = new Tool
+			{
+				Id = SawId,
+				Name = "Ron's Saw",
+				Description = "Ron's prized Golden Guinea push saw.",
+				DepartmentScoped = true,
+				ADPath = "pw-parksrec-carpenters"
+			};
 		}
 
 		public static class Units

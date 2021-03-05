@@ -92,6 +92,12 @@ namespace API.Data
                 FetchPersonAndMembership(db, requestorNetId, unitId)
                 .Bind(person => ResolveUnitMemberPermissions(person, unitId))
                 .Tap(perms => req.SetEntityPermissions(perms)));
+        
+        internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId) 
+            => ExecuteDbPipeline($"resolve unit {membershipId} member management permissions", db =>
+                FetchPersonAndMembership(db, requestorNetId)
+                .Bind(person => ResolveMembershipPermissions(person, membershipId))
+                .Tap(perms => req.SetEntityPermissions(perms)));
 
         private static async Task<Result<Person,Error>> FetchPersonAndMembership(PeopleContext db, string requestorNetid)
         {
@@ -134,6 +140,19 @@ namespace API.Data
             
             // Requestor owner/manage roles can get put
             if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageMembers)))
+                return Pipeline.Success(EntityPermissions.All);
+                
+            return Pipeline.Success(EntityPermissions.Get);
+        }
+
+        public static Result<EntityPermissions,Error> ResolveMembershipPermissions(Person requestor, int membershipId)
+        {
+            // service admins: get post put delete
+            if (requestor != null && requestor.IsServiceAdmin)
+                return Pipeline.Success(EntityPermissions.All);
+            
+            // Requestor owner/manage roles can get put
+            if(requestor != null && requestor.UnitMemberships.Any(um => um.Id == membershipId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageTools)))
                 return Pipeline.Success(EntityPermissions.All);
                 
             return Pipeline.Success(EntityPermissions.Get);

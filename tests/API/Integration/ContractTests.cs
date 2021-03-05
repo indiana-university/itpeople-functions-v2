@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.InteropServices;
 using NUnit.Framework;
 using PactNet;
 using PactNet.Infrastructure.Outputters;
@@ -10,14 +11,35 @@ namespace Integration
         [Test]
         public void VerifyContract()
         {
-            var pactOutputs = new[] { new PactOutput(TestContext.Progress) };
-            var config = new PactVerifierConfig() { /* Outputters = pactOutputs */ };
-            new PactVerifier(config)
-                .ServiceProvider("API", "http://localhost:8080")
-                .ProviderState("http://localhost:8081/state")
-                .PactUri("https://raw.githubusercontent.com/indiana-university/itpeople-app/develop/contracts/itpeople-app-itpeople-functions.json")
-                .HonoursPactWith("Client")
-                .Verify();
+            /*
+                Pact has some troubles with Windows paths
+                * If the path to the bin folder is more than ~260 characters it will fail unless "long paths" are enabled in the registry . https://github.com/pact-foundation/pact-node/blob/master/README.md#enable-long-paths
+                * Ruby gems can fail if the path contains any spaces. It may blow up with an error like:
+                    /provider_verifier/app.rb:4:in `require': cannot load such file -- pact/provider_verifier/provider_states/remove_provider_states_header_middleware (LoadError)
+            */
+            try
+            {
+                var pactOutputs = new[] { new PactOutput(TestContext.Progress) };
+                var config = new PactVerifierConfig() { /* Outputters = pactOutputs */ };
+                new PactVerifier(config)
+                    .ServiceProvider("API", "http://localhost:8080")
+                    .ProviderState("http://localhost:8081/state")
+                    .PactUri("https://raw.githubusercontent.com/indiana-university/itpeople-app/develop/contracts/itpeople-app-itpeople-functions.json")
+                    .HonoursPactWith("Client")
+                    .Verify();
+            }
+            catch(System.Exception ex)
+            {
+                if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    if(System.AppDomain.CurrentDomain.BaseDirectory.Length > 260 || System.AppDomain.CurrentDomain.BaseDirectory.Contains(" "))
+                    {
+                        throw new System.Exception($"Pact has known issues running from certain paths on Windows.  Please see readme.md about contract tests.\n{ex.Message}", ex.InnerException);
+                    }
+                }
+
+                throw ex;
+            }
         }
 
         internal class PactOutput : IOutput

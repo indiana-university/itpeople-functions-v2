@@ -64,7 +64,7 @@ namespace API.Middleware
         {
             try
             {
-                return ContentResponse(req, status, "application/json", JsonConvert.SerializeObject(value, Json.JsonSerializerSettings));
+                return ContentResponse(req, status, "application/json; charset=utf-8", JsonConvert.SerializeObject(value, Json.JsonSerializerSettings));
             }
             catch (Exception ex)
             {
@@ -100,7 +100,7 @@ namespace API.Middleware
             {
                 StatusCode = (int)statusCode,
                 Content = content,
-                ContentType = contentType
+                ContentType = contentType,
             };
         }
 
