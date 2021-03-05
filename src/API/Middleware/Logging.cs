@@ -9,6 +9,7 @@ using System;
 
 namespace API.Middleware
 {
+
     public static class LogProps
     {
         public const string Function = "Function";
@@ -34,12 +35,9 @@ namespace API.Middleware
 
     public static class Logging
     {
-        private static string Env(string key) 
-            => System.Environment.GetEnvironmentVariable(key);
-
         private static LoggerConfiguration TryAddAzureAppInsightsSink(this LoggerConfiguration logger)
         {
-            var appInsightsKey = Env("APPINSIGHTS_INSTRUMENTATIONKEY");
+            var appInsightsKey = Utils.Env("APPINSIGHTS_INSTRUMENTATIONKEY");
             if (!string.IsNullOrWhiteSpace(appInsightsKey))
             {
                 logger.WriteTo.ApplicationInsights(
@@ -60,7 +58,7 @@ namespace API.Middleware
             {"parameters", new SinglePropertyColumnWriter(LogProps.RequestParameters, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // subsequent parts of path
             {"query", new SinglePropertyColumnWriter(LogProps.RequestQuery, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // query string
             {"detail", new SinglePropertyColumnWriter(LogProps.ErrorMessages, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // error message details
-            {"content", new SinglePropertyColumnWriter(LogProps.RequestBody, PropertyWriteMethod.Raw, NpgsqlDbType.Json) }, // request body
+            {"request", new SinglePropertyColumnWriter(LogProps.RequestBody, PropertyWriteMethod.Raw, NpgsqlDbType.Json) }, // request body
             {"record", new SinglePropertyColumnWriter(LogProps.RecordBody, PropertyWriteMethod.Raw, NpgsqlDbType.Json) }, // existing record body
             {"ip_address", new SinglePropertyColumnWriter(LogProps.RequestIPAddress, PropertyWriteMethod.Raw, NpgsqlDbType.Text) },
             {"netid", new SinglePropertyColumnWriter(LogProps.RequestorNetid, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // requestor netid
@@ -70,7 +68,7 @@ namespace API.Middleware
         private static LoggerConfiguration TryAddPostgresqlDatabaseSink(this LoggerConfiguration logger)
         {
             var tableName = "logs";
-            var connectionString = Env("DatabaseConnectionString");
+            var connectionString = Utils.Env("DatabaseConnectionString", required:true);
 
             if (!string.IsNullOrWhiteSpace(connectionString))
             {

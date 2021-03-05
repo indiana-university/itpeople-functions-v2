@@ -11,7 +11,7 @@ namespace API
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Debug, true, true);
+            // NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Debug, true, true);
             MigrateDatabaseToLatest();
         }
 

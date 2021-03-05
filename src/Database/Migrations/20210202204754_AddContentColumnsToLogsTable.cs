@@ -6,11 +6,10 @@ namespace Database.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Change logs.content to JSON 
+            // Add logs.record to JSON 
             migrationBuilder.Sql(@"
-                ALTER TABLE logs ALTER COLUMN content TYPE JSON USING content::JSON;
+                ALTER TABLE logs ADD COLUMN request JSON;
             ");
-
             // Add logs.record to JSON 
             migrationBuilder.Sql(@"
                 ALTER TABLE logs ADD COLUMN record JSON;
@@ -23,11 +22,10 @@ namespace Database.Migrations
             migrationBuilder.Sql(@"
                 ALTER TABLE logs DROP COLUMN record
             ");
-
-            // Change logs.content back to TEXT 
+            // Drop logs.record
             migrationBuilder.Sql(@"
-                ALTER TABLE logs ALTER COLUMN content TYPE TEXT USING content::TEXT;
-            ");            
+                ALTER TABLE logs DROP COLUMN request
+            ");
         }
     }
 }

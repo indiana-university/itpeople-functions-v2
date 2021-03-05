@@ -11,6 +11,7 @@ using Models.Enums;
 
 namespace API.Middleware
 {
+
     public static class Request
     {
         public static Task<Result<T,Error>> DeserializeBody<T>(HttpRequest req)
@@ -42,6 +43,14 @@ namespace API.Middleware
             ? Pipeline.BadRequest(results.Select(r => r.ErrorMessage))
             : Pipeline.Success(body);
         }
+
+        internal static Result<string,Error> GetRequiredQueryParam(HttpRequest req, string key)
+        {
+            var dict = req.GetQueryParameterDictionary();
+            return dict.ContainsKey(key)
+                ? Pipeline.Success(dict[key])
+                : Pipeline.BadRequest($"Missing required query parameter: {key}");
+        }
     }
 
     public static class HttpRequestExtensions
@@ -49,12 +58,12 @@ namespace API.Middleware
         public static void SetEntityPermissions(this HttpRequest req, EntityPermissions permissions)
         {
             req.HttpContext.Items[Response.Headers.XUserPermissions] = permissions;
-            req.HttpContext.Response.Headers[Response.Headers.XUserPermissions] = permissions.ToString();
-            // TODO: CORS stuff...
-            req.HttpContext.Response.Headers[Response.Headers.AccessControlExposeHeaders] = Response.Headers.XUserPermissions;
         }
 
         public static EntityPermissions GetEntityPermissions(this HttpRequest req) 
             => (EntityPermissions)req.HttpContext.Items[Response.Headers.XUserPermissions];
+
+        public static bool HasEntityPermissions(this HttpRequest req) 
+            => req.HttpContext.Items.ContainsKey(Response.Headers.XUserPermissions);
     }
 }

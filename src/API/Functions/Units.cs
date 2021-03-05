@@ -15,6 +15,7 @@ using Microsoft.OpenApi.Models;
 using System.Net.Mime;
 using System.Linq;
 using Models.Enums;
+using System.Net.Http;
 
 namespace API.Functions
 {
