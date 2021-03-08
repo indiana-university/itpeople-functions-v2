@@ -10,6 +10,7 @@ using System.Net.Http.Headers;
 using Models;
 using Database;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Tasks
 {
@@ -21,7 +22,7 @@ namespace Tasks
             [DurableClient] IDurableOrchestrationClient starter,
             ILogger log)
         {
-            string instanceId = await starter.StartNewAsync("BuildingsUpdateOrchestrator", null);
+            string instanceId = await starter.StartNewAsync(nameof(BuildingsUpdateOrchestrator), null);
             log.LogInformation($"Started buildings update orchestration with ID = '{instanceId}'.");
         }
 
@@ -31,12 +32,8 @@ namespace Tasks
         {
             var buildings = await context.CallActivityWithRetryAsync<IEnumerable<DenodoBuilding>>(
                 nameof(FetchBuildingsFromDenodo), RetryOptions, null);
-
-            foreach(var building in buildings)
-            {
-                await context.CallActivityWithRetryAsync(
-                    nameof(AddOrUpdateBuildingRecord), RetryOptions, building);
-            }
+            await context.CallActivityWithRetryAsync(
+                nameof(AddOrUpdateBuildingRecords), RetryOptions, buildings);
         }
 
         // Fetch all buildings from the Denodo view maintianed by UITS Facilities
@@ -51,15 +48,18 @@ namespace Tasks
 
         // Add new Builing records to the IT People database.
         // If a building with the same code already exists then update its properties.
-        [FunctionName(nameof(AddOrUpdateBuildingRecord))]
-        public static async Task AddOrUpdateBuildingRecord([ActivityTrigger] DenodoBuilding b, ILogger log)
+        [FunctionName(nameof(AddOrUpdateBuildingRecords))]
+        public static async Task AddOrUpdateBuildingRecords([ActivityTrigger] IEnumerable<DenodoBuilding> buildings, ILogger log)
         {
             var connStr = Utils.Env("DatabaseConnectionString", required: true);
+            var buildingValues = buildings.Select(b => $"({b.Description}, {b.BuildingCode}, {b.Street}, {b.SiteCode}, {b.State}, {b.Zip}, '')");
+            var valuesClause = string.Join(",", buildingValues);
+
             using (var db = PeopleContext.Create(connStr))
-            {
+            {                
                 await db.Database.ExecuteSqlInterpolatedAsync($@"
                     INSERT INTO buildings (name, code, address, city, state, post_code, country) VALUES
-                    ({b.Description}, {b.BuildingCode}, {b.Street}, {b.SiteCode}, {b.State}, {b.Zip}, '')
+                    {valuesClause}
                     ON CONFLICT(code) DO UPDATE SET  
                         name = EXCLUDED.name, 
                         address = EXCLUDED.address,
