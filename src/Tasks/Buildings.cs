@@ -33,8 +33,11 @@ namespace Tasks
         {
             var buildings = await context.CallActivityWithRetryAsync<IEnumerable<DenodoBuilding>>(
                 nameof(FetchBuildingsFromDenodo), RetryOptions, null);
-            await context.CallActivityWithRetryAsync(
-                nameof(AddOrUpdateBuildingRecords), RetryOptions, buildings);
+            foreach (var building in buildings)
+            {
+                await context.CallActivityWithRetryAsync(
+                    nameof(AddOrUpdateBuildingRecords), RetryOptions, building);
+            }
         }
 
         // Fetch all buildings from the Denodo view maintianed by UITS Facilities
@@ -43,6 +46,7 @@ namespace Tasks
         {
             var req = CreateDenodoBuildingsRequest();
             var resp = await HttpClient.SendAsync(req);
+            resp.EnsureSuccessStatusCode();
             var body = await resp.Content.ReadAsAsync<DenodoResponse<DenodoBuilding>>();
             return body.Elements;
         }
@@ -50,24 +54,19 @@ namespace Tasks
         // Add new Builing records to the IT People database.
         // If a building with the same code already exists then update its properties.
         [FunctionName(nameof(AddOrUpdateBuildingRecords))]
-        public static async Task AddOrUpdateBuildingRecords([ActivityTrigger] IEnumerable<DenodoBuilding> buildings, ILogger log)
+        public static async Task AddOrUpdateBuildingRecords([ActivityTrigger] DenodoBuilding bld, ILogger log)
         {
             var connStr = Utils.Env("DatabaseConnectionString", required: true);
-            var buildingValues = buildings.Select(b => $"({b.Description}, {b.BuildingCode}, {b.Street}, {b.SiteCode}, {b.State}, {b.Zip}, '')");
-            var valuesClause = string.Join(",", buildingValues);
-
             using (var db = PeopleContext.Create(connStr))
             {                
-                await db.Database.ExecuteSqlInterpolatedAsync($@"
-                    INSERT INTO buildings (name, code, address, city, state, post_code, country) VALUES
-                    {valuesClause}
-                    ON CONFLICT(code) DO UPDATE SET  
-                        name = EXCLUDED.name, 
-                        address = EXCLUDED.address,
-                        city = EXCLUDED.city,
-                        state = EXCLUDED.state,
-                        post_code = EXCLUDED.post_code,
-                        country = EXCLUDED.country;");                                     
+                var record = await db.Buildings.SingleOrDefaultAsync(b => b.Code == bld.BuildingCode);
+                if (record == null)
+                {
+                    record = new Building();
+                    db.Buildings.Add(record);
+                }
+                bld.MapToBuilding(record);
+                await db.SaveChangesAsync();
             }
         }
 
@@ -109,5 +108,16 @@ namespace Tasks
         [JsonProperty("city")] public string City { get; set; }
         [JsonProperty("state")] public string State { get; set; }
         [JsonProperty("zip")] public string Zip { get; set; }
+
+        public void MapToBuilding(Building record)
+        {
+            record.Name = Description;
+            record.Code = BuildingCode;
+            record.Address = Street;
+            record.City = City;
+            record.State = State;
+            record.PostCode = Zip;
+            record.Country = "";
+        }
     }
 }
