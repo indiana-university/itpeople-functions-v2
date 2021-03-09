@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models
@@ -15,6 +16,8 @@ namespace Models
         public string ADPath { get; set; }
         /// Whether this tool is scoped to a department via a unit-department support relationship.
        public bool DepartmentScoped { get; set; }
+
+       public IEnumerable<MemberTool> MemberTools { get; set; }
 
     }
 }
