@@ -16,9 +16,9 @@ namespace Tasks
 {
     public static class Buildings
     {
-        // Runs at the bottom of the hour (00:30 AM, 01:30 AM, 02:30 AM, ...)
+        // Runs at 40 minutes past every hour (00:40 AM, 01:40 AM, 02:40 AM, ...)
         [FunctionName(nameof(ScheduledBuildingsUpdate))]
-        public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 30 * * * *")]TimerInfo myTimer, 
+        public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 40 * * * *")]TimerInfo myTimer, 
             [DurableClient] IDurableOrchestrationClient starter,
             ILogger log)
         {
