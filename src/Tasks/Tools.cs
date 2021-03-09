@@ -34,7 +34,6 @@ namespace Tasks
                 nameof(FetchTools), RetryOptions, null);
             
             // Compare current tool grants with IT People grants and add/remove grants as necessary.
-            var updates = new List<ToolUpdate>();
             foreach(var tool in tools)
             {
                 await context.CallSubOrchestratorAsync(
