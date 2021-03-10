@@ -43,7 +43,7 @@ stages:
   # condition: succeeded()
 
   jobs:
-  - job: PackageFunctionApp
+  - job: PackageApiApp
     displayName: Package API Function App
     pool:
       vmImage: $(vmImageName)
@@ -66,9 +66,35 @@ stages:
         replaceExistingArchive: true
 
     - publish: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
-      displayName: Publish API Web App Artifacts
-      artifact: FunctionAppDrop
+      displayName: Publish API Function App Artifacts
+      artifact: ApiFunctionAppDrop
 
+  - job: PackageTasksApp
+    displayName: Package Tasks Function App
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Build API
+      inputs:
+        command: 'build'
+        projects: src/Tasks/Tasks.csproj
+        arguments: --output $(System.DefaultWorkingDirectory)/TasksFunctionApp --configuration Release
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive Tasks files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/TasksFunctionApp'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
+        replaceExistingArchive: true
+
+    - publish: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
+      displayName: Publish Tasks Function App Artifacts
+      artifact: TasksFunctionAppDrop
+      
 - stage: Deploy
   displayName: Deploy
   dependsOn: Package
@@ -92,5 +118,24 @@ stages:
               azureSubscription: '$(azureSubscription)'
               appType: functionApp
               appName: '$(apiFunctionAppName)'
-              package: '$(Pipeline.Workspace)/FunctionAppDrop/ApiFunctionApp.zip'
+              package: '$(Pipeline.Workspace)/ApiFunctionAppDrop/ApiFunctionApp.zip'
+
+  # - deployment: DeployTasks
+  #   displayName: Deploy Tasks
+  #   environment: 'development'
+  #   pool:
+  #     vmImage: $(vmImageName)
+
+  #   strategy:
+  #     runOnce:
+  #       deploy:
+
+  #         steps:
+  #         - task: AzureFunctionApp@1
+  #           displayName: Publish Tasks Function App
+  #           inputs:
+  #             azureSubscription: '$(azureSubscription)'
+  #             appType: functionApp
+  #             appName: '$(tasksFunctionAppName)'
+  #             package: '$(Pipeline.Workspace)/TasksFunctionAppDrop/TasksFunctionApp.zip'
               
