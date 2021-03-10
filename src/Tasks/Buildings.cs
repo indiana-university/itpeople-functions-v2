@@ -1,6 +1,4 @@
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Extensions.Logging;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -8,9 +6,7 @@ using System.Net.Http;
 using System;
 using System.Net.Http.Headers;
 using Models;
-using Database;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 
 namespace Tasks
 {
@@ -19,45 +15,50 @@ namespace Tasks
         // Runs at 40 minutes past every hour (00:40 AM, 01:40 AM, 02:40 AM, ...)
         [FunctionName(nameof(ScheduledBuildingsUpdate))]
         public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 40 * * * *")]TimerInfo myTimer, 
-            [DurableClient] IDurableOrchestrationClient starter,
-            ILogger log)
+            [DurableClient] IDurableOrchestrationClient starter)
         {
             string instanceId = await starter.StartNewAsync(nameof(BuildingsUpdateOrchestrator), null);
-            log.LogInformation($"Started buildings update orchestration with ID = '{instanceId}'.");
+            Logging.GetLogger(instanceId, nameof(ScheduledBuildingsUpdate), myTimer)
+                .Information("Started scheduled buildings update.");
         }
 
         [FunctionName(nameof(BuildingsUpdateOrchestrator))]
-        public static async Task BuildingsUpdateOrchestrator(
-            [OrchestrationTrigger] IDurableOrchestrationContext context)
+        public static async Task BuildingsUpdateOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
         {
-            var buildings = await context.CallActivityWithRetryAsync<IEnumerable<DenodoBuilding>>(
-                nameof(FetchBuildingsFromDenodo), RetryOptions, null);
-            foreach (var building in buildings)
+            try
             {
-                await context.CallActivityWithRetryAsync(
-                    nameof(AddOrUpdateBuildingRecords), RetryOptions, building);
+                var buildings = await context.CallActivityWithRetryAsync<IEnumerable<DenodoBuilding>>(
+                    nameof(FetchBuildingsFromDenodo), RetryOptions, null);
+                foreach (var building in buildings)
+                {
+                    await context.CallActivityWithRetryAsync(
+                        nameof(AddOrUpdateBuildingRecords), RetryOptions, building);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logging.GetLogger(context).Error(ex, "Buildings update orchestration failed with exception.");
+                throw;
             }
         }
 
         // Fetch all buildings from the Denodo view maintianed by UITS Facilities
         [FunctionName(nameof(FetchBuildingsFromDenodo))]
-        public static async Task<IEnumerable<DenodoBuilding>> FetchBuildingsFromDenodo([ActivityTrigger] ILogger log)
+        public static async Task<IEnumerable<DenodoBuilding>> FetchBuildingsFromDenodo([ActivityTrigger] IDurableActivityContext context)
         {
             var req = CreateDenodoBuildingsRequest();
             var resp = await HttpClient.SendAsync(req);
-            resp.EnsureSuccessStatusCode();
-            var body = await resp.Content.ReadAsAsync<DenodoResponse<DenodoBuilding>>();
+            var body = await Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(context, resp, "fetch buildings from Denodo view");
             return body.Elements;
         }
 
         // Add new Builing records to the IT People database.
         // If a building with the same code already exists then update its properties.
         [FunctionName(nameof(AddOrUpdateBuildingRecords))]
-        public static async Task AddOrUpdateBuildingRecords([ActivityTrigger] DenodoBuilding bld, ILogger log)
+        public static async Task AddOrUpdateBuildingRecords([ActivityTrigger] IDurableActivityContext context)
         {
-            var connStr = Utils.Env("DatabaseConnectionString", required: true);
-            using (var db = PeopleContext.Create(connStr))
-            {                
+            var bld = context.GetInput<DenodoBuilding>();
+            await Utils.DatabaseCommand(context, $"Add/update building with code {bld.BuildingCode}", async db => {
                 var record = await db.Buildings.SingleOrDefaultAsync(b => b.Code == bld.BuildingCode);
                 if (record == null)
                 {
@@ -66,7 +67,7 @@ namespace Tasks
                 }
                 bld.MapToBuilding(record);
                 await db.SaveChangesAsync();
-            }
+            });
         }
 
         private static HttpClient HttpClient = new HttpClient();

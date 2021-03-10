@@ -1,5 +1,4 @@
 using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -7,7 +6,6 @@ using Models;
 using System.Net.Http;
 using System;
 using System.Net.Http.Headers;
-using Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tasks
@@ -17,45 +15,45 @@ namespace Tasks
          // Runs at the top of the hour (00:00 AM, 01:00 AM, 02:00 AM, ...)
         [FunctionName(nameof(ScheduledPeopleUpdate))]
         public static async Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *")]TimerInfo myTimer, 
-            [DurableClient] IDurableOrchestrationClient starter,
-            ILogger log)
+            [DurableClient] IDurableOrchestrationClient starter)
         {
             string instanceId = await starter.StartNewAsync(nameof(PeopleUpdateOrchestrator), null);
-            log.LogInformation($"Started people update orchestration with ID = '{instanceId}'.");
+            Logging.GetLogger(instanceId, nameof(ScheduledPeopleUpdate), myTimer)
+                .Information("Started scheduled people update.");
         }
 
         [FunctionName(nameof(PeopleUpdateOrchestrator))]
-        public static async Task PeopleUpdateOrchestrator(
-            [OrchestrationTrigger] IDurableOrchestrationContext context)
+        public static async Task PeopleUpdateOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
         {
-            // Get a UAA JWT to authenticate calls to the IMS Profile API
-            var uaaJwt = await context.CallActivityWithRetryAsync<string>(
-                nameof(FetchUAAToken), RetryOptions, null);
-
-            // Aggregate all the HR records of various different types
-            var hrRecords = new List<ProfileEmployee>();
-            foreach(var type in new[]{"employee", "affiliate", "foundation"})
+            try
             {
-                var employees = await context.CallSubOrchestratorAsync<IEnumerable<ProfileEmployee>>(
-                    nameof(FetchPeopleFromProfileApi), (uaaJwt, type));
-                hrRecords.AddRange(employees);
-            }
+                // Get a UAA JWT to authenticate calls to the IMS Profile API
+                var uaaJwt = await context.CallActivityWithRetryAsync<string>(
+                    nameof(FetchUAAToken), RetryOptions, null);
 
-            // Refresh the HrPeople table with the Profile API data
-            await context.CallActivityWithRetryAsync(
-                    nameof(RefreshHrPeople), RetryOptions, hrRecords);
-            // Add/update Departments from new HR data
-            await context.CallActivityWithRetryAsync(
-                    nameof(UpdateDepartmentRecords), RetryOptions, null);
-            // Update People name/position/contact info from new HR data
-            await context.CallActivityWithRetryAsync(
-                    nameof(UpdatePeopleRecords), RetryOptions, null);
+                // Aggregate all the HR records of various different types
+                var hrRecords = new List<ProfileEmployee>();
+                foreach(var type in new[]{"employee", "affiliate", "foundation"})
+                {
+                    var employees = await context.CallSubOrchestratorAsync<IEnumerable<ProfileEmployee>>(
+                        nameof(FetchPeopleFromProfileApi), (uaaJwt, type));
+                    hrRecords.AddRange(employees);
+                }
+
+                // Update hr_people/people/departments database records.
+                await context.CallSubOrchestratorAsync(
+                    nameof(UpdateDatabaseRecords), hrRecords);
+            }
+            catch (Exception ex)
+            {
+                Logging.GetLogger(context).Error(ex, "People update orchestration failed with exception.");
+                throw;
+            }
         }       
 
         // Fetch a UAA Jwt using the client credentials (username/password) grant type.
         [FunctionName(nameof(FetchUAAToken))]
-        public static async Task<string> FetchUAAToken(
-            [ActivityTrigger] IDurableActivityContext context)
+        public static async Task<string> FetchUAAToken([ActivityTrigger] IDurableActivityContext context)
         {
             var content = new FormUrlEncodedContent(new Dictionary<string,string>{
                 {"grant_type", "client_credentials"},
@@ -73,10 +71,9 @@ namespace Tasks
 
         // Aggregate all HR records of a certain type from the IMS Profile API
         [FunctionName(nameof(FetchPeopleFromProfileApi))]
-        public static async Task<IEnumerable<ProfileEmployee>> FetchPeopleFromProfileApi(
-            [OrchestrationTrigger] IDurableOrchestrationContext context,
-            ILogger log, (string uaaJwt, string type) args)
+        public static async Task<IEnumerable<ProfileEmployee>> FetchPeopleFromProfileApi([OrchestrationTrigger] IDurableOrchestrationContext context)
         {
+            var args = context.GetInput<(string uaaJwt, string type)>();
             var page = 0;
             var hasMore = true;
             var hrRecords = new List<ProfileEmployee>();
@@ -97,73 +94,86 @@ namespace Tasks
 
         // Fetch a page of HR records of a certain type from the IMS Profile API
         [FunctionName(nameof(FetchPeoplePageFromProfileApi))]
-        public static async Task<ProfileResponse> FetchPeoplePageFromProfileApi(
-            [ActivityTrigger] IDurableActivityContext context,
-            ILogger log, (string uaaJwt, string type, int page) args)
+        public static async Task<ProfileResponse> FetchPeoplePageFromProfileApi([ActivityTrigger] IDurableActivityContext context)
         {
+            var args = context.GetInput<(string uaaJwt, string type, int page)>();
             var url = Utils.Env("HrDataUrl", required: true);
             var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={args.type}&page={args.page}&pageSize=7500");
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", args.uaaJwt);
-            var resp = await HttpClient.SendAsync(req);
-            resp.EnsureSuccessStatusCode();
-            var body = await resp.Content.ReadAsAsync<ProfileResponse>();
-            return body;
+            var resp = await HttpClient.SendAsync(req);            
+            return await Utils.DeserializeResponse<ProfileResponse>(context, resp, "fetch page from IMS Profile API");
+        }
+
+        // Aggregate all HR records of a certain type from the IMS Profile API
+        [FunctionName(nameof(UpdateDatabaseRecords))]
+        public static async Task UpdateDatabaseRecords([OrchestrationTrigger] IDurableOrchestrationContext context)
+        {
+            var hrRecords = context.GetInput<IEnumerable<ProfileEmployee>>();
+            // Refresh the HrPeople table with the Profile API data
+            await context.CallActivityWithRetryAsync(
+                    nameof(RefreshHrPeople), RetryOptions, hrRecords);
+            // Add/update Departments from new HR data
+            await context.CallActivityWithRetryAsync(
+                    nameof(UpdateDepartmentRecords), RetryOptions, null);
+            // Update People name/position/contact info from new HR data
+            await context.CallActivityWithRetryAsync(
+                    nameof(UpdatePeopleRecords), RetryOptions, null);
         }
 
         // Reset the hr_people table with the lastest HR data from the Profile API 
         [FunctionName(nameof(RefreshHrPeople))]
-        public static async Task RefreshHrPeople(
-            [ActivityTrigger] IDurableActivityContext context, IEnumerable<ProfileEmployee> emps, ILogger log)
+        public static async Task RefreshHrPeople([ActivityTrigger] IDurableActivityContext context)
         {
-            var connStr = Utils.Env("DatabaseConnectionString", required: true);
-            using (var db = new Npgsql.NpgsqlConnection(connStr))
+            try
             {
-                await db.OpenAsync();
-                // Clear all records in hr_people
-                var cmd = db.CreateCommand();
-                cmd.CommandText = "TRUNCATE hr_people;";
-                await cmd.ExecuteNonQueryAsync();
-                // Quickly import all HR records from the IMS Profile API
-                using (var writer = db.BeginTextImport("COPY hr_people (name, name_first, name_last, netid, position, campus, campus_phone, campus_email, hr_department, hr_department_desc) FROM STDIN"))
+                var emps = context.GetInput<IEnumerable<ProfileEmployee>>();
+                var connStr = Utils.Env("DatabaseConnectionString", required: true);
+                using (var db = new Npgsql.NpgsqlConnection(connStr))
                 {
-                    foreach(var emp in emps)
+                    await db.OpenAsync();
+                    // Clear all records in hr_people
+                    var cmd = db.CreateCommand();
+                    cmd.CommandText = "TRUNCATE hr_people;";
+                    await cmd.ExecuteNonQueryAsync();
+                    // Quickly import all HR records from the IMS Profile API
+                    using (var writer = db.BeginTextImport("COPY hr_people (name, name_first, name_last, netid, position, campus, campus_phone, campus_email, hr_department, hr_department_desc) FROM STDIN"))
                     {
-                        var p = new HrPerson();
-                        emp.MapToHrPerson(p);
-                        await writer.WriteLineAsync($"{p.Name}\t{p.NameFirst}\t{p.NameLast}\t{p.Netid}\t{p.Position}\t{p.Campus}\t{p.CampusPhone}\t{p.CampusEmail}\t{p.HrDepartment}\t{p.HrDepartmentDescription}");
+                        foreach(var emp in emps)
+                        {
+                            var p = new HrPerson();
+                            emp.MapToHrPerson(p);
+                            await writer.WriteLineAsync($"{p.Name}\t{p.NameFirst}\t{p.NameLast}\t{p.Netid}\t{p.Position}\t{p.Campus}\t{p.CampusPhone}\t{p.CampusEmail}\t{p.HrDepartment}\t{p.HrDepartmentDescription}");
+                        }
+                        await writer.FlushAsync();
                     }
-                    await writer.FlushAsync();
                 }
+            }
+            catch (Exception ex)
+            {
+                Logging.GetLogger(context).Error(ex, "Failed to bulk-insert HR records to hr_people");
+                throw;
             }
         }
 
         // Add new Departmnet records to the IT People database.
         // If a departments with the same name already exists then update its description..
         [FunctionName(nameof(UpdateDepartmentRecords))]
-        public static async Task UpdateDepartmentRecords([ActivityTrigger] IDurableActivityContext context, ILogger log)
-        {
-            var connStr = Utils.Env("DatabaseConnectionString", required: true);
-            using (var db = PeopleContext.Create(connStr))
-            {
-                await db.Database.ExecuteSqlRawAsync(@"
+        public static Task UpdateDepartmentRecords([ActivityTrigger] IDurableActivityContext context) 
+            => Utils.DatabaseCommand(context, "Upsert department records from new HR data", db =>
+                db.Database.ExecuteSqlRawAsync(@"
                     INSERT INTO departments (name, description)
                     SELECT DISTINCT hr_department, hr_department_desc
                     FROM hr_people
                     WHERE hr_department IS NOT NULL
                     ON CONFLICT (name) DO UPDATE SET
-                        description = EXCLUDED.description;");        
-            }
-        }
+                        description = EXCLUDED.description;"));
 
         /// Update name, location, position of people in directory using new HR data
         /// This should be one *after* departments are updated.
         [FunctionName(nameof(UpdatePeopleRecords))]
-        public static async Task UpdatePeopleRecords([ActivityTrigger] IDurableActivityContext context, ILogger log)
-        {
-            var connStr = Utils.Env("DatabaseConnectionString", required: true);
-            using (var db = PeopleContext.Create(connStr))
-            {
-                await db.Database.ExecuteSqlRawAsync(@"
+        public static Task UpdatePeopleRecords([ActivityTrigger] IDurableActivityContext context)
+            => Utils.DatabaseCommand(context, "Upsert department records from new HR data", db =>
+                db.Database.ExecuteSqlRawAsync(@"
                     UPDATE people p
                     SET p.name = hr.name,
                         p.name_first = hr.name_first,
@@ -175,10 +185,7 @@ namespace Tasks
                         p.campus_email = hr.campus_email,
                         p.department_id = (SELECT id FROM departments WHERE name=hr.hr_department)
                     FROM hr_people hr
-                    WHERE p.netid = hr.netid");
-            }
-        }
-
+                    WHERE p.netid = hr.netid"));
 
         private static HttpClient HttpClient = new HttpClient();
 
