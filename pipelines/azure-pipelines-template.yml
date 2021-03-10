@@ -9,126 +9,88 @@ parameters:
   default: itpeople-functions-test
 
 variables:
-  # Azure Resource Manager connection created during pipeline creation
-  azureSubscription: 'Azure - IU Print'
+  - group: ${{ parameters.VariableGroup }}
   # Agent VM image name
-  vmImageName: 'ubuntu-20.04'
-  # # Flag for integration test fixture that we're running in a CI environment
-  # ci_build: 'true'
-  imageName: 'integration-test'
-  tagName: 'ci'
-
-# resources:
-#   containers:
-#   - container: 'print-integration-test'
-#     image: 'mcr.microsoft.com/mssql/server:2019-latest'
-#     ports:
-#     - 1433:1433/tcp
-#     env:
-#       ACCEPT_EULA: 'Y'
-#       SA_PASSWORD: 'abcd1234@'
-#       MSSQL_PID: 'Developer'
+  - name: vmImageName
+    value: 'ubuntu-20.04'
 
 stages:
-- stage: Build
-  displayName: Build stage  
-  
+# - stage: Test
+#   displayName: Test
+
+#   jobs: 
+#     - job: ApiTest
+#       displayName: API Tests
+#       pool:
+#         vmImage: $(vmImageName)
+
+#       steps:
+#         - task: DotNetCoreCLI@2
+#           displayName: Unit Tests
+#           inputs:
+#             command: test
+#             projects: tests/API/Unit/Unit.csproj
+            
+#         - task: DotNetCoreCLI@2
+#           displayName: Integration Tests
+#           inputs:
+#             command: test
+#             projects: tests/API/Integration/Integration.csproj  
+
+- stage: Package
+  displayName: Package  
+  # dependsOn: Test
+  # condition: succeeded()
+
   jobs:
-  - job: BuildSolution
-    displayName: Build Solution
+  - job: PackageFunctionApp
+    displayName: Package API Function App
     pool:
       vmImage: $(vmImageName)
 
     steps:
     - task: DotNetCoreCLI@2
-      displayName: Build Solution
+      displayName: Build API
       inputs:
-        command: build
+        command: 'build'
+        projects: src/API/API.csproj
+        arguments: --output $(System.DefaultWorkingDirectory)/ApiFunctionApp --configuration Release
 
-- stage: Test
-  displayName: Test
-  dependsOn: Build
+    - task: ArchiveFiles@2
+      displayName: 'Archive API files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/ApiFunctionApp'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
+        replaceExistingArchive: true
 
-  jobs: 
-    - job: ApiIntegrationTest
-      displayName: API Integration Test
-      pool:
-        vmImage: $(vmImageName)
+    - publish: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
+      displayName: Publish API Web App Artifacts
+      artifact: FunctionAppDrop
 
-      steps:
-        - task: DotNetCoreCLI@2
-          displayName: Run All
-          inputs:
-            command: test
+- stage: Deploy
+  displayName: Deploy
+  dependsOn: Package
+  condition: succeeded()
 
-  # - job: BuildFunctionApp
-  #   displayName: Build Function App
-  #   pool:
-  #     vmImage: $(vmImageName)
+  jobs:
+  - deployment: DeployAPI
+    displayName: Deploy API
+    environment: 'development'
+    pool:
+      vmImage: $(vmImageName)
 
-  #   steps:
-  #   - task: DotNetCoreCLI@2
-  #     displayName: Build
-  #     inputs:
-  #       command: 'build'
-  #       projects: src/functions/functions.csproj
-  #       arguments: --output $(System.DefaultWorkingDirectory)/FunctionApp --configuration Release
+    strategy:
+      runOnce:
+        deploy:
 
-  #   - task: ArchiveFiles@2
-  #     displayName: 'Archive files'
-  #     inputs:
-  #       rootFolderOrFile: '$(System.DefaultWorkingDirectory)/FunctionApp'
-  #       includeRootFolder: false
-  #       archiveType: zip
-  #       archiveFile: $(Build.ArtifactStagingDirectory)/FunctionApp.zip
-  #       replaceExistingArchive: true
-
-  #   - publish: $(Build.ArtifactStagingDirectory)/FunctionApp.zip
-  #     displayName: Publish Web App Artifacts
-  #     artifact: FunctionAppDrop
-
-  # - job: TestFunctionApp
-  #   displayName: Test Function App
-  #   pool:
-  #     vmImage: $(vmImageName)
-  #   services:
-  #     integrationTestDb: 'print-integration-test'
-
-  #   steps:
-  #   - task: DotNetCoreCLI@2
-  #     displayName: Unit Test
-  #     inputs:
-  #       command: 'test'
-  #       projects: tests/unit/unit.csproj
-
-  #   - task: DotNetCoreCLI@2
-  #     displayName: Integration Tests
-  #     inputs:
-  #       command: 'test'
-  #       projects: tests/integration.api/integration.api.csproj
-
-# - stage: Deploy
-#   displayName: Deploy stage
-#   dependsOn: Build
-#   condition: succeeded()
-
-#   jobs:
-#   - deployment: Deploy
-#     displayName: Deploy
-#     environment: 'development'
-#     pool:
-#       vmImage: $(vmImageName)
-
-#     strategy:
-#       runOnce:
-#         deploy:
-
-#           steps:
-#           - task: AzureFunctionApp@1
-#             displayName: Publish Function App
-#             inputs:
-#               azureSubscription: '$(azureSubscription)'
-#               appType: functionApp
-#               appName: ${{ parameters.functionAppName }}
-#               package: '$(Pipeline.Workspace)/FunctionAppDrop/FunctionApp.zip'
-    
+          steps:
+          - task: AzureFunctionApp@1
+            displayName: Publish API Function App
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: functionApp
+              appName: '$(apiFunctionAppName)'
+              package: '$(Pipeline.Workspace)/FunctionAppDrop/ApiFunctionApp.zip'
+              
