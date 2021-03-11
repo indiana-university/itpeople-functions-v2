@@ -19,7 +19,7 @@ namespace Tasks
         {
             string instanceId = await starter.StartNewAsync(nameof(BuildingsUpdateOrchestrator), null);
             Logging.GetLogger(instanceId, nameof(ScheduledBuildingsUpdate), myTimer)
-                .Information("{Message}","Started scheduled buildings update.");
+               .Information("Started scheduled buildings update.");
         }
 
         [FunctionName(nameof(BuildingsUpdateOrchestrator))]
@@ -46,8 +46,6 @@ namespace Tasks
         [FunctionName(nameof(FetchBuildingsFromDenodo))]
         public static async Task<IEnumerable<DenodoBuilding>> FetchBuildingsFromDenodo([ActivityTrigger] IDurableActivityContext context)
         {
-            throw new Exception("HORK! 🤮");
-
             var denodoUrl = Utils.Env("DenodoBuildingsViewUrl", required: true);
             var denodoUser = Utils.Env("DenodoBuildingsViewUser", required: true);
             var denodoPwd = Utils.Env("DenodoBuildingsViewPassword", required: true);
@@ -86,5 +84,7 @@ namespace Tasks
         private static RetryOptions RetryOptions = new RetryOptions(
             firstRetryInterval: TimeSpan.FromSeconds(5),
             maxNumberOfAttempts: 3);
+
+        
     }
 }

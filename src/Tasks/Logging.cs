@@ -37,7 +37,7 @@ namespace Tasks
             {"level", new LevelColumnWriter(true, NpgsqlDbType.Varchar) },
             {"invocation_id", new SinglePropertyColumnWriter(LogProps.InvocationId, PropertyWriteMethod.Raw, NpgsqlDbType.Uuid) }, 
             {"function_name", new SinglePropertyColumnWriter(LogProps.Function, PropertyWriteMethod.Raw, NpgsqlDbType.Text) }, // first part of path
-            {"message", new SinglePropertyColumnWriter(LogProps.Message, PropertyWriteMethod.Raw, NpgsqlDbType.Text) },
+            {"message", new RenderedMessageColumnWriter(NpgsqlDbType.Text) },
             {"properties", new SinglePropertyColumnWriter(LogProps.Properties, PropertyWriteMethod.Raw, NpgsqlDbType.Json) },
             {"exception", new ExceptionColumnWriter(NpgsqlDbType.Text) } // exception details
         };
@@ -49,7 +49,6 @@ namespace Tasks
 
             if (!string.IsNullOrWhiteSpace(connectionString))
             {
-                Serilog.Debugging.SelfLog.Enable(msg => System.Console.WriteLine(msg));
                 logger.WriteTo.PostgreSQL(
                     connectionString, tableName, columnWriters);
             }
@@ -71,6 +70,6 @@ namespace Tasks
                 .CreateLogger()
                 .ForContext(LogProps.InvocationId, System.Guid.Parse(instanceId))
                 .ForContext(LogProps.Function, function)
-                .ForContext(LogProps.Properties, properties == null ? null : JsonConvert.SerializeObject(properties, Formatting.Indented));
+                .ForContext(LogProps.Properties, properties == null ? null : JsonConvert.SerializeObject(properties, Formatting.Indented));        
     }
 }

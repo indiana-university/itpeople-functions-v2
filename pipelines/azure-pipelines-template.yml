@@ -67,7 +67,7 @@ stages:
 
     - publish: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
       displayName: Publish API Function App Artifacts
-      artifact: DeploymentPackages
+      artifact: ApiDeploymentPackage
 
   - job: PackageTasksApp
     displayName: Package Tasks Function App
@@ -93,7 +93,7 @@ stages:
 
     - publish: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
       displayName: Publish Tasks Function App Artifacts
-      artifact: DeploymentPackages
+      artifact: TasksDeploymentPackage
       
 - stage: Deploy
   displayName: Deploy
@@ -118,24 +118,24 @@ stages:
               azureSubscription: '$(azureSubscription)'
               appType: functionApp
               appName: '$(apiFunctionAppName)'
-              package: '$(Pipeline.Workspace)/DeploymentPackages/ApiFunctionApp.zip'
+              package: '$(Pipeline.Workspace)/ApiDeploymentPackage/ApiFunctionApp.zip'
 
-  # - deployment: DeployTasks
-  #   displayName: Deploy Tasks
-  #   environment: 'development'
-  #   pool:
-  #     vmImage: $(vmImageName)
+  - deployment: DeployTasks
+    displayName: Deploy Tasks
+    environment: 'development'
+    pool:
+      vmImage: $(vmImageName)
 
-  #   strategy:
-  #     runOnce:
-  #       deploy:
+    strategy:
+      runOnce:
+        deploy:
 
-  #         steps:
-  #         - task: AzureFunctionApp@1
-  #           displayName: Publish Tasks Function App
-  #           inputs:
-  #             azureSubscription: '$(azureSubscription)'
-  #             appType: functionApp
-  #             appName: '$(tasksFunctionAppName)'
-  #             package: '$(Pipeline.Workspace)/DeploymentPackages/TasksFunctionApp.zip'
+          steps:
+          - task: AzureFunctionApp@1
+            displayName: Publish Tasks Function App
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: functionApp
+              appName: '$(tasksFunctionAppName)'
+              package: '$(Pipeline.Workspace)/TasksDeploymentPackages/TasksFunctionApp.zip
               

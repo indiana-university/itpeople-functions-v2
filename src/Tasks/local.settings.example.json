@@ -13,7 +13,7 @@
         "ImsProfileApiUrl":"https://prs.apps.iu.edu/search",
         "AdToolsGroupManagerUser":"a username",
         "AdToolsGroupManagerPassword":"password for AdUser",
-        "DatabaseConnectionString":"A Postgres EF connection string",
+        "DatabaseConnectionString":"Server=localhost;Database=ItPeople;User Id=SA;Password=abcd1234@;",
         "APPINSIGHTS_INSTRUMENTATIONKEY": "an App Insights instrumentation key (guid)"
     }
 }
