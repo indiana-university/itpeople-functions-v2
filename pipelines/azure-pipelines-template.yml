@@ -67,7 +67,6 @@ stages:
 
     - publish: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
       displayName: Publish API Function App Artifacts
-      artifact: ApiDeploymentPackage
 
   - job: PackageTasksApp
     displayName: Package Tasks Function App
@@ -93,7 +92,6 @@ stages:
 
     - publish: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
       displayName: Publish Tasks Function App Artifacts
-      artifact: TasksDeploymentPackage
       
 - stage: Deploy
   displayName: Deploy
@@ -118,7 +116,7 @@ stages:
               azureSubscription: '$(azureSubscription)'
               appType: functionApp
               appName: '$(apiFunctionAppName)'
-              package: '$(Pipeline.Workspace)/ApiDeploymentPackage/ApiFunctionApp.zip'
+              package: '$(Pipeline.Workspace)/ApiFunctionApp.zip'
 
   - deployment: DeployTasks
     displayName: Deploy Tasks
@@ -137,5 +135,5 @@ stages:
               azureSubscription: '$(azureSubscription)'
               appType: functionApp
               appName: '$(tasksFunctionAppName)'
-              package: '$(Pipeline.Workspace)/TasksDeploymentPackage/TasksFunctionApp.zip'
+              package: '$(Pipeline.Workspace)/TasksFunctionApp.zip'
               
