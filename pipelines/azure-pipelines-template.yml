@@ -137,5 +137,5 @@ stages:
               azureSubscription: '$(azureSubscription)'
               appType: functionApp
               appName: '$(tasksFunctionAppName)'
-              package: '$(Pipeline.Workspace)/TasksDeploymentPackage/TasksFunctionApp.zip
+              package: '$(Pipeline.Workspace)/TasksDeploymentPackage/TasksFunctionApp.zip'
               
