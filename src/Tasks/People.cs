@@ -13,9 +13,9 @@ namespace Tasks
     public static class People
     {
          // Runs at the top of the hour (00:00 AM, 01:00 AM, 02:00 AM, ...)
-        [Disable]
+        //[Disable]
         [FunctionName(nameof(ScheduledPeopleUpdate))]
-        public static async Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *")]TimerInfo myTimer, 
+        public static async Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *", RunOnStartup=true)]TimerInfo myTimer, 
             [DurableClient] IDurableOrchestrationClient starter)
         {
             string instanceId = await starter.StartNewAsync(nameof(PeopleUpdateOrchestrator), null);
@@ -32,6 +32,7 @@ namespace Tasks
                 var uaaJwt = await context.CallActivityWithRetryAsync<string>(
                     nameof(FetchUAAToken), RetryOptions, null);
 
+/*
                 // Aggregate all the HR records of various different types
                 var hrRecords = new List<ProfileEmployee>();
                 foreach(var type in new[]{"employee", "affiliate", "foundation"})
@@ -44,6 +45,7 @@ namespace Tasks
                 // Update hr_people/people/departments database records.
                 await context.CallSubOrchestratorAsync(
                     nameof(UpdateDatabaseRecords), hrRecords);
+*/
             }
             catch (Exception ex)
             {
@@ -59,7 +61,7 @@ namespace Tasks
             var content = new FormUrlEncodedContent(new Dictionary<string,string>{
                 {"grant_type", "client_credentials"},
                 {"client_id", Utils.Env("UaaClientCredentialId", required: true)},
-                {"client_secret", Utils.Env("UaaClientCredentialPassword", required: true)},
+                {"client_secret", Utils.Env("UaaClientCredentialSecret", required: true)},
             });
             var url = Utils.Env("UaaClientCredentialUrl", required: true);
             var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };

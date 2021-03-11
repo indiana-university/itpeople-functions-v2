@@ -7,6 +7,7 @@ using System;
 using System.Net.Http.Headers;
 using Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Tasks
 {
@@ -30,7 +31,7 @@ namespace Tasks
             {
                 var buildings = await context.CallActivityWithRetryAsync<IEnumerable<DenodoBuilding>>(
                     nameof(FetchBuildingsFromDenodo), RetryOptions, null);
-                foreach (var building in buildings)
+                foreach (var building in buildings.Take(1))
                 {
                     await context.CallActivityWithRetryAsync(
                         nameof(AddOrUpdateBuildingRecords), RetryOptions, building);
