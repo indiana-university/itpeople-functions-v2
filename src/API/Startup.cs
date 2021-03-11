@@ -2,7 +2,6 @@ using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using System;
 using Database;
-using Npgsql.Logging;
 
 [assembly: FunctionsStartup(typeof(API.Startup))]
 namespace API
@@ -30,7 +29,7 @@ namespace API
             catch (Exception e)
             {
                 Console.Error.WriteLine($"Error when migrating database: {e.Message}");
-                throw new Exception($"Error when migrating database: {e.Message}");
+                throw new Exception($"Error when migrating database.", e);
             }
         }
     }
