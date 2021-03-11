@@ -76,7 +76,7 @@ stages:
 
     steps:
     - task: DotNetCoreCLI@2
-      displayName: Build API
+      displayName: Build Tasks
       inputs:
         command: 'build'
         projects: src/Tasks/Tasks.csproj

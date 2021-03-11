@@ -33,18 +33,12 @@ namespace Tasks
                     nameof(FetchUAAToken), RetryOptions, null);
 
                 // Aggregate all the HR records of various different types
-                var hrRecords = new List<ProfileEmployee>();
-                foreach(var type in new[]{"employee", "affiliate", "foundation"})
-                {
-                    var employees = await context.CallSubOrchestratorAsync<IEnumerable<ProfileEmployee>>(
-                        nameof(FetchPeopleFromProfileApi), (uaaJwt, type));
-                    hrRecords.AddRange(employees);
-                }
-/*
+                var hrRecords = await context.CallActivityWithRetryAsync<IEnumerable<ProfileEmployee>>(
+                    nameof(FetchPeopleFromProfileApi), RetryOptions, uaaJwt);
+
                 // Update hr_people/people/departments database records.
                 await context.CallSubOrchestratorAsync(
                     nameof(UpdateDatabaseRecords), hrRecords);
-*/
             }
             catch (Exception ex)
             {
@@ -72,37 +66,33 @@ namespace Tasks
 
         // Aggregate all HR records of a certain type from the IMS Profile API
         [FunctionName(nameof(FetchPeopleFromProfileApi))]
-        public static async Task<IEnumerable<ProfileEmployee>> FetchPeopleFromProfileApi([OrchestrationTrigger] IDurableOrchestrationContext context)
+        public static async Task<IEnumerable<ProfileEmployee>> FetchPeopleFromProfileApi([ActivityTrigger] IDurableActivityContext context)
         {
-            var args = context.GetInput<(string uaaJwt, string type)>();
-            var page = 0;
-            var hasMore = true;
+            var jwt = context.GetInput<string>();
             var hrRecords = new List<ProfileEmployee>();
-
-            do 
-            {
-                var resp = await context.CallActivityWithRetryAsync<ProfileResponse>(                    
-                    nameof(FetchPeoplePageFromProfileApi), RetryOptions, (args.uaaJwt, args.type, page++));
-                hrRecords.AddRange(resp.affiliates == null ? new List<ProfileEmployee>() : resp.affiliates);
-                hrRecords.AddRange(resp.employees == null ? new List<ProfileEmployee>() : resp.employees);
-                hrRecords.AddRange(resp.foundations == null ? new List<ProfileEmployee>() : resp.foundations);
-                page += 1;
-                hasMore = (resp.page.CurrentPage == resp.page.LastPage);
-            } while (hasMore);
-
-            return hrRecords;
-        }
-
-        // Fetch a page of HR records of a certain type from the IMS Profile API
-        [FunctionName(nameof(FetchPeoplePageFromProfileApi))]
-        public static async Task<ProfileResponse> FetchPeoplePageFromProfileApi([ActivityTrigger] IDurableActivityContext context)
-        {
-            var args = context.GetInput<(string uaaJwt, string type, int page)>();
             var url = Utils.Env("ImsProfileApiUrl", required: true);
-            var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={args.type}&page={args.page}&pageSize=7500");
-            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", args.uaaJwt);
-            var resp = await HttpClient.SendAsync(req);            
-            return await Utils.DeserializeResponse<ProfileResponse>(context, resp, "fetch page from IMS Profile API");
+            var authHeader = new AuthenticationHeaderValue("Bearer", jwt);
+
+            foreach(var type in new[]{"employee", "affiliate", "foundation"})
+            {
+                var page = 0;
+                var hasMore = true;
+                // do 
+                // {
+                    Console.WriteLine($"Fetching {type} page {page}");
+                    var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=7500");
+                    req.Headers.Authorization = authHeader;
+                    var resp = await HttpClient.SendAsync(req);            
+                    var body = await Utils.DeserializeResponse<ProfileResponse>(context, resp, "fetch page from IMS Profile API");
+                    hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
+                    hrRecords.AddRange(body.employees == null ? new List<ProfileEmployee>() : body.employees);
+                    hrRecords.AddRange(body.foundations == null ? new List<ProfileEmployee>() : body.foundations);
+                    // page += 1;
+                    // Console.WriteLine($"{type} resp current page: {body.page.CurrentPage}; resp last page: {body.page.LastPage}");
+                    // hasMore = (body.page.CurrentPage != body.page.LastPage);
+                // } while (hasMore);
+            }
+            return hrRecords;
         }
 
         // Aggregate all HR records of a certain type from the IMS Profile API
@@ -151,6 +141,7 @@ namespace Tasks
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"********* {context.InstanceId} {ex.Message}");
                 Logging.GetLogger(context).Error(ex, "Failed to bulk-insert HR records to hr_people");
                 throw;
             }
