@@ -12,9 +12,10 @@ namespace Tasks
 {
     public static class Buildings
     {
+        [Disable]
         // Runs at 40 minutes past every hour (00:40 AM, 01:40 AM, 02:40 AM, ...)
         [FunctionName(nameof(ScheduledBuildingsUpdate))]
-        public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 40 * * * *", RunOnStartup=true)]TimerInfo myTimer, 
+        public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 40 * * * *")]TimerInfo myTimer, 
             [DurableClient] IDurableOrchestrationClient starter)
         {
             string instanceId = await starter.StartNewAsync(nameof(BuildingsUpdateOrchestrator), null);
