@@ -32,7 +32,6 @@ namespace Tasks
                 var uaaJwt = await context.CallActivityWithRetryAsync<string>(
                     nameof(FetchUAAToken), RetryOptions, null);
 
-/*
                 // Aggregate all the HR records of various different types
                 var hrRecords = new List<ProfileEmployee>();
                 foreach(var type in new[]{"employee", "affiliate", "foundation"})
@@ -41,7 +40,7 @@ namespace Tasks
                         nameof(FetchPeopleFromProfileApi), (uaaJwt, type));
                     hrRecords.AddRange(employees);
                 }
-
+/*
                 // Update hr_people/people/departments database records.
                 await context.CallSubOrchestratorAsync(
                     nameof(UpdateDatabaseRecords), hrRecords);
