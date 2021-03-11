@@ -61,7 +61,7 @@ namespace Tasks
             var content = new FormUrlEncodedContent(new Dictionary<string,string>{
                 {"grant_type", "client_credentials"},
                 {"client_id", Utils.Env("UaaClientCredentialId", required: true)},
-                {"client_secret", Utils.Env("UaaClientCredentialPassword", required: true)},
+                {"client_secret", Utils.Env("UaaClientCredentialSecret", required: true)},
             });
             var url = Utils.Env("UaaClientCredentialUrl", required: true);
             var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
