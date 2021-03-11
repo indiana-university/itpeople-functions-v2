@@ -43,31 +43,31 @@ stages:
   # condition: succeeded()
 
   jobs:
-  - job: PackageApiApp
-    displayName: Package API Function App
-    pool:
-      vmImage: $(vmImageName)
+  # - job: PackageApiApp
+  #   displayName: Package API Function App
+  #   pool:
+  #     vmImage: $(vmImageName)
 
-    steps:
-    - task: DotNetCoreCLI@2
-      displayName: Build API
-      inputs:
-        command: 'build'
-        projects: src/API/API.csproj
-        arguments: --output $(System.DefaultWorkingDirectory)/ApiFunctionApp --configuration Release
+  #   steps:
+  #   - task: DotNetCoreCLI@2
+  #     displayName: Build API
+  #     inputs:
+  #       command: 'build'
+  #       projects: src/API/API.csproj
+  #       arguments: --output $(System.DefaultWorkingDirectory)/ApiFunctionApp --configuration Release
 
-    - task: ArchiveFiles@2
-      displayName: 'Archive API files'
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/ApiFunctionApp'
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
-        replaceExistingArchive: true
+  #   - task: ArchiveFiles@2
+  #     displayName: 'Archive API files'
+  #     inputs:
+  #       rootFolderOrFile: '$(System.DefaultWorkingDirectory)/ApiFunctionApp'
+  #       includeRootFolder: false
+  #       archiveType: zip
+  #       archiveFile: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
+  #       replaceExistingArchive: true
 
-    - publish: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
-      displayName: Publish API Function App Artifacts
-      artifact: ApiDeploymentPackage
+  #   - publish: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
+  #     displayName: Publish API Function App Artifacts
+  #     artifact: ApiDeploymentPackage
 
   - job: PackageTasksApp
     displayName: Package Tasks Function App
@@ -101,24 +101,24 @@ stages:
   condition: succeeded()
 
   jobs:
-  - deployment: DeployAPI
-    displayName: Deploy API
-    environment: 'development'
-    pool:
-      vmImage: $(vmImageName)
+  # - deployment: DeployAPI
+  #   displayName: Deploy API
+  #   environment: 'development'
+  #   pool:
+  #     vmImage: $(vmImageName)
 
-    strategy:
-      runOnce:
-        deploy:
+  #   strategy:
+  #     runOnce:
+  #       deploy:
 
-          steps:
-          - task: AzureFunctionApp@1
-            displayName: Publish API Function App
-            inputs:
-              azureSubscription: '$(azureSubscription)'
-              appType: functionApp
-              appName: '$(apiFunctionAppName)'
-              package: '$(Pipeline.Workspace)/ApiDeploymentPackage/ApiFunctionApp.zip'
+  #         steps:
+  #         - task: AzureFunctionApp@1
+  #           displayName: Publish API Function App
+  #           inputs:
+  #             azureSubscription: '$(azureSubscription)'
+  #             appType: functionApp
+  #             appName: '$(apiFunctionAppName)'
+  #             package: '$(Pipeline.Workspace)/ApiDeploymentPackage/ApiFunctionApp.zip'
 
   - deployment: DeployTasks
     displayName: Deploy Tasks
