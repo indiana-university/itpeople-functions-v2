@@ -176,8 +176,8 @@ namespace Tasks
 
         private static LdapConnection GetLdapConnection()
         {
-            var adsUser = $"ads\\{Utils.Env("AdsUser")}";
-            var adsPassword = Utils.Env("AdsPassword");
+            var adsUser = $"ads\\{Utils.Env("AdToolsGroupManagerUsername")}";
+            var adsPassword = Utils.Env("AdToolsGroupManagerPassword");
             var ldap = new LdapConnection() {SecureSocketLayer = true};
             ldap.Connect("ads.iu.edu", 636);
             ldap.Bind(adsUser, adsPassword);    

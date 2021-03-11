@@ -63,8 +63,7 @@ namespace Tasks
             var url = Utils.Env("UaaClientCredentialUrl", required: true);
             var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
             var resp = await HttpClient.SendAsync(req);
-            resp.EnsureSuccessStatusCode();
-            var body = await resp.Content.ReadAsAsync<UaaJwtResponse>();
+            var body = await Utils.DeserializeResponse<UaaJwtResponse>(context, resp, "fetch JWT from UAA");
             return body.access_token;
         }
 
@@ -97,7 +96,7 @@ namespace Tasks
         public static async Task<ProfileResponse> FetchPeoplePageFromProfileApi([ActivityTrigger] IDurableActivityContext context)
         {
             var args = context.GetInput<(string uaaJwt, string type, int page)>();
-            var url = Utils.Env("HrDataUrl", required: true);
+            var url = Utils.Env("ImsProfileApiUrl", required: true);
             var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={args.type}&page={args.page}&pageSize=7500");
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", args.uaaJwt);
             var resp = await HttpClient.SendAsync(req);            

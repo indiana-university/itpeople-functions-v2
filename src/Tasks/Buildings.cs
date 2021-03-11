@@ -47,6 +47,9 @@ namespace Tasks
         public static async Task<IEnumerable<DenodoBuilding>> FetchBuildingsFromDenodo([ActivityTrigger] IDurableActivityContext context)
         {
             var req = CreateDenodoBuildingsRequest();
+            var denodoUrl = Utils.Env("DenodoBuildingsViewUrl", required: true);
+            var denodoUser = Utils.Env("DenodoBuildingsViewUser", required: true);
+            var denodoPwd = Utils.Env("DenodoBuildingsViewPassword", required: true);
             var resp = await HttpClient.SendAsync(req);
             var body = await Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(context, resp, "fetch buildings from Denodo view");
             return body.Elements;
