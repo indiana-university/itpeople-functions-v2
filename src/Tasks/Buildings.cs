@@ -14,12 +14,12 @@ namespace Tasks
     {
         // Runs at 40 minutes past every hour (00:40 AM, 01:40 AM, 02:40 AM, ...)
         [FunctionName(nameof(ScheduledBuildingsUpdate))]
-        public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 40 * * * *")]TimerInfo myTimer, 
+        public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 40 * * * *", RunOnStartup=true)]TimerInfo myTimer, 
             [DurableClient] IDurableOrchestrationClient starter)
         {
             string instanceId = await starter.StartNewAsync(nameof(BuildingsUpdateOrchestrator), null);
             Logging.GetLogger(instanceId, nameof(ScheduledBuildingsUpdate), myTimer)
-                .Information("Started scheduled buildings update.");
+                .Information("{Message}","Started scheduled buildings update.");
         }
 
         [FunctionName(nameof(BuildingsUpdateOrchestrator))]
@@ -46,10 +46,18 @@ namespace Tasks
         [FunctionName(nameof(FetchBuildingsFromDenodo))]
         public static async Task<IEnumerable<DenodoBuilding>> FetchBuildingsFromDenodo([ActivityTrigger] IDurableActivityContext context)
         {
-            var req = CreateDenodoBuildingsRequest();
+            throw new Exception("HORK! 🤮");
+
             var denodoUrl = Utils.Env("DenodoBuildingsViewUrl", required: true);
             var denodoUser = Utils.Env("DenodoBuildingsViewUser", required: true);
             var denodoPwd = Utils.Env("DenodoBuildingsViewPassword", required: true);
+            var basicAuth = Convert.ToBase64String(
+                System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(
+                    $"{denodoUser}:{denodoPwd}"
+                )
+            );
+            var req = new HttpRequestMessage(HttpMethod.Get, denodoUrl);
+            req.Headers.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);            
             var resp = await HttpClient.SendAsync(req);
             var body = await Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(context, resp, "fetch buildings from Denodo view");
             return body.Elements;
@@ -78,20 +86,5 @@ namespace Tasks
         private static RetryOptions RetryOptions = new RetryOptions(
             firstRetryInterval: TimeSpan.FromSeconds(5),
             maxNumberOfAttempts: 3);
-
-        private static HttpRequestMessage CreateDenodoBuildingsRequest()
-        {
-            var denodoUrl = Utils.Env("DenodoBuildingsUrl", required: true);
-            var denodoUser = Utils.Env("DenodoBuildingsUsername", required: true);
-            var denodoPwd = Utils.Env("DenodoBuildingsPassword", required: true);
-            var basicAuth = Convert.ToBase64String(
-                System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(
-                    $"{denodoUser}:{denodoPwd}"
-                )
-            );
-            var req = new HttpRequestMessage(HttpMethod.Get, denodoUrl);
-            req.Headers.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);
-            return req;
-        }
     }
 }

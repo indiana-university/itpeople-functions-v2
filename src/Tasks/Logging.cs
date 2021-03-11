@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Serilog.Sinks.PostgreSQL;
 using NpgsqlTypes;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Newtonsoft.Json;
 
 namespace Tasks
 {
@@ -48,6 +49,7 @@ namespace Tasks
 
             if (!string.IsNullOrWhiteSpace(connectionString))
             {
+                Serilog.Debugging.SelfLog.Enable(msg => System.Console.WriteLine(msg));
                 logger.WriteTo.PostgreSQL(
                     connectionString, tableName, columnWriters);
             }
@@ -67,8 +69,8 @@ namespace Tasks
                 .TryAddAzureAppInsightsSink()
                 .TryAddPostgresqlDatabaseSink()
                 .CreateLogger()
-                .ForContext(LogProps.InvocationId, instanceId)
+                .ForContext(LogProps.InvocationId, System.Guid.Parse(instanceId))
                 .ForContext(LogProps.Function, function)
-                .ForContext(LogProps.Properties, properties);
+                .ForContext(LogProps.Properties, properties == null ? null : JsonConvert.SerializeObject(properties, Formatting.Indented));
     }
 }
