@@ -31,11 +31,12 @@ namespace Tasks
             {
                 var buildings = await context.CallActivityWithRetryAsync<IEnumerable<DenodoBuilding>>(
                     nameof(FetchBuildingsFromDenodo), RetryOptions, null);
-                foreach (var building in buildings.Take(1))
-                {
-                    await context.CallActivityWithRetryAsync(
-                        nameof(AddOrUpdateBuildingRecords), RetryOptions, building);
-                }
+                
+                var tasks = buildings.Select(b =>
+                    context.CallActivityWithRetryAsync(
+                        nameof(AddOrUpdateBuildingRecords), RetryOptions, b));
+                
+                await Task.WhenAll(tasks);
             }
             catch (Exception ex)
             {
@@ -58,7 +59,7 @@ namespace Tasks
             );
             var req = new HttpRequestMessage(HttpMethod.Get, denodoUrl);
             req.Headers.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);            
-            var resp = await HttpClient.SendAsync(req);
+            var resp = await Utils.HttpClient.SendAsync(req);
             var body = await Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(context, resp, "fetch buildings from Denodo view");
             return body.Elements;
         }

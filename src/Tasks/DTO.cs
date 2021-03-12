@@ -28,10 +28,10 @@ namespace Tasks
         {
             record.Name = Description;
             record.Code = BuildingCode;
-            record.Address = Street;
-            record.City = City;
-            record.State = State;
-            record.PostCode = Zip;
+            record.Address = Street ?? "";
+            record.City = City ?? "";
+            record.State = State ?? "";
+            record.PostCode = Zip ?? "";
             record.Country = "";
         }
     }
