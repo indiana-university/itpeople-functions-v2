@@ -81,7 +81,6 @@ namespace Tasks
         private const string LdapSearchBase = "ou=Accounts,dc=ads,dc=iu,dc=edu";
         private const int LdapPageSize = 500;
 
-        [FunctionName(nameof(GetGroupMembers))]
         public static List<string> GetGroupMembers(IDurableActivityContext context, Tool tool)
         {
             var members = new List<string>();
