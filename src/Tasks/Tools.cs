@@ -64,17 +64,13 @@ namespace Tasks
             var members = await context.CallActivityWithRetryAsync<IEnumerable<string>>(
                 nameof(GetGroupMembers), RetryOptions, tool);
             // add to the group any grantee who is not a member.
-            foreach (var netid in grantees.Except(members))
-            {
-                await context.CallActivityWithRetryAsync(
-                    nameof(AddGroupMember), RetryOptions, (tool, netid));
-            }
-            // remove from the group any member who is not a grantee.
-            foreach (var netid in members.Except(grantees))
-            {
-                await context.CallActivityWithRetryAsync(
-                    nameof(RemoveGroupMember), RetryOptions, (tool, netid));
-            }
+            var addTasks = grantees.Except(members).Select(m => 
+                context.CallActivityWithRetryAsync(nameof(AddGroupMember), RetryOptions, (tool, m)));
+            // remove from the group any member who is not a grantee
+            var removeTasks = members.Except(grantees).Select(m =>
+                context.CallActivityWithRetryAsync(nameof(RemoveGroupMember), RetryOptions, (tool, m)));
+
+            await Task.WhenAll(addTasks.Concat(removeTasks));
         }
 
         [FunctionName(nameof(GetToolGrantees))]
