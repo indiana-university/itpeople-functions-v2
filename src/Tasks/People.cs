@@ -152,9 +152,9 @@ namespace Tasks
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"********* {context.InstanceId} {ex.Message}");
-                Logging.GetLogger(context).Error(ex, "Failed to bulk-insert HR records to hr_people");
-                throw;
+                var msg = "Failed to bulk-insert HR records to hr_people";
+                Logging.GetLogger(context).Error(ex, msg);
+                throw new Exception(msg, ex);
             }
         }
 
