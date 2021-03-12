@@ -66,16 +66,20 @@ namespace Tasks
             var uaa = TryUaaConnect();
             await Task.WhenAll(dnsDb, dnsDenodo, dnsUaa, dnsProfile, db, denodo, uaa);
             return $@"
-~~~~~~~ DNS ~~~~~~~~
+~~~~~ DNS ~~~~~
 Database: {dnsDb.Result}
 Denodo:   {dnsDenodo.Result}
 Apps/UAA: {dnsUaa.Result}
 Apps/PRS: {dnsProfile.Result}
 
-~~~ Dependencies ~~~
-Database: {db.Result}
+~~~ Database ~~~
+{db.Result}
+
+~~~~ Denodo ~~~~
 Denodo:   {denodo.Result}
-Apps/UAA: {uaa.Result}";
+
+~~~ Apps/UAA ~~~
+{uaa.Result}";
         }
 
         private static async Task<string> TryDbConnect()
@@ -92,7 +96,7 @@ Apps/UAA: {uaa.Result}";
             }
             catch (Exception ex)
             {
-                return $"Failed ({Elapsed(start)}): {ex.Message}";
+                return $"Failed ({Elapsed(start)}):\n{ex.ToString()}";
             }
         }
 
@@ -120,7 +124,7 @@ Apps/UAA: {uaa.Result}";
             }
             catch (Exception ex)
             {
-                return $"Failed ({Elapsed(start)}): {ex.Message}";
+                return $"Failed ({Elapsed(start)}):\n{ex.ToString()}";
             }
         }
 
@@ -142,7 +146,7 @@ Apps/UAA: {uaa.Result}";
             }
             catch (Exception ex)
             {
-                return $"Failed ({Elapsed(start)}): {ex.Message}";
+                return $"Failed ({Elapsed(start)}):\n{ex.ToString()}";
             }
         }
 
