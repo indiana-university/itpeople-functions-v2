@@ -14,7 +14,6 @@ namespace Tasks
     public class Tools
     {
         // Runs at 20 minutes past the hour (00:20 AM, 01:20 AM, 02:20 AM, ...)
-        [Disable]
         [FunctionName(nameof(ScheduledToolsUpdate))]
         public static async Task ScheduledToolsUpdate([TimerTrigger("0 20 * * * *")]TimerInfo myTimer, 
             [DurableClient] IDurableOrchestrationClient starter)
@@ -31,15 +30,13 @@ namespace Tasks
             try
             {
                 // Fetch all tools.
-                var tools = await context.CallActivityWithRetryAsync<string>(
+                var tools = await context.CallActivityWithRetryAsync<IEnumerable<Tool>>(
                     nameof(FetchTools), RetryOptions, null);
                 
                 // Compare current tool grants with IT People grants and add/remove grants as necessary.
-                foreach(var tool in tools)
-                {
-                    await context.CallSubOrchestratorAsync(
-                        nameof(SynchronizeToolGroupMembership), tool);
-                }
+                var toolTasks = tools.Select(t => 
+                    context.CallActivityWithRetryAsync(nameof(SynchronizeToolGroupMembership), RetryOptions, t));
+                await Task.WhenAll(toolTasks);
             } 
             catch (Exception ex)
             {
@@ -54,37 +51,28 @@ namespace Tasks
 
         // Aggregate all HR records of a certain type from the IMS Profile API
         [FunctionName(nameof(SynchronizeToolGroupMembership))]
-        public static async Task SynchronizeToolGroupMembership([OrchestrationTrigger] IDurableOrchestrationContext context)
+        public static async Task SynchronizeToolGroupMembership([ActivityTrigger] IDurableActivityContext context)
         {
             var tool = context.GetInput<Tool>();
             // get grantee netids from IT People DB
-            var grantees = await context.CallActivityWithRetryAsync<IEnumerable<string>>(
-                nameof(GetToolGrantees), RetryOptions, tool);
+            var grantees = await GetToolGrantees(context, tool);
             // get current group members
-            var members = await context.CallActivityWithRetryAsync<IEnumerable<string>>(
-                nameof(GetGroupMembers), RetryOptions, tool);
+            var members = await Task.Run(()=>GetGroupMembers(context, tool));
             // add to the group any grantee who is not a member.
-            var addTasks = grantees.Except(members).Select(m => 
-                context.CallActivityWithRetryAsync(nameof(AddGroupMember), RetryOptions, (tool, m)));
+            var addTasks = grantees.Except(members).Select(m => AddGroupMember(context, tool, m));
             // remove from the group any member who is not a grantee
-            var removeTasks = members.Except(grantees).Select(m =>
-                context.CallActivityWithRetryAsync(nameof(RemoveGroupMember), RetryOptions, (tool, m)));
-
+            var removeTasks = members.Except(grantees).Select(m => RemoveGroupMember(context, tool, m));
             await Task.WhenAll(addTasks.Concat(removeTasks));
         }
 
-        [FunctionName(nameof(GetToolGrantees))]
-        public static Task<List<string>> GetToolGrantees([ActivityTrigger] IDurableActivityContext context)
-        {
-            var tool = context.GetInput<Tool>();
-            return Utils.DatabaseQuery<List<string>>(context, $"fetch grantees for tool '{tool.Name}'", db =>
+        public static Task<List<string>> GetToolGrantees(IDurableActivityContext context, Tool tool) 
+            => Utils.DatabaseQuery<List<string>>(context, $"fetch grantees for tool '{tool.Name}'", db =>
                 db.Tools
                     .Where(t => t.Id == tool.Id)
                     .SelectMany(t => t.MemberTools)
                     .Select(mt => mt.UnitMember.Person.Netid)
                     .Distinct()
                     .ToListAsync());
-        }
 
         private const bool AddMember = true;
         private const bool DeleteMember = false;
@@ -94,9 +82,8 @@ namespace Tasks
         private const int LdapPageSize = 500;
 
         [FunctionName(nameof(GetGroupMembers))]
-        public static List<string> GetGroupMembers([ActivityTrigger] IDurableActivityContext context)
+        public static List<string> GetGroupMembers(IDurableActivityContext context, Tool tool)
         {
-            var tool = context.GetInput<Tool>();
             var members = new List<string>();
             try
             {
@@ -114,7 +101,7 @@ namespace Tasks
                         var constraints = new LdapSearchConstraints();
                         constraints.setControls(controls);
                         // query the LDAP group membrship
-                        var search = ldap.Search(LdapSearchBase, LdapConnection.SCOPE_SUB, $"(memberOf={tool.ADPath}", new[]{LdapAttributeName}, false, constraints);
+                        var search = ldap.Search(LdapSearchBase, LdapConnection.SCOPE_SUB, $"(memberOf={tool.ADPath})", new[]{LdapAttributeName}, false, constraints);
                         // Pull member netids from the results list. But LDAP is weird: it sends
                         // a linked list of results that wraps around on itself. We know we've
                         // reached the end of the list when we encounter a netid we've already seen.
@@ -134,37 +121,43 @@ namespace Tasks
             }
             catch (Exception ex)
             {
-                Logging.GetLogger(context, tool).Error(ex, $"Failed to fetch members of tool {tool.Name} group at path {tool.ADPath}");
-                throw;
+                string msg = $"Failed to fetch members of tool {tool.Name} group at path {tool.ADPath}";
+                Logging.GetLogger(context, tool).Error(ex, msg);
+                throw new Exception(msg, ex);
             }
         }
 
-        [FunctionName(nameof(AddGroupMember))]
-        public static void AddGroupMember([ActivityTrigger] IDurableActivityContext context)
+        public static Task AddGroupMember(IDurableActivityContext context, Tool tool, string netid)
         {
-            var args = context.GetInput<(Tool tool, string netid)>();
-            Logging.GetLogger(context,args).Information($"Add {args.netid} tool {args.tool.Name} group");
-            ModifyGroupMembership(args.netid, args.tool.ADPath, LdapModification.ADD);
+            Logging.GetLogger(context,new {tool=tool, netid=netid}).Information($"Add {netid} tool {tool.Name} group");
+            return Task.Run(()=>ModifyGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.ADD));
         }
 
-
-        [FunctionName(nameof(RemoveGroupMember))]
-        public static void RemoveGroupMember([ActivityTrigger] IDurableActivityContext context)
+        public static Task RemoveGroupMember(IDurableActivityContext context, Tool tool, string netid)
         {
-            var args = context.GetInput<(Tool tool, string netid)>();
-            Logging.GetLogger(context,args).Information($"Remove {args.netid} from {args.tool.Name} group");
-            ModifyGroupMembership(args.netid, args.tool.ADPath, LdapModification.DELETE);
+            Logging.GetLogger(context,new {tool=tool, netid=netid}).Information($"Remove {netid} from {tool.Name} group");
+            return Task.Run(()=>ModifyGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.DELETE));
         }
 
-        private static void ModifyGroupMembership(string netid, string adPath, int action)
+        private static void ModifyGroupMembership(IDurableActivityContext context, string netid, string name, string adPath, int action)
         {
-            using (var ldap = GetLdapConnection())
+            try
             {
-                var memberAttribute = $"cn={netid},{LdapSearchBase}";
-                var ldapAttribute = new LdapAttribute("member", memberAttribute);
-                var groupMod = new LdapModification(action, ldapAttribute);
-                ldap.Modify(adPath, groupMod);
-            }
+                using (var ldap = GetLdapConnection())
+                {
+                    var memberAttribute = $"cn={netid},{LdapSearchBase}";
+                    var ldapAttribute = new LdapAttribute("member", memberAttribute);
+                    var groupMod = new LdapModification(action, ldapAttribute);
+                    ldap.Modify(adPath, groupMod);
+                }
+            } 
+            catch (Exception ex)
+            {
+                string actionDesc = action == 0 ? "ADD" : "REMOVE";
+                string msg = $"Failed to {actionDesc} {netid} from {name} group";
+                Logging.GetLogger(context, new{action= actionDesc, tool= name, path= adPath }).Error(ex, msg);
+                throw new Exception(msg, ex);
+            }    
         }
 
         private static RetryOptions RetryOptions = new RetryOptions(
@@ -173,8 +166,8 @@ namespace Tasks
 
         private static LdapConnection GetLdapConnection()
         {
-            var adsUser = $"ads\\{Utils.Env("AdToolsGroupManagerUsername")}";
-            var adsPassword = Utils.Env("AdToolsGroupManagerPassword");
+            var adsUser = $"ads\\{Utils.Env("AdToolsGroupManagerUser", required:true)}";
+            var adsPassword = Utils.Env("AdToolsGroupManagerPassword", required:true);
             var ldap = new LdapConnection() {SecureSocketLayer = true};
             ldap.Connect("ads.iu.edu", 636);
             ldap.Bind(adsUser, adsPassword);    
