@@ -40,14 +40,15 @@ namespace Tasks
 
         private static string TryGetIP(string hostName)
         {
+            var start = DateTime.Now;
             try
             {
                 var ip = System.Net.Dns.GetHostEntry(hostName);
-                return $"{hostName}: {string.Join(",", ip.AddressList.Select(ipx=>ipx.ToString()))}";
+                return $"{hostName} ({(Elapsed(start))}): {string.Join(",", ip.AddressList.Select(ipx=>ipx.ToString()))}";
             }
             catch (Exception ex)
             {
-                return $"{hostName}: {ex.Message}";
+                return $"{hostName} ({(Elapsed(start))}): {ex.Message}";
             }
         }
 
@@ -72,23 +73,28 @@ Apps:     {uaa.Result}";
 
         private static async Task<string> TryDbConnect()
         {
+            var start = DateTime.Now;
             try
             {
                 var connStr = Utils.Env("DatabaseConnectionString", required: true);
                 using (var db = PeopleContext.Create(connStr))
                 {
                     var tool = await db.Tools.FirstAsync();
-                    return "OK";
+                    return $"OK ({Elapsed(start)})";
                 }
             }
             catch (Exception ex)
             {
-                return $"Failed: {ex.Message}";
+                return $"Failed ({Elapsed(start)}): {ex.Message}";
             }
         }
 
+        private static string Elapsed(DateTime start) 
+            => $"{Math.Round((DateTime.Now - start).TotalSeconds, 1)}s";
+
         private static async Task<string> TryDenodoConnect()
         {
+            var start = DateTime.Now;
             try
             {
                 var denodoUrl = Utils.Env("DenodoBuildingsViewUrl", required: true);
@@ -103,16 +109,17 @@ Apps:     {uaa.Result}";
                 req.Headers.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);            
                 var resp = await Utils.HttpClient.SendAsync(req);
                 resp.EnsureSuccessStatusCode();
-                return "OK";
+                return $"OK ({Elapsed(start)})";
             }
             catch (Exception ex)
             {
-                return $"Failed: {ex.Message}";
+                return $"Failed ({Elapsed(start)}): {ex.Message}";
             }
         }
 
         private static async Task<string> TryUaaConnect()
         {
+            var start = DateTime.Now;
             try
             {
                 var content = new FormUrlEncodedContent(new Dictionary<string,string>{
@@ -124,11 +131,11 @@ Apps:     {uaa.Result}";
                 var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
                 var resp = await Utils.HttpClient.SendAsync(req);
                 resp.EnsureSuccessStatusCode();
-                return "OK";
+                return $"OK ({Elapsed(start)})";
             }
             catch (Exception ex)
             {
-                return $"Failed: {ex.Message}";
+                return $"Failed ({Elapsed(start)}): {ex.Message}";
             }
         }
 
