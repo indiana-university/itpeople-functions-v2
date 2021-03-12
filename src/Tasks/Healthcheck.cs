@@ -38,12 +38,12 @@ namespace Tasks
             return string.Join("\n", hosts.Select(TryGetIP));
         }
 
-        private static string TryGetIP(string hostName)
+        private static async Task<string> TryGetIP(string hostName)
         {
             var start = DateTime.Now;
             try
             {
-                var ip = System.Net.Dns.GetHostEntry(hostName);
+                var ip = await Task.Run(()=>System.Net.Dns.GetHostEntry(hostName));
                 return $"{hostName} ({(Elapsed(start))}): {string.Join(",", ip.AddressList.Select(ipx=>ipx.ToString()))}";
             }
             catch (Exception ex)
@@ -56,19 +56,26 @@ namespace Tasks
         public static async Task<string> SmokeTest(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "smokeTest")] HttpRequest req)
         {
-            var dns = DoDnsCheck();
+
+            var dnsDb = TryGetIP("esdbp57p.uits.iu.edu");
+            var dnsDenodo = TryGetIP("ebidvt.uits.iu.edu");
+            var dnsUaa = TryGetIP("apps.iu.edu");
+            var dnsProfile = TryGetIP("prs.apps.iu.edu");
             var db = TryDbConnect();
             var denodo = TryDenodoConnect();
             var uaa = TryUaaConnect();
-            await Task.WhenAll(db, denodo, uaa);
+            await Task.WhenAll(dnsDb, dnsDenodo, dnsUaa, dnsProfile, db, denodo, uaa);
             return $@"
 ~~~~~~~ DNS ~~~~~~~~
-{dns}
+Database: {dnsDb.Result}
+Denodo:   {dnsDenodo.Result}
+Apps/UAA: {dnsUaa.Result}
+Apps/PRS: {dnsProfile.Result}
 
 ~~~ Dependencies ~~~
 Database: {db.Result}
 Denodo:   {denodo.Result}
-Apps:     {uaa.Result}";
+Apps/UAA: {uaa.Result}";
         }
 
         private static async Task<string> TryDbConnect()
