@@ -44,11 +44,11 @@ namespace Tasks
             try
             {
                 var ip = await Task.Run(()=>System.Net.Dns.GetHostEntry(hostName));
-                return $"{hostName} ({(Elapsed(start))}): {string.Join(",", ip.AddressList.Select(ipx=>ipx.ToString()))}";
+                return $"😎 ({(Elapsed(start))}): {hostName} -> {string.Join(",", ip.AddressList.Select(ipx=>ipx.ToString()))}";
             }
             catch (Exception ex)
             {
-                return $"{hostName} ({(Elapsed(start))}): {ex.Message}";
+                return $"💩 ({(Elapsed(start))}): {hostName} -> {ex.Message}";
             }
         }
 
@@ -66,20 +66,30 @@ namespace Tasks
             var uaa = TryUaaConnect();
             await Task.WhenAll(dnsDb, dnsDenodo, dnsUaa, dnsProfile, db, denodo, uaa);
             return $@"
-~~~~~ DNS ~~~~~
-Database: {dnsDb.Result}
-Denodo:   {dnsDenodo.Result}
-Apps/UAA: {dnsUaa.Result}
-Apps/PRS: {dnsProfile.Result}
-
+~~~~~~~~~~~~~~~~
 ~~~ Database ~~~
-{db.Result}
+~~~~~~~~~~~~~~~~
 
+DNS Resolution: {dnsDb.Result}
+Connection:     {db.Result}
+
+
+~~~~~~~~~~~~~~~~
 ~~~~ Denodo ~~~~
-Denodo:   {denodo.Result}
+~~~~~~~~~~~~~~~~
 
-~~~ Apps/UAA ~~~
-{uaa.Result}";
+DNS Resolution: {dnsDenodo.Result}
+Connection:     {denodo.Result}
+
+
+~~~~~~~~~~~~~~~~
+~~~~~ Apps ~~~~~
+~~~~~~~~~~~~~~~~
+
+UAA DNS Resolution: {dnsUaa.Result}
+PRS DNS Resolution: {dnsProfile.Result}
+UAA Connection:     {uaa.Result}
+";
         }
 
         private static async Task<string> TryDbConnect()
@@ -91,12 +101,12 @@ Denodo:   {denodo.Result}
                 using (var db = PeopleContext.Create(connStr))
                 {
                     var tool = await db.Tools.FirstAsync();
-                    return $"OK ({Elapsed(start)})";
+                    return $"😎 ({Elapsed(start)})";
                 }
             }
             catch (Exception ex)
             {
-                return $"Failed ({Elapsed(start)}):\n{ex.ToString()}";
+                return $"💩 ({Elapsed(start)})\n{ex.ToString()}";
             }
         }
 
@@ -120,11 +130,11 @@ Denodo:   {denodo.Result}
                 req.Headers.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);            
                 var resp = await Utils.HttpClient.SendAsync(req);
                 resp.EnsureSuccessStatusCode();
-                return $"OK ({Elapsed(start)})";
+                return $"😎 ({Elapsed(start)})";
             }
             catch (Exception ex)
             {
-                return $"Failed ({Elapsed(start)}):\n{ex.ToString()}";
+                return $"💩 ({Elapsed(start)})\n{ex.ToString()}";
             }
         }
 
@@ -142,11 +152,11 @@ Denodo:   {denodo.Result}
                 var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
                 var resp = await Utils.HttpClient.SendAsync(req);
                 resp.EnsureSuccessStatusCode();
-                return $"OK ({Elapsed(start)})";
+                return $"😎 ({Elapsed(start)})";
             }
             catch (Exception ex)
             {
-                return $"Failed ({Elapsed(start)}):\n{ex.ToString()}";
+                return $"💩 ({Elapsed(start)})\n{ex.ToString()}";
             }
         }
 
