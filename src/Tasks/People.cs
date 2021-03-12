@@ -14,10 +14,10 @@ namespace Tasks
 {
     public static class People
     {
+        [Disable]
          // Runs at the top of the hour (00:00 AM, 01:00 AM, 02:00 AM, ...)
-        //[Disable]
         [FunctionName(nameof(ScheduledPeopleUpdate))]
-        public static async Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *", RunOnStartup=true)]TimerInfo myTimer, 
+        public static async Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *")]TimerInfo myTimer, 
             [DurableClient] IDurableOrchestrationClient starter)
         {
             string instanceId = await starter.StartNewAsync(nameof(PeopleUpdateOrchestrator), null);
