@@ -56,7 +56,7 @@ namespace Tasks
         }
 
         public static ILogger GetLogger(IDurableActivityContext ctx, object properties = null)  
-            => GetLogger(ctx.InstanceId, "", properties);
+            => GetLogger("00000000-0000-0000-0000-000000000000", "", properties);
 
         public static ILogger GetLogger(IDurableOrchestrationContext ctx, object properties = null) 
             => GetLogger(ctx.InstanceId, ctx.Name, properties);

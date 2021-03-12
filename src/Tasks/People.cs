@@ -7,6 +7,8 @@ using System.Net.Http;
 using System;
 using System.Net.Http.Headers;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Net;
 
 namespace Tasks
 {
@@ -36,9 +38,15 @@ namespace Tasks
                 var hrRecords = await context.CallActivityWithRetryAsync<IEnumerable<ProfileEmployee>>(
                     nameof(FetchPeopleFromProfileApi), RetryOptions, uaaJwt);
 
-                // Update hr_people/people/departments database records.
-                await context.CallSubOrchestratorAsync(
-                    nameof(UpdateDatabaseRecords), hrRecords);
+                // Refresh the HrPeople table with the Profile API data
+                await context.CallActivityWithRetryAsync(
+                        nameof(RefreshHrPeople), RetryOptions, hrRecords);
+                // Add/update Departments from new HR data
+                await context.CallActivityWithRetryAsync(
+                        nameof(UpdateDepartmentRecords), RetryOptions, null);
+                // Update People name/position/contact info from new HR data
+                await context.CallActivityWithRetryAsync(
+                        nameof(UpdatePeopleRecords), RetryOptions, null);
             }
             catch (Exception ex)
             {
@@ -58,7 +66,7 @@ namespace Tasks
             });
             var url = Utils.Env("UaaClientCredentialUrl", required: true);
             var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
-            var resp = await HttpClient.SendAsync(req);
+            var resp = await Utils.HttpClient.SendAsync(req);
             var body = await Utils.DeserializeResponse<UaaJwtResponse>(context, resp, "fetch JWT from UAA");
             return body.access_token;
         }
@@ -70,46 +78,50 @@ namespace Tasks
         {
             var jwt = context.GetInput<string>();
             var hrRecords = new List<ProfileEmployee>();
-            var url = Utils.Env("ImsProfileApiUrl", required: true);
-            var authHeader = new AuthenticationHeaderValue("Bearer", jwt);
 
             foreach(var type in new[]{"employee", "affiliate", "foundation"})
             {
                 var page = 0;
                 var hasMore = true;
-                // do 
-                // {
-                    Console.WriteLine($"Fetching {type} page {page}");
-                    var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=7500");
-                    req.Headers.Authorization = authHeader;
-                    var resp = await HttpClient.SendAsync(req);            
-                    var body = await Utils.DeserializeResponse<ProfileResponse>(context, resp, "fetch page from IMS Profile API");
+                do 
+                {
+                    var body = await FetchPage(context, jwt, type, page);
                     hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
                     hrRecords.AddRange(body.employees == null ? new List<ProfileEmployee>() : body.employees);
                     hrRecords.AddRange(body.foundations == null ? new List<ProfileEmployee>() : body.foundations);
-                    // page += 1;
-                    // Console.WriteLine($"{type} resp current page: {body.page.CurrentPage}; resp last page: {body.page.LastPage}");
-                    // hasMore = (body.page.CurrentPage != body.page.LastPage);
-                // } while (hasMore);
+                    page += 1;
+                    hasMore = (body.page.CurrentPage != body.page.LastPage);
+                } while (hasMore);
             }
-            return hrRecords;
+
+            return Clean(hrRecords);
         }
 
-        // Aggregate all HR records of a certain type from the IMS Profile API
-        [FunctionName(nameof(UpdateDatabaseRecords))]
-        public static async Task UpdateDatabaseRecords([OrchestrationTrigger] IDurableOrchestrationContext context)
+        private static async Task<ProfileResponse> FetchPage(IDurableActivityContext context, string jwt, string type, int page)
         {
-            var hrRecords = context.GetInput<IEnumerable<ProfileEmployee>>();
-            // Refresh the HrPeople table with the Profile API data
-            await context.CallActivityWithRetryAsync(
-                    nameof(RefreshHrPeople), RetryOptions, hrRecords);
-            // Add/update Departments from new HR data
-            await context.CallActivityWithRetryAsync(
-                    nameof(UpdateDepartmentRecords), RetryOptions, null);
-            // Update People name/position/contact info from new HR data
-            await context.CallActivityWithRetryAsync(
-                    nameof(UpdatePeopleRecords), RetryOptions, null);
+            Console.WriteLine($"Fetching {type} page {page}");
+            var url = Utils.Env("ImsProfileApiUrl", required: true);
+            var authHeader = new AuthenticationHeaderValue("Bearer", jwt);
+            var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=7500");
+            req.Headers.Authorization = authHeader;
+            var resp = await Utils.HttpClient.SendAsync(req);
+            return await Utils.DeserializeResponse<ProfileResponse>(context, resp, "fetch page from IMS Profile API");
         }
+
+        private static IEnumerable<ProfileEmployee> Clean(List<ProfileEmployee> hrRecords) 
+            => hrRecords.GroupBy(r => r.Username)
+                .Select(grp => new ProfileEmployee()
+                {
+                    Username = grp.Key,
+                    FirstName = grp.First().FirstName,
+                    LastName = grp.First().LastName,
+                    Email = grp.First().Email,
+                    Jobs = grp.SelectMany(grpx => grpx.Jobs),
+                    Contacts = grp.SelectMany(grpx => grpx.Contacts)
+                })
+                .Where(r =>
+                    !string.IsNullOrWhiteSpace(r.Email)
+                    && r.Jobs.Any(j => j.JobStatus == "P" && !string.IsNullOrWhiteSpace(j.JobDepartmentId)));
 
         // Reset the hr_people table with the lastest HR data from the Profile API 
         [FunctionName(nameof(RefreshHrPeople))]
@@ -133,7 +145,7 @@ namespace Tasks
                         {
                             var p = new HrPerson();
                             emp.MapToHrPerson(p);
-                            await writer.WriteLineAsync($"{p.Name}\t{p.NameFirst}\t{p.NameLast}\t{p.Netid}\t{p.Position}\t{p.Campus}\t{p.CampusPhone}\t{p.CampusEmail}\t{p.HrDepartment}\t{p.HrDepartmentDescription}");
+                            await writer.WriteLineAsync($"{p.Name}\t{p.NameFirst}\t{p.NameLast}\t{p.Netid.ToLowerInvariant()}\t{p.Position}\t{p.Campus}\t{p.CampusPhone}\t{p.CampusEmail}\t{p.HrDepartment}\t{p.HrDepartmentDescription}");
                         }
                         await writer.FlushAsync();
                     }
@@ -153,12 +165,18 @@ namespace Tasks
         public static Task UpdateDepartmentRecords([ActivityTrigger] IDurableActivityContext context) 
             => Utils.DatabaseCommand(context, "Upsert department records from new HR data", db =>
                 db.Database.ExecuteSqlRawAsync(@"
+                    -- 1. Add any new hr departments
                     INSERT INTO departments (name, description)
                     SELECT DISTINCT hr_department, hr_department_desc
                     FROM hr_people
                     WHERE hr_department IS NOT NULL
-                    ON CONFLICT (name) DO UPDATE SET
-                        description = EXCLUDED.description;"));
+                    ON CONFLICT (name)
+                    DO NOTHING;
+                    -- 2. Update department descriptions 
+                    UPDATE departments d
+                    SET description = hr_department_desc
+                    FROM hr_people hr
+                    WHERE d.name = hr.hr_department"));
 
         /// Update name, location, position of people in directory using new HR data
         /// This should be one *after* departments are updated.
@@ -167,19 +185,16 @@ namespace Tasks
             => Utils.DatabaseCommand(context, "Upsert department records from new HR data", db =>
                 db.Database.ExecuteSqlRawAsync(@"
                     UPDATE people p
-                    SET p.name = hr.name,
-                        p.name_first = hr.name_first,
-                        p.name_last = hr.name_last,
-                        p.position = hr.position,
-                        p.location = hr.location,
-                        p.campus = hr.campus,
-                        p.campus_phone = hr.campus_phone,
-                        p.campus_email = hr.campus_email,
-                        p.department_id = (SELECT id FROM departments WHERE name=hr.hr_department)
+                    SET name = hr.name,
+                        name_first = hr.name_first,
+                        name_last = hr.name_last,
+                        position = hr.position,
+                        campus = hr.campus,
+                        campus_phone = hr.campus_phone,
+                        campus_email = hr.campus_email,
+                        department_id = (SELECT id FROM departments WHERE name=hr.hr_department)
                     FROM hr_people hr
                     WHERE p.netid = hr.netid"));
-
-        private static HttpClient HttpClient = new HttpClient();
 
         private static RetryOptions RetryOptions = new RetryOptions(
             firstRetryInterval: TimeSpan.FromSeconds(5),
