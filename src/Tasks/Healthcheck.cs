@@ -62,7 +62,7 @@ namespace Tasks
             var dnsUaa = TryGetIP("apps.iu.edu");
             var dnsProfile = TryGetIP("prs.apps.iu.edu");
             var dnsPie = TryGetIP("pie.iu.edu");
-            var dnsPieStage = TryGetIP("pie.iu.edu");
+            var dnsPieStage = TryGetIP("pie-stage.eas.iu.edu");
             var db = TryDbConnect();
             var denodo = TryDenodoConnect();
             var uaa = TryUaaConnect();
