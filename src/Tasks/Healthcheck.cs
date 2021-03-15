@@ -61,12 +61,12 @@ namespace Tasks
             var dnsDenodo = TryGetIP("ebidvt.uits.iu.edu");
             var dnsUaa = TryGetIP("apps.iu.edu");
             var dnsProfile = TryGetIP("prs.apps.iu.edu");
-            var dnsPiews = TryGetIP("pie-stage.eas.iu.edu");
+            var dnsPie = TryGetIP("pie.iu.edu");
             var db = TryDbConnect();
             var denodo = TryDenodoConnect();
             var uaa = TryUaaConnect();
-            var piews = TryPiewsConnect();
-            await Task.WhenAll(dnsDb, dnsDenodo, dnsUaa, dnsProfile, dnsPiews, db, denodo, uaa, piews);
+            var pie = TryPiewPing();
+            await Task.WhenAll(dnsDb, dnsDenodo, dnsUaa, dnsProfile, dnsPie, db, denodo, uaa, pie);
             return $@"
 ~~~~~~~~~~~~~~~~
 ~~~ Database ~~~
@@ -91,24 +91,26 @@ Connection:     {denodo.Result}
 UAA DNS Resolution: {dnsUaa.Result}
 PRS DNS Resolution: {dnsProfile.Result}
 UAA Connection:     {uaa.Result}
+
 ~~~~~~~~~~~~~~~~
-~~~ Piews1 ~~~
+~~~ Pie Ping ~~~
 ~~~~~~~~~~~~~~~~
 
-DNS Resolution: {dnsPiews.Result}
-Connection:     {piews.Result}
+DNS Resolution: {dnsPie.Result}
+Connection:     {pie.Result}
 
 ";
         }
 
-        private static async Task<string> TryPiewsConnect()
+        private static async Task<string> TryPiewPing()
         {
             var start = DateTime.Now;
             try
             {
-                var url = "https://pie-stage.eas.iu.edu";                
-                var resp = await Utils.HttpClient.GetAsync(url);         
-                return $"😎 Status Code : {resp.StatusCode}, ({Elapsed(start)})";
+                var url = "https://pie.iu.edu/api/ping";
+                var resp = await Utils.HttpClient.GetAsync(url);
+                var result = await resp.Content.ReadAsStringAsync();
+                return $"😎 Status Code : {resp.StatusCode}, Body: {result}, ({Elapsed(start)})";
             }
             catch (Exception ex)
             {
