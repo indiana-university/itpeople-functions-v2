@@ -164,7 +164,7 @@ namespace Tasks
             firstRetryInterval: TimeSpan.FromSeconds(5),
             maxNumberOfAttempts: 3);
 
-        private static LdapConnection GetLdapConnection()
+        public static LdapConnection GetLdapConnection()
         {
             var adsUser = $"ads\\{Utils.Env("AdToolsGroupManagerUser", required:true)}";
             var adsPassword = Utils.Env("AdToolsGroupManagerPassword", required:true);

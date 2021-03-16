@@ -59,16 +59,18 @@ namespace Tasks
 
             var dnsDb = TryGetIP("esdbp57p.uits.iu.edu");
             var dnsDenodo = TryGetIP("ebidvt.uits.iu.edu");
+            var dnsLdap = TryGetIP("ads.iu.edu");
             var dnsUaa = TryGetIP("apps.iu.edu");
             var dnsProfile = TryGetIP("prs.apps.iu.edu");
             var dnsPie = TryGetIP("pie.iu.edu");
             var dnsPieStage = TryGetIP("pie-stage.eas.iu.edu");
             var db = TryDbConnect();
             var denodo = TryDenodoConnect();
+            var ldap = TryLdapConnect();
             var uaa = TryUaaConnect();
             var pie = TryPiePing("pie.iu.edu");
             var pieStage = TryPiePing("pie-stage.eas.iu.edu");
-            await Task.WhenAll(dnsDb, dnsDenodo, dnsUaa, dnsProfile, dnsPie, dnsPieStage, db, denodo, uaa, pie, pieStage);
+            await Task.WhenAll(dnsDb, dnsDenodo, dnsLdap, dnsUaa, dnsProfile, dnsPie, dnsPieStage, db, denodo, ldap, uaa, pie, pieStage);
             return $@"
 ~~~~~~~~~~~~~~~~
 ~~~ Database ~~~
@@ -85,6 +87,12 @@ Connection:     {db.Result}
 DNS Resolution: {dnsDenodo.Result}
 Connection:     {denodo.Result}
 
+~~~~~~~~~~~~~~~~
+~~~~  LDAP  ~~~~
+~~~~~~~~~~~~~~~~
+
+DNS Resolution: {dnsLdap.Result}
+Connection:     {ldap.Result}
 
 ~~~~~~~~~~~~~~~~
 ~~~~~ Apps ~~~~~
@@ -108,6 +116,20 @@ Connection:     {pie.Result}
 DNS Resolution: {dnsPieStage.Result}
 Connection:     {pieStage.Result}
 ";
+        }
+
+        private static async Task<string> TryLdapConnect()
+        {
+            var start = DateTime.Now;
+            try
+            {
+                var result = await Task.Run(() => Tools.GetLdapConnection());
+                return $"😎 ({Elapsed(start)})";
+            }
+            catch (Exception ex)
+            {
+                return $"💩 ({Elapsed(start)})\n{ex.ToString()}";
+            }
         }
 
         private static async Task<string> TryPiePing(string baseUrl)
