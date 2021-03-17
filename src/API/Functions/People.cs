@@ -55,9 +55,22 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided ID.")]
         public static Task<IActionResult> PeopleGetMemberships(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}/memberships")] HttpRequest req, string id) 
-            => Security.Authenticate(req)
-                .Bind(_ => PeopleRepository.GetMemberships(ParseId(id)))
-                .Finally(result => Response.Ok(req, result));
+            {
+               if(int.TryParse(id, out int value))
+               {
+                   return  Security.Authenticate(req)
+                    .Bind(_ => PeopleRepository.GetMemberships(value))
+                    .Finally(result => Response.Ok(req, result));
+               }
+               else
+               {
+                   return  Security.Authenticate(req)
+                    .Bind(_ => PeopleRepository.GetMemberships(id))
+                    .Finally(result => Response.Ok(req, result));
+
+               }                
+                
+            }
 
 
         [FunctionName(nameof(People.PeopleUpdate))]
@@ -76,22 +89,5 @@ namespace API.Functions
                 .Bind(_ => Request.DeserializeBody<PersonUpdateRequest>(req))
                 .Bind(body => PeopleRepository.Update(req, id, body))
                 .Finally(result => Response.Ok(req, result));
-
-        private static int ParseId(string id)
-        {
-            int value;
-            try
-            {
-                value = int.Parse(id);
-            }
-            catch(System.FormatException ex)
-            {
-                if(!int.TryParse(id, out value))
-                Pipeline.Conflict($"Coudn't parse {id} to an int: {ex.Message}");
-
-            }
-            
-            return value;
-        }
     }
 }
