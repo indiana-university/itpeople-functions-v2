@@ -54,9 +54,9 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided ID.")]
         public static Task<IActionResult> PeopleGetMemberships(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}/memberships")] HttpRequest req, int id) 
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}/memberships")] HttpRequest req, string id) 
             => Security.Authenticate(req)
-                .Bind(_ => PeopleRepository.GetMemberships(id))
+                .Bind(_ => PeopleRepository.GetMemberships(ParseId(id)))
                 .Finally(result => Response.Ok(req, result));
 
 
@@ -77,5 +77,11 @@ namespace API.Functions
                 .Bind(body => PeopleRepository.Update(req, id, body))
                 .Finally(result => Response.Ok(req, result));
 
+        private static int ParseId(string id)
+        {
+            if(!int.TryParse(id, out int value))
+            Pipeline.Conflict($"Coudn't parse {id} to an int");
+            return value;
+        }
     }
 }
