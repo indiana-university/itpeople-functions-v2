@@ -79,8 +79,18 @@ namespace API.Functions
 
         private static int ParseId(string id)
         {
-            if(!int.TryParse(id, out int value))
-            Pipeline.Conflict($"Coudn't parse {id} to an int");
+            int value;
+            try
+            {
+                value = int.Parse(id);
+            }
+            catch(System.FormatException ex)
+            {
+                if(!int.TryParse(id, out value))
+                Pipeline.Conflict($"Coudn't parse {id} to an int: {ex.Message}");
+
+            }
+            
             return value;
         }
     }
