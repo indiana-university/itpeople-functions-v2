@@ -13,9 +13,9 @@ namespace Tasks
 {
     public class Tools
     {
-        // Runs at 20 minutes past the hour (00:20 AM, 01:20 AM, 02:20 AM, ...)
+        // Runs every 5 minutes)
         [FunctionName(nameof(ScheduledToolsUpdate))]
-        public static async Task ScheduledToolsUpdate([TimerTrigger("0 20 * * * *")]TimerInfo myTimer, 
+        public static async Task ScheduledToolsUpdate([TimerTrigger("0 */5 * * * *")]TimerInfo myTimer, 
             [DurableClient] IDurableOrchestrationClient starter)
         {
             string instanceId = await starter.StartNewAsync(nameof(ToolsUpdateOrchestrator), null);
