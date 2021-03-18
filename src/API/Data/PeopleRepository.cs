@@ -94,7 +94,7 @@ namespace API.Data
                 .Include(p => p.UnitMemberships).ThenInclude(um => um.Unit)
                 .SingleOrDefaultAsync(p => p.Id == id);
             return person == null
-                ? Pipeline.NotFound("No person found with that netid.")
+                ? Pipeline.NotFound("No person found with that Id.")
                 : Pipeline.Success(person);
         }
         private static async Task<Result<Person,Error>> TryFindPerson (PeopleContext db, string username)
@@ -102,7 +102,7 @@ namespace API.Data
             var person = await db.People
                 .Include(p => p.Department)
                 .Include(p => p.UnitMemberships).ThenInclude(um => um.Unit)
-                .SingleOrDefaultAsync(p => p.Netid == username);
+                .SingleOrDefaultAsync(p => EF.Functions.ILike(p.Netid, username));
             return person == null
                 ? Pipeline.NotFound("No person found with that netid.")
                 : Pipeline.Success(person);
