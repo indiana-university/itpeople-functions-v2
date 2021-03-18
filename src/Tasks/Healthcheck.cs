@@ -20,24 +20,6 @@ namespace Tasks
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequest req) 
                 => "Pong!";
 
-        [FunctionName(nameof(DnsCheck))]
-        public static string DnsCheck(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "dnsCheck")] HttpRequest req)
-        {
-            return DoDnsCheck();
-        }
-
-        private static string DoDnsCheck()
-        {
-            var hosts = new[]{
-                "apps.iu.edu",
-                "prs.apps.iu.edu",
-                "ebidvt.uits.iu.edu",
-                "esdbp57p.uits.iu.edu"
-            };
-            return string.Join("\n", hosts.Select(TryGetIP));
-        }
-
         private static async Task<string> TryGetIP(string hostName)
         {
             var start = DateTime.Now;
