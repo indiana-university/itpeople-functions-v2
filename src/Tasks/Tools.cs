@@ -55,10 +55,11 @@ namespace Tasks
         public static async Task SynchronizeToolGroupMembership([ActivityTrigger] IDurableActivityContext context)
         {
             var tool = context.GetInput<Tool>();
+            Logging.GetLogger(context).Information($"Synchronizing {tool.Name} ({tool.Id}) membership with AD group {tool.ADPath}.");
             // get grantee netids from IT People DB
             var grantees = await GetToolGrantees(context, tool);
             // get current group members
-            var members = await Task.Run(()=>GetGroupMembers(context, tool));
+            var members = GetGroupMembers(context, tool);
             // add to the group any grantee who is not a member.
             var addTasks = grantees.Except(members).Select(m => AddGroupMember(context, tool, m));
             // remove from the group any member who is not a grantee
@@ -129,13 +130,13 @@ namespace Tasks
 
         public static Task AddGroupMember(IDurableActivityContext context, Tool tool, string netid)
         {
-            Logging.GetLogger(context,new {tool=tool, netid=netid}).Information($"Add {netid} tool {tool.Name} group");
+            Logging.GetLogger(context,new {tool=tool, netid=netid}).Information($"Add {netid} to group {tool.Name}.");
             return Task.Run(()=>ModifyGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.ADD));
         }
 
         public static Task RemoveGroupMember(IDurableActivityContext context, Tool tool, string netid)
         {
-            Logging.GetLogger(context,new {tool=tool, netid=netid}).Information($"Remove {netid} from {tool.Name} group");
+            Logging.GetLogger(context,new {tool=tool, netid=netid}).Information($"Remove {netid} from group {tool.Name}.");
             return Task.Run(()=>ModifyGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.DELETE));
         }
 
