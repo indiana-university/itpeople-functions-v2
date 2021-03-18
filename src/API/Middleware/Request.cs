@@ -33,7 +33,7 @@ namespace API.Middleware
         }
 
         /// <summary>Deserialize the request body to an instance of specified type and validate all properties. If valid, the instance is returned.</summary>
-        private static Result<T, Error> ValidateBody<T>(T body)
+        public static Result<T, Error> ValidateBody<T>(T body)
         {
             var validationContext = new ValidationContext(body, null, null);
             var results = new List<ValidationResult>();

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Models;
 using System;
 using System.Linq;
+using System.ComponentModel.DataAnnotations;
 
 namespace API.Functions
 {
@@ -79,9 +80,28 @@ namespace API.Functions
         }
     }
 
+    public class HrPeopleSearchParameters : BaseSearchParameters
+    {
+        [MinLength(3)]
+        public new string Q { get; }
+
+        public HrPeopleSearchParameters(string q) : base(q)
+        {}
+
+        public static Result<HrPeopleSearchParameters, Error> Parse(HttpRequest req) 
+            => Parse(req.GetQueryParameterDictionary());
+        public static Result<HrPeopleSearchParameters, Error> Parse(IDictionary<string, string> queryParms)
+        {
+            queryParms.TryGetValue("q", out string q);
+            
+            var result = new HrPeopleSearchParameters(q);
+            
+            return Pipeline.Success(result);
+        }
+    }
+
     public class PeopleSearchParameters : BaseSearchParameters
     {
-
         public PeopleSearchParameters(string q, Responsibilities responsibilities, string[] expertise, string[] campus, Role[] role, UnitPermissions[] permissions, Area[] areas)
             : base(q)
         {
