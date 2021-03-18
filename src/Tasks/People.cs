@@ -15,7 +15,6 @@ namespace Tasks
     public static class People
     {
          // Runs at the top of the hour (00:00 AM, 01:00 AM, 02:00 AM, ...)
-        [Disable]
         [FunctionName(nameof(ScheduledPeopleUpdate))]
         public static async Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *")]TimerInfo myTimer, 
             [DurableClient] IDurableOrchestrationClient starter)
