@@ -74,6 +74,7 @@ namespace Tasks
                 var record = await db.Buildings.SingleOrDefaultAsync(b => b.Code == bld.BuildingCode);
                 if (record == null)
                 {
+                    Logging.GetLogger(nameof(AddOrUpdateBuildingRecords), bld).Information($"Adding building with code {bld.BuildingCode}");
                     record = new Building();
                     db.Buildings.Add(record);
                 }

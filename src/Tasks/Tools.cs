@@ -55,7 +55,6 @@ namespace Tasks
         public static async Task SynchronizeToolGroupMembership([ActivityTrigger] IDurableActivityContext context)
         {
             var tool = context.GetInput<Tool>();
-            Logging.GetLogger(nameof(SynchronizeToolGroupMembership)).Information($"Synchronizing {tool.Name} ({tool.Id}) membership with AD group {tool.ADPath}.");
             // get grantee netids from IT People DB
             var grantees = await GetToolGrantees(context, tool);
             // get current group members

@@ -40,7 +40,8 @@ namespace Tasks
         {
 
             var dnsDb = TryGetIP("esdbp57p.uits.iu.edu");
-            var dnsDenodo = TryGetIP("ebidvt.uits.iu.edu");
+            var dnsDenodoProd = TryGetIP("ebidvt.uits.iu.edu");
+            var dnsDenodoDev = TryGetIP("ebidvt-dev.uits.iu.edu");
             var dnsLdap = TryGetIP("ads.iu.edu");
             var dnsUaa = TryGetIP("apps.iu.edu");
             var dnsProfile = TryGetIP("prs.apps.iu.edu");
@@ -52,7 +53,7 @@ namespace Tasks
             var uaa = TryUaaConnect();
             var pie = TryPiePing("pie.iu.edu");
             var pieStage = TryPiePing("pie-stage.eas.iu.edu");
-            await Task.WhenAll(dnsDb, dnsDenodo, dnsLdap, dnsUaa, dnsProfile, dnsPie, dnsPieStage, db, denodo, ldap, uaa, pie, pieStage);
+            await Task.WhenAll(dnsDb, dnsDenodoDev, dnsDenodoProd, dnsLdap, dnsUaa, dnsProfile, dnsPie, dnsPieStage, db, denodo, ldap, uaa, pie, pieStage);
             return $@"
 ~~~~~~~~~~~~~~~~
 ~~~ Database ~~~
@@ -66,7 +67,8 @@ Connection:     {db.Result}
 ~~~~ Denodo ~~~~
 ~~~~~~~~~~~~~~~~
 
-DNS Resolution: {dnsDenodo.Result}
+Dev DNS:        {dnsDenodoDev.Result}
+Prod DNS:       {dnsDenodoProd.Result}
 Connection:     {denodo.Result}
 
 ~~~~~~~~~~~~~~~~
