@@ -40,7 +40,7 @@ namespace Tasks
 
                 // Refresh the HrPeople table with the Profile API data
                 await context.CallActivityWithRetryAsync(
-                        nameof(RefreshHrPeople), RetryOptions, hrRecords);
+                        nameof(BulkInsertHrPeople), RetryOptions, hrRecords);
                 // Add/update Departments from new HR data
                 await context.CallActivityWithRetryAsync(
                         nameof(UpdateDepartmentRecords), RetryOptions, null);
@@ -67,7 +67,7 @@ namespace Tasks
             var url = Utils.Env("UaaClientCredentialUrl", required: true);
             var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
             var resp = await Utils.HttpClient.SendAsync(req);
-            var body = await Utils.DeserializeResponse<UaaJwtResponse>(context, resp, "fetch JWT from UAA");
+            var body = await Utils.DeserializeResponse<UaaJwtResponse>(nameof(FetchUAAToken), resp, "fetch JWT from UAA");
             return body.access_token;
         }
 
@@ -85,7 +85,7 @@ namespace Tasks
                 var hasMore = true;
                 do 
                 {
-                    var body = await FetchPage(context, jwt, type, page);
+                    var body = await FetchProfileApiPage(context, jwt, type, page);
                     hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
                     hrRecords.AddRange(body.employees == null ? new List<ProfileEmployee>() : body.employees);
                     hrRecords.AddRange(body.foundations == null ? new List<ProfileEmployee>() : body.foundations);
@@ -97,7 +97,7 @@ namespace Tasks
             return Clean(hrRecords);
         }
 
-        private static async Task<ProfileResponse> FetchPage(IDurableActivityContext context, string jwt, string type, int page)
+        private static async Task<ProfileResponse> FetchProfileApiPage(IDurableActivityContext context, string jwt, string type, int page)
         {
             Console.WriteLine($"Fetching {type} page {page}");
             var url = Utils.Env("ImsProfileApiUrl", required: true);
@@ -105,7 +105,7 @@ namespace Tasks
             var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=7500");
             req.Headers.Authorization = authHeader;
             var resp = await Utils.HttpClient.SendAsync(req);
-            return await Utils.DeserializeResponse<ProfileResponse>(context, resp, "fetch page from IMS Profile API");
+            return await Utils.DeserializeResponse<ProfileResponse>(nameof(FetchProfileApiPage), resp, "fetch page from IMS Profile API");
         }
 
         private static IEnumerable<ProfileEmployee> Clean(List<ProfileEmployee> hrRecords) 
@@ -124,8 +124,8 @@ namespace Tasks
                     && r.Jobs.Any(j => j.JobStatus == "P" && !string.IsNullOrWhiteSpace(j.JobDepartmentId)));
 
         // Reset the hr_people table with the lastest HR data from the Profile API 
-        [FunctionName(nameof(RefreshHrPeople))]
-        public static async Task RefreshHrPeople([ActivityTrigger] IDurableActivityContext context)
+        [FunctionName(nameof(BulkInsertHrPeople))]
+        public static async Task BulkInsertHrPeople([ActivityTrigger] IDurableActivityContext context)
         {
             try
             {
@@ -154,7 +154,7 @@ namespace Tasks
             catch (Exception ex)
             {
                 var msg = "Failed to bulk-insert HR records to hr_people";
-                Logging.GetLogger(context).Error(ex, msg);
+                Logging.GetLogger(nameof(BulkInsertHrPeople)).Error(ex, msg);
                 throw new Exception(msg, ex);
             }
         }
@@ -163,7 +163,7 @@ namespace Tasks
         // If a departments with the same name already exists then update its description..
         [FunctionName(nameof(UpdateDepartmentRecords))]
         public static Task UpdateDepartmentRecords([ActivityTrigger] IDurableActivityContext context) 
-            => Utils.DatabaseCommand(context, "Upsert department records from new HR data", db =>
+            => Utils.DatabaseCommand(nameof(UpdateDepartmentRecords), "Upsert department records from new HR data", db =>
                 db.Database.ExecuteSqlRawAsync(@"
                     -- 1. Add any new hr departments
                     INSERT INTO departments (name, description)
@@ -182,7 +182,7 @@ namespace Tasks
         /// This should be one *after* departments are updated.
         [FunctionName(nameof(UpdatePeopleRecords))]
         public static Task UpdatePeopleRecords([ActivityTrigger] IDurableActivityContext context)
-            => Utils.DatabaseCommand(context, "Upsert department records from new HR data", db =>
+            => Utils.DatabaseCommand(nameof(UpdatePeopleRecords), "Upsert department records from new HR data", db =>
                 db.Database.ExecuteSqlRawAsync(@"
                     UPDATE people p
                     SET name = hr.name,

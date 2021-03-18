@@ -60,7 +60,7 @@ namespace Tasks
             var req = new HttpRequestMessage(HttpMethod.Get, denodoUrl);
             req.Headers.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);            
             var resp = await Utils.HttpClient.SendAsync(req);
-            var body = await Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(context, resp, "fetch buildings from Denodo view");
+            var body = await Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(nameof(FetchBuildingsFromDenodo), resp, "fetch buildings from Denodo view");
             return body.Elements;
         }
 
@@ -70,7 +70,7 @@ namespace Tasks
         public static async Task AddOrUpdateBuildingRecords([ActivityTrigger] IDurableActivityContext context)
         {
             var bld = context.GetInput<DenodoBuilding>();
-            await Utils.DatabaseCommand(context, $"Add/update building with code {bld.BuildingCode}", async db => {
+            await Utils.DatabaseCommand(nameof(AddOrUpdateBuildingRecords), $"Add/update building with code {bld.BuildingCode}", async db => {
                 var record = await db.Buildings.SingleOrDefaultAsync(b => b.Code == bld.BuildingCode);
                 if (record == null)
                 {

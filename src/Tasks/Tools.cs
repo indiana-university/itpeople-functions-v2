@@ -32,7 +32,7 @@ namespace Tasks
             {
                 // Fetch all tools.
                 var tools = await context.CallActivityWithRetryAsync<IEnumerable<Tool>>(
-                    nameof(FetchTools), RetryOptions, null);
+                    nameof(FetchAllTools), RetryOptions, null);
                 
                 // Compare current tool grants with IT People grants and add/remove grants as necessary.
                 var toolTasks = tools.Select(t => 
@@ -46,34 +46,35 @@ namespace Tasks
             }
         }
 
-        [FunctionName(nameof(FetchTools))]
-        public static Task<List<Tool>> FetchTools([ActivityTrigger] IDurableActivityContext context) 
-            => Utils.DatabaseQuery(context, "fetch all tools", db => db.Tools.ToListAsync());
+        [FunctionName(nameof(FetchAllTools))]
+        public static Task<List<Tool>> FetchAllTools([ActivityTrigger] IDurableActivityContext context) 
+            => Utils.DatabaseQuery(nameof(FetchAllTools), "fetch all tools", db => db.Tools.ToListAsync());
 
         // Aggregate all HR records of a certain type from the IMS Profile API
         [FunctionName(nameof(SynchronizeToolGroupMembership))]
         public static async Task SynchronizeToolGroupMembership([ActivityTrigger] IDurableActivityContext context)
         {
             var tool = context.GetInput<Tool>();
-            Logging.GetLogger(context).Information($"Synchronizing {tool.Name} ({tool.Id}) membership with AD group {tool.ADPath}.");
+            Logging.GetLogger(nameof(SynchronizeToolGroupMembership)).Information($"Synchronizing {tool.Name} ({tool.Id}) membership with AD group {tool.ADPath}.");
             // get grantee netids from IT People DB
             var grantees = await GetToolGrantees(context, tool);
             // get current group members
-            var members = GetGroupMembers(context, tool);
+            var members = GetToolGroupMembers(context, tool);
             // add to the group any grantee who is not a member.
-            var addTasks = grantees.Except(members).Select(m => AddGroupMember(context, tool, m));
+            var addTasks = grantees.Except(members).Select(m => AddToolGroupMember(context, tool, m));
             // remove from the group any member who is not a grantee
-            var removeTasks = members.Except(grantees).Select(m => RemoveGroupMember(context, tool, m));
+            var removeTasks = members.Except(grantees).Select(m => RemoveToolGroupMember(context, tool, m));
             await Task.WhenAll(addTasks.Concat(removeTasks));
         }
 
         public static Task<List<string>> GetToolGrantees(IDurableActivityContext context, Tool tool) 
-            => Utils.DatabaseQuery<List<string>>(context, $"fetch grantees for tool '{tool.Name}'", db =>
+            => Utils.DatabaseQuery<List<string>>(nameof(GetToolGrantees), $"fetch grantees for tool '{tool.Name}'", db =>
                 db.Tools
                     .Where(t => t.Id == tool.Id)
                     .SelectMany(t => t.MemberTools)
                     .Select(mt => mt.UnitMember.Person.Netid)
                     .Distinct()
+                    .OrderBy(m=>m)
                     .ToListAsync());
 
         private const bool AddMember = true;
@@ -83,7 +84,7 @@ namespace Tasks
         private const string LdapSearchBase = "ou=Accounts,dc=ads,dc=iu,dc=edu";
         private const int LdapPageSize = 500;
 
-        public static List<string> GetGroupMembers(IDurableActivityContext context, Tool tool)
+        public static List<string> GetToolGroupMembers(IDurableActivityContext context, Tool tool)
         {
             var members = new List<string>();
             try
@@ -124,29 +125,29 @@ namespace Tasks
                         page = page + 1;
                     } while (groupHasMoreMembers);
                 }
-                return members;
+                return members.OrderBy(m => m).ToList();
             }
             catch (Exception ex)
             {
                 string msg = $"Failed to fetch members of tool {tool.Name} group at path {tool.ADPath}";
-                Logging.GetLogger(context, tool).Error(ex, msg);
+                Logging.GetLogger(nameof(GetToolGroupMembers), tool).Error(ex, msg);
                 throw new Exception(msg, ex);
             }
         }
 
-        public static Task AddGroupMember(IDurableActivityContext context, Tool tool, string netid)
+        public static Task AddToolGroupMember(IDurableActivityContext context, Tool tool, string netid)
         {
-            Logging.GetLogger(context,new {tool=tool, netid=netid}).Information($"Add {netid} to group {tool.Name}.");
-            return Task.Run(()=>ModifyGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.ADD));
+            Logging.GetLogger(nameof(AddToolGroupMember),new {tool=tool, netid=netid}).Information($"Add {netid} to group {tool.Name}.");
+            return Task.Run(()=>ModifyToolGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.ADD));
         }
 
-        public static Task RemoveGroupMember(IDurableActivityContext context, Tool tool, string netid)
+        public static Task RemoveToolGroupMember(IDurableActivityContext context, Tool tool, string netid)
         {
-            Logging.GetLogger(context,new {tool=tool, netid=netid}).Information($"Remove {netid} from group {tool.Name}.");
-            return Task.Run(()=>ModifyGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.DELETE));
+            Logging.GetLogger(nameof(RemoveToolGroupMember),new {tool=tool, netid=netid}).Information($"Remove {netid} from group {tool.Name}.");
+            return Task.Run(()=>ModifyToolGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.DELETE));
         }
 
-        private static void ModifyGroupMembership(IDurableActivityContext context, string netid, string name, string adPath, int action)
+        private static void ModifyToolGroupMembership(IDurableActivityContext context, string netid, string name, string adPath, int action)
         {
             try
             {
@@ -162,7 +163,7 @@ namespace Tasks
             {
                 string actionDesc = action == 0 ? "ADD" : "REMOVE";
                 string msg = $"Failed to {actionDesc} {netid} from {name} group";
-                Logging.GetLogger(context, new{action= actionDesc, tool= name, path= adPath }).Error(ex, msg);
+                Logging.GetLogger(nameof(ModifyToolGroupMembership), new{action= actionDesc, tool= name, path= adPath }).Error(ex, msg);
                 throw new Exception(msg, ex);
             }    
         }
