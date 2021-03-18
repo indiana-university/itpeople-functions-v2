@@ -9,8 +9,11 @@ namespace Models.Enums
 		Post = 0b0010,      // Create
 		Put = 0b0100,      // Update
 		Delete = 0b1000,    // Remove
+	}
 
-		All = Get | Post | Put | Delete,
-		GetPut = Get | Put,
+	public static class PermsGroups
+	{
+		public const EntityPermissions All = EntityPermissions.Get | EntityPermissions.Post | EntityPermissions.Put | EntityPermissions.Delete;
+		public const EntityPermissions GetPut = EntityPermissions.Get | EntityPermissions.Put;
 	}
 }
