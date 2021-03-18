@@ -20,7 +20,7 @@ namespace Tasks
         {
             string instanceId = await starter.StartNewAsync(nameof(BuildingsUpdateOrchestrator), null);
             Logging.GetLogger(instanceId, nameof(ScheduledBuildingsUpdate), myTimer)
-               .Information("Started scheduled buildings update.");
+               .Debug("Started scheduled buildings update.");
         }
 
         [FunctionName(nameof(BuildingsUpdateOrchestrator))]
@@ -36,10 +36,12 @@ namespace Tasks
                         nameof(AddOrUpdateBuildingRecords), RetryOptions, b));
                 
                 await Task.WhenAll(tasks);
+
+                Logging.GetLogger(context).Debug("Finished buildings update.");
             }
             catch (Exception ex)
             {
-                Logging.GetLogger(context).Error(ex, "Buildings update orchestration failed with exception.");
+                Logging.GetLogger(context).Error(ex, "Buildings update failed with exception.");
                 throw;
             }
         }

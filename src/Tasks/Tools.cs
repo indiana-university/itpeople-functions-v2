@@ -20,7 +20,7 @@ namespace Tasks
         {
             string instanceId = await starter.StartNewAsync(nameof(ToolsUpdateOrchestrator), null);
             Logging.GetLogger(instanceId, nameof(ScheduledToolsUpdate), myTimer)
-                .Information("Started scheduled tools update.");
+                .Debug("Started scheduled tools update.");
         }
 
         [FunctionName(nameof(ToolsUpdateOrchestrator))]
@@ -37,10 +37,12 @@ namespace Tasks
                 var toolTasks = tools.Select(t => 
                     context.CallActivityWithRetryAsync(nameof(SynchronizeToolGroupMembership), RetryOptions, t));
                 await Task.WhenAll(toolTasks);
+
+                Logging.GetLogger(context).Debug("Finished tools update.");
             } 
             catch (Exception ex)
             {
-                Logging.GetLogger(context).Error(ex, "Tools update orchestration failed with exception.");
+                Logging.GetLogger(context).Error(ex, "Tools update failed with exception.");
                 throw;
             }
         }

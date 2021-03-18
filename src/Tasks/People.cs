@@ -21,7 +21,7 @@ namespace Tasks
         {
             string instanceId = await starter.StartNewAsync(nameof(PeopleUpdateOrchestrator), null);
             Logging.GetLogger(instanceId, nameof(ScheduledPeopleUpdate), myTimer)
-                .Information("Started scheduled people update.");
+                .Debug("Started scheduled people update.");
         }
 
         [FunctionName(nameof(PeopleUpdateOrchestrator))]
@@ -46,10 +46,12 @@ namespace Tasks
                 // Update People name/position/contact info from new HR data
                 await context.CallActivityWithRetryAsync(
                         nameof(UpdatePeopleRecords), RetryOptions, null);
+
+                Logging.GetLogger(context).Debug("Finished people update.");
             }
             catch (Exception ex)
             {
-                Logging.GetLogger(context).Error(ex, "People update orchestration failed with exception.");
+                Logging.GetLogger(context).Error(ex, "People update failed with exception.");
                 throw;
             }
         }       
