@@ -91,7 +91,7 @@ namespace Tasks
                 using (var ldap = GetLdapConnection())
                 {
                     var page = 0;
-                    var groupHasMoreMembers = true;
+                    var groupHasMoreMembers = false;
                     do 
                     {
                         // set up a pager and sorter for the group member search results 
@@ -110,9 +110,15 @@ namespace Tasks
                         {
                             var netid = search.next().getAttribute(LdapAttributeName).StringValue;
                             if (members.Contains(netid))
+                            {
                                 groupHasMoreMembers = false;
+                                break;
+                            }
                             else 
+                            {                                
                                 members.Add(netid);
+                                groupHasMoreMembers = true;
+                            }
                         } 
                         // advance the page
                         page = page + 1;
