@@ -275,14 +275,46 @@ namespace Integration
                 //Searching for "Swan" should get Ron from the People table, and Tammy Swanson form the HrPeople table.
                 var resp = await GetAuthenticated("people-lookup?q=Swan");
                 AssertStatusCode(resp, HttpStatusCode.OK);
-                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
                 Assert.AreEqual(2, actual.Count);
+            }
+            
+            [TestCase(1)]
+            [TestCase(5)]
+            [TestCase(15)]
+            [TestCase(25)]
+            public async Task DoesNotReturnTooManyRecords(int maxRecords)
+            {
+                //Add extra HrPeople records that would be constrained by _limit.
+                await SpamTammies();
+
+                var resp = await GetAuthenticated($"people-lookup?q=Swan&_limit={maxRecords}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
+                Assert.LessOrEqual(actual.Count, maxRecords);
             }
 
             [Test]
-            public async Task DoesNotReturnTooManyRecords()
+            public async Task DefaultLimit()
             {
-                Assert.AreEqual(1, 0);
+                //Add extra HrPeople records that would be constrained by _limit.
+                await SpamTammies();
+
+                var resp = await GetAuthenticated($"people-lookup?q=Swan");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
+                Assert.LessOrEqual(actual.Count, 15);
+            }
+
+            private async Task SpamTammies()
+            {
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                //Start by adding additional results to HrPeople.  So many records that we don't want to return them all at once.
+                for(var n = 1; n < 27; n++)
+                {
+                    db.HrPeople.Add(new HrPerson { Id = TestEntities.HrPeople.Tammy1Id + n, Netid = $"tammy{n}", Name = $"Swanson, Tammy{n}", Campus = "Pawnee", HrDepartment = "N/A" });
+                }
+                await db.SaveChangesAsync();
             }
         }
     }

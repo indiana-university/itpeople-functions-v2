@@ -97,6 +97,7 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<PeopleLookupItem>))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description="The search query was malformed or incorrect. See response content for additional information.")]
         [OpenApiParameter("q", In=ParameterLocation.Query, Description="filter by name/netid, ex: `Ron` or `rswanso`")]
+        [OpenApiParameter("_limit", In=ParameterLocation.Query, Description="Restrict the number of responses to no more than this integer.  ex: `15` or `20`")]
         public static Task<IActionResult> PeopleLookup(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people-lookup")] HttpRequest req) 
             => Security.Authenticate(req)

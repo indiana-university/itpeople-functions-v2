@@ -84,14 +84,18 @@ namespace API.Data
                 .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
                             || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
                 .Select(p => new PeopleLookupItem { Id = 0, Netid = p.Netid, Name = p.Name })
+                .Take(query.Limit)
                 .AsNoTracking();
             var existingNetIds = peopleMatches.Select(p => p.Netid.ToLower()).ToList();
 
             //Get possible matches from the HrPeople table, and exclude any existing users.
             var hrPeopleMatches = SearchHrPeopleByNameOrNetId(db, query)
-                .Where(h => existingNetIds.Contains(h.Netid.ToLower()) == false);
+                .Where(h => existingNetIds.Contains(h.Netid.ToLower()) == false)
+                .Take(query.Limit);
             
-            return peopleMatches.Union(hrPeopleMatches);
+            return peopleMatches
+                .Union(hrPeopleMatches)
+                .Take(query.Limit);
         }
 
         public static Task<Result<Person, Error>> GetOne(int id) 

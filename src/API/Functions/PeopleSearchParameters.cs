@@ -86,9 +86,13 @@ namespace API.Functions
         [MinLength(3, ErrorMessage = "The query parameter 'q' must be at least {1} characters long.")]
         public new string Q { get; }
 
-        public HrPeopleSearchParameters(string q) : base(q)
+        [Range(1, 100, ErrorMessage = "The query parameter '_limit' must be an integer between 1 and 100.")]
+        public int Limit { get; }
+
+        public HrPeopleSearchParameters(string q, int limit) : base(q)
         {
             Q = q;
+            Limit = limit;
         }
 
         public static Result<HrPeopleSearchParameters, Error> Parse(HttpRequest req) 
@@ -96,8 +100,14 @@ namespace API.Functions
         public static Result<HrPeopleSearchParameters, Error> Parse(IDictionary<string, string> queryParms)
         {
             queryParms.TryGetValue("q", out string q);
+            queryParms.TryGetValue("_limit", out string limitString);
             
-            var result = new HrPeopleSearchParameters(q);
+            int limit = 15;
+            if(string.IsNullOrWhiteSpace(limitString) == false){
+                int.TryParse(limitString, out limit);
+            }
+
+            var result = new HrPeopleSearchParameters(q, limit);
             
             return Pipeline.Success(result);
         }
