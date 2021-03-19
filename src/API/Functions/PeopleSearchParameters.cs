@@ -82,11 +82,14 @@ namespace API.Functions
 
     public class HrPeopleSearchParameters : BaseSearchParameters
     {
-        [MinLength(3)]
+        [Required(ErrorMessage = "The query parameter 'q' is required.")]
+        [MinLength(3, ErrorMessage = "The query parameter 'q' must be at least {1} characters long.")]
         public new string Q { get; }
 
         public HrPeopleSearchParameters(string q) : base(q)
-        {}
+        {
+            Q = q;
+        }
 
         public static Result<HrPeopleSearchParameters, Error> Parse(HttpRequest req) 
             => Parse(req.GetQueryParameterDictionary());

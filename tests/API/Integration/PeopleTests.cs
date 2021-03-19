@@ -248,5 +248,26 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.Forbidden);
             }
         }
+
+        public class PeopleLookup : ApiTest
+        {
+            [Test]
+            public async Task QueryStringIsRequired()
+            {
+                var resp = await GetAuthenticated($"people-lookup");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+                Assert.Contains("The query parameter 'q' is required.", actual.Errors);
+            }
+            [Test]
+            public async Task HonorsMinimumQueryStringLength()
+            {
+                var q = "ro";
+                var resp = await GetAuthenticated($"people-lookup?q={q}");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+                Assert.Contains("The query parameter 'q' must be at least 3 characters long.", actual.Errors);
+            }
+        }
     }
 }
