@@ -67,7 +67,7 @@ namespace API.Data
                     || requestor.Id == target.Id // requestor and and target person are the same
                     || matches.Count() > 0)  // requestor manages a unit that the target person is a member of
                 {
-                    result = EntityPermissions.GetPut;
+                    result = PermsGroups.GetPut;
                 }   
             }
 
@@ -116,18 +116,18 @@ namespace API.Data
 
         public static Result<EntityPermissions, Error> ResolveUnitPermissions(Person requestor) 
             => requestor != null && requestor.IsServiceAdmin
-                ? Pipeline.Success(EntityPermissions.All)
+                ? Pipeline.Success(PermsGroups.All)
                 : Pipeline.Success(EntityPermissions.Get);
                 
         public static Result<EntityPermissions,Error> ResolveUnitPermissions(Person requestor, int unitId)
         {
             // service admins: get post put delete
             if (requestor?.IsServiceAdmin == true)
-                return Pipeline.Success(EntityPermissions.All);
+                return Pipeline.Success(PermsGroups.All);
             
             // Requestor owner/manage roles can get put
             if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageMembers)))
-                return Pipeline.Success(EntityPermissions.GetPut);
+                return Pipeline.Success(PermsGroups.GetPut);
                 
             return Pipeline.Success(EntityPermissions.Get);
         }
@@ -136,11 +136,11 @@ namespace API.Data
         {
             // service admins: get post put delete
             if (requestor != null && requestor.IsServiceAdmin)
-                return Pipeline.Success(EntityPermissions.All);
+                return Pipeline.Success(PermsGroups.All);
             
             // Requestor owner/manage roles can get put
             if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageMembers)))
-                return Pipeline.Success(EntityPermissions.All);
+                return Pipeline.Success(PermsGroups.All);
                 
             return Pipeline.Success(EntityPermissions.Get);
         }
@@ -149,11 +149,11 @@ namespace API.Data
         {
             // service admins: get post put delete
             if (requestor != null && requestor.IsServiceAdmin)
-                return Pipeline.Success(EntityPermissions.All);
+                return Pipeline.Success(PermsGroups.All);
             
             // Requestor owner/manage roles can get put
             if(requestor != null && requestor.UnitMemberships.Any(um => um.Id == membershipId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageTools)))
-                return Pipeline.Success(EntityPermissions.All);
+                return Pipeline.Success(PermsGroups.All);
                 
             return Pipeline.Success(EntityPermissions.Get);
         }

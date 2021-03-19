@@ -89,5 +89,21 @@ namespace API.Functions
                 .Bind(_ => Request.DeserializeBody<PersonUpdateRequest>(req))
                 .Bind(body => PeopleRepository.Update(req, id, body))
                 .Finally(result => Response.Ok(req, result));
+
+
+        //Check people table first, if no records check HR people
+        [FunctionName(nameof(People.PeopleLookup))]
+        [OpenApiOperation(nameof(People.PeopleLookup), nameof(People), Summary="Search all people", Description = @"Search results are unioned within a filter and intersected across filters. For example, `interest=node, lambda` will return people with an interest in either `node` OR `lambda`, whereas `role=ItLeadership&interest=node` will only return people who are both in `ItLeadership AND have an interest in `node`." )]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<Person>))]
+        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description="The search query was malformed or incorrect. See response content for additional information.")]
+        [OpenApiParameter("q", In=ParameterLocation.Query, Description="filter by netid, ex: `rswanso`")]
+        public static Task<IActionResult> PeopleLookup(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people-lookup")] HttpRequest req) 
+            => Security.Authenticate(req)
+                .Bind(_ => HrPeopleSearchParameters.Parse(req))
+                .Bind(query => Request.ValidateBody(query)) //Validate query params
+                .Bind(query => PeopleRepository.GetAllWithHr(query))
+                .Finally(people => Response.Ok(req, people));
+
     }
 }

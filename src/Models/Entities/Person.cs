@@ -51,5 +51,19 @@ namespace Models
         /// <summary>The units of which this person is a member</summary>
         [JsonIgnore]
         public List<UnitMember> UnitMemberships { get; set; }
+
+        public Person(){}
+        public Person(HrPerson hrPerson, Department matchingDepartment)
+        {
+            Netid = hrPerson.Netid;
+            Name = hrPerson.Name;
+            NameFirst = hrPerson.NameFirst;
+            NameLast = hrPerson.NameLast;
+            Position = hrPerson.Position;
+            Campus = hrPerson.Campus;
+            CampusPhone = hrPerson.CampusPhone;
+            CampusEmail = hrPerson.CampusEmail;
+            DepartmentId = matchingDepartment?.Id;
+        }
     }
 }

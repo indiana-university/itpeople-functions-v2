@@ -53,7 +53,7 @@ namespace Integration
             }
 
             [TestCase(ValidRswansonJwt, EntityPermissions.Get, Description="As non-admin I can't create/delete units")]
-            [TestCase(ValidAdminJwt, EntityPermissions.All, Description="As a service admin I can create/modify/delete units")]
+            [TestCase(ValidAdminJwt, PermsGroups.All, Description="As a service admin I can create/modify/delete units")]
             public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, EntityPermissions expectedPermissions)
             {
                 var resp = await GetAuthenticated($"units", jwt);
@@ -76,10 +76,10 @@ namespace Integration
                 Assert.AreEqual(expected.Parent?.Id, actual.Parent?.Id);
             }
 
-            [TestCase(ValidRswansonJwt, TestEntities.Units.ParksAndRecUnitId, EntityPermissions.GetPut, Description="As Ron I can a unit I manage")]
+            [TestCase(ValidRswansonJwt, TestEntities.Units.ParksAndRecUnitId, PermsGroups.GetPut, Description="As Ron I can a unit I manage")]
             [TestCase(ValidRswansonJwt, TestEntities.Units.CityOfPawneeUnitId, EntityPermissions.Get, Description="As Ron I can't update a unit I don't manage")]
-            [TestCase(ValidAdminJwt, TestEntities.Units.ParksAndRecUnitId, EntityPermissions.All, Description="As a service admin I can do anything to any unit")]
-            [TestCase(ValidAdminJwt, TestEntities.Units.CityOfPawneeUnitId, EntityPermissions.All, Description="As a service admin I can do anything to any unit")]
+            [TestCase(ValidAdminJwt, TestEntities.Units.ParksAndRecUnitId, PermsGroups.All, Description="As a service admin I can do anything to any unit")]
+            [TestCase(ValidAdminJwt, TestEntities.Units.CityOfPawneeUnitId, PermsGroups.All, Description="As a service admin I can do anything to any unit")]
             public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int unitId, EntityPermissions expectedPermissions)
             {
                 var resp = await GetAuthenticated($"units/{unitId}", jwt);

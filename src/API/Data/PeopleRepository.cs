@@ -68,6 +68,28 @@ namespace API.Data
                             )
                             SELECT id FROM parentage
                             WHERE root_id <> 1))");
+        
+        private static IQueryable<Person> SearchHrPeopleByNetId(PeopleContext db, HrPeopleSearchParameters query)
+            => db.HrPeople
+                .Where(p=>  EF.Functions.ILike(p.Netid, $"%{query.Q}%")
+                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
+                .Select(h => new Person(h, null));
+
+        private static IQueryable<Person> SearchBothByNetId(PeopleContext db, HrPeopleSearchParameters query)
+        {
+            //Get existing people matches
+            var peopleMatches = db.People
+                .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
+                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"));
+            
+            var existingNetIds = peopleMatches.Select(p => p.Netid).ToList();
+
+            //Get possible matches from the HrPeople table, and exclude any existing users.
+            var hrPeopleMatches = SearchHrPeopleByNetId(db, query)
+                .Where(h => existingNetIds.Any(e => EF.Functions.ILike(e, h.Netid)) == false);
+            
+            return peopleMatches.Union(hrPeopleMatches);
+        }
 
         public static Task<Result<Person, Error>> GetOne(int id) 
             => ExecuteDbPipeline("get a person by ID", db => 
@@ -119,5 +141,13 @@ namespace API.Data
             await db.SaveChangesAsync();
             return Pipeline.Success(record);
         }
+
+        internal static Task<Result<List<Person>, Error>> GetAllWithHr(HrPeopleSearchParameters query)
+            => ExecuteDbPipeline("search all people by netId", async db => {
+                    var result =  await SearchBothByNetId(db, query).ToListAsync();
+                    return Pipeline.Success(result);
+                });
+           
+        
     }
 }

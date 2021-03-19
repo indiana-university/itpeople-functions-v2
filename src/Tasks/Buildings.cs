@@ -13,15 +13,14 @@ namespace Tasks
 {
     public static class Buildings
     {
-        // Runs at 40 minutes past every hour (00:40 AM, 01:40 AM, 02:40 AM, ...)
-        [Disable]
+        // Runs at 30 minutes past every hour (00:30 AM, 01:30 AM, 02:30 AM, ...)
         [FunctionName(nameof(ScheduledBuildingsUpdate))]
-        public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 40 * * * *")]TimerInfo myTimer, 
+        public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 30 * * * *")]TimerInfo myTimer, 
             [DurableClient] IDurableOrchestrationClient starter)
         {
             string instanceId = await starter.StartNewAsync(nameof(BuildingsUpdateOrchestrator), null);
             Logging.GetLogger(instanceId, nameof(ScheduledBuildingsUpdate), myTimer)
-               .Information("Started scheduled buildings update.");
+               .Debug("Started scheduled buildings update.");
         }
 
         [FunctionName(nameof(BuildingsUpdateOrchestrator))]
@@ -37,10 +36,12 @@ namespace Tasks
                         nameof(AddOrUpdateBuildingRecords), RetryOptions, b));
                 
                 await Task.WhenAll(tasks);
+
+                Logging.GetLogger(context).Debug("Finished buildings update.");
             }
             catch (Exception ex)
             {
-                Logging.GetLogger(context).Error(ex, "Buildings update orchestration failed with exception.");
+                Logging.GetLogger(context).Error(ex, "Buildings update failed with exception.");
                 throw;
             }
         }
@@ -60,7 +61,7 @@ namespace Tasks
             var req = new HttpRequestMessage(HttpMethod.Get, denodoUrl);
             req.Headers.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);            
             var resp = await Utils.HttpClient.SendAsync(req);
-            var body = await Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(context, resp, "fetch buildings from Denodo view");
+            var body = await Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(nameof(FetchBuildingsFromDenodo), resp, "fetch buildings from Denodo view");
             return body.Elements;
         }
 
@@ -70,10 +71,11 @@ namespace Tasks
         public static async Task AddOrUpdateBuildingRecords([ActivityTrigger] IDurableActivityContext context)
         {
             var bld = context.GetInput<DenodoBuilding>();
-            await Utils.DatabaseCommand(context, $"Add/update building with code {bld.BuildingCode}", async db => {
+            await Utils.DatabaseCommand(nameof(AddOrUpdateBuildingRecords), $"Add/update building with code {bld.BuildingCode}", async db => {
                 var record = await db.Buildings.SingleOrDefaultAsync(b => b.Code == bld.BuildingCode);
                 if (record == null)
                 {
+                    Logging.GetLogger(nameof(AddOrUpdateBuildingRecords), bld).Information($"Adding building with code {bld.BuildingCode}");
                     record = new Building();
                     db.Buildings.Add(record);
                 }
