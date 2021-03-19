@@ -268,6 +268,22 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
                 Assert.Contains("The query parameter 'q' must be at least 3 characters long.", actual.Errors);
             }
+
+            [Test]
+            public async Task GetsCorrectMatches()
+            {
+                //Searching for "Swan" should get Ron from the People table, and Tammy Swanson form the HrPeople table.
+                var resp = await GetAuthenticated("people-lookup?q=Swan");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(2, actual.Count);
+            }
+
+            [Test]
+            public async Task DoesNotReturnTooManyRecords()
+            {
+                Assert.AreEqual(1, 0);
+            }
         }
     }
 }

@@ -39,6 +39,7 @@ namespace StateServer
                     public.building_relationships, 
                     public.departments,
                     public.people, 
+                    public.hr_people,
                     public.support_relationships, 
                     public.tools,
                     public.units,
@@ -101,6 +102,8 @@ namespace StateServer
                 TestEntities.MemberTools.MemberTool,
                 TestEntities.MemberTools.AdminMemberTool
             });
+            
+            peopleContext.HrPeople.AddRange(new List<HrPerson> { TestEntities.HrPeople.Tammy1 });
             
             peopleContext.SaveChanges();
 
