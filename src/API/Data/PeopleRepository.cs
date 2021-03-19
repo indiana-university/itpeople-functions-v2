@@ -70,18 +70,21 @@ namespace API.Data
                             WHERE root_id <> 1))");
         
         private static IQueryable<Person> SearchHrPeopleByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
-            => db.HrPeople
-                .Where(p=>  EF.Functions.ILike(p.Netid, $"%{query.Q}%")
-                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
-                .Select(h => new Person(h, null));
+            //To get an IQueryable<Person> that can be used in .Union()
+            // we need to psych-out EF by making it thinks it's pulling real Person records.
+            => db.People
+                .FromSqlInterpolated<Person>($"SELECT net_id, name, name_first, name_last, campus, position FROM hr_people")
+                .Where(h=>  EF.Functions.ILike(h.Netid, $"%{query.Q}%")
+                            || EF.Functions.ILike(h.Name, $"%{query.Q}%"))
+                .AsNoTracking();
 
         private static IQueryable<Person> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
         {
             //Get existing people matches
             var peopleMatches = db.People
                 .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
-                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"));
-            
+                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
+                .AsNoTracking();
             var existingNetIds = peopleMatches.Select(p => p.Netid).ToList();
 
             //Get possible matches from the HrPeople table, and exclude any existing users.
@@ -144,7 +147,7 @@ namespace API.Data
 
         internal static Task<Result<List<Person>, Error>> GetAllWithHr(HrPeopleSearchParameters query)
             => ExecuteDbPipeline("search all people by netId", async db => {
-                    var result =  await SearchBothByNameOrNetId(db, query).ToListAsync();
+                    var result = SearchBothByNameOrNetId(db, query);
                     return Pipeline.Success(result);
                 });
            
