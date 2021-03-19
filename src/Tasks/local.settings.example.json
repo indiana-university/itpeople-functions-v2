@@ -1,0 +1,19 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+        "WEBSITE_TIME_ZONE":"Eastern Standard Time",
+        "DenodoBuildingsViewUrl":"https://ebidvt.uits.iu.edu/server/iu_vpcpf_spaceinfo/building_summary/views/building_summary_i?$filter=building_function_code ne 'E'",
+        "DenodoBuildingsViewUser":"denodo username",
+        "DenodoBuildingsViewPassword":"denodo secret for BuildingUser",
+        "UaaClientCredentialUrl":"https://apps.iu.edu/uaa-prd/oauth/token",
+        "UaaClientCredentialId":"uaa client id",
+        "UaaClientCredentialSecret":"client secret for UaaUser",
+        "ImsProfileApiUrl":"https://prs.apps.iu.edu/search",
+        "AdToolsGroupManagerUser":"a username",
+        "AdToolsGroupManagerPassword":"password for AdUser",
+        "DatabaseConnectionString":"Server=localhost;Database=ItPeople;User Id=SA;Password=abcd1234@;",
+        "APPINSIGHTS_INSTRUMENTATIONKEY": "an App Insights instrumentation key (guid)"
+    }
+}

@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using Jose;
 using Microsoft.AspNetCore.Http;
+using Models;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
@@ -219,17 +220,6 @@ namespace API.Middleware
 
         static DateTime Epoch = new DateTime(1970,1,1,0,0,0,0,System.DateTimeKind.Utc);
 
-        public class UaaJwt{
-            public string user_name { get; set; }
-            // when this token expires, as a Unix timestamp
-            public long exp { get; set; }
-            // when this token becomes valid, as a Unix timestamp
-            public long nbf { get; set; }
-        }
 
-        public class UaaJwtResponse {
-            /// The OAuth JSON Web Token (JWT) that represents the logged-in user. The JWT must be passed in an HTTP Authentication header in the form: 'Bearer <JWT>'
-            public string access_token { get; set; }
-        }
     }
 }

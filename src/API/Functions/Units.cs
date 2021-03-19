@@ -149,13 +149,14 @@ namespace API.Functions
         [FunctionName(nameof(Units.GetUnitTools))]
         [OpenApiOperation(nameof(Units.GetUnitTools), nameof(Units), Summary = "List all unit tools", Description = "List all tools that are available to this unit.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<Tool>))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<ToolResponse>))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit was found with the provided ID.")]
         public static Task<IActionResult> GetUnitTools(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/tools")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetTools(req, unitId))
-                .Finally(result => Response.Ok(req, result));    
+                .Bind(t => Pipeline.Success(ToolResponse.ConvertList(t)))
+                .Finally(result => Response.Ok(req, result));
     }
 }

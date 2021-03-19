@@ -54,10 +54,23 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided ID.")]
         public static Task<IActionResult> PeopleGetMemberships(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}/memberships")] HttpRequest req, int id) 
-            => Security.Authenticate(req)
-                .Bind(_ => PeopleRepository.GetMemberships(id))
-                .Finally(result => Response.Ok(req, result));
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}/memberships")] HttpRequest req, string id) 
+            {
+               if(int.TryParse(id, out int value))
+               {
+                   return  Security.Authenticate(req)
+                    .Bind(_ => PeopleRepository.GetMemberships(value))
+                    .Finally(result => Response.Ok(req, result));
+               }
+               else
+               {
+                   return  Security.Authenticate(req)
+                    .Bind(_ => PeopleRepository.GetMemberships(id))
+                    .Finally(result => Response.Ok(req, result));
+
+               }                
+                
+            }
 
 
         [FunctionName(nameof(People.PeopleUpdate))]
@@ -76,6 +89,21 @@ namespace API.Functions
                 .Bind(_ => Request.DeserializeBody<PersonUpdateRequest>(req))
                 .Bind(body => PeopleRepository.Update(req, id, body))
                 .Finally(result => Response.Ok(req, result));
+
+
+        //Check people table first, if no records check HR people
+        [FunctionName(nameof(People.PeopleLookup))]
+        [OpenApiOperation(nameof(People.PeopleLookup), nameof(People), Summary="Search all staff", Description = @"Search for staff, including IT People, by name or username (netid)." )]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<Person>))]
+        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description="The search query was malformed or incorrect. See response content for additional information.")]
+        [OpenApiParameter("q", In=ParameterLocation.Query, Description="filter by name/netid, ex: `Ron` or `rswanso`")]
+        public static Task<IActionResult> PeopleLookup(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people-lookup")] HttpRequest req) 
+            => Security.Authenticate(req)
+                .Bind(_ => HrPeopleSearchParameters.Parse(req))
+                .Bind(query => Request.ValidateBody(query)) //Validate query params
+                .Bind(query => PeopleRepository.GetAllWithHr(query))
+                .Finally(people => Response.Ok(req, people));
 
     }
 }

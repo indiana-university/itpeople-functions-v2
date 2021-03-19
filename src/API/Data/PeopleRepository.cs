@@ -68,6 +68,28 @@ namespace API.Data
                             )
                             SELECT id FROM parentage
                             WHERE root_id <> 1))");
+        
+        private static IQueryable<Person> SearchHrPeopleByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
+            => db.HrPeople
+                .Where(p=>  EF.Functions.ILike(p.Netid, $"%{query.Q}%")
+                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
+                .Select(h => new Person(h, null));
+
+        private static IQueryable<Person> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
+        {
+            //Get existing people matches
+            var peopleMatches = db.People
+                .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
+                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"));
+            
+            var existingNetIds = peopleMatches.Select(p => p.Netid).ToList();
+
+            //Get possible matches from the HrPeople table, and exclude any existing users.
+            var hrPeopleMatches = SearchHrPeopleByNameOrNetId(db, query)
+                .Where(h => existingNetIds.Any(e => EF.Functions.ILike(e, h.Netid)) == false);
+            
+            return peopleMatches.Union(hrPeopleMatches);
+        }
 
         public static Task<Result<Person, Error>> GetOne(int id) 
             => ExecuteDbPipeline("get a person by ID", db => 
@@ -77,7 +99,10 @@ namespace API.Data
             => ExecuteDbPipeline("fetch unit memberships", db =>
                 TryFindPerson(db, id)
                 .Bind(person => Pipeline.Success(person.UnitMemberships)));
-
+        public static Task<Result<List<UnitMember>, Error>> GetMemberships(string username) 
+            => ExecuteDbPipeline("fetch unit memberships", db =>
+                TryFindPerson(db, username)
+                .Bind(person => Pipeline.Success(person.UnitMemberships)));
         public static Task<Result<Person, Error>> Update(HttpRequest req, int id, PersonUpdateRequest body)
             => ExecuteDbPipeline("update person", db =>
                 TryFindPerson(db, id)
@@ -90,6 +115,16 @@ namespace API.Data
                 .Include(p => p.Department)
                 .Include(p => p.UnitMemberships).ThenInclude(um => um.Unit)
                 .SingleOrDefaultAsync(p => p.Id == id);
+            return person == null
+                ? Pipeline.NotFound("No person found with that Id.")
+                : Pipeline.Success(person);
+        }
+        private static async Task<Result<Person,Error>> TryFindPerson (PeopleContext db, string username)
+        {
+            var person = await db.People
+                .Include(p => p.Department)
+                .Include(p => p.UnitMemberships).ThenInclude(um => um.Unit)
+                .SingleOrDefaultAsync(p => EF.Functions.ILike(p.Netid, username));
             return person == null
                 ? Pipeline.NotFound("No person found with that netid.")
                 : Pipeline.Success(person);
@@ -106,5 +141,13 @@ namespace API.Data
             await db.SaveChangesAsync();
             return Pipeline.Success(record);
         }
+
+        internal static Task<Result<List<Person>, Error>> GetAllWithHr(HrPeopleSearchParameters query)
+            => ExecuteDbPipeline("search all people by netId", async db => {
+                    var result =  await SearchBothByNameOrNetId(db, query).ToListAsync();
+                    return Pipeline.Success(result);
+                });
+           
+        
     }
 }
