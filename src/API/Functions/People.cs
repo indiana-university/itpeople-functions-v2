@@ -94,7 +94,7 @@ namespace API.Functions
         //Check people table first, if no records check HR people
         [FunctionName(nameof(People.PeopleLookup))]
         [OpenApiOperation(nameof(People.PeopleLookup), nameof(People), Summary="Search all staff", Description = @"Search for staff, including IT People, by name or username (netid)." )]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<Person>))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<PeopleLookupItem>))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description="The search query was malformed or incorrect. See response content for additional information.")]
         [OpenApiParameter("q", In=ParameterLocation.Query, Description="filter by name/netid, ex: `Ron` or `rswanso`")]
         public static Task<IActionResult> PeopleLookup(

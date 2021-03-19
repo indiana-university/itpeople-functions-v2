@@ -69,27 +69,27 @@ namespace API.Data
                             SELECT id FROM parentage
                             WHERE root_id <> 1))");
         
-        private static IQueryable<Person> SearchHrPeopleByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
-            //To get an IQueryable<Person> that can be used in .Union()
-            // we need to psych-out EF by making it thinks it's pulling real Person records.
-            => db.People
-                .FromSqlInterpolated<Person>($"SELECT net_id, name, name_first, name_last, campus, position FROM hr_people")
+        
+        private static IQueryable<PeopleLookupItem> SearchHrPeopleByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
+            => db.HrPeople
                 .Where(h=>  EF.Functions.ILike(h.Netid, $"%{query.Q}%")
                             || EF.Functions.ILike(h.Name, $"%{query.Q}%"))
+                .Select(h => new PeopleLookupItem { Id = 0, Netid = h.Netid, Name = h.Name })
                 .AsNoTracking();
 
-        private static IQueryable<Person> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
+        private static IQueryable<PeopleLookupItem> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
         {
             //Get existing people matches
             var peopleMatches = db.People
                 .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
                             || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
+                .Select(p => new PeopleLookupItem { Id = 0, Netid = p.Netid, Name = p.Name })
                 .AsNoTracking();
-            var existingNetIds = peopleMatches.Select(p => p.Netid).ToList();
+            var existingNetIds = peopleMatches.Select(p => p.Netid.ToLower()).ToList();
 
             //Get possible matches from the HrPeople table, and exclude any existing users.
             var hrPeopleMatches = SearchHrPeopleByNameOrNetId(db, query)
-                .Where(h => existingNetIds.Any(e => EF.Functions.ILike(e, h.Netid)) == false);
+                .Where(h => existingNetIds.Contains(h.Netid.ToLower()) == false);
             
             return peopleMatches.Union(hrPeopleMatches);
         }
@@ -145,9 +145,9 @@ namespace API.Data
             return Pipeline.Success(record);
         }
 
-        internal static Task<Result<List<Person>, Error>> GetAllWithHr(HrPeopleSearchParameters query)
+        internal static Task<Result<List<PeopleLookupItem>, Error>> GetAllWithHr(HrPeopleSearchParameters query)
             => ExecuteDbPipeline("search all people by netId", async db => {
-                    var result = SearchBothByNameOrNetId(db, query);
+                    var result = await SearchBothByNameOrNetId(db, query).ToListAsync();
                     return Pipeline.Success(result);
                 });
            
