@@ -99,7 +99,10 @@ namespace API.Data
             => ExecuteDbPipeline("fetch unit memberships", db =>
                 TryFindPerson(db, id)
                 .Bind(person => Pipeline.Success(person.UnitMemberships)));
-
+        public static Task<Result<List<UnitMember>, Error>> GetMemberships(string username) 
+            => ExecuteDbPipeline("fetch unit memberships", db =>
+                TryFindPerson(db, username)
+                .Bind(person => Pipeline.Success(person.UnitMemberships)));
         public static Task<Result<Person, Error>> Update(HttpRequest req, int id, PersonUpdateRequest body)
             => ExecuteDbPipeline("update person", db =>
                 TryFindPerson(db, id)
@@ -112,6 +115,16 @@ namespace API.Data
                 .Include(p => p.Department)
                 .Include(p => p.UnitMemberships).ThenInclude(um => um.Unit)
                 .SingleOrDefaultAsync(p => p.Id == id);
+            return person == null
+                ? Pipeline.NotFound("No person found with that Id.")
+                : Pipeline.Success(person);
+        }
+        private static async Task<Result<Person,Error>> TryFindPerson (PeopleContext db, string username)
+        {
+            var person = await db.People
+                .Include(p => p.Department)
+                .Include(p => p.UnitMemberships).ThenInclude(um => um.Unit)
+                .SingleOrDefaultAsync(p => EF.Functions.ILike(p.Netid, username));
             return person == null
                 ? Pipeline.NotFound("No person found with that netid.")
                 : Pipeline.Success(person);

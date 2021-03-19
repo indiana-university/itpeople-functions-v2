@@ -189,16 +189,19 @@ namespace Integration
         {
             [TestCase(TestEntities.People.RSwansonId, HttpStatusCode.OK)]
             [TestCase(9999, HttpStatusCode.NotFound)]
-            public async Task CanGetMemberships(int id, HttpStatusCode expectedStatus)
+            [TestCase("rswanso", HttpStatusCode.OK)]
+            [TestCase("Rswanso", HttpStatusCode.OK)]
+            public async Task CanGetMemberships(object id, HttpStatusCode expectedStatus)
             {
                 var resp = await GetAuthenticated($"people/{id}/memberships");
                 AssertStatusCode(resp, expectedStatus);
             }
 
-            [Test]
-            public async Task GetRonsMemberships()
+            [TestCase("Rswanso")]
+            [TestCase(TestEntities.People.RSwansonId)]
+            public async Task GetRonsMemberships(object id)
             {
-                var resp = await GetAuthenticated($"people/{TestEntities.People.RSwansonId}/memberships");
+                var resp = await GetAuthenticated($"people/{id}/memberships");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<UnitMember>>();
                 var expected = TestEntities.UnitMembers.RSwansonDirector;
