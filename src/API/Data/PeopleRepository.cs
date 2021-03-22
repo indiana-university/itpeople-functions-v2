@@ -46,8 +46,9 @@ namespace API.Data
 
         private static IQueryable<Person> GetPeopleFilteredByArea(PeopleContext db, PeopleSearchParameters query) 
             => db.People .FromSqlInterpolated<Person>($@"
-                    SELECT p.* from public.people p
-                        JOIN public.unit_members um ON um.person_id = p.id
+                    SELECT DISTINCT p.*
+                    FROM public.people p
+                    JOIN public.unit_members um ON um.person_id = p.id
                     WHERE CARDINALITY({query.Areas}) = 0 -- no area specified
                         OR {query.Areas} = ARRAY[1,2]    -- both uits and edge requested
                         -- Area=1: UITS unit members only

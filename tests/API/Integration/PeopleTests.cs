@@ -23,6 +23,38 @@ namespace Integration
                 Assert.AreEqual(4, actual.Count);
             }
 
+            [Test]
+            public async Task HasCorrectNumberWhenUserInMultipleUnits()
+            {
+                //Add Ben to the general city, as well as the auditor UnitMembership from test entities
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                await db.UnitMembers.AddAsync(
+                    new UnitMember()
+                    {
+                        Role = Role.Member,
+                        Permissions = UnitPermissions.Viewer,
+                        PersonId = TestEntities.People.BWyattId,
+                        UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                        Title = "Auditor",
+                        Percentage = 10,
+                        Notes = "more notes about Ben",
+                        MemberTools = null
+                    });
+                await db.SaveChangesAsync();
+
+                //List users, we should only get one entry for ben.
+                var resp = await GetAuthenticated($"people?q={TestEntities.People.BWyatt.Netid}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(1, actual.Count);
+
+                //Listing all users should still return 4 records
+                resp = await GetAuthenticated($"people");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                actual = await resp.Content.ReadAsAsync<List<Person>>();
+                Assert.AreEqual(4, actual.Count);
+            }
+
             [TestCase("rswanso", Description="Exact match of netid")]
             [TestCase("RSWANSO", Description="Search is case-insensitive")]
             [TestCase("rSwaN", Description="Partial netid match")]
