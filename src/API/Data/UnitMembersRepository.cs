@@ -104,7 +104,8 @@ namespace API.Data
 				return Pipeline.NotFound("The specified person's department does not exist in the directory.");
 			}
 
-			var newPerson = new Person{
+			var newPerson = new Person
+			{
 				Netid = hrPerson.Netid,
 				Name = hrPerson.Name,
 				NameFirst = hrPerson.NameFirst,

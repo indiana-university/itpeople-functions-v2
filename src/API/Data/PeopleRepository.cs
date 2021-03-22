@@ -106,10 +106,7 @@ namespace API.Data
             => ExecuteDbPipeline("fetch unit memberships", db =>
                 TryFindPerson(db, id)
                 .Bind(person => Pipeline.Success(person.UnitMemberships)));
-        public static Task<Result<List<UnitMember>, Error>> GetMemberships(string username) 
-            => ExecuteDbPipeline("fetch unit memberships", db =>
-                TryFindPerson(db, username)
-                .Bind(person => Pipeline.Success(person.UnitMemberships)));
+
         public static Task<Result<Person, Error>> Update(HttpRequest req, int id, PersonUpdateRequest body)
             => ExecuteDbPipeline("update person", db =>
                 TryFindPerson(db, id)

@@ -115,6 +115,7 @@ namespace API.Functions
 
     public class PeopleSearchParameters : BaseSearchParameters
     {
+
         public PeopleSearchParameters(string q, Responsibilities responsibilities, string[] expertise, string[] campus, Role[] role, UnitPermissions[] permissions, Area[] areas)
             : base(q)
         {
