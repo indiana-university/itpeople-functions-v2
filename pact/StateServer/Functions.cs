@@ -39,6 +39,7 @@ namespace StateServer
                     public.building_relationships, 
                     public.departments,
                     public.people, 
+                    public.hr_people,
                     public.support_relationships, 
                     public.tools,
                     public.units,
@@ -102,6 +103,8 @@ namespace StateServer
                 TestEntities.MemberTools.AdminMemberTool
             });
             
+            peopleContext.HrPeople.AddRange(new List<HrPerson> { TestEntities.HrPeople.Tammy1 });
+            
             peopleContext.SaveChanges();
 
             // Account for the identities of Units we've already added to the database.  Prevents error:
@@ -140,6 +143,11 @@ namespace StateServer
                 SELECT
                     setval(pg_get_serial_sequence('public.departments', 'id'), 
                     (SELECT MAX(id) FROM public.departments));
+                ");
+            peopleContext.Database.ExecuteSqlRaw(@"
+                SELECT
+                    setval(pg_get_serial_sequence('public.hr_people', 'id'), 
+                    (SELECT MAX(id) FROM public.hr_people));
                 ");
         }
     }

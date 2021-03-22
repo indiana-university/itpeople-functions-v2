@@ -248,5 +248,74 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.Forbidden);
             }
         }
+
+        public class PeopleLookup : ApiTest
+        {
+            [Test]
+            public async Task QueryStringIsRequired()
+            {
+                var resp = await GetAuthenticated($"people-lookup");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+                Assert.Contains("The query parameter 'q' is required.", actual.Errors);
+            }
+            [Test]
+            public async Task HonorsMinimumQueryStringLength()
+            {
+                var q = "ro";
+                var resp = await GetAuthenticated($"people-lookup?q={q}");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+                Assert.Contains("The query parameter 'q' must be at least 3 characters long.", actual.Errors);
+            }
+
+            [Test]
+            public async Task GetsCorrectMatches()
+            {
+                //Searching for "Swan" should get Ron from the People table, and Tammy Swanson form the HrPeople table.
+                var resp = await GetAuthenticated("people-lookup?q=Swan");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
+                Assert.AreEqual(2, actual.Count);
+            }
+            
+            [TestCase(1)]
+            [TestCase(5)]
+            [TestCase(15)]
+            [TestCase(25)]
+            public async Task DoesNotReturnTooManyRecords(int maxRecords)
+            {
+                //Add extra HrPeople records that would be constrained by _limit.
+                await SpamTammies();
+
+                var resp = await GetAuthenticated($"people-lookup?q=Swan&_limit={maxRecords}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
+                Assert.LessOrEqual(actual.Count, maxRecords);
+            }
+
+            [Test]
+            public async Task DefaultLimit()
+            {
+                //Add extra HrPeople records that would be constrained by _limit.
+                await SpamTammies();
+
+                var resp = await GetAuthenticated($"people-lookup?q=Swan");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
+                Assert.LessOrEqual(actual.Count, 15);
+            }
+
+            private async Task SpamTammies()
+            {
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                //Start by adding additional results to HrPeople.  So many records that we don't want to return them all at once.
+                for(var n = 1; n < 27; n++)
+                {
+                    db.HrPeople.Add(new HrPerson { Id = TestEntities.HrPeople.Tammy1Id + n, Netid = $"tammy{n}", Name = $"Swanson, Tammy{n}", Campus = "Pawnee", HrDepartment = "N/A" });
+                }
+                await db.SaveChangesAsync();
+            }
+        }
     }
 }

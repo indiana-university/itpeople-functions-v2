@@ -104,7 +104,18 @@ namespace API.Data
 				return Pipeline.NotFound("The specified person's department does not exist in the directory.");
 			}
 
-			var newPerson = new Person(hrPerson, matchingDepartment);
+			var newPerson = new Person
+			{
+				Netid = hrPerson.Netid,
+				Name = hrPerson.Name,
+				NameFirst = hrPerson.NameFirst,
+				NameLast = hrPerson.NameLast,
+				Position = hrPerson.Position,
+				Campus = hrPerson.Campus,
+				CampusPhone = hrPerson.CampusPhone,
+				CampusEmail = hrPerson.CampusEmail,
+				DepartmentId = matchingDepartment?.Id
+			};
 
 			db.People.Add(newPerson);
 			await db.SaveChangesAsync();

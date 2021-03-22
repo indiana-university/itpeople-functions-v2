@@ -69,26 +69,33 @@ namespace API.Data
                             SELECT id FROM parentage
                             WHERE root_id <> 1))");
         
-        private static IQueryable<Person> SearchHrPeopleByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
+        
+        private static IQueryable<PeopleLookupItem> SearchHrPeopleByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
             => db.HrPeople
-                .Where(p=>  EF.Functions.ILike(p.Netid, $"%{query.Q}%")
-                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
-                .Select(h => new Person(h, null));
+                .Where(h=>  EF.Functions.ILike(h.Netid, $"%{query.Q}%")
+                            || EF.Functions.ILike(h.Name, $"%{query.Q}%"))
+                .Select(h => new PeopleLookupItem { Id = 0, Netid = h.Netid, Name = h.Name })
+                .AsNoTracking();
 
-        private static IQueryable<Person> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
+        private static IQueryable<PeopleLookupItem> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
         {
             //Get existing people matches
             var peopleMatches = db.People
                 .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
-                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"));
-            
-            var existingNetIds = peopleMatches.Select(p => p.Netid).ToList();
+                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
+                .Select(p => new PeopleLookupItem { Id = 0, Netid = p.Netid, Name = p.Name })
+                .Take(query.Limit)
+                .AsNoTracking();
+            var existingNetIds = peopleMatches.Select(p => p.Netid.ToLower()).ToList();
 
             //Get possible matches from the HrPeople table, and exclude any existing users.
             var hrPeopleMatches = SearchHrPeopleByNameOrNetId(db, query)
-                .Where(h => existingNetIds.Any(e => EF.Functions.ILike(e, h.Netid)) == false);
+                .Where(h => existingNetIds.Contains(h.Netid.ToLower()) == false)
+                .Take(query.Limit);
             
-            return peopleMatches.Union(hrPeopleMatches);
+            return peopleMatches
+                .Union(hrPeopleMatches)
+                .Take(query.Limit);
         }
 
         public static Task<Result<Person, Error>> GetOne(int id) 
@@ -142,9 +149,9 @@ namespace API.Data
             return Pipeline.Success(record);
         }
 
-        internal static Task<Result<List<Person>, Error>> GetAllWithHr(HrPeopleSearchParameters query)
+        internal static Task<Result<List<PeopleLookupItem>, Error>> GetAllWithHr(HrPeopleSearchParameters query)
             => ExecuteDbPipeline("search all people by netId", async db => {
-                    var result =  await SearchBothByNameOrNetId(db, query).ToListAsync();
+                    var result = await SearchBothByNameOrNetId(db, query).ToListAsync();
                     return Pipeline.Success(result);
                 });
            
