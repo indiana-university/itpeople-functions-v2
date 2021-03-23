@@ -84,7 +84,7 @@ namespace API.Data
             var peopleMatches = db.People
                 .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
                             || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
-                .Select(p => new PeopleLookupItem { Id = 0, Netid = p.Netid, Name = p.Name })
+                .Select(p => new PeopleLookupItem { Id = p.Id, Netid = p.Netid, Name = p.Name })
                 .Take(query.Limit)
                 .AsNoTracking();
             var existingNetIds = peopleMatches.Select(p => p.Netid.ToLower()).ToList();
