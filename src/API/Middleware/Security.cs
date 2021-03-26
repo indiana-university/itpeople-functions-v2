@@ -171,12 +171,14 @@ namespace API.Middleware
 
         private static Result<string,Error> ValidateJWT(UaaJwt jwt)
         {
+            var nowUnix = System.Math.Floor((DateTime.UtcNow - Epoch).TotalSeconds);
+
             // check for expired token
-            if(DateTime.UtcNow > Epoch.AddSeconds((float)(jwt.exp)))
+            if(nowUnix > (double)jwt.exp)
                 return Pipeline.Unauthorized("Access token has expired.");
 
             // check for unripe token
-            if(DateTime.UtcNow < Epoch.AddSeconds((float)jwt.nbf))
+            if(nowUnix < (double)jwt.nbf)
                 return Pipeline.Unauthorized("Access token is not yet valid.");
 
             return Pipeline.Success(jwt.user_name);
