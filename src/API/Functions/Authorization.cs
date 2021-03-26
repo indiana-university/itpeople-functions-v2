@@ -21,7 +21,7 @@ namespace API.Functions
 
 		[FunctionName(nameof(Authorization.Options))]
 		[OpenApiIgnore]
-		public static IActionResult Options(
+		public static Task<IActionResult> Options(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "options", Route = "{*url}")] HttpRequest req)
 			=> Response.Ok(req, Pipeline.Success(string.Empty));
 
