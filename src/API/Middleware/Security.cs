@@ -176,8 +176,15 @@ namespace API.Middleware
                 return Pipeline.Unauthorized("Access token has expired.");
 
             // check for unripe token
+            var utcNow = DateTime.UtcNow;
+            var nowEpoch = (utcNow - Epoch).TotalSeconds;
+            var nbf = Epoch.AddSeconds((float)jwt.nbf);     
             if(DateTime.UtcNow < Epoch.AddSeconds((float)jwt.nbf))
-                return Pipeline.Unauthorized("Access token is not yet valid.");
+                return Pipeline.Unauthorized($@"Access token is not yet valid. 
+                now: {utcNow.ToString("d MMMM hh:mm:ss.FFF")}  
+                nbf time: {nbf.ToString("d MMMM hh:mm:ss.FFF")} 
+                now value: {nowEpoch}
+                nbf value: {jwt.nbf}");
 
             return Pipeline.Success(jwt.user_name);
         }
