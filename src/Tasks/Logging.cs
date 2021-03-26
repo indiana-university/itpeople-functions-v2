@@ -61,13 +61,15 @@ namespace Tasks
         public static ILogger GetLogger(IDurableOrchestrationContext ctx, object properties = null) 
             => GetLogger(ctx.InstanceId, ctx.Name, properties);
 
-        public static ILogger GetLogger(string instanceId, string function, object properties = null) 
-            => new LoggerConfiguration()
+        private static ILogger Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .WriteTo.Console(Serilog.Events.LogEventLevel.Information)
                 .TryAddAzureAppInsightsSink()
                 .TryAddPostgresqlDatabaseSink()
-                .CreateLogger()
+                .CreateLogger();
+
+        public static ILogger GetLogger(string instanceId, string function, object properties = null) 
+            => Logger
                 .ForContext(LogProps.InvocationId, System.Guid.Parse(instanceId))
                 .ForContext(LogProps.Function, function)
                 .ForContext(LogProps.Properties, properties == null ? null : JsonConvert.SerializeObject(properties, Formatting.Indented));        
