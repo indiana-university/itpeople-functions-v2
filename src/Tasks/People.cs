@@ -144,7 +144,7 @@ namespace Tasks
                     await db.OpenAsync();
                     // Clear all records in hr_people
                     var cmd = db.CreateCommand();
-                    cmd.CommandText = "TRUNCATE hr_people;";
+                    cmd.CommandText = "TRUNCATE hr_people; setval(pg_get_serial_sequence('public.hr_people', 'id'),1);";
                     await cmd.ExecuteNonQueryAsync();
                     // Quickly import all HR records from the IMS Profile API
                     using (var writer = db.BeginTextImport("COPY hr_people (name, name_first, name_last, netid, position, campus, campus_phone, campus_email, hr_department, hr_department_desc) FROM STDIN"))
