@@ -215,6 +215,15 @@ namespace Integration
                 var resp = await GetAuthenticated($"people/{personId}", jwt);
                 AssertPermissions(resp, expectedPermissions);
             }
+
+            [Test]
+            public async Task CanGetUserByNetid()
+            {
+                var resp = await GetAuthenticated($"people/{TestEntities.People.RSwanson.Netid}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<Person>();
+                Assert.AreEqual(TestEntities.People.RSwanson.Id, actual.Id);
+            }
         }
 
         public class GetMemberships : ApiTest

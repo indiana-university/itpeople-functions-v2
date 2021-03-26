@@ -102,6 +102,9 @@ namespace API.Data
         public static Task<Result<Person, Error>> GetOne(int id) 
             => ExecuteDbPipeline("get a person by ID", db => 
                 TryFindPerson(db, id));
+        public static Task<Result<Person, Error>> GetOne(string id) 
+            => ExecuteDbPipeline("get a person by Netid", db => 
+                TryFindPerson(db, id));
 
         public static Task<Result<List<UnitMember>, Error>> GetMemberships(int id) 
             => ExecuteDbPipeline("fetch unit memberships", db =>

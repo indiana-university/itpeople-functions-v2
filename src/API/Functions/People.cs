@@ -42,11 +42,18 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(Person))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided ID.")]
         public static Task<IActionResult> PeopleGetOne(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}")] HttpRequest req, int id) 
-            => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DeterminePersonPermissions(req, requestor, id))
-                .Bind(_ => PeopleRepository.GetOne(id))
-                .Finally(result => Response.Ok(req, result));
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}")] HttpRequest req, string id) 
+            =>  Security.Authenticate(req)
+                .Bind(requestor => 
+                    int.TryParse(id, out int value)
+                    ? AuthorizationRepository.DeterminePersonPermissions(req, requestor, value)
+                    : AuthorizationRepository.DeterminePersonPermissions(req, requestor, id))
+                .Bind(_ => 
+                    int.TryParse(id, out int value)
+                    ? PeopleRepository.GetOne(value)
+                    : PeopleRepository.GetOne(id))
+                .Finally(result => Response.Ok(req, result));                    
+            
 
         [FunctionName(nameof(People.PeopleGetMemberships))]
         [OpenApiOperation(nameof(People.PeopleGetMemberships), nameof(People), Summary = "List unit memberships", Description = "List all units for which this person does IT work.")]
