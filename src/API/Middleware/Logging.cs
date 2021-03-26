@@ -78,6 +78,14 @@ namespace API.Middleware
             return logger;
         }
 
+        private static ILogger Logger = 
+            new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .TryAddAzureAppInsightsSink()
+                .TryAddPostgresqlDatabaseSink()
+                .CreateLogger();
+
         public static ILogger GetLogger(HttpRequest req)
         {
             var pathParts = req.Path.HasValue
@@ -89,13 +97,7 @@ namespace API.Middleware
                 ? (DateTime.UtcNow - (DateTime)req.HttpContext.Items[LogProps.ElapsedTime]).TotalMilliseconds
                 : -1;
 
-            return 
-                new LoggerConfiguration()
-                .Enrich.FromLogContext()
-                .WriteTo.Console()
-                .TryAddAzureAppInsightsSink()
-                .TryAddPostgresqlDatabaseSink()
-                .CreateLogger()
+            return Logger
                 .ForContext(LogProps.ElapsedTime, elapsed)
                 .ForContext(LogProps.RequestIPAddress, req.HttpContext.Connection.RemoteIpAddress)
                 .ForContext(LogProps.RequestMethod, req.Method)
