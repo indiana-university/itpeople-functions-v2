@@ -62,24 +62,13 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided ID.")]
         public static Task<IActionResult> PeopleGetMemberships(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}/memberships")] HttpRequest req, string id) 
-            {
-               if(int.TryParse(id, out int value))
-               {
-                   return  Security.Authenticate(req)
-                    .Bind(_ => PeopleRepository.GetMemberships(value))
-                    .Finally(result => Response.Ok(req, result));
-               }
-               else
-               {
-                   return  Security.Authenticate(req)
-                    .Bind(_ => PeopleRepository.GetMemberships(id))
-                    .Finally(result => Response.Ok(req, result));
-
-               }                
+            => Security.Authenticate(req)
+                .Bind(_ => 
+                    int.TryParse(id, out int value)
+                    ? PeopleRepository.GetMemberships(value)
+                    : PeopleRepository.GetMemberships(id))
+                .Finally(result => Response.Ok(req, result));
                 
-            }
-
-
         [FunctionName(nameof(People.PeopleUpdate))]
         [OpenApiOperation(nameof(People.PeopleUpdate), nameof(People), Summary = "Update person information", Description = "Update a person's location, expertise, and responsibilities/job classes.\n\n_Authorization_: The JWT must represent either the person whose record is being modified (i.e., a person can modify their own record), or someone who has permissions to manage a unit of which this person is a member (i.e., typically that person's manager/supervisor.)")]
         [OpenApiParameter("id", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the person record.")]
