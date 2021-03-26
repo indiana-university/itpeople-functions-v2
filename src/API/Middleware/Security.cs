@@ -175,15 +175,11 @@ namespace API.Middleware
 
             // check for expired token
             if(nowUnix > (double)jwt.exp)
-                return Pipeline.Unauthorized($@"Access token has expired.
-                now: {nowUnix}
-                exp: {jwt.exp}");
+                return Pipeline.Unauthorized("Access token has expired.");
 
             // check for unripe token
             if(nowUnix < (double)jwt.nbf)
-                return Pipeline.Unauthorized($@"Access token is not yet valid. 
-                now: {nowUnix}  
-                nbf: {jwt.nbf}");
+                return Pipeline.Unauthorized("Access token is not yet valid.");
 
             return Pipeline.Success(jwt.user_name);
         }
