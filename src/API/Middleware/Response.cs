@@ -30,16 +30,15 @@ namespace API.Middleware
             HttpStatusCode statusCode, 
             Func<T,IActionResult> resultGenerator)
         {
-            var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
                 if (statusCode != HttpStatusCode.OK)
-                    await logger.SuccessResult(req, statusCode);
+                    await Logging.GetLogger(req).SuccessResult(req, statusCode);
                 return resultGenerator(result.Value);
             }
             else 
             {
-                await logger.FailureResult<T>(req, result.Error);
+                await Logging.GetLogger(req).FailureResult<T>(req, result.Error);
                 return result.Error.ToResponse(req);
             }
         }
