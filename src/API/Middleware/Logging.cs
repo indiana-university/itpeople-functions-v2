@@ -78,13 +78,13 @@ namespace API.Middleware
             return logger;
         }
 
-        private static ILogger Logger = 
+        private static Lazy<ILogger> Logger = new Lazy<ILogger>(() => 
             new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .WriteTo.Console()
                 .TryAddAzureAppInsightsSink()
                 .TryAddPostgresqlDatabaseSink()
-                .CreateLogger();
+                .CreateLogger());
 
         public static ILogger GetLogger(HttpRequest req)
         {
@@ -97,7 +97,7 @@ namespace API.Middleware
                 ? (DateTime.UtcNow - (DateTime)req.HttpContext.Items[LogProps.ElapsedTime]).TotalMilliseconds
                 : -1;
 
-            return Logger
+            return Logger.Value
                 .ForContext(LogProps.ElapsedTime, elapsed)
                 .ForContext(LogProps.RequestIPAddress, req.HttpContext.Connection.RemoteIpAddress)
                 .ForContext(LogProps.RequestMethod, req.Method)

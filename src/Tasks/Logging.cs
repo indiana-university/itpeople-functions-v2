@@ -6,6 +6,7 @@ using NpgsqlTypes;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Newtonsoft.Json;
 using Serilog.Events;
+using System;
 
 namespace Tasks
 {
@@ -62,15 +63,16 @@ namespace Tasks
         public static ILogger GetLogger(IDurableOrchestrationContext ctx, object properties = null) 
             => GetLogger(ctx.InstanceId, ctx.Name, properties);
 
-        private static ILogger Logger = new LoggerConfiguration()
+        private static Lazy<ILogger> Logger = new Lazy<ILogger>(() => 
+            new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .WriteTo.Console(LogEventLevel.Information)
                 .TryAddAzureAppInsightsSink(LogEventLevel.Information)
                 .TryAddPostgresqlDatabaseSink(LogEventLevel.Debug)
-                .CreateLogger();
+                .CreateLogger());
 
         public static ILogger GetLogger(string instanceId, string function, object properties = null) 
-            => Logger
+            => Logger.Value
                 .ForContext(LogProps.InvocationId, System.Guid.Parse(instanceId))
                 .ForContext(LogProps.Function, function)
                 .ForContext(LogProps.Properties, properties == null ? null : JsonConvert.SerializeObject(properties, Models.Json.JsonSerializerSettings));        
