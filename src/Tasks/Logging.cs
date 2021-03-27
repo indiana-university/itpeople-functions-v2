@@ -5,6 +5,7 @@ using Serilog.Sinks.PostgreSQL;
 using NpgsqlTypes;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Newtonsoft.Json;
+using Serilog.Events;
 
 namespace Tasks
 {
@@ -19,13 +20,13 @@ namespace Tasks
 
     public static class Logging
     {
-        private static LoggerConfiguration TryAddAzureAppInsightsSink(this LoggerConfiguration logger)
+        private static LoggerConfiguration TryAddAzureAppInsightsSink(this LoggerConfiguration logger, LogEventLevel minLevel)
         {
             var appInsightsKey = Utils.Env("APPINSIGHTS_INSTRUMENTATIONKEY");
             if (!string.IsNullOrWhiteSpace(appInsightsKey))
             {
                 logger.WriteTo.ApplicationInsights(
-                    TelemetryConfiguration.CreateDefault(), TelemetryConverter.Traces);
+                    TelemetryConfiguration.CreateDefault(), TelemetryConverter.Traces, minLevel);
             }
 
             return logger;
@@ -42,7 +43,7 @@ namespace Tasks
             {"exception", new ExceptionColumnWriter(NpgsqlDbType.Text) } // exception details
         };
 
-        private static LoggerConfiguration TryAddPostgresqlDatabaseSink(this LoggerConfiguration logger)
+        private static LoggerConfiguration TryAddPostgresqlDatabaseSink(this LoggerConfiguration logger, LogEventLevel minLevel)
         {
             var tableName = "logs_automation";
             var connectionString = Utils.Env("DatabaseConnectionString", required:true);
@@ -50,7 +51,7 @@ namespace Tasks
             if (!string.IsNullOrWhiteSpace(connectionString))
             {
                 logger.WriteTo.PostgreSQL(
-                    connectionString, tableName, columnWriters);
+                    connectionString, tableName, columnWriters, minLevel);
             }
             return logger;
         }
@@ -63,9 +64,9 @@ namespace Tasks
 
         private static ILogger Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
-                .WriteTo.Console(Serilog.Events.LogEventLevel.Information)
-                .TryAddAzureAppInsightsSink()
-                .TryAddPostgresqlDatabaseSink()
+                .WriteTo.Console(LogEventLevel.Information)
+                .TryAddAzureAppInsightsSink(LogEventLevel.Information)
+                .TryAddPostgresqlDatabaseSink(LogEventLevel.Debug)
                 .CreateLogger();
 
         public static ILogger GetLogger(string instanceId, string function, object properties = null) 
