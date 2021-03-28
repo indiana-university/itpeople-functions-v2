@@ -32,8 +32,10 @@ namespace API.Middleware
         {
             if (result.IsSuccess)
             {
-                if (statusCode != HttpStatusCode.OK)
+                if (req.Method.ToLower() != "get")
+                {
                     await Logging.GetLogger(req).SuccessResult(req, statusCode);
+                }
                 return resultGenerator(result.Value);
             }
             else 
