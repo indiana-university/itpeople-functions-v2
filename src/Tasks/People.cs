@@ -20,22 +20,6 @@ namespace Tasks
             [DurableClient] IDurableOrchestrationClient starter) 
             => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(PeopleUpdateOrchestrator));
 
-        /* Strategies for consideration
-
-        A. Timestamp (naive about the correct cut-off)
-            1. Fetch page, upsert records, set 'last updated' timestamp, repeat for all pages.
-            2. Delete any record not updated in last X hours.
-
-        B. Orchestration ID (requires singleton checks)
-            1. Fetch page, upsert records, set 'orchestration' field to current orchestration ID, repeat for all pages.
-            2. Delete any record whose `orchestration` doesn't match current orchestration ID
-
-        C. Mark for Delete flag (requires singleton check)
-            1. Set 'MarkedForDelete' flag to TRUE for all rows.
-            2. Fetch page, upsert records, set 'MarkedForDelete' to FALSE for upserted records
-            3. Delete any record whose MarkedForDelete flag is TRUE. 
-
-        */
 
         [FunctionName(nameof(PeopleUpdateOrchestrator))]
         public static async Task PeopleUpdateOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
@@ -48,10 +32,7 @@ namespace Tasks
 
                 // Aggregate all the HR records of various different types
                 var hrRows = await context.CallActivityWithRetryAsync<IEnumerable<string>>(
-                    nameof(UpdatePeopleFromProfileApi), RetryOptions, uaaJwt);
-                // Refresh the HrPeople table with the Profile API data
-                await context.CallActivityWithRetryAsync(
-                        nameof(BulkInsertHrPeople), RetryOptions, hrRows);
+                    nameof(UpdateHrPeopleRecords), RetryOptions, uaaJwt);                
                         
                 // Add/update Departments from new HR data
                 await context.CallActivityWithRetryAsync(
@@ -87,11 +68,10 @@ namespace Tasks
 
 
         // Aggregate all HR records of a certain type from the IMS Profile API
-        [FunctionName(nameof(UpdatePeopleFromProfileApi))]
-        public static async Task<IEnumerable<string>> UpdatePeopleFromProfileApi([ActivityTrigger] IDurableActivityContext context)
-        {
+        [FunctionName(nameof(UpdateHrPeopleRecords))]
+        public static async Task UpdateHrPeopleRecords([OrchestrationTrigger] IDurableOrchestrationContext context)
+        {            
             var jwt = context.GetInput<string>();
-            var hrRecords = new List<ProfileEmployee>();
 
             foreach(var type in new[]{"employee", "affiliate", "foundation"})
             {
@@ -99,27 +79,53 @@ namespace Tasks
                 var hasMore = true;
                 do 
                 {
-                    var body = await FetchProfileApiPage(context, jwt, type, page);
+                    // Make FetchProfileApiPage an activity and call it.
+                    var body = await context.CallActivityWithRetryAsync<ProfileResponse>(
+                        nameof(FetchProfileApiPage), RetryOptions, (jwt, type, page));
+                    
+                    var hrRecords = new List<ProfileEmployee>();
                     hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
                     hrRecords.AddRange(body.employees == null ? new List<ProfileEmployee>() : body.employees);
                     hrRecords.AddRange(body.foundations == null ? new List<ProfileEmployee>() : body.foundations);
+
+                    // Make an UpsertHrPeopleRecords Activity: Do Upserts of cleaned ProfileEmployees
+                    var tasks = Clean(hrRecords).Select(b =>
+                        context.CallActivityWithRetryAsync(
+                            nameof(UpsertHrPersonRecord), RetryOptions, b));
+                
+                    await Task.WhenAll(tasks);
+
                     page += 1;
                     hasMore = (body.page.CurrentPage != body.page.LastPage);
                 } while (hasMore);
             }
 
-            return Clean(hrRecords).Select(emp => MapToHrPeopleRow(emp));
+        }
+        
+        [FunctionName(nameof(UpsertHrPersonRecord))]
+        private static async Task UpsertHrPersonRecord([ActivityTrigger]IDurableActivityContext context)
+        {
+            // Set MarkedForDelete to false
+            var profileEmployee = context.GetInput<ProfileEmployee>();
+
+            // find a person by netid
+            await Utils.DatabaseCommand(nameof(UpsertHrPersonRecord), "Upsert Hr Person records", async db => {
+                var entity = await db.HrPeople.SingleOrDefaultAsync(h => EF.Functions.ILike(h.Netid, profileEmployee.Username));
+                if(entity == null)
+                {
+                    entity = new HrPerson();
+                    await db.HrPeople.AddAsync(entity);
+                }
+                profileEmployee.MapToHrPerson(entity);
+                await db.SaveChangesAsync();
+            });
         }
 
-        private static string MapToHrPeopleRow(ProfileEmployee emp)
+        [FunctionName(nameof(FetchProfileApiPage))]
+        private static async Task<ProfileResponse> FetchProfileApiPage([ActivityTrigger]IDurableActivityContext context)
         {
-            var p = new HrPerson();
-            emp.MapToHrPerson(p);
-            return $"{p.Name}\t{p.NameFirst}\t{p.NameLast}\t{p.Netid.ToLowerInvariant()}\t{p.Position}\t{p.Campus}\t{p.CampusPhone}\t{p.CampusEmail}\t{p.HrDepartment}\t{p.HrDepartmentDescription}";
-        }
 
-        private static async Task<ProfileResponse> FetchProfileApiPage(IDurableActivityContext context, string jwt, string type, int page)
-        {
+            var (jwt, type, page) = context.GetInput<(string, string, int)>();
             Console.WriteLine($"Fetching {type} page {page}");
             var url = Utils.Env("ImsProfileApiUrl", required: true);
             var authHeader = new AuthenticationHeaderValue("Bearer", jwt);
@@ -143,40 +149,6 @@ namespace Tasks
                 .Where(r =>
                     !string.IsNullOrWhiteSpace(r.Email)
                     && r.Jobs.Any(j => j.JobStatus == "P" && !string.IsNullOrWhiteSpace(j.JobDepartmentId)));
-
-        // Reset the hr_people table with the lastest HR data from the Profile API 
-        [FunctionName(nameof(BulkInsertHrPeople))]
-        public static async Task BulkInsertHrPeople([ActivityTrigger] IDurableActivityContext context)
-        {
-            try
-            {
-                var rows = context.GetInput<IEnumerable<string>>();
-                var connStr = Utils.Env("DatabaseConnectionString", required: true);
-                using (var db = new Npgsql.NpgsqlConnection(connStr))
-                {
-                    await db.OpenAsync();
-                    // Clear all records in hr_people
-                    var cmd = db.CreateCommand();
-                    cmd.CommandText = "TRUNCATE hr_people; setval(pg_get_serial_sequence('public.hr_people', 'id'),1);";
-                    await cmd.ExecuteNonQueryAsync();
-                    // Quickly import all HR records from the IMS Profile API
-                    using (var writer = db.BeginTextImport("COPY hr_people (name, name_first, name_last, netid, position, campus, campus_phone, campus_email, hr_department, hr_department_desc) FROM STDIN"))
-                    {
-                        foreach (var row in rows)
-                        {                            
-                            await writer.WriteLineAsync(row);
-                        }
-                        await writer.FlushAsync();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                var msg = "Failed to bulk-insert HR records to hr_people";
-                Logging.GetLogger(nameof(BulkInsertHrPeople)).Error(ex, msg);
-                throw new Exception(msg, ex);
-            }
-        }
 
         // Add new Departmnet records to the IT People database.
         // If a departments with the same name already exists then update its description..
