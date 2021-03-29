@@ -92,9 +92,11 @@ namespace Tasks
                     hrRecords.AddRange(body.foundations == null ? new List<ProfileEmployee>() : body.foundations);
 
                     // Make an UpsertHrPeopleRecords Activity: Do Upserts of cleaned ProfileEmployees
-                    var tasks = Clean(hrRecords).Select(b =>
-                        context.CallActivityWithRetryAsync(
-                            nameof(UpsertHrPersonRecord), RetryOptions, b));
+                    var tasks = Clean(hrRecords)
+                        .Partition(50)
+                        .Select(records =>
+                            context.CallActivityWithRetryAsync(
+                                nameof(UpsertManyHrPersonRecords), RetryOptions, records));
                 
                     await Task.WhenAll(tasks);
 
@@ -126,22 +128,31 @@ namespace Tasks
             });
         }
         
-        [FunctionName(nameof(UpsertHrPersonRecord))]
-        public static async Task UpsertHrPersonRecord([ActivityTrigger]IDurableActivityContext context)
+        [FunctionName(nameof(UpsertManyHrPersonRecords))]
+        public static async Task UpsertManyHrPersonRecords([ActivityTrigger]IDurableActivityContext context)
         {
-            // Set MarkedForDelete to false
-            var profileEmployee = context.GetInput<ProfileEmployee>();
+            var profiles = context.GetInput<IEnumerable<ProfileEmployee>>();
+            var profileNetids = profiles
+                .Select(p => p.Username.ToLower().Trim())
+                .ToList();
+            
+            await Utils.DatabaseCommand(nameof(UpsertManyHrPersonRecords), "Upsert Hr Person records", async db => {
+                var existingRecords = await db.HrPeople
+                    .Where(h => profileNetids.Contains(h.Netid.ToLower().Trim()))
+                    .ToListAsync();
 
-            // find a person by netid
-            await Utils.DatabaseCommand(nameof(UpsertHrPersonRecord), "Upsert Hr Person records", async db => {
-                var entity = await db.HrPeople.SingleOrDefaultAsync(h => EF.Functions.ILike(h.Netid, profileEmployee.Username));
-                if(entity == null)
+                foreach(var profile in profiles)
                 {
-                    entity = new HrPerson();
-                    await db.HrPeople.AddAsync(entity);
+                    var existing = existingRecords.SingleOrDefault(e => e.Netid.ToLower().Trim() == profile.Username.ToLower().Trim());
+                    if(existing == null)
+                    {
+                        existing = new HrPerson();
+                        await db.HrPeople.AddAsync(existing);
+                    }
+                    profile.MapToHrPerson(existing);
+                    existing.MarkedForDelete = false;
                 }
-                profileEmployee.MapToHrPerson(entity);
-                entity.MarkedForDelete = false;
+
                 await db.SaveChangesAsync();
             });
         }
