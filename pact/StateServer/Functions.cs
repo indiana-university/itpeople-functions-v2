@@ -146,6 +146,11 @@ namespace StateServer
                 ");
             peopleContext.Database.ExecuteSqlRaw(@"
                 SELECT
+                    setval(pg_get_serial_sequence('public.people', 'id'), 
+                    (SELECT MAX(id) FROM public.people));
+                ");
+            peopleContext.Database.ExecuteSqlRaw(@"
+                SELECT
                     setval(pg_get_serial_sequence('public.hr_people', 'id'), 
                     (SELECT MAX(id) FROM public.hr_people));
                 ");

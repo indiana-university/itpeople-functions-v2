@@ -52,6 +52,7 @@ namespace API.Data
                 .Include(m => m.Unit.Parent)
                 .Where(m => m.Person.DepartmentId == departmentId)
                 .Select(m => m.Unit)
+                .Distinct()
                 .AsNoTracking().ToListAsync();
             return Pipeline.Success(result);
         }

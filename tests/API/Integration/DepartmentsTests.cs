@@ -99,6 +99,49 @@ namespace Integration
 				Assert.That(actual.First().Id, Is.EqualTo(expected.First().Id));
 				Assert.That(actual.First().Parent.Id, Is.EqualTo(expected.First().Parent.Id));
 			}
+
+			[Test]
+			public async Task GetsDistinctMemberUnits()
+			{
+				// Add Chris as a second member of the Auditor team.
+				var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+				var chris = new Person
+				{
+					Netid = "ctraeger",
+					Name = "Traeger, Chris",
+					NameFirst = "Chris",
+					NameLast = "Traeger",
+					Position = "Sr. Auditor",
+					Location = "Pawnee",
+					Campus = "Pawnee",
+					CampusPhone = "5-6789",
+					CampusEmail = "ctraeger@auditz.com",
+					Notes = "",
+					PhotoUrl = "",
+					Responsibilities = Responsibilities.None,
+					DepartmentId = TestEntities.Departments.AuditorId,
+					UnitMemberships = new List<UnitMember>()
+				};
+				
+				var chrisAuditor = new UnitMember
+				{
+					UnitId = TestEntities.Units.AuditorId,
+					Person = chris,
+					Role = Role.Leader,
+					Title = "Sr. Auditor",
+					Percentage = 100,
+					Notes = "Chris notes",
+					MemberTools = new List<MemberTool>()
+				};
+				await db.UnitMembers.AddAsync(chrisAuditor);
+				await db.SaveChangesAsync();
+
+				var resp = await GetAuthenticated($"departments/{TestEntities.Departments.Auditor.Id}/memberUnits");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
+				Assert.AreEqual(1, actual.Count);
+				Assert.True(actual.Any(u => u.Id.Equals(TestEntities.Units.AuditorId)));
+			}
 		}
 
 		public class GetSupportingUnits : ApiTest
