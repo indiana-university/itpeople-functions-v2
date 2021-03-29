@@ -34,12 +34,12 @@ namespace Tasks
                     nameof(FetchUAAToken), RetryOptions, null);
 
                 // Aggregate all the HR records of various different types
-                var hrRecords = await context.CallActivityWithRetryAsync<IEnumerable<ProfileEmployee>>(
-                    nameof(FetchPeopleFromProfileApi), RetryOptions, uaaJwt);
-
+                var hrRows = await context.CallActivityWithRetryAsync<IEnumerable<string>>(
+                    nameof(UpdatePeopleFromProfileApi), RetryOptions, uaaJwt);
                 // Refresh the HrPeople table with the Profile API data
                 await context.CallActivityWithRetryAsync(
-                        nameof(BulkInsertHrPeople), RetryOptions, hrRecords);
+                        nameof(BulkInsertHrPeople), RetryOptions, hrRows);
+                        
                 // Add/update Departments from new HR data
                 await context.CallActivityWithRetryAsync(
                         nameof(UpdateDepartmentRecords), RetryOptions, null);
@@ -74,8 +74,8 @@ namespace Tasks
 
 
         // Aggregate all HR records of a certain type from the IMS Profile API
-        [FunctionName(nameof(FetchPeopleFromProfileApi))]
-        public static async Task<IEnumerable<ProfileEmployee>> FetchPeopleFromProfileApi([ActivityTrigger] IDurableActivityContext context)
+        [FunctionName(nameof(UpdatePeopleFromProfileApi))]
+        public static async Task<IEnumerable<string>> UpdatePeopleFromProfileApi([ActivityTrigger] IDurableActivityContext context)
         {
             var jwt = context.GetInput<string>();
             var hrRecords = new List<ProfileEmployee>();
@@ -95,7 +95,14 @@ namespace Tasks
                 } while (hasMore);
             }
 
-            return Clean(hrRecords);
+            return Clean(hrRecords).Select(emp => MapToHrPeopleRow(emp));
+        }
+
+        private static string MapToHrPeopleRow(ProfileEmployee emp)
+        {
+            var p = new HrPerson();
+            emp.MapToHrPerson(p);
+            return $"{p.Name}\t{p.NameFirst}\t{p.NameLast}\t{p.Netid.ToLowerInvariant()}\t{p.Position}\t{p.Campus}\t{p.CampusPhone}\t{p.CampusEmail}\t{p.HrDepartment}\t{p.HrDepartmentDescription}";
         }
 
         private static async Task<ProfileResponse> FetchProfileApiPage(IDurableActivityContext context, string jwt, string type, int page)
@@ -130,23 +137,21 @@ namespace Tasks
         {
             try
             {
-                var emps = context.GetInput<IEnumerable<ProfileEmployee>>();
+                var rows = context.GetInput<IEnumerable<string>>();
                 var connStr = Utils.Env("DatabaseConnectionString", required: true);
                 using (var db = new Npgsql.NpgsqlConnection(connStr))
                 {
                     await db.OpenAsync();
                     // Clear all records in hr_people
                     var cmd = db.CreateCommand();
-                    cmd.CommandText = "TRUNCATE hr_people;";
+                    cmd.CommandText = "TRUNCATE hr_people; setval(pg_get_serial_sequence('public.hr_people', 'id'),1);";
                     await cmd.ExecuteNonQueryAsync();
                     // Quickly import all HR records from the IMS Profile API
                     using (var writer = db.BeginTextImport("COPY hr_people (name, name_first, name_last, netid, position, campus, campus_phone, campus_email, hr_department, hr_department_desc) FROM STDIN"))
                     {
-                        foreach(var emp in emps)
-                        {
-                            var p = new HrPerson();
-                            emp.MapToHrPerson(p);
-                            await writer.WriteLineAsync($"{p.Name}\t{p.NameFirst}\t{p.NameLast}\t{p.Netid.ToLowerInvariant()}\t{p.Position}\t{p.Campus}\t{p.CampusPhone}\t{p.CampusEmail}\t{p.HrDepartment}\t{p.HrDepartmentDescription}");
+                        foreach (var row in rows)
+                        {                            
+                            await writer.WriteLineAsync(row);
                         }
                         await writer.FlushAsync();
                     }

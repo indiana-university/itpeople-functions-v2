@@ -12,6 +12,7 @@ using System.IO;
 using System.Text;
 using System.Net.Http.Headers;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace API.Middleware
 {
@@ -23,41 +24,42 @@ namespace API.Middleware
             public const string AccessControlExposeHeaders = "Access-Control-Expose-Headers";
         }
         
-        private static IActionResult Generate<T>(
+        private static async Task<IActionResult> Generate<T>(
             HttpRequest req, 
             Result<T, Error> result, 
             HttpStatusCode statusCode, 
             Func<T,IActionResult> resultGenerator)
         {
-            var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
-                // if (statusCode != HttpStatusCode.OK)
-                    logger.SuccessResult(req, statusCode);
+                if (req.Method.ToLower() != "get")
+                {
+                    await Logging.GetLogger(req).SuccessResult(req, statusCode);
+                }
                 return resultGenerator(result.Value);
             }
             else 
             {
-                logger.FailureResult<T>(req, result.Error);
+                await Logging.GetLogger(req).FailureResult<T>(req, result.Error);
                 return result.Error.ToResponse(req);
             }
         }
 
         /// <summary>Return an HTTP 200 response with content, or an appropriate HTTP error response.</summary>
-        public static IActionResult Ok<T>(HttpRequest req, Result<T, Error> result)
+        public static Task<IActionResult> Ok<T>(HttpRequest req, Result<T, Error> result)
             => Generate(req, result, HttpStatusCode.OK, val => JsonResponse(req, val, HttpStatusCode.OK));
 
         /// <summary>Return an HTTP 201 response with content, with the URL for the resource and the resource itself.</summary>
-        public static IActionResult Created<T>(HttpRequest req, Result<T, Error> result) where T : Models.Entity
+        public static Task<IActionResult> Created<T>(HttpRequest req, Result<T, Error> result) where T : Models.Entity
 		    => Generate(req, result, HttpStatusCode.Created, val => JsonResponse(req, val, HttpStatusCode.Created));
 
         /// <summary>Return an HTTP 204 indicating success, but nothing to return.</summary>
-        public static IActionResult NoContent<T>(HttpRequest req, Result<T, Error> result)
+        public static Task<IActionResult> NoContent<T>(HttpRequest req, Result<T, Error> result)
             => Generate(req, result, HttpStatusCode.NoContent, val => StatusCodeResponse(req, HttpStatusCode.NoContent));
 
 
         /// <summary>Return an HTTP 200 response with XML content, or an appropriate HTTP error response.</summary>
-        public static IActionResult OkXml<T>(HttpRequest req, Result<T, Error> result)
+        public static Task<IActionResult> OkXml<T>(HttpRequest req, Result<T, Error> result)
             => Generate(req, result, HttpStatusCode.OK, val => XmlResponse(req, val, HttpStatusCode.OK));
 
         private static IActionResult JsonResponse<T>(HttpRequest req, T value, HttpStatusCode status)
@@ -136,19 +138,25 @@ namespace API.Middleware
             }
         }
 
-        private static void SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode) 
-            => logger
-                .ForContext(LogProps.StatusCode, (int)statusCode)
-                .ForContext(LogProps.RequestBody, request.ContentLength > 0 ? request.ReadAsStringAsync().Result : null)
-                .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
-                .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
+        private static async Task SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode) 
+            {
+                var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
+                logger
+                    .ForContext(LogProps.StatusCode, (int)statusCode)
+                    .ForContext(LogProps.RequestBody, requestBody)
+                    .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
+                    .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
+            }
 
-        private static void FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error) 
-            => logger
+        private static async Task FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error) 
+        {
+            var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
+            logger
                 .ForContext(LogProps.StatusCode, (int)error.StatusCode)
-                .ForContext(LogProps.RequestBody, request.ContentLength > 0 ? request.ReadAsStringAsync().Result : null)
+                .ForContext(LogProps.RequestBody, requestBody)
                 .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
-                .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(error.Messages))
+                .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(error.Messages, Json.JsonSerializerSettings))
                 .Error(error.Exception, $"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}:\nErrors: {{{LogProps.ErrorMessages}}}.");
+        }
     }
 }
