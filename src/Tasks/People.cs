@@ -73,6 +73,13 @@ namespace Tasks
         {            
             var jwt = context.GetInput<string>();
 
+            // Mark all HrPeople records for deletion
+            await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Mark all HrPeople for deletion", async db => {
+                await db.Database.ExecuteSqlRawAsync(@"
+                    UPDATE hr_people
+                    SET MarkedForDelete = 1");
+            });
+
             foreach(var type in new[]{"employee", "affiliate", "foundation"})
             {
                 var page = 0;
@@ -99,6 +106,12 @@ namespace Tasks
                     hasMore = (body.page.CurrentPage != body.page.LastPage);
                 } while (hasMore);
             }
+            // Delete HRpeople still marked for deletion
+             await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Delete all HrPeople with MarkedForDelete == true", async db => {
+                var hrPeopleToDelete = db.HrPeople.Where(h => h.MarkedForDelete);
+                db.HrPeople.RemoveRange(hrPeopleToDelete);
+                await db.SaveChangesAsync();
+            });
 
         }
         
@@ -117,6 +130,7 @@ namespace Tasks
                     await db.HrPeople.AddAsync(entity);
                 }
                 profileEmployee.MapToHrPerson(entity);
+                entity.MarkedForDelete = false;
                 await db.SaveChangesAsync();
             });
         }
