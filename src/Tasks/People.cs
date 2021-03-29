@@ -14,15 +14,28 @@ namespace Tasks
 {
     public static class People
     {
-         // Runs at the top of the hour (00:00 AM, 01:00 AM, 02:00 AM, ...)
+        // Runs at the top of the hour (00:00 AM, 01:00 AM, 02:00 AM, ...)
         [FunctionName(nameof(ScheduledPeopleUpdate))]
-        public static async Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *")]TimerInfo myTimer, 
-            [DurableClient] IDurableOrchestrationClient starter)
-        {
-            string instanceId = await starter.StartNewAsync(nameof(PeopleUpdateOrchestrator), null);
-            Logging.GetLogger(instanceId, nameof(ScheduledPeopleUpdate), myTimer)
-                .Debug("Started scheduled people update.");
-        }
+        public static Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *")] TimerInfo timer,
+            [DurableClient] IDurableOrchestrationClient starter) 
+            => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(PeopleUpdateOrchestrator));
+
+        /* Strategies for consideration
+
+        A. Timestamp (naive about the correct cut-off)
+            1. Fetch page, upsert records, set 'last updated' timestamp, repeat for all pages.
+            2. Delete any record not updated in last X hours.
+
+        B. Orchestration ID (requires singleton checks)
+            1. Fetch page, upsert records, set 'orchestration' field to current orchestration ID, repeat for all pages.
+            2. Delete any record whose `orchestration` doesn't match current orchestration ID
+
+        C. Mark for Delete flag (requires singleton check)
+            1. Set 'MarkedForDelete' flag to TRUE for all rows.
+            2. Fetch page, upsert records, set 'MarkedForDelete' to FALSE for upserted records
+            3. Delete any record whose MarkedForDelete flag is TRUE. 
+
+        */
 
         [FunctionName(nameof(PeopleUpdateOrchestrator))]
         public static async Task PeopleUpdateOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)

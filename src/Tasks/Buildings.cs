@@ -15,13 +15,9 @@ namespace Tasks
     {
         // Runs at 30 minutes past every hour (00:30 AM, 01:30 AM, 02:30 AM, ...)
         [FunctionName(nameof(ScheduledBuildingsUpdate))]
-        public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 30 * * * *")]TimerInfo myTimer, 
+        public static Task ScheduledBuildingsUpdate([TimerTrigger("0 30 * * * *")]TimerInfo timer, 
             [DurableClient] IDurableOrchestrationClient starter)
-        {
-            string instanceId = await starter.StartNewAsync(nameof(BuildingsUpdateOrchestrator), null);
-            Logging.GetLogger(instanceId, nameof(ScheduledBuildingsUpdate), myTimer)
-               .Debug("Started scheduled buildings update.");
-        }
+            => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(BuildingsUpdateOrchestrator));
 
         [FunctionName(nameof(BuildingsUpdateOrchestrator))]
         public static async Task BuildingsUpdateOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
