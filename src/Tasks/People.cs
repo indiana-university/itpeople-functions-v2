@@ -30,9 +30,9 @@ namespace Tasks
                 var uaaJwt = await context.CallActivityWithRetryAsync<string>(
                     nameof(FetchUAAToken), RetryOptions, null);
 
-                // Aggregate all the HR records of various different types
-                var hrRows = await context.CallActivityWithRetryAsync<IEnumerable<string>>(
-                    nameof(UpdateHrPeopleRecords), RetryOptions, uaaJwt);                
+                // Add/update HR records of various different types
+                await context.CallSubOrchestratorAsync(
+                    nameof(UpdateHrPeopleRecords), uaaJwt);                
                         
                 // Add/update Departments from new HR data
                 await context.CallActivityWithRetryAsync(
@@ -107,20 +107,19 @@ namespace Tasks
         }
         
         [FunctionName(nameof(MarkHrPeopleForDeletion))]
-        private static async Task MarkHrPeopleForDeletion([ActivityTrigger]IDurableActivityContext context)
+        public static async Task MarkHrPeopleForDeletion([ActivityTrigger]IDurableActivityContext context)
         {
             await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Mark all HrPeople for deletion", async db => {
                 await db.Database.ExecuteSqlRawAsync(@"
                     UPDATE hr_people
-                    SET MarkedForDelete = 1");
+                    SET marked_for_delete = true");
             });
         }
 
         [FunctionName(nameof(DeleteMarkedHrPeople))]
-        private static async Task DeleteMarkedHrPeople([ActivityTrigger]IDurableActivityContext context)
-        {
-            // Delete HRpeople still marked for deletion
-             await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Delete all HrPeople with MarkedForDelete == true", async db => {
+        public static async Task DeleteMarkedHrPeople([ActivityTrigger]IDurableActivityContext context)
+        {           
+            await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Delete all HrPeople with MarkedForDelete == true", async db => {
                 var hrPeopleToDelete = db.HrPeople.Where(h => h.MarkedForDelete);
                 db.HrPeople.RemoveRange(hrPeopleToDelete);
                 await db.SaveChangesAsync();
@@ -128,7 +127,7 @@ namespace Tasks
         }
         
         [FunctionName(nameof(UpsertHrPersonRecord))]
-        private static async Task UpsertHrPersonRecord([ActivityTrigger]IDurableActivityContext context)
+        public static async Task UpsertHrPersonRecord([ActivityTrigger]IDurableActivityContext context)
         {
             // Set MarkedForDelete to false
             var profileEmployee = context.GetInput<ProfileEmployee>();
@@ -148,14 +147,14 @@ namespace Tasks
         }
 
         [FunctionName(nameof(FetchProfileApiPage))]
-        private static async Task<ProfileResponse> FetchProfileApiPage([ActivityTrigger]IDurableActivityContext context)
+        public static async Task<ProfileResponse> FetchProfileApiPage([ActivityTrigger]IDurableActivityContext context)
         {
 
             var (jwt, type, page) = context.GetInput<(string, string, int)>();
             Console.WriteLine($"Fetching {type} page {page}");
             var url = Utils.Env("ImsProfileApiUrl", required: true);
             var authHeader = new AuthenticationHeaderValue("Bearer", jwt);
-            var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=500");
+            var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=1000");
             req.Headers.Authorization = authHeader;
             var resp = await Utils.HttpClient.SendAsync(req);
             return await Utils.DeserializeResponse<ProfileResponse>(nameof(FetchProfileApiPage), resp, "fetch page from IMS Profile API");

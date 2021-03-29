@@ -77,8 +77,8 @@ namespace Tasks
             record.NameLast = LastName;
             record.Netid = Username.ToLowerInvariant();
             record.CampusEmail = Email;
-            record.Campus = contact == null ? "" : contact.CampusCode; 
-            record.CampusPhone = contact == null ? "" : contact.PhoneNumber; 
+            record.Campus = contact?.CampusCode == null ? "" : contact.CampusCode; 
+            record.CampusPhone = contact?.PhoneNumber == null ? "" : contact.PhoneNumber; 
             record.Position = job == null ? "" : job.Position;
             record.HrDepartment = job == null ? "" : job.JobDepartmentId;
             record.HrDepartmentDescription = job == null ? "" : job.JobDepartmentDesc;
