@@ -74,11 +74,7 @@ namespace Tasks
             var jwt = context.GetInput<string>();
 
             // Mark all HrPeople records for deletion
-            await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Mark all HrPeople for deletion", async db => {
-                await db.Database.ExecuteSqlRawAsync(@"
-                    UPDATE hr_people
-                    SET MarkedForDelete = 1");
-            });
+            await context.CallActivityWithRetryAsync(nameof(MarkHrPeopleForDeletion), RetryOptions, null);
 
             foreach(var type in new[]{"employee", "affiliate", "foundation"})
             {
@@ -107,12 +103,28 @@ namespace Tasks
                 } while (hasMore);
             }
             // Delete HRpeople still marked for deletion
+            await context.CallActivityWithRetryAsync(nameof(DeleteMarkedHrPeople), RetryOptions, null);
+        }
+        
+        [FunctionName(nameof(MarkHrPeopleForDeletion))]
+        private static async Task MarkHrPeopleForDeletion([ActivityTrigger]IDurableActivityContext context)
+        {
+            await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Mark all HrPeople for deletion", async db => {
+                await db.Database.ExecuteSqlRawAsync(@"
+                    UPDATE hr_people
+                    SET MarkedForDelete = 1");
+            });
+        }
+
+        [FunctionName(nameof(DeleteMarkedHrPeople))]
+        private static async Task DeleteMarkedHrPeople([ActivityTrigger]IDurableActivityContext context)
+        {
+            // Delete HRpeople still marked for deletion
              await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Delete all HrPeople with MarkedForDelete == true", async db => {
                 var hrPeopleToDelete = db.HrPeople.Where(h => h.MarkedForDelete);
                 db.HrPeople.RemoveRange(hrPeopleToDelete);
                 await db.SaveChangesAsync();
             });
-
         }
         
         [FunctionName(nameof(UpsertHrPersonRecord))]
