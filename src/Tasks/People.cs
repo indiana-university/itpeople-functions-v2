@@ -137,7 +137,7 @@ namespace Tasks
             Console.WriteLine($"Fetching {type} page {page}");
             var url = Utils.Env("ImsProfileApiUrl", required: true);
             var authHeader = new AuthenticationHeaderValue("Bearer", jwt);
-            var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=1000");
+            var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=5000");
             req.Headers.Authorization = authHeader;
             var resp = await Utils.HttpClient.SendAsync(req);
             return await Utils.DeserializeResponse<ProfileResponse>(nameof(FetchProfileApiPage), resp, "fetch page from IMS Profile API");
