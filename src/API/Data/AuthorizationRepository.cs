@@ -33,11 +33,24 @@ namespace API.Data
                 FetchPeople(db, requestorNetid, personId)
                 .Bind(tup => ResolvePersonPermissions(tup.requestor, tup.target))
                 .Tap(perms => req.SetEntityPermissions(perms)));
+        internal static Task<Result<EntityPermissions, Error>> DeterminePersonPermissions(HttpRequest req, string requestorNetid, string netId)
+            => ExecuteDbPipeline("resolve person permissions", db =>
+                FetchPeople(db, requestorNetid, netId)
+                .Bind(tup => ResolvePersonPermissions(tup.requestor, tup.target))
+                .Tap(perms => req.SetEntityPermissions(perms)));
         
         private static async Task<Result<(Person requestor, Person target),Error>> FetchPeople(PeopleContext db, string requestorNetid, int personId)
         {
             var requestor = await FindRequestorOrDefault(db, requestorNetid);
             var target = await db.People.Include(p => p.UnitMemberships).SingleOrDefaultAsync(p => p.Id == personId);
+            return target == null
+                ? Pipeline.NotFound("No person was found with the ID provided.")
+                : Pipeline.Success((requestor, target));
+        }
+        private static async Task<Result<(Person requestor, Person target),Error>> FetchPeople(PeopleContext db, string requestorNetid, string netId)
+        {
+            var requestor = await FindRequestorOrDefault(db, requestorNetid);
+            var target = await db.People.Include(p => p.UnitMemberships).SingleOrDefaultAsync(p => p.Netid == netId);
             return target == null
                 ? Pipeline.NotFound("No person was found with the ID provided.")
                 : Pipeline.Success((requestor, target));

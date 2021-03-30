@@ -42,11 +42,18 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(Person))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided ID.")]
         public static Task<IActionResult> PeopleGetOne(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}")] HttpRequest req, int id) 
-            => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DeterminePersonPermissions(req, requestor, id))
-                .Bind(_ => PeopleRepository.GetOne(id))
-                .Finally(result => Response.Ok(req, result));
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}")] HttpRequest req, string id) 
+            =>  Security.Authenticate(req)
+                .Bind(requestor => 
+                    int.TryParse(id, out int value)
+                    ? AuthorizationRepository.DeterminePersonPermissions(req, requestor, value)
+                    : AuthorizationRepository.DeterminePersonPermissions(req, requestor, id))
+                .Bind(_ => 
+                    int.TryParse(id, out int value)
+                    ? PeopleRepository.GetOne(value)
+                    : PeopleRepository.GetOne(id))
+                .Finally(result => Response.Ok(req, result));                    
+            
 
         [FunctionName(nameof(People.PeopleGetMemberships))]
         [OpenApiOperation(nameof(People.PeopleGetMemberships), nameof(People), Summary = "List unit memberships", Description = "List all units for which this person does IT work.")]
@@ -55,24 +62,13 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided ID.")]
         public static Task<IActionResult> PeopleGetMemberships(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/{id}/memberships")] HttpRequest req, string id) 
-            {
-               if(int.TryParse(id, out int value))
-               {
-                   return  Security.Authenticate(req)
-                    .Bind(_ => PeopleRepository.GetMemberships(value))
-                    .Finally(result => Response.Ok(req, result));
-               }
-               else
-               {
-                   return  Security.Authenticate(req)
-                    .Bind(_ => PeopleRepository.GetMemberships(id))
-                    .Finally(result => Response.Ok(req, result));
-
-               }                
+            => Security.Authenticate(req)
+                .Bind(_ => 
+                    int.TryParse(id, out int value)
+                    ? PeopleRepository.GetMemberships(value)
+                    : PeopleRepository.GetMemberships(id))
+                .Finally(result => Response.Ok(req, result));
                 
-            }
-
-
         [FunctionName(nameof(People.PeopleUpdate))]
         [OpenApiOperation(nameof(People.PeopleUpdate), nameof(People), Summary = "Update person information", Description = "Update a person's location, expertise, and responsibilities/job classes.\n\n_Authorization_: The JWT must represent either the person whose record is being modified (i.e., a person can modify their own record), or someone who has permissions to manage a unit of which this person is a member (i.e., typically that person's manager/supervisor.)")]
         [OpenApiParameter("id", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the person record.")]
