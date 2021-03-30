@@ -60,7 +60,7 @@ namespace API.Functions
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(requestor => Request.DeserializeBody<SupportRelationshipRequest>(req))
 			.Tap(srr => supportRelationshipRequest = srr)
-			.Bind(srr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, srr.UnitId))// Set headers saying what the requestor can do to this unit
+			.Bind(srr => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestorNetId, srr.UnitId))// Set headers saying what the requestor can do to this unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => SupportRelationshipsRepository.CreateSupportRelationship(supportRelationshipRequest))
 			.Bind(sr => Pipeline.Success(new SupportRelationshipResponse(sr)))
@@ -85,7 +85,7 @@ namespace API.Functions
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => Request.DeserializeBody<SupportRelationshipRequest>(req))
 				.Tap(srr => supportRelationshipRequest = srr)
-				.Bind(srr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, srr.UnitId))// Set headers saying what the requestor can do to this unit
+				.Bind(srr => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestorNetId, srr.UnitId))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
 				.Bind(authorized => SupportRelationshipsRepository.UpdateSupportRelationship(req, supportRelationshipRequest, relationshipId))
 				.Bind(sr => Pipeline.Success(new SupportRelationshipResponse(sr)))
@@ -105,7 +105,7 @@ namespace API.Functions
 			return Security.Authenticate(req)
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => SupportRelationshipsRepository.GetOne(relationshipId))
-				.Bind(sr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, sr.UnitId))// Set headers saying what the requestor can do to this unit
+				.Bind(sr => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestorNetId, sr.UnitId))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
 				.Bind(_ => SupportRelationshipsRepository.DeleteSupportRelationship(req, relationshipId))
 				.Finally(result => Response.NoContent(req, result));

@@ -44,7 +44,7 @@ namespace API.Functions
         public static Task<IActionResult> UnitsGetOne(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetOne(unitId))
                 .Finally(result => Response.Ok(req, result));
         
@@ -74,7 +74,7 @@ namespace API.Functions
         public static Task<IActionResult> UpdateUnit(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "units/{unitId}")] HttpRequest req, int unitId)
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
                 .Bind(_ => Request.DeserializeBody<UnitRequest>(req))
                 .Bind(body => UnitsRepository.UpdateUnit(req, body, unitId))
@@ -90,7 +90,7 @@ namespace API.Functions
         public static Task<IActionResult> DeleteUnit(
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "units/{unitId}")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
                 .Bind(_ => UnitsRepository.DeleteUnit(req, unitId))
                 .Finally(result => Response.NoContent(req, result));
@@ -103,7 +103,7 @@ namespace API.Functions
         public static Task<IActionResult> GetUnitChildren(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/children")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetChildren(req, unitId))
                 .Finally(result => Response.Ok(req, result));
 
@@ -115,7 +115,7 @@ namespace API.Functions
         public static Task<IActionResult> GetUnitMembers(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/members")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetMembers(req, unitId))
 				.Bind(ms => Pipeline.Success(ms.Select(e => e.ToUnitMemberResponse(req.GetEntityPermissions()))))
                 .Finally(result => Response.Ok(req, result));
@@ -128,7 +128,7 @@ namespace API.Functions
         public static Task<IActionResult> GetUnitSupportedBuildings(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/supportedBuildings")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetSupportedBuildings(req, unitId))
                 .Bind(sr => Pipeline.Success(sr.Select(srx => new BuildingRelationshipResponse(srx)).ToList()))
                 .Finally(result => Response.Ok(req, result));
@@ -141,7 +141,7 @@ namespace API.Functions
         public static Task<IActionResult> GetUnitSupportedDepartments(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/supportedDepartments")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetSupportedDepartments(req, unitId))
                 .Bind(sr => Pipeline.Success(sr.Select(srx => new SupportRelationshipResponse(srx)).ToList()))
                 .Finally(result => Response.Ok(req, result));
@@ -154,7 +154,7 @@ namespace API.Functions
         public static Task<IActionResult> GetUnitTools(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/tools")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetTools(req, unitId))
                 .Bind(t => Pipeline.Success(ToolResponse.ConvertList(t)))
                 .Finally(result => Response.Ok(req, result));
