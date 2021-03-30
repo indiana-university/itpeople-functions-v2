@@ -65,6 +65,13 @@ namespace Integration
 				Assert.AreEqual(CityHallParksAndRec.BuildingId, actual.Building.Id);
 			}
 
+			//201
+			[Test]
+			public async Task BuildingRelationshipsOwnerCanCreate()
+			{
+				var resp = await PostAuthenticated("buildingRelationships", CityHallParksAndRec, ValidRswansonJwt);
+				AssertStatusCode(resp, HttpStatusCode.Created);
+			}
 
 			//400 The request body is malformed or missing
 			[Test]
@@ -82,7 +89,6 @@ namespace Integration
 				Assert.Contains("The request body was malformed, the unitId and/or buildingId field was missing.", actual.Errors);
 				Assert.AreEqual("(none)", actual.Details);
 			}
-			
 
 			[TestCase(99999, TestEntities.Buildings.RonsCabinId, Description = "Unit Id not found")]
 			[TestCase(TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Building Id not found")]
