@@ -82,14 +82,7 @@ namespace Integration
 				Assert.Contains("The request body was malformed, the unitId and/or buildingId field was missing.", actual.Errors);
 				Assert.AreEqual("(none)", actual.Details);
 			}
-
-			//403 unauthorized
-			[Test]
-			public async Task BuildingRelationshipsUnauthorizedCannotCreate()
-			{
-				var resp = await PostAuthenticated("buildingRelationships", CityHallParksAndRec, ValidRswansonJwt);
-				AssertStatusCode(resp, HttpStatusCode.Forbidden);
-			}
+			
 
 			[TestCase(99999, TestEntities.Buildings.RonsCabinId, Description = "Unit Id not found")]
 			[TestCase(TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Building Id not found")]
