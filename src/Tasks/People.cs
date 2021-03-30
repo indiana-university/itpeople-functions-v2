@@ -31,8 +31,8 @@ namespace Tasks
                     nameof(FetchUAAToken), RetryOptions, null);
 
                 // Add/update HR records of various different types
-                await context.CallSubOrchestratorAsync(
-                    nameof(UpdateHrPeopleRecords), uaaJwt);                
+                await context.CallActivityWithRetryAsync(
+                    nameof(UpdateHrPeopleRecords), RetryOptions, uaaJwt);                
                         
                 // Add/update Departments from new HR data
                 await context.CallActivityWithRetryAsync(
@@ -69,12 +69,12 @@ namespace Tasks
 
         // Aggregate all HR records of a certain type from the IMS Profile API
         [FunctionName(nameof(UpdateHrPeopleRecords))]
-        public static async Task UpdateHrPeopleRecords([OrchestrationTrigger] IDurableOrchestrationContext context)
+        public static async Task UpdateHrPeopleRecords([ActivityTrigger] IDurableActivityContext context)
         {            
             var jwt = context.GetInput<string>();
 
             // Mark all HrPeople records for deletion
-            await context.CallActivityWithRetryAsync(nameof(MarkHrPeopleForDeletion), RetryOptions, null);
+            await MarkHrPeopleForDeletion();
 
             foreach(var type in new[]{"employee", "affiliate", "foundation"})
             {
@@ -83,8 +83,7 @@ namespace Tasks
                 do 
                 {
                     // Make FetchProfileApiPage an activity and call it.
-                    var body = await context.CallActivityWithRetryAsync<ProfileResponse>(
-                        nameof(FetchProfileApiPage), RetryOptions, (jwt, type, page));
+                    var body = await FetchProfileApiPage(jwt, type, page);
                     
                     var hrRecords = new List<ProfileEmployee>();
                     hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
@@ -92,24 +91,20 @@ namespace Tasks
                     hrRecords.AddRange(body.foundations == null ? new List<ProfileEmployee>() : body.foundations);
 
                     // Make an UpsertHrPeopleRecords Activity: Do Upserts of cleaned ProfileEmployees
-                    var tasks = Clean(hrRecords)
-                        .Partition(50)
-                        .Select(records =>
-                            context.CallActivityWithRetryAsync(
-                                nameof(UpsertManyHrPersonRecords), RetryOptions, records));
+                    foreach(var batch in Clean(hrRecords).Partition(50))
+                    {
+                        await UpsertManyHrPersonRecords(batch);
+                    }
                 
-                    await Task.WhenAll(tasks);
-
                     page += 1;
                     hasMore = (body.page.CurrentPage != body.page.LastPage);
                 } while (hasMore);
             }
             // Delete HRpeople still marked for deletion
-            await context.CallActivityWithRetryAsync(nameof(DeleteMarkedHrPeople), RetryOptions, null);
+            await DeleteMarkedHrPeople();
         }
         
-        [FunctionName(nameof(MarkHrPeopleForDeletion))]
-        public static async Task MarkHrPeopleForDeletion([ActivityTrigger]IDurableActivityContext context)
+        public static async Task MarkHrPeopleForDeletion()
         {
             await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Mark all HrPeople for deletion", async db => {
                 await db.Database.ExecuteSqlRawAsync(@"
@@ -118,20 +113,17 @@ namespace Tasks
             });
         }
 
-        [FunctionName(nameof(DeleteMarkedHrPeople))]
-        public static async Task DeleteMarkedHrPeople([ActivityTrigger]IDurableActivityContext context)
+        public static async Task DeleteMarkedHrPeople()
         {           
             await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Delete all HrPeople with MarkedForDelete == true", async db => {
                 var hrPeopleToDelete = db.HrPeople.Where(h => h.MarkedForDelete);
                 db.HrPeople.RemoveRange(hrPeopleToDelete);
                 await db.SaveChangesAsync();
             });
-        }
-        
-        [FunctionName(nameof(UpsertManyHrPersonRecords))]
-        public static async Task UpsertManyHrPersonRecords([ActivityTrigger]IDurableActivityContext context)
+        }        
+       
+        public static async Task UpsertManyHrPersonRecords(IEnumerable<ProfileEmployee> profiles)
         {
-            var profiles = context.GetInput<IEnumerable<ProfileEmployee>>();
             var profileNetids = profiles
                 .Select(p => p.Username.ToLower().Trim())
                 .ToList();
@@ -157,11 +149,8 @@ namespace Tasks
             });
         }
 
-        [FunctionName(nameof(FetchProfileApiPage))]
-        public static async Task<ProfileResponse> FetchProfileApiPage([ActivityTrigger]IDurableActivityContext context)
+        public static async Task<ProfileResponse> FetchProfileApiPage(string jwt, string type, int page)
         {
-
-            var (jwt, type, page) = context.GetInput<(string, string, int)>();
             Console.WriteLine($"Fetching {type} page {page}");
             var url = Utils.Env("ImsProfileApiUrl", required: true);
             var authHeader = new AuthenticationHeaderValue("Bearer", jwt);
