@@ -5,19 +5,20 @@ using System.Xml.Serialization;
 namespace Models
 {
     [Serializable]
-    public class DeptCodeList
-    {
+    [XmlRoot(ElementName="DeptCodeList")]
+    public class DeptCodeList { 
+
+        [XmlElement(ElementName="a", IsNullable=false)]
+        public List<string> A { get; set; }
+
         public DeptCodeList()
         {
+            A = new List<string>();
         }
 
         public DeptCodeList(List<string> values)
         {
-            Values = values;
+            A = values;
         }
-
-        [XmlElement(ElementName = "a", IsNullable=false)]
-        public List<string> Values { get; set; }
     }
-    
 }
