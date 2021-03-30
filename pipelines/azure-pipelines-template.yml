@@ -15,36 +15,36 @@ variables:
     value: 'ubuntu-20.04'
 
 stages:
-# - stage: Test
-#   displayName: Test
+- stage: Test
+  displayName: Test
 
-#   jobs: 
-#     - job: ApiTest
-#       displayName: API Tests
-#       pool:
-#         vmImage: $(vmImageName)
+  jobs: 
+    - job: ApiTest
+      displayName: API
+      pool:
+        vmImage: $(vmImageName)
 
-#       steps:
-#         - task: DotNetCoreCLI@2
-#           displayName: Unit Tests
-#           inputs:
-#             command: test
-#             projects: tests/API/Unit/Unit.csproj
+      steps:
+        - task: DotNetCoreCLI@2
+          displayName: Unit
+          inputs:
+            command: test
+            projects: tests/API/Unit/Unit.csproj
             
-#         - task: DotNetCoreCLI@2
-#           displayName: Integration Tests
-#           inputs:
-#             command: test
-#             projects: tests/API/Integration/Integration.csproj  
+        - task: DotNetCoreCLI@2
+          displayName: Integration
+          inputs:
+            command: test
+            projects: tests/API/Integration/Integration.csproj  
 
 - stage: Package
   displayName: Package  
-  # dependsOn: Test
-  # condition: succeeded()
+  dependsOn: Test
+  condition: succeeded()
 
   jobs:
   - job: PackageApiApp
-    displayName: Package API Function App
+    displayName: API Function App
     pool:
       vmImage: $(vmImageName)
 
@@ -70,7 +70,7 @@ stages:
       artifact: ApiDeploymentPackage
 
   - job: PackageTasksApp
-    displayName: Package Tasks Function App
+    displayName: Tasks Function App
     pool:
       vmImage: $(vmImageName)
 
@@ -102,7 +102,7 @@ stages:
 
   jobs:
   - deployment: DeployAPI
-    displayName: Deploy API
+    displayName: API
     environment: 'development'
     pool:
       vmImage: $(vmImageName)
@@ -121,7 +121,7 @@ stages:
               package: '$(Pipeline.Workspace)/ApiDeploymentPackage/ApiFunctionApp.zip'
 
   - deployment: DeployTasks
-    displayName: Deploy Tasks
+    displayName: Tasks
     environment: 'development'
     pool:
       vmImage: $(vmImageName)
