@@ -47,8 +47,7 @@ namespace Tasks
         }
 
         // Fetch all buildings from the Denodo view maintianed by UITS Facilities
-        [FunctionName(nameof(FetchBuildingsFromDenodo))]
-        public static async Task<IEnumerable<DenodoBuilding>> FetchBuildingsFromDenodo([ActivityTrigger] IDurableActivityContext context)
+        public static async Task<IEnumerable<DenodoBuilding>> FetchBuildingsFromDenodo()
         {
             var denodoUrl = Utils.Env("DenodoBuildingsViewUrl", required: true);
             var denodoUser = Utils.Env("DenodoBuildingsViewUser", required: true);
@@ -67,21 +66,29 @@ namespace Tasks
 
         // Add new Builing records to the IT People database.
         // If a building with the same code already exists then update its properties.
-        [FunctionName(nameof(AddOrUpdateBuildingRecords))]
-        public static async Task AddOrUpdateBuildingRecords([ActivityTrigger] IDurableActivityContext context)
+        public static async Task AddOrUpdateBuildingRecords(IEnumerable<DenodoBuilding> buildings)
         {
-            var bld = context.GetInput<DenodoBuilding>();
-            await Utils.DatabaseCommand(nameof(AddOrUpdateBuildingRecords), $"Add/update building with code {bld.BuildingCode}", async db => {
-                var record = await db.Buildings.SingleOrDefaultAsync(b => b.Code == bld.BuildingCode);
-                if (record == null)
+            var buildingCodes = buildings
+                .Select(b => b.BuildingCode)
+                .ToList();
+            
+            await Utils.DatabaseCommand(nameof(AddOrUpdateBuildingRecords), "Add/update buildings", async db =>{
+                var existingRecords = await db.Buildings
+                    .Where(b => buildingCodes.Contains(b.Code))
+                    .ToListAsync();
+                foreach(var building in buildings)
                 {
-                    Logging.GetLogger(nameof(AddOrUpdateBuildingRecords), bld).Information($"Adding building with code {bld.BuildingCode}");
-                    record = new Building();
-                    db.Buildings.Add(record);
+                    var existing = existingRecords.SingleOrDefault(e => e.Code == building.BuildingCode);
+                    if(existing == null)
+                    {
+                        existing = new Building();
+                        await db.Buildings.AddAsync(existing);
+                    }
+
+                    building.MapToBuilding(existing);
                 }
-                bld.MapToBuilding(record);
                 await db.SaveChangesAsync();
-            });
+            });             
         }
 
         private static HttpClient HttpClient = new HttpClient();
