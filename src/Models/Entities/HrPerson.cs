@@ -27,6 +27,9 @@ namespace Models
         /// The long name / description of the person's HR department.
         [Column("hr_department_desc")]
         public string HrDepartmentDescription { get; set; }
+
+        /// The MarkedForDelete when updating from HR Profile API
+        public bool MarkedForDelete { get; set; }
     
     }
     

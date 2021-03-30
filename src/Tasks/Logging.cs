@@ -57,11 +57,8 @@ namespace Tasks
             return logger;
         }
 
-        public static ILogger GetLogger(string functionName, object properties = null)  
-            => GetLogger("00000000-0000-0000-0000-000000000000", functionName, properties);
-
         public static ILogger GetLogger(IDurableOrchestrationContext ctx, object properties = null) 
-            => GetLogger(ctx.InstanceId, ctx.Name, properties);
+            => GetLogger(ctx.Name, properties);
 
         private static Lazy<ILogger> Logger = new Lazy<ILogger>(() => 
             new LoggerConfiguration()
@@ -71,9 +68,9 @@ namespace Tasks
                 .TryAddPostgresqlDatabaseSink(LogEventLevel.Debug)
                 .CreateLogger());
 
-        public static ILogger GetLogger(string instanceId, string function, object properties = null) 
+        public static ILogger GetLogger(string function, object properties = null) 
             => Logger.Value
-                .ForContext(LogProps.InvocationId, System.Guid.Parse(instanceId))
+                .ForContext(LogProps.InvocationId, System.Guid.Parse("00000000-0000-0000-0000-000000000000"))
                 .ForContext(LogProps.Function, function)
                 .ForContext(LogProps.Properties, properties == null ? null : JsonConvert.SerializeObject(properties, Models.Json.JsonSerializerSettings));        
     }

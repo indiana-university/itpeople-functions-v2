@@ -14,15 +14,12 @@ namespace Tasks
 {
     public static class People
     {
-         // Runs at the top of the hour (00:00 AM, 01:00 AM, 02:00 AM, ...)
+        // Runs at the top of the hour (00:00 AM, 01:00 AM, 02:00 AM, ...)
         [FunctionName(nameof(ScheduledPeopleUpdate))]
-        public static async Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *")]TimerInfo myTimer, 
-            [DurableClient] IDurableOrchestrationClient starter)
-        {
-            string instanceId = await starter.StartNewAsync(nameof(PeopleUpdateOrchestrator), null);
-            Logging.GetLogger(instanceId, nameof(ScheduledPeopleUpdate), myTimer)
-                .Debug("Started scheduled people update.");
-        }
+        public static Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *")] TimerInfo timer,
+            [DurableClient] IDurableOrchestrationClient starter) 
+            => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(PeopleUpdateOrchestrator));
+
 
         [FunctionName(nameof(PeopleUpdateOrchestrator))]
         public static async Task PeopleUpdateOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
@@ -33,12 +30,9 @@ namespace Tasks
                 var uaaJwt = await context.CallActivityWithRetryAsync<string>(
                     nameof(FetchUAAToken), RetryOptions, null);
 
-                // Aggregate all the HR records of various different types
-                var hrRows = await context.CallActivityWithRetryAsync<IEnumerable<string>>(
-                    nameof(UpdatePeopleFromProfileApi), RetryOptions, uaaJwt);
-                // Refresh the HrPeople table with the Profile API data
-                await context.CallActivityWithRetryAsync(
-                        nameof(BulkInsertHrPeople), RetryOptions, hrRows);
+                // Add/update HR records of various different types
+                await context.CallSubOrchestratorAsync(
+                    nameof(UpdateHrPeopleRecords), uaaJwt);                
                         
                 // Add/update Departments from new HR data
                 await context.CallActivityWithRetryAsync(
@@ -74,11 +68,13 @@ namespace Tasks
 
 
         // Aggregate all HR records of a certain type from the IMS Profile API
-        [FunctionName(nameof(UpdatePeopleFromProfileApi))]
-        public static async Task<IEnumerable<string>> UpdatePeopleFromProfileApi([ActivityTrigger] IDurableActivityContext context)
-        {
+        [FunctionName(nameof(UpdateHrPeopleRecords))]
+        public static async Task UpdateHrPeopleRecords([OrchestrationTrigger] IDurableOrchestrationContext context)
+        {            
             var jwt = context.GetInput<string>();
-            var hrRecords = new List<ProfileEmployee>();
+
+            // Mark all HrPeople records for deletion
+            await context.CallActivityWithRetryAsync(nameof(MarkHrPeopleForDeletion), RetryOptions, null);
 
             foreach(var type in new[]{"employee", "affiliate", "foundation"})
             {
@@ -86,35 +82,94 @@ namespace Tasks
                 var hasMore = true;
                 do 
                 {
-                    var body = await FetchProfileApiPage(context, jwt, type, page);
-                    hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
-                    hrRecords.AddRange(body.employees == null ? new List<ProfileEmployee>() : body.employees);
-                    hrRecords.AddRange(body.foundations == null ? new List<ProfileEmployee>() : body.foundations);
+                    hasMore = await context.CallActivityWithRetryAsync<bool>(
+                        nameof(UpdateHrPeoplePage), RetryOptions, (jwt, type, page));
                     page += 1;
-                    hasMore = (body.page.CurrentPage != body.page.LastPage);
                 } while (hasMore);
             }
-
-            return Clean(hrRecords).Select(emp => MapToHrPeopleRow(emp));
+            // Delete HRpeople still marked for deletion
+            await context.CallActivityWithRetryAsync(nameof(DeleteMarkedHrPeople), RetryOptions, null);
         }
-
-        private static string MapToHrPeopleRow(ProfileEmployee emp)
+        
+        [FunctionName(nameof(MarkHrPeopleForDeletion))]
+        public static async Task MarkHrPeopleForDeletion([ActivityTrigger]IDurableActivityContext context)
         {
-            var p = new HrPerson();
-            emp.MapToHrPerson(p);
-            return $"{p.Name}\t{p.NameFirst}\t{p.NameLast}\t{p.Netid.ToLowerInvariant()}\t{p.Position}\t{p.Campus}\t{p.CampusPhone}\t{p.CampusEmail}\t{p.HrDepartment}\t{p.HrDepartmentDescription}";
+            await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Mark all HrPeople for deletion", async db => {
+                await db.Database.ExecuteSqlRawAsync(@"
+                    UPDATE hr_people
+                    SET marked_for_delete = true");
+            });
         }
 
-        private static async Task<ProfileResponse> FetchProfileApiPage(IDurableActivityContext context, string jwt, string type, int page)
+        [FunctionName(nameof(DeleteMarkedHrPeople))]
+        public static async Task DeleteMarkedHrPeople([ActivityTrigger]IDurableActivityContext context)
+        {           
+            await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Delete all HrPeople with MarkedForDelete == true", async db => {
+                var hrPeopleToDelete = db.HrPeople.Where(h => h.MarkedForDelete);
+                db.HrPeople.RemoveRange(hrPeopleToDelete);
+                await db.SaveChangesAsync();
+            });
+        }
+
+        [FunctionName(nameof(UpdateHrPeoplePage))]
+        public static async Task<bool> UpdateHrPeoplePage([ActivityTrigger]IDurableActivityContext context)
+        {
+            var (jwt, type, page) = context.GetInput<(string, string, int)>();
+            var body = await FetchProfileApiPage(jwt, type, page);
+            var hrRecords = new List<ProfileEmployee>();
+            hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
+            hrRecords.AddRange(body.employees == null ? new List<ProfileEmployee>() : body.employees);
+            hrRecords.AddRange(body.foundations == null ? new List<ProfileEmployee>() : body.foundations);
+
+            foreach (var batch in Clean(hrRecords).Partition(50))
+            {
+                await UpsertManyHrPersonRecords(batch);
+            }
+
+            var hasMore = (body.page.CurrentPage != body.page.LastPage);
+
+            return hasMore;
+        }
+
+
+        public static async Task<ProfileResponse> FetchProfileApiPage(string jwt, string type, int page)
         {
             Console.WriteLine($"Fetching {type} page {page}");
             var url = Utils.Env("ImsProfileApiUrl", required: true);
             var authHeader = new AuthenticationHeaderValue("Bearer", jwt);
-            var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=7500");
+            var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=5000");
             req.Headers.Authorization = authHeader;
             var resp = await Utils.HttpClient.SendAsync(req);
             return await Utils.DeserializeResponse<ProfileResponse>(nameof(FetchProfileApiPage), resp, "fetch page from IMS Profile API");
         }
+        
+        public static async Task UpsertManyHrPersonRecords(IEnumerable<ProfileEmployee> profiles)
+        {
+            var profileNetids = profiles
+                .Select(p => p.Username.ToLower().Trim())
+                .ToList();
+            
+            await Utils.DatabaseCommand(nameof(UpsertManyHrPersonRecords), "Upsert Hr Person records", async db => {
+                var existingRecords = await db.HrPeople
+                    .Where(h => profileNetids.Contains(h.Netid.ToLower().Trim()))
+                    .ToListAsync();
+
+                foreach(var profile in profiles)
+                {
+                    var existing = existingRecords.SingleOrDefault(e => e.Netid.ToLower().Trim() == profile.Username.ToLower().Trim());
+                    if(existing == null)
+                    {
+                        existing = new HrPerson();
+                        await db.HrPeople.AddAsync(existing);
+                    }
+                    profile.MapToHrPerson(existing);
+                    existing.MarkedForDelete = false;
+                }
+
+                await db.SaveChangesAsync();
+            });
+        }
+
 
         private static IEnumerable<ProfileEmployee> Clean(List<ProfileEmployee> hrRecords) 
             => hrRecords.GroupBy(r => r.Username)
@@ -130,40 +185,6 @@ namespace Tasks
                 .Where(r =>
                     !string.IsNullOrWhiteSpace(r.Email)
                     && r.Jobs.Any(j => j.JobStatus == "P" && !string.IsNullOrWhiteSpace(j.JobDepartmentId)));
-
-        // Reset the hr_people table with the lastest HR data from the Profile API 
-        [FunctionName(nameof(BulkInsertHrPeople))]
-        public static async Task BulkInsertHrPeople([ActivityTrigger] IDurableActivityContext context)
-        {
-            try
-            {
-                var rows = context.GetInput<IEnumerable<string>>();
-                var connStr = Utils.Env("DatabaseConnectionString", required: true);
-                using (var db = new Npgsql.NpgsqlConnection(connStr))
-                {
-                    await db.OpenAsync();
-                    // Clear all records in hr_people
-                    var cmd = db.CreateCommand();
-                    cmd.CommandText = "TRUNCATE hr_people; setval(pg_get_serial_sequence('public.hr_people', 'id'),1);";
-                    await cmd.ExecuteNonQueryAsync();
-                    // Quickly import all HR records from the IMS Profile API
-                    using (var writer = db.BeginTextImport("COPY hr_people (name, name_first, name_last, netid, position, campus, campus_phone, campus_email, hr_department, hr_department_desc) FROM STDIN"))
-                    {
-                        foreach (var row in rows)
-                        {                            
-                            await writer.WriteLineAsync(row);
-                        }
-                        await writer.FlushAsync();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                var msg = "Failed to bulk-insert HR records to hr_people";
-                Logging.GetLogger(nameof(BulkInsertHrPeople)).Error(ex, msg);
-                throw new Exception(msg, ex);
-            }
-        }
 
         // Add new Departmnet records to the IT People database.
         // If a departments with the same name already exists then update its description..

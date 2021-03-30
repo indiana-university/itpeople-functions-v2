@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Database;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 
 namespace Tasks
@@ -82,5 +84,39 @@ namespace Tasks
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             }
         );
+
+        public static async Task StartOrchestratorAsSingleton(TimerInfo timer, IDurableOrchestrationClient starter, string orchestratorName)
+        {
+            // Check if an instance with the specified ID already exists or an existing one stopped running(completed/failed/terminated).
+            var existingInstance = await starter.GetStatusAsync(orchestratorName);
+            if (existingInstance == null 
+                || existingInstance.RuntimeStatus == OrchestrationRuntimeStatus.Completed 
+                || existingInstance.RuntimeStatus == OrchestrationRuntimeStatus.Failed 
+                || existingInstance.RuntimeStatus == OrchestrationRuntimeStatus.Terminated)
+            {
+                // An instance with the specified ID doesn't exist or an existing one stopped running, create one.
+                await starter.StartNewAsync(orchestratorName, orchestratorName);
+                Logging.GetLogger(orchestratorName, timer)
+                    .Debug($"Started orchestration '{orchestratorName}'.");
+            }
+            else
+            {
+                Logging.GetLogger(orchestratorName, timer)
+                    .Warning($"Orchestration not started; current status is '{existingInstance.RuntimeStatus}'.");
+            }
+        }
+
+        public static IEnumerable<IEnumerable<T>> Partition<T>(this IEnumerable<T> sequence, int size) {
+            List<T> partition = new List<T>(size);
+            foreach(var item in sequence) {
+                partition.Add(item);
+                if (partition.Count == size) {
+                    yield return partition;
+                    partition = new List<T>(size);
+                }
+            }
+            if (partition.Count > 0)
+                yield return partition;
+        }
     }
 }

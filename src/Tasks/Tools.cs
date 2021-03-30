@@ -15,13 +15,9 @@ namespace Tasks
     {
         // Runs every 5 minutes)
         [FunctionName(nameof(ScheduledToolsUpdate))]
-        public static async Task ScheduledToolsUpdate([TimerTrigger("0 */5 * * * *")]TimerInfo myTimer, 
+        public static Task ScheduledToolsUpdate([TimerTrigger("0 */5 * * * *")]TimerInfo timer, 
             [DurableClient] IDurableOrchestrationClient starter)
-        {
-            string instanceId = await starter.StartNewAsync(nameof(ToolsUpdateOrchestrator), null);
-            Logging.GetLogger(instanceId, nameof(ScheduledToolsUpdate), myTimer)
-                .Debug("Started scheduled tools update.");
-        }
+            => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(ToolsUpdateOrchestrator));
 
         [FunctionName(nameof(ToolsUpdateOrchestrator))]
         public static async Task ToolsUpdateOrchestrator(

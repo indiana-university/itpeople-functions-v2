@@ -15,27 +15,17 @@ namespace Tasks
     {
         // Runs at 30 minutes past every hour (00:30 AM, 01:30 AM, 02:30 AM, ...)
         [FunctionName(nameof(ScheduledBuildingsUpdate))]
-        public static async Task ScheduledBuildingsUpdate([TimerTrigger("0 30 * * * *")]TimerInfo myTimer, 
+        public static Task ScheduledBuildingsUpdate([TimerTrigger("0 30 * * * *")]TimerInfo timer, 
             [DurableClient] IDurableOrchestrationClient starter)
-        {
-            string instanceId = await starter.StartNewAsync(nameof(BuildingsUpdateOrchestrator), null);
-            Logging.GetLogger(instanceId, nameof(ScheduledBuildingsUpdate), myTimer)
-               .Debug("Started scheduled buildings update.");
-        }
+            => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(BuildingsUpdateOrchestrator));
 
         [FunctionName(nameof(BuildingsUpdateOrchestrator))]
         public static async Task BuildingsUpdateOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
         {
             try
             {
-                var buildings = await context.CallActivityWithRetryAsync<IEnumerable<DenodoBuilding>>(
-                    nameof(FetchBuildingsFromDenodo), RetryOptions, null);
-                
-                var tasks = buildings.Select(b =>
-                    context.CallActivityWithRetryAsync(
-                        nameof(AddOrUpdateBuildingRecords), RetryOptions, b));
-                
-                await Task.WhenAll(tasks);
+                await context.CallActivityWithRetryAsync(
+                    nameof(BuildingsUpdateActivity), RetryOptions, null);
 
                 Logging.GetLogger(context).Debug("Finished buildings update.");
             }
@@ -46,9 +36,18 @@ namespace Tasks
             }
         }
 
+        [FunctionName(nameof(BuildingsUpdateActivity))]
+        public static async Task BuildingsUpdateActivity([ActivityTrigger] IDurableActivityContext context)
+        {   
+            var buildings = await FetchBuildingsFromDenodo();
+            foreach (var batch in buildings.Partition(50))
+            {
+                await AddOrUpdateBuildingRecords(batch);
+            }
+        }
+
         // Fetch all buildings from the Denodo view maintianed by UITS Facilities
-        [FunctionName(nameof(FetchBuildingsFromDenodo))]
-        public static async Task<IEnumerable<DenodoBuilding>> FetchBuildingsFromDenodo([ActivityTrigger] IDurableActivityContext context)
+        public static async Task<IEnumerable<DenodoBuilding>> FetchBuildingsFromDenodo()
         {
             var denodoUrl = Utils.Env("DenodoBuildingsViewUrl", required: true);
             var denodoUser = Utils.Env("DenodoBuildingsViewUser", required: true);
@@ -67,21 +66,29 @@ namespace Tasks
 
         // Add new Builing records to the IT People database.
         // If a building with the same code already exists then update its properties.
-        [FunctionName(nameof(AddOrUpdateBuildingRecords))]
-        public static async Task AddOrUpdateBuildingRecords([ActivityTrigger] IDurableActivityContext context)
+        public static async Task AddOrUpdateBuildingRecords(IEnumerable<DenodoBuilding> buildings)
         {
-            var bld = context.GetInput<DenodoBuilding>();
-            await Utils.DatabaseCommand(nameof(AddOrUpdateBuildingRecords), $"Add/update building with code {bld.BuildingCode}", async db => {
-                var record = await db.Buildings.SingleOrDefaultAsync(b => b.Code == bld.BuildingCode);
-                if (record == null)
+            var buildingCodes = buildings
+                .Select(b => b.BuildingCode)
+                .ToList();
+            
+            await Utils.DatabaseCommand(nameof(AddOrUpdateBuildingRecords), "Add/update buildings", async db =>{
+                var existingRecords = await db.Buildings
+                    .Where(b => buildingCodes.Contains(b.Code))
+                    .ToListAsync();
+                foreach(var building in buildings)
                 {
-                    Logging.GetLogger(nameof(AddOrUpdateBuildingRecords), bld).Information($"Adding building with code {bld.BuildingCode}");
-                    record = new Building();
-                    db.Buildings.Add(record);
+                    var existing = existingRecords.SingleOrDefault(e => e.Code == building.BuildingCode);
+                    if(existing == null)
+                    {
+                        existing = new Building();
+                        await db.Buildings.AddAsync(existing);
+                    }
+
+                    building.MapToBuilding(existing);
                 }
-                bld.MapToBuilding(record);
                 await db.SaveChangesAsync();
-            });
+            });             
         }
 
         private static HttpClient HttpClient = new HttpClient();
