@@ -24,14 +24,8 @@ namespace Tasks
         {
             try
             {
-                var buildings = await context.CallActivityWithRetryAsync<IEnumerable<DenodoBuilding>>(
-                    nameof(FetchBuildingsFromDenodo), RetryOptions, null);
-                
-                var tasks = buildings.Select(b =>
-                    context.CallActivityWithRetryAsync(
-                        nameof(AddOrUpdateBuildingRecords), RetryOptions, b));
-                
-                await Task.WhenAll(tasks);
+                await context.CallActivityWithRetryAsync(
+                    nameof(BuildingsUpdateActivity), RetryOptions, null);
 
                 Logging.GetLogger(context).Debug("Finished buildings update.");
             }
@@ -39,6 +33,16 @@ namespace Tasks
             {
                 Logging.GetLogger(context).Error(ex, "Buildings update failed with exception.");
                 throw;
+            }
+        }
+
+        [FunctionName(nameof(BuildingsUpdateActivity))]
+        public static async Task BuildingsUpdateActivity([ActivityTrigger] IDurableActivityContext context)
+        {   
+            var buildings = await FetchBuildingsFromDenodo();
+            foreach (var batch in buildings.Partition(50))
+            {
+                await AddOrUpdateBuildingRecords(batch);
             }
         }
 
