@@ -116,6 +116,14 @@ namespace Integration
                 Assert.AreEqual(req.ParentId, actual.Parent.Id);
             }
 
+            [Test]
+            public async Task CreateWithDefaultValues()
+            {
+                var req = new UnitRequest { Name = "Foo" };
+                var resp = await PostAuthenticated("units", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.Created);
+            }
+
             //403 unauthorized
             [Test]
             public async Task UnauthorizedCannotCreate()

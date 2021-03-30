@@ -17,5 +17,10 @@ namespace Models
         public int? ParentId { get; set; }
         
         public const string MalformedRequest = "The request body is malformed or missing. The Name field is required.";
+
+        public UnitRequest()
+        {
+            Description = "";
+        }
     }
 }
