@@ -31,8 +31,8 @@ namespace Tasks
                     nameof(FetchUAAToken), RetryOptions, null);
 
                 // Add/update HR records of various different types
-                await context.CallActivityWithRetryAsync(
-                    nameof(UpdateHrPeopleRecords), RetryOptions, uaaJwt);                
+                await context.CallSubOrchestratorAsync(
+                    nameof(UpdateHrPeopleRecords), uaaJwt);                
                         
                 // Add/update Departments from new HR data
                 await context.CallActivityWithRetryAsync(
@@ -69,12 +69,12 @@ namespace Tasks
 
         // Aggregate all HR records of a certain type from the IMS Profile API
         [FunctionName(nameof(UpdateHrPeopleRecords))]
-        public static async Task UpdateHrPeopleRecords([ActivityTrigger] IDurableActivityContext context)
+        public static async Task UpdateHrPeopleRecords([OrchestrationTrigger] IDurableOrchestrationContext context)
         {            
             var jwt = context.GetInput<string>();
 
             // Mark all HrPeople records for deletion
-            await MarkHrPeopleForDeletion();
+            await context.CallActivityWithRetryAsync(nameof(MarkHrPeopleForDeletion), RetryOptions, null);
 
             foreach(var type in new[]{"employee", "affiliate", "foundation"})
             {
@@ -82,29 +82,17 @@ namespace Tasks
                 var hasMore = true;
                 do 
                 {
-                    // Make FetchProfileApiPage an activity and call it.
-                    var body = await FetchProfileApiPage(jwt, type, page);
-                    
-                    var hrRecords = new List<ProfileEmployee>();
-                    hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
-                    hrRecords.AddRange(body.employees == null ? new List<ProfileEmployee>() : body.employees);
-                    hrRecords.AddRange(body.foundations == null ? new List<ProfileEmployee>() : body.foundations);
-
-                    // Make an UpsertHrPeopleRecords Activity: Do Upserts of cleaned ProfileEmployees
-                    foreach(var batch in Clean(hrRecords).Partition(50))
-                    {
-                        await UpsertManyHrPersonRecords(batch);
-                    }
-                
+                    hasMore = await context.CallActivityWithRetryAsync<bool>(
+                        nameof(UpdateHrPeoplePage), RetryOptions, (jwt, type, page));
                     page += 1;
-                    hasMore = (body.page.CurrentPage != body.page.LastPage);
                 } while (hasMore);
             }
             // Delete HRpeople still marked for deletion
-            await DeleteMarkedHrPeople();
+            await context.CallActivityWithRetryAsync(nameof(DeleteMarkedHrPeople), RetryOptions, null);
         }
         
-        public static async Task MarkHrPeopleForDeletion()
+        [FunctionName(nameof(MarkHrPeopleForDeletion))]
+        public static async Task MarkHrPeopleForDeletion([ActivityTrigger]IDurableActivityContext context)
         {
             await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Mark all HrPeople for deletion", async db => {
                 await db.Database.ExecuteSqlRawAsync(@"
@@ -113,15 +101,48 @@ namespace Tasks
             });
         }
 
-        public static async Task DeleteMarkedHrPeople()
+        [FunctionName(nameof(DeleteMarkedHrPeople))]
+        public static async Task DeleteMarkedHrPeople([ActivityTrigger]IDurableActivityContext context)
         {           
             await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Delete all HrPeople with MarkedForDelete == true", async db => {
                 var hrPeopleToDelete = db.HrPeople.Where(h => h.MarkedForDelete);
                 db.HrPeople.RemoveRange(hrPeopleToDelete);
                 await db.SaveChangesAsync();
             });
-        }        
-       
+        }
+
+        [FunctionName(nameof(UpdateHrPeoplePage))]
+        public static async Task<bool> UpdateHrPeoplePage([ActivityTrigger]IDurableActivityContext context)
+        {
+            var (jwt, type, page) = context.GetInput<(string, string, int)>();
+            var body = await FetchProfileApiPage(jwt, type, page);
+            var hrRecords = new List<ProfileEmployee>();
+            hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
+            hrRecords.AddRange(body.employees == null ? new List<ProfileEmployee>() : body.employees);
+            hrRecords.AddRange(body.foundations == null ? new List<ProfileEmployee>() : body.foundations);
+
+            foreach (var batch in Clean(hrRecords).Partition(50))
+            {
+                await UpsertManyHrPersonRecords(batch);
+            }
+
+            var hasMore = (body.page.CurrentPage != body.page.LastPage);
+
+            return hasMore;
+        }
+
+
+        public static async Task<ProfileResponse> FetchProfileApiPage(string jwt, string type, int page)
+        {
+            Console.WriteLine($"Fetching {type} page {page}");
+            var url = Utils.Env("ImsProfileApiUrl", required: true);
+            var authHeader = new AuthenticationHeaderValue("Bearer", jwt);
+            var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=1000");
+            req.Headers.Authorization = authHeader;
+            var resp = await Utils.HttpClient.SendAsync(req);
+            return await Utils.DeserializeResponse<ProfileResponse>(nameof(FetchProfileApiPage), resp, "fetch page from IMS Profile API");
+        }
+        
         public static async Task UpsertManyHrPersonRecords(IEnumerable<ProfileEmployee> profiles)
         {
             var profileNetids = profiles
@@ -149,16 +170,6 @@ namespace Tasks
             });
         }
 
-        public static async Task<ProfileResponse> FetchProfileApiPage(string jwt, string type, int page)
-        {
-            Console.WriteLine($"Fetching {type} page {page}");
-            var url = Utils.Env("ImsProfileApiUrl", required: true);
-            var authHeader = new AuthenticationHeaderValue("Bearer", jwt);
-            var req = new HttpRequestMessage(HttpMethod.Get, $"{url}?affiliationType={type}&page={page}&pageSize=1000");
-            req.Headers.Authorization = authHeader;
-            var resp = await Utils.HttpClient.SendAsync(req);
-            return await Utils.DeserializeResponse<ProfileResponse>(nameof(FetchProfileApiPage), resp, "fetch page from IMS Profile API");
-        }
 
         private static IEnumerable<ProfileEmployee> Clean(List<ProfileEmployee> hrRecords) 
             => hrRecords.GroupBy(r => r.Username)
