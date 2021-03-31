@@ -69,7 +69,7 @@ namespace Integration
 				Assert.AreEqual(expected.PersonId, actual.PersonId);
 				Assert.AreEqual(expected.Title, actual.Title);
 				Assert.AreEqual(expected.Percentage, actual.Percentage);
-				Assert.AreEqual("", actual.Notes); //Notes are stripped on membership getters
+				Assert.AreEqual(expected.Notes, actual.Notes); //Notes are stripped on membership getters
 				// relations
 				Assert.NotNull(actual.Person);
 				Assert.AreEqual(expected.Person.Id, actual.Person.Id);
