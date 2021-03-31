@@ -137,11 +137,9 @@ namespace Integration
 				};
 				await db.UnitMembers.AddAsync(chrisCityMembership);
 				await db.SaveChangesAsync();
-
-				var chrisJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiY3RyYWVnZXIiLCJleHAiOjIxNDc0ODM2NDh9.hj0v52e6c3Q-1A9EE9cJMJ8Hm4zrAbVb2PCwBSF7uS-RkbIC26RBdkllP5Rb2GDo32U8dGisdiXzFcqtMhuHFfootJz8JDCzgcA6_t6ibc3NFq9CkqqWcjjlSPckQ8HPSGCmVsNsXPY6hk_aZLtuPZ_YqdeaTEicKr_hyu7rehoJNhimoi2iVKqOo9VYHhenrfkVcniZmREflvNMlbFijUlozjjFQgkycwGRflnIyaUXg50w4z-8QZEqonvnRbrbfJB8AcYE65MWL4lpklKATP1eYI9uNW0Irxcv5Hh7LB1N6RVPFgSfNCGAjpR4c__5O2_ogFMe2iTqIj5ax8QE9A";
-
+				
 				// Get "parks & rec", they should have PermsGroups.All because "City of Pawnee" is "Parks & Rec's" parent.
-				var resp = await GetAuthenticated($"memberships/{chrisCityMembership.Id}", chrisJwt);
+				var resp = await GetAuthenticated($"memberships/{chrisCityMembership.Id}", ValidCtraegerJwt);
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, PermsGroups.All);
 
