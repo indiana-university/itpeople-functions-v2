@@ -96,6 +96,56 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, expectedPermissions);
             }
+
+			[Test]
+			public async Task ResponseInheritsXUserPermissionsFromParentUnit()
+			{
+				// Add a person to City of Pawnee that has All permissions on "City of Pawnee," but NO permissions directly on "Parks & Rec."
+				var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+				var chris =  new Person()
+				{
+					Netid = "ctraeger",
+					Name = "Traeger, Chris",
+					NameFirst = "Chris",
+					NameLast = "Traeger",
+					Position = "Sr. Auditor",
+					Location = "",
+					Campus = "Indianapolis",
+					CampusPhone = "317.441.3333",
+					CampusEmail = "ctraeger@pawnee.in.us",
+					Expertise = "Fitness",
+					Notes = "",
+					PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg",
+					Responsibilities = Responsibilities.ItProjectMgt,
+					DepartmentId = TestEntities.Departments.Auditor.Id,
+					IsServiceAdmin = false
+				};
+				await db.People.AddAsync(chris);
+
+				// Add chris to City of Pawnee with All permissions
+				var chrisCityMembership = new UnitMember()
+				{
+					Role = Role.Member,
+					Permissions = UnitPermissions.ManageMembers,
+					PersonId = chris.Id,
+					Title = "Auditor",
+					Percentage = 100,
+					Notes = "notes about Chris",
+					Person = chris,
+					UnitId = TestEntities.Units.CityOfPawneeUnitId,
+					MemberTools = null
+				};
+				await db.UnitMembers.AddAsync(chrisCityMembership);
+				await db.SaveChangesAsync();
+
+				var chrisJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiY3RyYWVnZXIiLCJleHAiOjIxNDc0ODM2NDh9.hj0v52e6c3Q-1A9EE9cJMJ8Hm4zrAbVb2PCwBSF7uS-RkbIC26RBdkllP5Rb2GDo32U8dGisdiXzFcqtMhuHFfootJz8JDCzgcA6_t6ibc3NFq9CkqqWcjjlSPckQ8HPSGCmVsNsXPY6hk_aZLtuPZ_YqdeaTEicKr_hyu7rehoJNhimoi2iVKqOo9VYHhenrfkVcniZmREflvNMlbFijUlozjjFQgkycwGRflnIyaUXg50w4z-8QZEqonvnRbrbfJB8AcYE65MWL4lpklKATP1eYI9uNW0Irxcv5Hh7LB1N6RVPFgSfNCGAjpR4c__5O2_ogFMe2iTqIj5ax8QE9A";
+
+				// Get "parks & rec", they should have PermsGroups.All because "City of Pawnee" is "Parks & Rec's" parent.
+				var resp = await GetAuthenticated($"memberships/{TestEntities.Units.ParksAndRecUnitId}", chrisJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
+
+			}
 		}
 
 		public class UnitMemberCreate : ApiTest
