@@ -97,7 +97,7 @@ namespace API.Data
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId) 
             => ExecuteDbPipeline($"resolve unit {unitId} and unit member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId, unitId)
-                .Bind(person => DetermineUnitManagementPermissions(person, unitId))
+                .Bind(person => RecursiveUnitManagmentPermissions(person, unitId, db))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId) 
@@ -126,7 +126,7 @@ namespace API.Data
                 ? Pipeline.Success(PermsGroups.All)
                 : Pipeline.Success(EntityPermissions.Get);
                 
-        public static Result<EntityPermissions,Error> DetermineUnitManagementPermissions(Person requestor, int unitId)
+        public static Result<EntityPermissions,Error> RecursiveUnitManagmentPermissions(Person requestor, int unitId, PeopleContext db)
         {
             // service admins: get post put delete
             if (requestor?.IsServiceAdmin == true)
@@ -135,7 +135,17 @@ namespace API.Data
             // Requestor owner/manage roles can get put
             if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageMembers)))
                 return Pipeline.Success(PermsGroups.All);
-                
+            
+            // We need to check the unit's parent permissions for requestor
+            var parent = db.Units
+                .Include(u => u.Parent)
+                .Single(u => u.Id == unitId)
+                .Parent;
+            
+            if(parent != null)
+                return RecursiveUnitManagmentPermissions(requestor, parent.Id, db);
+
+            // They have no special permissions
             return Pipeline.Success(EntityPermissions.Get);
         }
 
