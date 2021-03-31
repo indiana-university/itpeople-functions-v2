@@ -76,6 +76,7 @@ namespace Integration
                 Assert.AreEqual(expected.Parent?.Id, actual.Parent?.Id);
             }
 
+            
             [TestCase(ValidRswansonJwt, TestEntities.Units.ParksAndRecUnitId, PermsGroups.All, Description="As Ron I can do anything to a unit I own")]
             [TestCase(ValidRswansonJwt, TestEntities.Units.CityOfPawneeUnitId, EntityPermissions.Get, Description="As Ron I can't update a unit I don't manage")]
             [TestCase(ValidAdminJwt, TestEntities.Units.ParksAndRecUnitId, PermsGroups.All, Description="As a service admin I can do anything to any unit")]
@@ -85,7 +86,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"units/{unitId}", jwt);
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, expectedPermissions);
-            }            
+            }
         }
 
         public class UnitCreate : ApiTest
@@ -272,14 +273,15 @@ namespace Integration
         public class UnitDelete : ApiTest
         {
             [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin may delete a unit that has no children.")]
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Owner cannot delete a unit.")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Non-Admin cannot delete a unit.")]
             [TestCase(9999, ValidAdminJwt, HttpStatusCode.NotFound, Description = "Cannot delete a unit that does not exist.")]
             [TestCase(TestEntities.Units.CityOfPawneeUnitId, ValidAdminJwt, HttpStatusCode.Conflict, Description = "Cannot delete a unit that has children.")]
             public async Task CanDeleteUnit(int unitId, string jwt, HttpStatusCode expectedCode)
             {
                 var resp = await DeleteAuthenticated($"units/{unitId}", jwt);
                 AssertStatusCode(resp, expectedCode);
-            }
+            }                     
+            
             
             [Test]
             public async Task CannotDeleteUnitWithChildren()
