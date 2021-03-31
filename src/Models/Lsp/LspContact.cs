@@ -13,7 +13,7 @@ namespace Models
         {
             Email = person.CampusEmail;
             FullName = person.Name;
-            GroupInternalEmail = person.Notes;
+            GroupInternalEmail = person.Notes ?? "";
             NetworkID = person.Netid;
             Phone = person.CampusPhone;
             PreferredEmail = person.CampusEmail;
