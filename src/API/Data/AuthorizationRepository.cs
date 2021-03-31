@@ -97,7 +97,7 @@ namespace API.Data
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId) 
             => ExecuteDbPipeline($"resolve unit {unitId} and unit member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId, unitId)
-                .Bind(person => RecursiveUnitManagmentPermissions(person, unitId, db))
+                .Bind(person => RecursiveUnitManagmentPermissions(person, unitId, UnitPermissions.ManageMembers, db))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId) 
@@ -126,14 +126,14 @@ namespace API.Data
                 ? Pipeline.Success(PermsGroups.All)
                 : Pipeline.Success(EntityPermissions.Get);
                 
-        public static Result<EntityPermissions,Error> RecursiveUnitManagmentPermissions(Person requestor, int unitId, PeopleContext db)
+        public static Result<EntityPermissions,Error> RecursiveUnitManagmentPermissions(Person requestor, int unitId, UnitPermissions getsAllPermissions, PeopleContext db)
         {
             // service admins: get post put delete
             if (requestor?.IsServiceAdmin == true)
                 return Pipeline.Success(PermsGroups.All);
             
             // Requestor owner/manage roles can get put
-            if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageMembers)))
+            if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == getsAllPermissions)))
                 return Pipeline.Success(PermsGroups.All);
             
             // We need to check the unit's parent permissions for requestor
@@ -143,31 +143,9 @@ namespace API.Data
                 .Parent;
             
             if(parent != null)
-                return RecursiveUnitManagmentPermissions(requestor, parent.Id, db);
+                return RecursiveUnitManagmentPermissions(requestor, parent.Id, getsAllPermissions, db);
 
             // They have no special permissions
-            return Pipeline.Success(EntityPermissions.Get);
-        }
-
-        public static Result<EntityPermissions, Error> ResolveUnitToolPermissions(Person requestor, int unitId, PeopleContext db)
-        {
-            // service admins: get post put delete
-            if (requestor != null && requestor.IsServiceAdmin)
-                return Pipeline.Success(PermsGroups.All);           
-            
-            if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageTools)))
-                return Pipeline.Success(PermsGroups.All);
-
-            // Check the parent unit
-            var parent = db.Units
-                .Include(u => u.Parent)
-                .Single(u => u.Id == unitId)
-                .Parent;
-            
-            if(parent != null)
-                return ResolveUnitToolPermissions(requestor, parent.Id, db);
-
-            // Default condition
             return Pipeline.Success(EntityPermissions.Get);
         }
         
@@ -184,7 +162,7 @@ namespace API.Data
             if(membership == null)
                 return Pipeline.Success(EntityPermissions.Get);
             
-            return ResolveUnitToolPermissions(requestor, membership.Unit.Id, db);            
+            return RecursiveUnitManagmentPermissions(requestor, membership.Unit.Id, UnitPermissions.ManageTools, db);            
         }
 
         private static Task<Person> FindRequestorOrDefault(PeopleContext db, string requestorNetid) 
