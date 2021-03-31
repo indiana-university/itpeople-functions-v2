@@ -94,18 +94,12 @@ namespace API.Data
                 .Bind(person => ResolveUnitPermissions(person))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
-        internal static Task<Result<EntityPermissions, Error>> DetermineUnitPermissions(HttpRequest req, string requestorNetId, int unitId) 
-            => ExecuteDbPipeline($"resolve unit {unitId} permissions", db =>
+        internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId) 
+            => ExecuteDbPipeline($"resolve unit {unitId} and unit member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId, unitId)
-                .Bind(person => ResolveUnitPermissions(person, unitId))
+                .Bind(person => DetermineUnitManagementPermissions(person, unitId))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
-        internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberPermissions(HttpRequest req, string requestorNetId, int unitId) 
-            => ExecuteDbPipeline($"resolve unit {unitId} member management permissions", db =>
-                FetchPersonAndMembership(db, requestorNetId, unitId)
-                .Bind(person => ResolveUnitMemberPermissions(person, unitId))
-                .Tap(perms => req.SetEntityPermissions(perms)));
-        
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId) 
             => ExecuteDbPipeline($"resolve unit {membershipId} member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId)
@@ -132,23 +126,10 @@ namespace API.Data
                 ? Pipeline.Success(PermsGroups.All)
                 : Pipeline.Success(EntityPermissions.Get);
                 
-        public static Result<EntityPermissions,Error> ResolveUnitPermissions(Person requestor, int unitId)
+        public static Result<EntityPermissions,Error> DetermineUnitManagementPermissions(Person requestor, int unitId)
         {
             // service admins: get post put delete
             if (requestor?.IsServiceAdmin == true)
-                return Pipeline.Success(PermsGroups.All);
-            
-            // Requestor owner/manage roles can get put
-            if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageMembers)))
-                return Pipeline.Success(PermsGroups.GetPut);
-                
-            return Pipeline.Success(EntityPermissions.Get);
-        }
-
-        public static Result<EntityPermissions,Error> ResolveUnitMemberPermissions(Person requestor, int unitId)
-        {
-            // service admins: get post put delete
-            if (requestor != null && requestor.IsServiceAdmin)
                 return Pipeline.Success(PermsGroups.All);
             
             // Requestor owner/manage roles can get put

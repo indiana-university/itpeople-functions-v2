@@ -40,10 +40,17 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit membership was found with the ID provided.")]
 		public static Task<IActionResult> UnitMembersGetOne(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
-			=> Security.Authenticate(req)
-				.Bind(_ => UnitMembersRepository.GetOne(membershipId))
-				.Bind(um => Pipeline.Success(um.ToUnitMemberResponse(EntityPermissions.Get)))
-				.Finally(result => Response.Ok(req, result));
+		{
+			string requestorNetId = null;
+			UnitMember unitMember = null;
+			return Security.Authenticate(req)
+			.Tap(requestor => requestorNetId = requestor)
+			.Bind(_ => UnitMembersRepository.GetOne(membershipId))
+			.Tap(um => unitMember = um)
+			.Bind(um => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, um.UnitId))
+			.Bind(perms => Pipeline.Success(unitMember.ToUnitMemberResponse(perms)))
+			.Finally(result => Response.Ok(req, result));
+		}
 
 		[FunctionName(nameof(UnitMembers.CreateUnitMembers))]
 		[OpenApiOperation(nameof(UnitMembers.CreateUnitMembers), UnitMembersTitle, Summary = "Create a unit membership", Description = "Authorization: Unit memberships can be created by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
@@ -62,7 +69,7 @@ namespace API.Functions
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(requestor => Request.DeserializeBody<UnitMemberRequest>(req))
 			.Tap(umr => unitMemberRequest = umr)
-			.Bind(umr => AuthorizationRepository.DetermineUnitMemberPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
+			.Bind(umr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => UnitMembersRepository.CreateMembership(unitMemberRequest))
 			.Bind(res => Pipeline.Success(res.ToUnitMemberResponse(EntityPermissions.Post)))
@@ -87,7 +94,7 @@ namespace API.Functions
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => Request.DeserializeBody<UnitMemberRequest>(req))
 				.Tap(umr => unitMemberRequest = umr)
-				.Bind(umr => AuthorizationRepository.DetermineUnitMemberPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
+				.Bind(umr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
 				.Bind(authorized => UnitMembersRepository.UpdateMembership(req, unitMemberRequest, membershipId))
 				.Bind(um => Pipeline.Success(um.ToUnitMemberResponse(EntityPermissions.Put)))
@@ -107,7 +114,7 @@ namespace API.Functions
 			return Security.Authenticate(req)
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => UnitMembersRepository.GetOne(membershipId))
-				.Bind(um => AuthorizationRepository.DetermineUnitMemberPermissions(req, requestorNetId, um.UnitId))// Set headers saying what the requestor can do to this unit
+				.Bind(um => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, um.UnitId))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
 				.Bind(_ => UnitMembersRepository.DeleteMembership(req, membershipId))
 				.Finally(result => Response.NoContent(req, result));

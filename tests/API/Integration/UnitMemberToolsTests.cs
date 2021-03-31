@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Models;
+using Models.Enums;
 using NUnit.Framework;
 
 namespace Integration
@@ -22,8 +23,8 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<MemberToolResponse>>();
 				var expectedIds = new[]{
-					TestEntities.MemberTools.MemberTool1,
-					TestEntities.MemberTools.AdminMemberToolId
+					TestEntities.MemberTools.RonHammerId,
+					TestEntities.MemberTools.AdminHammerId
 				};
 				AssertIdsMatchContent(expectedIds, actual);
 			}
@@ -31,7 +32,7 @@ namespace Integration
 
 		public class GetOneUnitMemberTool : ApiTest
 		{
-			[TestCase(TestEntities.MemberTools.MemberTool1, HttpStatusCode.OK)]
+			[TestCase(TestEntities.MemberTools.RonHammerId, HttpStatusCode.OK)]
 			[TestCase(9999, HttpStatusCode.NotFound)]
 			public async Task UnitMemberToolHasCorrectStatusCode(int id, HttpStatusCode expectedStatus)
 			{
@@ -42,7 +43,7 @@ namespace Integration
 			[Test]
 			public async Task UnitMemberToolResponseHasCorrectShape()
 			{
-				var resp = await GetAuthenticated($"membertools/{TestEntities.MemberTools.AdminMemberToolId}");
+				var resp = await GetAuthenticated($"membertools/{TestEntities.MemberTools.AdminHammerId}");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<MemberToolResponse>();
 				var expected = TestEntities.MemberTools.AdminMemberTool;
@@ -50,6 +51,21 @@ namespace Integration
 				Assert.AreEqual(expected.MembershipId, actual.MembershipId);
 				Assert.AreEqual(expected.ToolId, actual.ToolId);
 			}
+
+			[TestCase(ValidRswansonJwt, TestEntities.MemberTools.RonHammerId, PermsGroups.All, TestName="Ron1", Description="As Ron (owner) I can manage Ron's tools")]
+			[TestCase(ValidRswansonJwt, TestEntities.MemberTools.AdminHammerId, EntityPermissions.Get, TestName="Ron2", Description="As Ron (owner) I can manage Leslie's tools")]
+			[TestCase(ValidLknopeJwt, TestEntities.MemberTools.RonHammerId, EntityPermissions.Get, TestName="Les1", Description="As Leslie (viewer) I can't manage Ron's tools")]
+			[TestCase(ValidLknopeJwt, TestEntities.MemberTools.AdminHammerId, EntityPermissions.Get, TestName="Les2", Description="As Leslie (viewer) I can't manage Leslies's tools")]
+			[TestCase(ValidBwyattJwt, TestEntities.MemberTools.RonHammerId, EntityPermissions.Get, TestName="Ben1", Description="As Ben (ManageMebers) I can't manage Ben's tools")]
+			[TestCase(ValidBwyattJwt, TestEntities.MemberTools.AdminHammerId, EntityPermissions.Get, TestName="Ben2", Description="As Ben (ManageMebers) I can't manage Ron's tools (different unit)")]
+            [TestCase(ValidAdminJwt, TestEntities.MemberTools.RonHammerId, PermsGroups.All, TestName="Adm1", Description="As a service admin I can do anything to any unit")]
+            [TestCase(ValidAdminJwt, TestEntities.MemberTools.AdminHammerId, PermsGroups.All, TestName="Adm2", Description="As a service admin I can do anything to any unit")]
+            public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int memberToolsId, EntityPermissions expectedPermissions)
+            {
+                var resp = await GetAuthenticated($"membertools/{memberToolsId}", jwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, expectedPermissions);
+            }			
 		}
 
 		public class UnitMemberToolsCreate : ApiTest
@@ -77,7 +93,7 @@ namespace Integration
 			{
 				var req = new MemberToolRequest
 				{
-					MembershipId = TestEntities.MemberTools.MemberTool1
+					MembershipId = TestEntities.MemberTools.RonHammerId
 				};
 				var resp = await PostAuthenticated("membertools", req, ValidRswansonJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
@@ -130,9 +146,9 @@ namespace Integration
 
 		public class UnitMemberToolsEdit : ApiTest
 		{
-			[TestCase(TestEntities.MemberTools.AdminMemberToolId, TestEntities.UnitMembers.LkNopeSubleadId, TestEntities.Tools.HammerId, Description = "Reassigned the admin hammer to the sub-lead UnitMember.")]
-			[TestCase(TestEntities.MemberTools.MemberTool1, TestEntities.UnitMembers.RSwansonLeaderId, TestEntities.Tools.SawId, Description = "For RSwansonDirector Trade hammer for saw tool")]
-			[TestCase(TestEntities.MemberTools.AdminMemberToolId, TestEntities.UnitMembers.LkNopeSubleadId, TestEntities.Tools.SawId, Description = "revise both membershipId and toolId of AdminMemberTool")]
+			[TestCase(TestEntities.MemberTools.AdminHammerId, TestEntities.UnitMembers.LkNopeSubleadId, TestEntities.Tools.HammerId, Description = "Reassigned the admin hammer to the sub-lead UnitMember.")]
+			[TestCase(TestEntities.MemberTools.RonHammerId, TestEntities.UnitMembers.RSwansonLeaderId, TestEntities.Tools.SawId, Description = "For RSwansonDirector Trade hammer for saw tool")]
+			[TestCase(TestEntities.MemberTools.AdminHammerId, TestEntities.UnitMembers.LkNopeSubleadId, TestEntities.Tools.SawId, Description = "revise both membershipId and toolId of AdminMemberTool")]
 			public async Task UpdateUnitMemberTool(int id, int membershipId, int toolId)
 			{
 				var req = new MemberToolRequest
@@ -155,11 +171,11 @@ namespace Integration
 			{
 				var req = new MemberToolRequest
 				{
-					Id = TestEntities.MemberTools.AdminMemberToolId,
+					Id = TestEntities.MemberTools.AdminHammerId,
 					MembershipId = TestEntities.UnitMembers.AdminMemberId,
 					ToolId = TestEntities.Tools.SawId
 				};
-				var resp = await PutAuthenticated($"membertools/{TestEntities.MemberTools.MemberTool1}", req, ValidAdminJwt);
+				var resp = await PutAuthenticated($"membertools/{TestEntities.MemberTools.RonHammerId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
@@ -189,12 +205,12 @@ namespace Integration
 					MembershipId = TestEntities.UnitMembers.RSwansonLeaderId,
 					ToolId = TestEntities.Tools.HammerId
 				};
-				var resp = await PutAuthenticated($"membertools/{TestEntities.MemberTools.MemberTool1}", req, ValidLknopeJwt);
+				var resp = await PutAuthenticated($"membertools/{TestEntities.MemberTools.RonHammerId}", req, ValidLknopeJwt);
 				AssertStatusCode(resp, HttpStatusCode.Forbidden);
 			}
 
-			[TestCase(TestEntities.MemberTools.AdminMemberToolId, 99999, TestEntities.Tools.SawId, "The specified member does not exist.")]
-			[TestCase(TestEntities.MemberTools.AdminMemberToolId, TestEntities.UnitMembers.RSwansonLeaderId, 99999, "The specified tool does not exist.")]
+			[TestCase(TestEntities.MemberTools.AdminHammerId, 99999, TestEntities.Tools.SawId, "The specified member does not exist.")]
+			[TestCase(TestEntities.MemberTools.AdminHammerId, TestEntities.UnitMembers.RSwansonLeaderId, 99999, "The specified tool does not exist.")]
 			[TestCase(99999, TestEntities.UnitMembers.RSwansonLeaderId, TestEntities.Tools.SawId, "The specified member/tool does not exist.")]
 			public async Task NotFoundCannotUpdateUnitMemberTools(int id, int membershipId, int toolId, string expectedError)
 			{
@@ -216,21 +232,21 @@ namespace Integration
 			{
 				var req = new MemberToolRequest
 				{
-					Id = TestEntities.MemberTools.MemberTool1,
+					Id = TestEntities.MemberTools.RonHammerId,
 					MembershipId = TestEntities.UnitMembers.AdminMemberId,
 					ToolId = TestEntities.Tools.HammerId
 				};
 
-				var resp = await PutAuthenticated($"membertools/{TestEntities.MemberTools.MemberTool1}", req, ValidAdminJwt);
+				var resp = await PutAuthenticated($"membertools/{TestEntities.MemberTools.RonHammerId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
 		}
 
 		public class UnitMemberToolsDelete : ApiTest
 		{
-			[TestCase(TestEntities.MemberTools.MemberTool1, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin can delete a MemberTool")]
-			[TestCase(TestEntities.MemberTools.MemberTool1, ValidRswansonJwt, HttpStatusCode.NoContent, Description = "Unit Owner can delete a MemberTool for that Unit")]
-			[TestCase(TestEntities.MemberTools.MemberTool1, ValidLknopeJwt, HttpStatusCode.Forbidden, Description = "Unit Viewer cannot delete a MemberTool for that Unit")]
+			[TestCase(TestEntities.MemberTools.RonHammerId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin can delete a MemberTool")]
+			[TestCase(TestEntities.MemberTools.RonHammerId, ValidRswansonJwt, HttpStatusCode.NoContent, Description = "Unit Owner can delete a MemberTool for that Unit")]
+			[TestCase(TestEntities.MemberTools.RonHammerId, ValidLknopeJwt, HttpStatusCode.Forbidden, Description = "Unit Viewer cannot delete a MemberTool for that Unit")]
 			[TestCase(9999, ValidAdminJwt, HttpStatusCode.NotFound, Description = "Cannot delete a MemberTool that does not exist.")]
 			public async Task CanDeleteUnitMemberTool(int memberToolId, string jwt, HttpStatusCode expectedCode)
 			{

@@ -121,18 +121,18 @@ namespace Models
 
 		public static class MemberTools
 		{
-			public const int MemberTool1 = 1;
+			public const int RonHammerId = 1;
 			public static readonly MemberTool MemberTool = new MemberTool()
 			{
-				Id = MemberTool1,
+				Id = RonHammerId,
 				MembershipId = UnitMembers.RSwansonLeaderId,
 				ToolId = Tools.HammerId
 			};
 
-			public const int AdminMemberToolId = 2;
+			public const int AdminHammerId = 2;
 			public static readonly MemberTool AdminMemberTool = new MemberTool()
 			{
-				Id = AdminMemberToolId,
+				Id = AdminHammerId,
 				MembershipId = UnitMembers.AdminMemberId,
 				ToolId = Tools.HammerId
 			};

@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Models;
+using Models.Enums;
 using NUnit.Framework;
 
 namespace Integration
@@ -68,7 +69,7 @@ namespace Integration
 				Assert.AreEqual(expected.PersonId, actual.PersonId);
 				Assert.AreEqual(expected.Title, actual.Title);
 				Assert.AreEqual(expected.Percentage, actual.Percentage);
-				Assert.AreEqual("", actual.Notes); //Notes are stripped on membership getters
+				Assert.AreEqual(expected.Notes, actual.Notes); //Notes are stripped on membership getters
 				// relations
 				Assert.NotNull(actual.Person);
 				Assert.AreEqual(expected.Person.Id, actual.Person.Id);
@@ -76,6 +77,25 @@ namespace Integration
 				Assert.AreEqual(expected.Unit.Id, actual.Unit.Id);
 				Assert.NotNull(actual.MemberTools);
 			}
+
+			[TestCase(ValidRswansonJwt, TestEntities.UnitMembers.RSwansonLeaderId, PermsGroups.All, TestName="Ron1", Description="As Ron (owner) I can manage Ron's membership")]
+			[TestCase(ValidRswansonJwt, TestEntities.UnitMembers.LkNopeSubleadId, PermsGroups.All, TestName="Ron2", Description="As Ron (owner) I can manage Leslie's membership")]
+			[TestCase(ValidRswansonJwt, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName="Ron3", Description="As Ron (owner) I can't manage Ben's membership (different unit)")]
+			[TestCase(ValidLknopeJwt, TestEntities.UnitMembers.RSwansonLeaderId, EntityPermissions.Get, TestName="Les1", Description="As Leslie (viewer) I can't manage Ron's membership")]
+			[TestCase(ValidLknopeJwt, TestEntities.UnitMembers.LkNopeSubleadId, EntityPermissions.Get, TestName="Les2", Description="As Leslie (viewer) I can't manage Leslies's membership")]
+            [TestCase(ValidLknopeJwt, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName="Les3", Description="As Leslie (viewer) I can't manage Ben's membership")]
+			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.BWyattMemberId, PermsGroups.All, TestName="Ben1", Description="As Ben (ManageMebers) I can manage Ben's membership")]
+			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.RSwansonLeaderId, EntityPermissions.Get, TestName="Ben2", Description="As Ben (ManageMebers) I can't manage Ron's membership (different unit)")]
+			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.LkNopeSubleadId,  EntityPermissions.Get, TestName="Ben3", Description="As Ben (ManageMebers) I can't manage Leslie's membership (different unit)")]
+            [TestCase(ValidAdminJwt, TestEntities.UnitMembers.RSwansonLeaderId, PermsGroups.All, TestName="Adm1", Description="As a service admin I can do anything to any unit")]
+            [TestCase(ValidAdminJwt, TestEntities.UnitMembers.LkNopeSubleadId, PermsGroups.All, TestName="Adm2", Description="As a service admin I can do anything to any unit")]
+            [TestCase(ValidAdminJwt, TestEntities.UnitMembers.BWyattMemberId, PermsGroups.All, TestName="Adm3", Description="As a service admin I can do anything to any unit")]
+            public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int membershipId, EntityPermissions expectedPermissions)
+            {
+                var resp = await GetAuthenticated($"memberships/{membershipId}", jwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, expectedPermissions);
+            }
 		}
 
 		public class UnitMemberCreate : ApiTest

@@ -76,7 +76,8 @@ namespace Integration
                 Assert.AreEqual(expected.Parent?.Id, actual.Parent?.Id);
             }
 
-            [TestCase(ValidRswansonJwt, TestEntities.Units.ParksAndRecUnitId, PermsGroups.GetPut, Description="As Ron I can a unit I manage")]
+            
+            [TestCase(ValidRswansonJwt, TestEntities.Units.ParksAndRecUnitId, PermsGroups.All, Description="As Ron I can do anything to a unit I own")]
             [TestCase(ValidRswansonJwt, TestEntities.Units.CityOfPawneeUnitId, EntityPermissions.Get, Description="As Ron I can't update a unit I don't manage")]
             [TestCase(ValidAdminJwt, TestEntities.Units.ParksAndRecUnitId, PermsGroups.All, Description="As a service admin I can do anything to any unit")]
             [TestCase(ValidAdminJwt, TestEntities.Units.CityOfPawneeUnitId, PermsGroups.All, Description="As a service admin I can do anything to any unit")]
@@ -85,7 +86,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"units/{unitId}", jwt);
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, expectedPermissions);
-            }            
+            }
         }
 
         public class UnitCreate : ApiTest
@@ -287,7 +288,8 @@ namespace Integration
             {
                 var resp = await DeleteAuthenticated($"units/{unitId}", jwt);
                 AssertStatusCode(resp, expectedCode);
-            }
+            }                     
+            
             
             [Test]
             public async Task CannotDeleteUnitWithChildren()

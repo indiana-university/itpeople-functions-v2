@@ -36,10 +36,17 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No member tool record was found with the ID provided.")]
 		public static Task<IActionResult> UnitMemberToolsGetOne(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "membertools/{memberToolId}")] HttpRequest req, int memberToolId)
-			=> Security.Authenticate(req)
+		{
+			string requestorNetId = null;
+			MemberTool memberTool = null;
+			return Security.Authenticate(req) 
+				.Tap(requestor => requestorNetId = requestor)
 				.Bind(_ => UnitMemberToolsRepository.GetOne(memberToolId))
-				.Bind(mt => Pipeline.Success(mt.ToMemberToolResponse()))
+				.Tap(mt => memberTool = mt)			
+				.Bind(mt => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, requestorNetId, mt.MembershipId))
+				.Bind(_ => Pipeline.Success(memberTool.ToMemberToolResponse()))
 				.Finally(result => Response.Ok(req, result));
+		}
 
 		[FunctionName(nameof(UnitMemberTools.UnitMemberToolsCreate))]
 		[OpenApiOperation(nameof(UnitMemberTools.UnitMemberToolsCreate), Title, Summary = "Create a unit member tool.", Description = "*Authorization*: Unit tool permissions can be created by any unit member that has either the `Owner` or `ManageTools` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitMembersGetAll).")]
