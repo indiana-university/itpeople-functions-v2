@@ -46,7 +46,7 @@ namespace API.Data
             var netidClean = netid.Trim().ToLowerInvariant();
             var deptCodeList = await db.Departments
                 .FromSqlRaw(GetLspDepartmentSql, netidClean)
-                .Select(d => new DeptCodeList(new List<string>(){d.Name}))
+                .Select(d => d.Name)
                 .AsNoTracking()
                 .ToListAsync();
             var result = new LspDepartmentArray(netidClean, deptCodeList);

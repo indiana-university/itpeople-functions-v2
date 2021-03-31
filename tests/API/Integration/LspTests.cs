@@ -5,6 +5,7 @@ using Models;
 using NUnit.Framework;
 using System.Xml.Serialization;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Integration
 {
@@ -38,10 +39,9 @@ namespace Integration
             var actual = await DeserializeXml<LspDepartmentArray>(resp);
             Assert.NotNull(actual);
             Assert.AreEqual(netid, actual.NetworkID);
-            Assert.NotNull(actual.DeptCodeLists);
-            Assert.AreEqual(expectedDepartments.Length, actual.DeptCodeLists.Count());
-            var actualDepartments = actual.DeptCodeLists.SelectMany(d => d.Values);
-            CollectionAssert.AreEquivalent(expectedDepartments, actualDepartments);
+            Assert.NotNull(actual.DeptCodeList);
+            Assert.AreEqual(expectedDepartments.Length, actual.DeptCodeList.A.Count());
+            CollectionAssert.AreEquivalent(expectedDepartments, actual.DeptCodeList.A);
         }
 
         [Test]
@@ -52,7 +52,26 @@ namespace Integration
             var actual = await DeserializeXml<LspDepartmentArray>(resp);
             Assert.NotNull(actual);
             Assert.AreEqual("johndoe", actual.NetworkID);
-            Assert.AreEqual(2, actual.DeptCodeLists.Count());
+            Assert.AreEqual(2, actual.DeptCodeList.A.Count());
+        }
+
+        [Test]
+        public async Task GetLspDepartmentsWellFormedMultipleDepartments()
+        {
+            var resp = await GetAnonymous($"LspdbWebService.svc/LspDepartments/johndoe");
+            AssertStatusCode(resp, HttpStatusCode.OK);
+            
+            var responseString = await resp.Content.ReadAsStringAsync();
+            var deptCodeTag = Regex.Escape("<DeptCodeList>");
+            Assert.AreEqual(1, Regex.Matches(responseString, deptCodeTag).Count());
+            
+            var aTag = Regex.Escape("<a>");
+            Assert.AreEqual(2, Regex.Matches(responseString, aTag).Count());
+            
+            var actual = await DeserializeXml<LspDepartmentArray>(resp);
+            Assert.NotNull(actual);
+            Assert.AreEqual("johndoe", actual.NetworkID);
+            Assert.AreEqual(2, actual.DeptCodeList.A.Count());
         }
 
         [TestCase(TestEntities.Departments.ParksName, new string[]{"johndoe"})]
