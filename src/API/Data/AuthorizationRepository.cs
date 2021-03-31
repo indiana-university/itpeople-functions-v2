@@ -103,7 +103,7 @@ namespace API.Data
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId) 
             => ExecuteDbPipeline($"resolve unit {membershipId} member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId)
-                .Bind(person => ResolveMembershipPermissions(person, membershipId))
+                .Bind(person => ResolveMembershipPermissions(person, membershipId, db))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
         private static async Task<Result<Person,Error>> FetchPersonAndMembership(PeopleContext db, string requestorNetid)
@@ -149,17 +149,42 @@ namespace API.Data
             return Pipeline.Success(EntityPermissions.Get);
         }
 
-        public static Result<EntityPermissions,Error> ResolveMembershipPermissions(Person requestor, int membershipId)
+        public static Result<EntityPermissions, Error> ResolveUnitToolPermissions(Person requestor, int unitId, PeopleContext db)
         {
             // service admins: get post put delete
             if (requestor != null && requestor.IsServiceAdmin)
-                return Pipeline.Success(PermsGroups.All);
+                return Pipeline.Success(PermsGroups.All);           
             
-            // Requestor owner/manage roles can get put
-            if(requestor != null && requestor.UnitMemberships.Any(um => um.Id == membershipId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageTools)))
+            if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageTools)))
                 return Pipeline.Success(PermsGroups.All);
-                
+
+            // Check the parent unit
+            var parent = db.Units
+                .Include(u => u.Parent)
+                .Single(u => u.Id == unitId)
+                .Parent;
+            
+            if(parent != null)
+                return ResolveUnitToolPermissions(requestor, parent.Id, db);
+
+            // Default condition
             return Pipeline.Success(EntityPermissions.Get);
+        }
+        
+        public static Result<EntityPermissions,Error> ResolveMembershipPermissions(Person requestor, int membershipId, PeopleContext db)
+        {
+            // service admins: get post put delete
+            if (requestor != null && requestor.IsServiceAdmin)
+                return Pipeline.Success(PermsGroups.All);     
+
+            var membership = db.UnitMembers
+                .Include(um => um.Unit)
+                .SingleOrDefault(um => um.Id == membershipId);
+            
+            if(membership == null)
+                return Pipeline.Success(EntityPermissions.Get);
+            
+            return ResolveUnitToolPermissions(requestor, membership.Unit.Id, db);            
         }
 
         private static Task<Person> FindRequestorOrDefault(PeopleContext db, string requestorNetid) 
