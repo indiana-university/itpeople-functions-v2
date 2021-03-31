@@ -94,10 +94,10 @@ namespace API.Data
                 .Bind(person => ResolveUnitPermissions(person))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
-        internal static Task<Result<EntityPermissions, Error>> DetermineUnitAndUnitMemberPermissions(HttpRequest req, string requestorNetId, int unitId) 
+        internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId) 
             => ExecuteDbPipeline($"resolve unit {unitId} and unit member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId, unitId)
-                .Bind(person => ResolveUnitAndUnitMemberPermissions(person, unitId))
+                .Bind(person => DetermineUnitManagementPermissions(person, unitId))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId) 
@@ -126,7 +126,7 @@ namespace API.Data
                 ? Pipeline.Success(PermsGroups.All)
                 : Pipeline.Success(EntityPermissions.Get);
                 
-        public static Result<EntityPermissions,Error> ResolveUnitAndUnitMemberPermissions(Person requestor, int unitId)
+        public static Result<EntityPermissions,Error> DetermineUnitManagementPermissions(Person requestor, int unitId)
         {
             // service admins: get post put delete
             if (requestor?.IsServiceAdmin == true)

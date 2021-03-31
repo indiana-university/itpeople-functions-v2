@@ -62,7 +62,7 @@ namespace API.Functions
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(requestor => Request.DeserializeBody<UnitMemberRequest>(req))
 			.Tap(umr => unitMemberRequest = umr)
-			.Bind(umr => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
+			.Bind(umr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => UnitMembersRepository.CreateMembership(unitMemberRequest))
 			.Bind(res => Pipeline.Success(res.ToUnitMemberResponse(EntityPermissions.Post)))
@@ -87,7 +87,7 @@ namespace API.Functions
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => Request.DeserializeBody<UnitMemberRequest>(req))
 				.Tap(umr => unitMemberRequest = umr)
-				.Bind(umr => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
+				.Bind(umr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
 				.Bind(authorized => UnitMembersRepository.UpdateMembership(req, unitMemberRequest, membershipId))
 				.Bind(um => Pipeline.Success(um.ToUnitMemberResponse(EntityPermissions.Put)))
@@ -107,7 +107,7 @@ namespace API.Functions
 			return Security.Authenticate(req)
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => UnitMembersRepository.GetOne(membershipId))
-				.Bind(um => AuthorizationRepository.DetermineUnitAndUnitMemberPermissions(req, requestorNetId, um.UnitId))// Set headers saying what the requestor can do to this unit
+				.Bind(um => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, um.UnitId))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
 				.Bind(_ => UnitMembersRepository.DeleteMembership(req, membershipId))
 				.Finally(result => Response.NoContent(req, result));
