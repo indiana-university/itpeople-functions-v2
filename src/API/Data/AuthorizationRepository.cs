@@ -132,18 +132,29 @@ namespace API.Data
             if (requestor?.IsServiceAdmin == true)
                 return Pipeline.Success(PermsGroups.All);
             
+            // Get the unit tree here
+            var unitTree = db.Units.FromSqlInterpolated($@"
+                WITH RECURSIVE parentage AS (
+                -- first row
+                SELECT id, name, parent_id
+                FROM units
+                WHERE id = {unitId}
+                UNION
+                -- recurse
+                SELECT u.id, u.name, u.parent_id
+                FROM units u
+                INNER JOIN parentage p ON p.parent_id = u.id
+                ) 
+                SELECT id, name, parent_id, '' AS description, '' AS email, '' AS url
+                FROM parentage
+            ")
+            .ToList();
+
             // Requestor owner/manage roles can get put
-            if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == getsAllPermissions)))
+            if(requestor != null && requestor.UnitMemberships.Any(um => 
+                unitTree.Any(u => u.Id == um.UnitId)
+                && (um.Permissions == UnitPermissions.Owner || um.Permissions == getsAllPermissions)))
                 return Pipeline.Success(PermsGroups.All);
-            
-            // We need to check the unit's parent permissions for requestor
-            var parent = db.Units
-                .Include(u => u.Parent)
-                .Single(u => u.Id == unitId)
-                .Parent;
-            
-            if(parent != null)
-                return RecursiveUnitManagmentPermissions(requestor, parent.Id, getsAllPermissions, db);
 
             // They have no special permissions
             return Pipeline.Success(EntityPermissions.Get);
