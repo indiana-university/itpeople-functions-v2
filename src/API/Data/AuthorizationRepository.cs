@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Middleware;
@@ -97,13 +98,13 @@ namespace API.Data
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId) 
             => ExecuteDbPipeline($"resolve unit {unitId} and unit member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId, unitId)
-                .Bind(person => DetermineUnitManagementPermissions(person, unitId))
+                .Bind(person => ResolveUnitManagmentPermissions(person, unitId, UnitPermissions.ManageMembers, db))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId) 
             => ExecuteDbPipeline($"resolve unit {membershipId} member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId)
-                .Bind(person => ResolveMembershipPermissions(person, membershipId))
+                .Bind(person => ResolveMembershipPermissions(person, membershipId, db))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
         private static async Task<Result<Person,Error>> FetchPersonAndMembership(PeopleContext db, string requestorNetid)
@@ -126,30 +127,66 @@ namespace API.Data
                 ? Pipeline.Success(PermsGroups.All)
                 : Pipeline.Success(EntityPermissions.Get);
                 
-        public static Result<EntityPermissions,Error> DetermineUnitManagementPermissions(Person requestor, int unitId)
+        public static async Task<Result<EntityPermissions,Error>> ResolveUnitManagmentPermissions(Person requestor, int unitId, UnitPermissions getsAllPermissions, PeopleContext db)
         {
-            // service admins: get post put delete
-            if (requestor?.IsServiceAdmin == true)
+            if (requestor == null)
+                return Pipeline.Success(EntityPermissions.Get);
+
+            // Grant all user permissions to Service Admins.
+            if (requestor.IsServiceAdmin)
                 return Pipeline.Success(PermsGroups.All);
-            
-            // Requestor owner/manage roles can get put
-            if(requestor != null && requestor.UnitMemberships.Any(um => um.UnitId == unitId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageMembers)))
-                return Pipeline.Success(PermsGroups.All);
-                
-            return Pipeline.Success(EntityPermissions.Get);
+
+            // Find all units in which  the requestor has the required unit permissions.
+            var privilegedUnits = requestor.UnitMemberships
+                .Where(um => um.Permissions == UnitPermissions.Owner || um.Permissions == getsAllPermissions)
+                .Select(um => um.UnitId);
+
+            // Grant minimal user permissions if *none* of the requestor's unit 
+            //   memberships contain the required unit permissions. 
+            if (false == privilegedUnits.Any())
+                return Pipeline.Success(EntityPermissions.Get);
+
+            // Grant all user permissions if the requestor has the required unit 
+            //  permissions in this unit or any parent unit in the hierarchy. 
+            //  Otherwise, grant minimal user permissions.
+            var unitsInHierarchy = (await BuildUnitTree(unitId, db)).Select(u => u.Id);
+            return (privilegedUnits.Intersect(unitsInHierarchy).Any())
+                ? Pipeline.Success(PermsGroups.All)
+                : Pipeline.Success(EntityPermissions.Get);
         }
 
-        public static Result<EntityPermissions,Error> ResolveMembershipPermissions(Person requestor, int membershipId)
+        private static Task<List<Unit>> BuildUnitTree(int unitId, PeopleContext db) 
+            => db.Units.FromSqlInterpolated($@"
+                WITH RECURSIVE parentage AS (
+                -- first row
+                SELECT id, name, parent_id
+                FROM units
+                WHERE id = {unitId}
+                UNION
+                -- recurse
+                SELECT u.id, u.name, u.parent_id
+                FROM units u
+                INNER JOIN parentage p ON p.parent_id = u.id
+                ) 
+                SELECT id, name, parent_id, '' AS description, '' AS email, '' AS url
+                FROM parentage
+            ")
+            .ToListAsync();
+
+        public static async Task<Result<EntityPermissions,Error>> ResolveMembershipPermissions(Person requestor, int membershipId, PeopleContext db)
         {
             // service admins: get post put delete
             if (requestor != null && requestor.IsServiceAdmin)
-                return Pipeline.Success(PermsGroups.All);
+                return Pipeline.Success(PermsGroups.All);     
+
+            var membership = await db.UnitMembers
+                .Include(um => um.Unit)
+                .SingleOrDefaultAsync(um => um.Id == membershipId);
             
-            // Requestor owner/manage roles can get put
-            if(requestor != null && requestor.UnitMemberships.Any(um => um.Id == membershipId && (um.Permissions == UnitPermissions.Owner || um.Permissions == UnitPermissions.ManageTools)))
-                return Pipeline.Success(PermsGroups.All);
-                
-            return Pipeline.Success(EntityPermissions.Get);
+            if(membership == null)
+                return Pipeline.Success(EntityPermissions.Get);
+            
+            return await ResolveUnitManagmentPermissions(requestor, membership.Unit.Id, UnitPermissions.ManageTools, db);            
         }
 
         private static Task<Person> FindRequestorOrDefault(PeopleContext db, string requestorNetid) 
