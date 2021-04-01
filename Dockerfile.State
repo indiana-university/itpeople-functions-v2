@@ -1,0 +1,28 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS installer-env
+
+# A reddit wizard says copy csproj filtes and do a restore first
+# https://www.reddit.com/r/docker/comments/i34thd/dotnet_core_slow_restore/g0azda1?utm_source=share&utm_medium=web2x&context=3
+# It does help, we went from 3m20s to build after changes to 1m20s
+
+COPY pact/StateServer/StateServer.csproj ./pact/StateServer/
+COPY src/Models/Models.csproj ./src/Models/
+COPY src/Database/Database.csproj ./src/Database/
+
+RUN dotnet restore ./pact/StateServer/StateServer.csproj
+
+# then copy the rest and build/publish.
+COPY src ./src/
+COPY pact ./pact/
+
+RUN mkdir -p /home/site/wwwroot && \
+    dotnet publish -c Release ./pact/StateServer/StateServer.csproj --output /home/site/wwwroot
+
+FROM mcr.microsoft.com/azure-functions/dotnet:3.0-appservice
+ENV AzureWebJobsScriptRoot=/home/site/wwwroot
+ENV AzureFunctionsJobHost__Logging__Console__IsEnabled=true
+ENV AzureWebJobsDisableHomepage=true
+ENV DatabaseConnectionString=Server=integration-test-db;Database=ItPeople;User\ Id=SA;Password=abcd1234@;
+COPY --from=installer-env ["/home/site/wwwroot", "/home/site/wwwroot"]
+
+HEALTHCHECK --interval=10s --timeout=1s --retries=60 \ 
+    CMD curl --fail http://localhost:80/ping || exit 1     

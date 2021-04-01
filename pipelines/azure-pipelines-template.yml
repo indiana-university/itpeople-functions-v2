@@ -1,0 +1,141 @@
+# .NET Core Function App to Windows on Azure
+# Build a .NET Core function app and deploy it to Azure as a Windows function App.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
+
+parameters:
+- name: VariableGroup
+  type: string
+  default: itpeople-functions-test
+
+variables:
+  - group: ${{ parameters.VariableGroup }}
+  # Agent VM image name
+  - name: vmImageName
+    value: 'ubuntu-20.04'
+
+stages:
+- stage: Test
+  displayName: Test
+
+  jobs: 
+    - job: ApiTest
+      displayName: API
+      pool:
+        vmImage: $(vmImageName)
+
+      steps:
+        - task: DotNetCoreCLI@2
+          displayName: Unit
+          inputs:
+            command: test
+            projects: tests/API/Unit/Unit.csproj
+            
+        - task: DotNetCoreCLI@2
+          displayName: Integration
+          inputs:
+            command: test
+            projects: tests/API/Integration/Integration.csproj  
+
+- stage: Package
+  displayName: Package  
+  dependsOn: Test
+  condition: succeeded()
+
+  jobs:
+  - job: PackageApiApp
+    displayName: API Function App
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Build API
+      inputs:
+        command: 'build'
+        projects: src/API/API.csproj
+        arguments: --output $(System.DefaultWorkingDirectory)/ApiFunctionApp --configuration Release
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive API files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/ApiFunctionApp'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
+        replaceExistingArchive: true
+
+    - publish: $(Build.ArtifactStagingDirectory)/ApiFunctionApp.zip
+      displayName: Publish API Function App Artifacts
+      artifact: ApiDeploymentPackage
+
+  - job: PackageTasksApp
+    displayName: Tasks Function App
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Build Tasks
+      inputs:
+        command: 'build'
+        projects: src/Tasks/Tasks.csproj
+        arguments: --output $(System.DefaultWorkingDirectory)/TasksFunctionApp --configuration Release
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive Tasks files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/TasksFunctionApp'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
+        replaceExistingArchive: true
+
+    - publish: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
+      displayName: Publish Tasks Function App Artifacts
+      artifact: TasksDeploymentPackage
+      
+- stage: Deploy
+  displayName: Deploy
+  dependsOn: Package
+  condition: succeeded()
+
+  jobs:
+  - deployment: DeployAPI
+    displayName: API
+    environment: 'development'
+    pool:
+      vmImage: $(vmImageName)
+
+    strategy:
+      runOnce:
+        deploy:
+
+          steps:
+          - task: AzureFunctionApp@1
+            displayName: Publish API Function App
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: functionApp
+              appName: '$(apiFunctionAppName)'
+              package: '$(Pipeline.Workspace)/ApiDeploymentPackage/ApiFunctionApp.zip'
+
+  - deployment: DeployTasks
+    displayName: Tasks
+    environment: 'development'
+    pool:
+      vmImage: $(vmImageName)
+
+    strategy:
+      runOnce:
+        deploy:
+
+          steps:
+          - task: AzureFunctionApp@1
+            displayName: Publish Tasks Function App
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: functionApp
+              appName: '$(tasksFunctionAppName)'
+              package: '$(Pipeline.Workspace)/TasksDeploymentPackage/TasksFunctionApp.zip'
+              
