@@ -124,19 +124,19 @@ namespace API.Middleware
         private static Result<string,Error> ExtractJWT(HttpRequest request)
         {
             if (!request.Headers.ContainsKey("Authorization")) 
-                return Pipeline.BadRequest(ErrorRequestMissingAuthorizationHeader);
+                return Pipeline.Unauthorized(ErrorRequestMissingAuthorizationHeader);
             
             var authHeaders = request.Headers["Authorization"].ToArray();
             if (!authHeaders.Any()) 
-                return Pipeline.BadRequest(ErrorRequestEmptyAuthorizationHeader);
+                return Pipeline.Unauthorized(ErrorRequestEmptyAuthorizationHeader);
             
             var header = authHeaders.First();
             if (!header.StartsWith("Bearer", ignoreCase: true, culture: CultureInfo.InvariantCulture)) 
-                return Pipeline.BadRequest(ErrorRequestAuthorizationHeaderMissingBearerScheme);
+                return Pipeline.Unauthorized(ErrorRequestAuthorizationHeaderMissingBearerScheme);
 
             var bearerToken = header.Replace("Bearer", "", ignoreCase: true, culture: CultureInfo.InvariantCulture).Trim();
             if (string.IsNullOrWhiteSpace(bearerToken)) 
-                return Pipeline.BadRequest(ErrorRequestAuthorizationHeaderMissingBearerToken);
+                return Pipeline.Unauthorized(ErrorRequestAuthorizationHeaderMissingBearerToken);
             
             return Pipeline.Success(bearerToken);
         }

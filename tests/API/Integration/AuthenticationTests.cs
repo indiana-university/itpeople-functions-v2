@@ -23,7 +23,7 @@ namespace Integration
         public async Task AuthorizationHeaderRequired()
         {
             var resp = await Http.GetAsync("people");
-            AssertStatusCode(resp, HttpStatusCode.BadRequest);
+            AssertStatusCode(resp, HttpStatusCode.Unauthorized);
             var actual = await resp.Content.ReadAsAsync<ApiError>();
             Assert.AreEqual(actual.Errors.First(), "Request is missing an Authorization header.");
         }
@@ -34,7 +34,7 @@ namespace Integration
             var request = new HttpRequestMessage(HttpMethod.Get, "people");
             request.Headers.Authorization = new AuthenticationHeaderValue("some_scheme");
             var resp = await Http.SendAsync(request);
-            AssertStatusCode(resp, HttpStatusCode.BadRequest);
+            AssertStatusCode(resp, HttpStatusCode.Unauthorized);
             var actual = await resp.Content.ReadAsAsync<ApiError>();
             Assert.AreEqual(actual.Errors.First(), "Request Authorization header scheme must be \"Bearer\"");
         }
@@ -46,7 +46,7 @@ namespace Integration
             var request = new HttpRequestMessage(HttpMethod.Get, "people");
             request.Headers.Authorization = new AuthenticationHeaderValue(scheme);
             var resp = await Http.SendAsync(request);
-            AssertStatusCode(resp, HttpStatusCode.BadRequest);
+            AssertStatusCode(resp, HttpStatusCode.Unauthorized);
             var actual = await resp.Content.ReadAsAsync<ApiError>();
             Assert.AreEqual(actual.Errors.First(), "Request Authorization header contains empty \"Bearer\" token.");
         }
