@@ -132,6 +132,8 @@ stages:
 
   - job: Tasks
     steps:
+    - checkout: scripts
+    
     - task: DownloadPipelineArtifact@2
       displayName: Download Deployment Package
       inputs:
