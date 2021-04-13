@@ -110,18 +110,6 @@ stages:
       inputs:
         artifact: 'ApiDeploymentPackage'
 
-    strategy:
-      runOnce:
-        deploy:
-
-          steps:
-          - task: AzureFunctionApp@1
-            displayName: Publish Tasks Function App
-            inputs:
-              azureSubscription: '$(azureSubscription)'
-              appType: functionApp
-              appName: '$(tasksFunctionAppName)'
-              package: '$(Pipeline.Workspace)/TasksDeploymentPackage/TasksFunctionApp.zip'
     - task: AzureCLI@2
       displayName: Stage
       inputs:
@@ -146,4 +134,18 @@ stages:
           -AppServiceName $(apiFunctionAppName) 
           -DeploymentSlot staging
 
+  - job: Tasks
+    steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Deployment Package
+      inputs:
+        artifact: 'TasksDeploymentPackage'
+
+    - task: AzureFunctionApp@1
+      displayName: Publish Tasks Function App
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        appType: functionApp
+        appName: '$(tasksFunctionAppName)'
+        package: '$(Pipeline.Workspace)/TasksFunctionApp.zip'
               
