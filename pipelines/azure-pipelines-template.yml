@@ -101,30 +101,14 @@ stages:
   condition: succeeded()
 
   jobs:
-  - deployment: DeployAPI
-    displayName: API
-    environment: 'development'
-    pool:
-      vmImage: $(vmImageName)
+  - job: API
+    steps:
+    - checkout: scripts
 
-    strategy:
-      runOnce:
-        deploy:
-
-          steps:
-          - task: AzureFunctionApp@1
-            displayName: Publish API Function App
-            inputs:
-              azureSubscription: '$(azureSubscription)'
-              appType: functionApp
-              appName: '$(apiFunctionAppName)'
-              package: '$(Pipeline.Workspace)/ApiDeploymentPackage/ApiFunctionApp.zip'
-
-  - deployment: DeployTasks
-    displayName: Tasks
-    environment: 'development'
-    pool:
-      vmImage: $(vmImageName)
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Deployment Package
+      inputs:
+        artifact: 'ApiDeploymentPackage'
 
     strategy:
       runOnce:
@@ -138,4 +122,28 @@ stages:
               appType: functionApp
               appName: '$(tasksFunctionAppName)'
               package: '$(Pipeline.Workspace)/TasksDeploymentPackage/TasksFunctionApp.zip'
+    - task: AzureCLI@2
+      displayName: Stage
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: pscore
+        scriptPath: $(Build.SourcesDirectory)/deploy-app-service.ps1
+        arguments: >-
+          -ResourceGroup $(resourceGroup) 
+          -AppServiceName $(apiFunctionAppName) 
+          -DeploymentSlot staging 
+          -PackagePath $(Pipeline.Workspace)/ApiFunctionApp.zip 
+          -HealthCheckPath "/ping"
+    
+    - task: AzureCLI@2
+      displayName: Swap
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: pscore
+        scriptPath: $(Build.SourcesDirectory)/swap-app-service.ps1
+        arguments: >-
+          -ResourceGroup $(resourceGroup) 
+          -AppServiceName $(apiFunctionAppName) 
+          -DeploymentSlot staging
+
               
