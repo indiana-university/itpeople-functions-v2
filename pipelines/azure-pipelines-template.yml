@@ -3,27 +3,25 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
-parameters:
-- name: VariableGroup
-  type: string
-  default: itpeople-functions-test
-
 variables:
-  - group: ${{ parameters.VariableGroup }}
-  # Agent VM image name
-  - name: vmImageName
-    value: 'ubuntu-20.04'
+  poolVmImage: 'ubuntu-20.04'
+
+resources:
+  repositories:
+  - repository: scripts
+    type: githubenterprise
+    name: UITS-SSL/azure-devops-scripts
+    endpoint: 'IU GitHub Enterprise'
 
 stages:
 - stage: Test
   displayName: Test
+  pool:
+    vmImage: $(poolVmImage)
 
   jobs: 
     - job: ApiTest
       displayName: API
-      pool:
-        vmImage: $(vmImageName)
-
       steps:
         - task: DotNetCoreCLI@2
           displayName: Unit
@@ -41,13 +39,12 @@ stages:
   displayName: Package  
   dependsOn: Test
   condition: succeeded()
+  pool:
+    vmImage: $(poolVmImage)
 
   jobs:
   - job: PackageApiApp
     displayName: API Function App
-    pool:
-      vmImage: $(vmImageName)
-
     steps:
     - task: DotNetCoreCLI@2
       displayName: Build API
@@ -71,9 +68,6 @@ stages:
 
   - job: PackageTasksApp
     displayName: Tasks Function App
-    pool:
-      vmImage: $(vmImageName)
-
     steps:
     - task: DotNetCoreCLI@2
       displayName: Build Tasks
@@ -99,43 +93,57 @@ stages:
   displayName: Deploy
   dependsOn: Package
   condition: succeeded()
+  pool:
+    vmImage: $(poolVmImage)
 
   jobs:
-  - deployment: DeployAPI
-    displayName: API
-    environment: 'development'
-    pool:
-      vmImage: $(vmImageName)
+  - job: API
+    steps:
+    - checkout: scripts
 
-    strategy:
-      runOnce:
-        deploy:
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Deployment Package
+      inputs:
+        artifact: 'ApiDeploymentPackage'
 
-          steps:
-          - task: AzureFunctionApp@1
-            displayName: Publish API Function App
-            inputs:
-              azureSubscription: '$(azureSubscription)'
-              appType: functionApp
-              appName: '$(apiFunctionAppName)'
-              package: '$(Pipeline.Workspace)/ApiDeploymentPackage/ApiFunctionApp.zip'
+    - task: AzureCLI@2
+      displayName: Publish to Staging Slot
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: pscore
+        scriptPath: $(Build.SourcesDirectory)/deploy-app-service.ps1
+        arguments: >-
+          -ResourceGroup $(resourceGroup) 
+          -AppServiceName $(apiFunctionAppName) 
+          -DeploymentSlot staging 
+          -PackagePath $(Pipeline.Workspace)/ApiFunctionApp.zip 
+          -HealthCheckPath "/ping"
+    
+    - task: AzureCLI@2
+      displayName: Swap to Production Slot
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: pscore
+        scriptPath: $(Build.SourcesDirectory)/swap-app-service.ps1
+        arguments: >-
+          -ResourceGroup $(resourceGroup) 
+          -AppServiceName $(apiFunctionAppName) 
+          -DeploymentSlot staging
 
-  - deployment: DeployTasks
-    displayName: Tasks
-    environment: 'development'
-    pool:
-      vmImage: $(vmImageName)
+  - job: Tasks
+    steps:
+    - checkout: scripts
+    
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Deployment Package
+      inputs:
+        artifact: 'TasksDeploymentPackage'
 
-    strategy:
-      runOnce:
-        deploy:
-
-          steps:
-          - task: AzureFunctionApp@1
-            displayName: Publish Tasks Function App
-            inputs:
-              azureSubscription: '$(azureSubscription)'
-              appType: functionApp
-              appName: '$(tasksFunctionAppName)'
-              package: '$(Pipeline.Workspace)/TasksDeploymentPackage/TasksFunctionApp.zip'
+    - task: AzureFunctionApp@1
+      displayName: Publish Tasks Function App
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        appType: functionApp
+        appName: '$(tasksFunctionAppName)'
+        package: '$(Pipeline.Workspace)/TasksFunctionApp.zip'
               
