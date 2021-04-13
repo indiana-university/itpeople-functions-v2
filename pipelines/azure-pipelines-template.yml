@@ -14,6 +14,9 @@ variables:
   - name: vmImageName
     value: 'ubuntu-20.04'
 
+pool:
+  vmImage: 'ubuntu-20.04'
+
 stages:
 - stage: Test
   displayName: Test
@@ -21,9 +24,6 @@ stages:
   jobs: 
     - job: ApiTest
       displayName: API
-      pool:
-        vmImage: $(vmImageName)
-
       steps:
         - task: DotNetCoreCLI@2
           displayName: Unit
@@ -45,9 +45,6 @@ stages:
   jobs:
   - job: PackageApiApp
     displayName: API Function App
-    pool:
-      vmImage: $(vmImageName)
-
     steps:
     - task: DotNetCoreCLI@2
       displayName: Build API
@@ -71,9 +68,6 @@ stages:
 
   - job: PackageTasksApp
     displayName: Tasks Function App
-    pool:
-      vmImage: $(vmImageName)
-
     steps:
     - task: DotNetCoreCLI@2
       displayName: Build Tasks
