@@ -4,14 +4,14 @@
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
 variables:
-  - vmImageName: 'ubuntu-20.04'
+  poolVmImage: 'ubuntu-20.04'
 
 
 stages:
 - stage: Test
   displayName: Test
   pool:
-    vmImage: $(vmImageName)
+    vmImage: $(poolVmImage)
 
   jobs: 
     - job: ApiTest
@@ -34,7 +34,7 @@ stages:
   dependsOn: Test
   condition: succeeded()
   pool:
-    vmImage: $(vmImageName)
+    vmImage: $(poolVmImage)
 
   jobs:
   - job: PackageApiApp
@@ -88,7 +88,7 @@ stages:
   dependsOn: Package
   condition: succeeded()
   pool:
-    vmImage: $(vmImageName)
+    vmImage: $(poolVmImage)
 
   jobs:
   - job: API
