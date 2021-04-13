@@ -107,7 +107,7 @@ stages:
         artifact: 'ApiDeploymentPackage'
 
     - task: AzureCLI@2
-      displayName: Stage
+      displayName: Publish to Staging Slot
       inputs:
         azureSubscription: '$(azureSubscription)'
         scriptType: pscore
@@ -120,7 +120,7 @@ stages:
           -HealthCheckPath "/ping"
     
     - task: AzureCLI@2
-      displayName: Swap
+      displayName: Swap to Production Slot
       inputs:
         azureSubscription: '$(azureSubscription)'
         scriptType: pscore
