@@ -3,12 +3,15 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
-pool:
-  vmImage: 'ubuntu-20.04'
+variables:
+  - vmImageName: 'ubuntu-20.04'
+
 
 stages:
 - stage: Test
   displayName: Test
+  pool:
+    vmImage: $(vmImageName)
 
   jobs: 
     - job: ApiTest
@@ -30,6 +33,8 @@ stages:
   displayName: Package  
   dependsOn: Test
   condition: succeeded()
+  pool:
+    vmImage: $(vmImageName)
 
   jobs:
   - job: PackageApiApp
@@ -82,6 +87,8 @@ stages:
   displayName: Deploy
   dependsOn: Package
   condition: succeeded()
+  pool:
+    vmImage: $(vmImageName)
 
   jobs:
   - job: API
