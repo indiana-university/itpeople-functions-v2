@@ -6,6 +6,12 @@
 variables:
   poolVmImage: 'ubuntu-20.04'
 
+resources:
+  repositories:
+  - repository: scripts
+    type: githubenterprise
+    name: UITS-SSL/azure-devops-scripts
+    endpoint: 'IU GitHub Enterprise'
 
 stages:
 - stage: Test
