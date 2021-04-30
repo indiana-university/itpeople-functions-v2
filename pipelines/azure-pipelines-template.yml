@@ -27,7 +27,7 @@ stages:
           displayName: 'Use .NET Core sdk'
           inputs:
             packageType: sdk
-            version: 3.1
+            version: 3.1.x
 
         - task: DotNetCoreCLI@2
           displayName: Unit
@@ -55,7 +55,7 @@ stages:
       displayName: 'Use .NET Core sdk'
       inputs:
         packageType: sdk
-        version: 3.1
+        version: 3.1.x
 
     - task: DotNetCoreCLI@2
       displayName: Build API
@@ -84,7 +84,7 @@ stages:
       displayName: 'Use .NET Core sdk'
       inputs:
         packageType: sdk
-        version: 3.1
+        version: 3.1.x
 
     - task: DotNetCoreCLI@2
       displayName: Build Tasks
