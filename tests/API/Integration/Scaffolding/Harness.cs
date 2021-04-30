@@ -35,23 +35,23 @@ namespace Integration
             // Start SQL Server container
             try { DbContainer.Remove(_client).Wait(60*1000); } catch {}
             DbContainer.Pull();
-            DbContainer.Start(_client).Wait(60*1000);
+            DbContainer.Start(_client).Wait();
             // Wait for SQL Server container to finish starting
-            DbContainer.WaitUntilReady().Wait(60*1000);
+            DbContainer.WaitUntilReady().Wait();
 
             try { AppContainer.Remove(_client).Wait(60*1000); } catch {}
             // Build and start API Function app container
             AppContainer.BuildImage();
-            AppContainer.Start(_client).Wait(10 * 1000);
+            AppContainer.Start(_client).Wait();
             // Wait for API container to finish starting
-            AppContainer.WaitUntilReady().Wait(10 * 1000);
+            AppContainer.WaitUntilReady().Wait();
 
             try { StateContainer.Remove(_client).Wait(60*1000); } catch {}
             // Build and start API Function app container
             StateContainer.BuildImage();
-            StateContainer.Start(_client).Wait(10 * 1000);
+            StateContainer.Start(_client).Wait();
             // Wait for API container to finish starting
-            StateContainer.WaitUntilReady().Wait(10 * 1000);
+            StateContainer.WaitUntilReady().Wait();
         }
 
         private void EnsureIntegrationTestsNetworkExists()
