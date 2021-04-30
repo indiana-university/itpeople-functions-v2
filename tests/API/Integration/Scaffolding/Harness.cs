@@ -59,9 +59,14 @@ namespace Integration
             var networks = _client.Networks.ListNetworksAsync().Result;
             if (!networks.Any(n => n.Name == DockerContainer.NetworkName))
             {
+                TestContext.Progress.WriteLine($"⏳ Creating test network '{DockerContainer.NetworkName}'...");
                 _client.Networks
                     .CreateNetworkAsync(new NetworksCreateParameters() { Name = DockerContainer.NetworkName })
                     .Wait();
+            }
+            else
+            {
+                TestContext.Progress.WriteLine($"😎 Test network '{DockerContainer.NetworkName}' exists.");
             }
         }
 
