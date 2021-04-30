@@ -73,8 +73,9 @@ namespace Integration
         [OneTimeTearDown]
         public void OneTimeTeardown()
         {
-            // AppContainer.Remove(_client).Wait(60*1000);
-            // DbContainer.Remove(_client).Wait(60*1000);
+            AppContainer.Remove(_client).Wait(60*1000);
+            DbContainer.Remove(_client).Wait(60*1000);
+            StateContainer.Remove(_client).Wait(60*1000);
         }
     }
 }
