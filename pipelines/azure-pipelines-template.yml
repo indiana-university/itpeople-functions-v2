@@ -4,7 +4,7 @@
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
 variables:
-  poolVmImage: 'ubuntu-20.04'
+  agentPool: 'CSSD-Linux-ELA'
 
 resources:
   repositories:
@@ -16,8 +16,7 @@ resources:
 stages:
 - stage: Test
   displayName: Test
-  pool:
-    vmImage: $(poolVmImage)
+  pool: $(agentPool)
 
   jobs: 
     - job: ApiTest
@@ -39,8 +38,7 @@ stages:
   displayName: Package  
   dependsOn: Test
   condition: succeeded()
-  pool:
-    vmImage: $(poolVmImage)
+  pool: $(agentPool)
 
   jobs:
   - job: PackageApiApp
@@ -93,9 +91,8 @@ stages:
   displayName: Deploy
   dependsOn: Package
   condition: succeeded()
-  pool:
-    vmImage: $(poolVmImage)
-
+  pool: $(agentPool)
+  
   jobs:
   - job: API
     steps:
