@@ -68,6 +68,12 @@ namespace Integration
             {
                 TestContext.Progress.WriteLine($"😎 Test network '{DockerContainer.NetworkName}' exists.");
             }
+            TestContext.Progress.WriteLine($"🔍 Docker Networks (name, driver, scope):");
+            foreach (var network in _client.Networks.ListNetworksAsync().Result)
+            {
+                TestContext.Progress.WriteLine($"  {network.Name}, {network.Driver}, {network.Scope}");
+            }
+
         }
 
         [OneTimeTearDown]
