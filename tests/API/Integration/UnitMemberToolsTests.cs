@@ -60,6 +60,7 @@ namespace Integration
 			[TestCase(ValidBwyattJwt, TestEntities.MemberTools.AdminHammerId, EntityPermissions.Get, TestName="Ben2", Description="As Ben (ManageMebers) I can't manage Ron's tools (different unit)")]
             [TestCase(ValidAdminJwt, TestEntities.MemberTools.RonHammerId, PermsGroups.All, TestName="Adm1", Description="As a service admin I can do anything to any unit")]
             [TestCase(ValidAdminJwt, TestEntities.MemberTools.AdminHammerId, PermsGroups.All, TestName="Adm2", Description="As a service admin I can do anything to any unit")]
+			[TestCase(ValidServiceAcct, TestEntities.MemberTools.RonHammerId, EntityPermissions.Get, TestName="Les1", Description="As service account (viewer) I can't manage Ron's tools")]
             public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int memberToolsId, EntityPermissions expectedPermissions)
             {
                 var resp = await GetAuthenticated($"membertools/{memberToolsId}", jwt);

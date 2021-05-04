@@ -210,6 +210,7 @@ namespace Integration
             [TestCase(ValidAdminJwt, TestEntities.People.LKnopeId, PermsGroups.GetPut, Description="As a service admin I can update anyone")]
             [TestCase(ValidAdminJwt, TestEntities.People.BWyattId, PermsGroups.GetPut, Description="As a service admin I can update anyone")]
             [TestCase(ValidAdminJwt, TestEntities.People.ServiceAdminId, PermsGroups.GetPut, Description="As a service admin I can update anyone")]
+            [TestCase(ValidServiceAcct, TestEntities.People.RSwansonId, EntityPermissions.Get, Description="As a service account I can get anyone")]
             public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int personId, EntityPermissions expectedPermissions)
             {
                 var resp = await GetAuthenticated($"people/{personId}", jwt);
