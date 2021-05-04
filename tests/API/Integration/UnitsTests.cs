@@ -54,6 +54,7 @@ namespace Integration
 
             [TestCase(ValidRswansonJwt, EntityPermissions.Get, Description="As non-admin I can't create/delete units")]
             [TestCase(ValidAdminJwt, PermsGroups.All, Description="As a service admin I can create/modify/delete units")]
+            [TestCase(ValidServiceAcct, EntityPermissions.Get, Description="As a service account I can get, but not create/delete units")]
             public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, EntityPermissions expectedPermissions)
             {
                 var resp = await GetAuthenticated($"units", jwt);
@@ -81,6 +82,7 @@ namespace Integration
             [TestCase(ValidRswansonJwt, TestEntities.Units.CityOfPawneeUnitId, EntityPermissions.Get, Description="As Ron I can't update a unit I don't manage")]
             [TestCase(ValidAdminJwt, TestEntities.Units.ParksAndRecUnitId, PermsGroups.All, Description="As a service admin I can do anything to any unit")]
             [TestCase(ValidAdminJwt, TestEntities.Units.CityOfPawneeUnitId, PermsGroups.All, Description="As a service admin I can do anything to any unit")]
+            [TestCase(ValidServiceAcct, TestEntities.Units.ParksAndRecUnitId, EntityPermissions.Get, Description="As a service account I can get a unit")]
             public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int unitId, EntityPermissions expectedPermissions)
             {
                 var resp = await GetAuthenticated($"units/{unitId}", jwt);
@@ -384,6 +386,16 @@ namespace Integration
                 Assert.True(actual.All(a => a.Parent != null));
                 Assert.True(actual.All(a => a.Parent.Id == unitId));
             }
+
+            [TestCase(ValidRswansonJwt, EntityPermissions.Get, Description="As non-admin I can't create/delete units")]
+            [TestCase(ValidAdminJwt, PermsGroups.All, Description="As a service admin I can create/modify/delete units")]
+            [TestCase(ValidServiceAcct, EntityPermissions.Get, Description="As a service account I can get, but not create/delete units")]
+            public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, EntityPermissions expectedPermissions)
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}/children", jwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, expectedPermissions);
+            }
         }
 
         [TestFixture]
@@ -418,6 +430,7 @@ namespace Integration
             [TestCase(ValidRswansonJwt, TestEntities.Units.AuditorId, true, Description="Ron doesn't see notes for unit he doesn't manage.")]
             [TestCase(ValidAdminJwt, TestEntities.Units.ParksAndRecUnitId, false)]
             [TestCase(ValidAdminJwt, TestEntities.Units.AuditorId, false)]
+            [TestCase(ValidServiceAcct, TestEntities.Units.AuditorId, true, Description="service account since they do not manage any units.")]
             public async Task NotesAreHidden(string requestor, int unitId, bool expectNotesHidden)
             {
                 var resp = await GetAuthenticated($"units/{unitId}/members", requestor);
