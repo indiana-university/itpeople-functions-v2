@@ -386,6 +386,16 @@ namespace Integration
                 Assert.True(actual.All(a => a.Parent != null));
                 Assert.True(actual.All(a => a.Parent.Id == unitId));
             }
+
+            [TestCase(ValidRswansonJwt, EntityPermissions.Get, Description="As non-admin I can't create/delete units")]
+            [TestCase(ValidAdminJwt, PermsGroups.All, Description="As a service admin I can create/modify/delete units")]
+            [TestCase(ValidServiceAcct, EntityPermissions.Get, Description="As a service account I can get, but not create/delete units")]
+            public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, EntityPermissions expectedPermissions)
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}/children", jwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, expectedPermissions);
+            }
         }
 
         [TestFixture]
