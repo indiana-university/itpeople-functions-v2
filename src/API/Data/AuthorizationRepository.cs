@@ -190,8 +190,11 @@ namespace API.Data
         }
 
         private static Task<Person> FindRequestorOrDefault(PeopleContext db, string requestorNetid) 
-            => db.People
-                .Include(p => p.UnitMemberships)
-                .SingleOrDefaultAsync(p => p.Netid.ToLower() == requestorNetid.ToLower());
+            => 
+                string.IsNullOrWhiteSpace(requestorNetid)
+                ? Task.FromResult<Person>(null)
+                : db.People
+                    .Include(p => p.UnitMemberships)
+                    .SingleOrDefaultAsync(p => p.Netid.ToLower() == requestorNetid.ToLower());
     }
 }
