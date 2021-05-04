@@ -430,6 +430,7 @@ namespace Integration
             [TestCase(ValidRswansonJwt, TestEntities.Units.AuditorId, true, Description="Ron doesn't see notes for unit he doesn't manage.")]
             [TestCase(ValidAdminJwt, TestEntities.Units.ParksAndRecUnitId, false)]
             [TestCase(ValidAdminJwt, TestEntities.Units.AuditorId, false)]
+            [TestCase(ValidServiceAcct, TestEntities.Units.AuditorId, true, Description="service account since they do not manage any units.")]
             public async Task NotesAreHidden(string requestor, int unitId, bool expectNotesHidden)
             {
                 var resp = await GetAuthenticated($"units/{unitId}/members", requestor);
