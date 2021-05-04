@@ -90,6 +90,7 @@ namespace Integration
             [TestCase(ValidAdminJwt, TestEntities.UnitMembers.RSwansonLeaderId, PermsGroups.All, TestName="Adm1", Description="As a service admin I can do anything to any unit")]
             [TestCase(ValidAdminJwt, TestEntities.UnitMembers.LkNopeSubleadId, PermsGroups.All, TestName="Adm2", Description="As a service admin I can do anything to any unit")]
             [TestCase(ValidAdminJwt, TestEntities.UnitMembers.BWyattMemberId, PermsGroups.All, TestName="Adm3", Description="As a service admin I can do anything to any unit")]
+			[TestCase(ValidServiceAcct, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName="Svc1", Description="As a service account I can only get unit membership")]
             public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int membershipId, EntityPermissions expectedPermissions)
             {
                 var resp = await GetAuthenticated($"memberships/{membershipId}", jwt);
