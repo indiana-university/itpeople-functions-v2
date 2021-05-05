@@ -106,9 +106,9 @@ namespace Integration
             Assert.AreEqual(expected.CampusEmail, actual.PreferredEmail);
             Assert.AreEqual(expected.Name, actual.FullName);
             Assert.AreEqual(TestEntities.Units.CityOfPawnee.Email, actual.GroupInternalEmail);
+            Assert.AreEqual(TestEntities.Units.CityOfPawnee.Email, actual.PreferredEmail);
             Assert.True(actual.IsLSPAdmin);
         }
-
 
         private static async Task<T> DeserializeXml<T>(HttpResponseMessage resp) where T : class
         {
