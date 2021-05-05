@@ -19,23 +19,27 @@ stages:
   pool: $(agentPool)
 
   jobs: 
-    - job: Unit
-      steps:
-        - task: UseDotNet@2
+  - job: Unit
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: 5.0.x
 
-        - task: DotNetCoreCLI@2
-          inputs:
-            command: test
-            projects: tests/API/Unit/Unit.csproj
-            
-    - job: Integration
-      steps:
-        - task: UseDotNet@2
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: test
+        projects: tests/API/Unit/Unit.csproj
+          
+  - job: Integration
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: 3.1.x
 
-        - task: DotNetCoreCLI@2
-          inputs:
-            command: test
-            projects: tests/API/Integration/Integration.csproj  
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: test
+        projects: tests/API/Integration/Integration.csproj  
 
 - stage: Package
   displayName: Package  
@@ -47,7 +51,9 @@ stages:
     displayName: API Function App
     steps:
     - task: UseDotNet@2
-        
+      inputs:
+        version: 3.1.x
+      
     - task: DotNetCoreCLI@2
       displayName: Build API
       inputs:
@@ -72,6 +78,8 @@ stages:
     displayName: Tasks Function App
     steps:
     - task: UseDotNet@2
+      inputs:
+        version: 3.1.x
 
     - task: DotNetCoreCLI@2
       displayName: Build Tasks
