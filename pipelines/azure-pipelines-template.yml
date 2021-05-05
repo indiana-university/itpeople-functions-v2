@@ -4,7 +4,7 @@
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
 variables:
-  agentPool: "CSSD-Linux-ELA"
+  agentPool: 'CSSD-Linux-ELA'
 
 resources:
   repositories:
