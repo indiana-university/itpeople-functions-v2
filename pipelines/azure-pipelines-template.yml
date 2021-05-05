@@ -22,9 +22,6 @@ stages:
     - job: Unit
       steps:
         - task: UseDotNet@2
-          inputs:
-            packageType: sdk
-            version: 3.1.x
 
         - task: DotNetCoreCLI@2
           inputs:
@@ -34,9 +31,6 @@ stages:
     - job: Integration
       steps:
         - task: UseDotNet@2
-          inputs:
-            packageType: sdk
-            version: 3.1.x
 
         - task: DotNetCoreCLI@2
           inputs:
@@ -53,9 +47,6 @@ stages:
     displayName: API Function App
     steps:
     - task: UseDotNet@2
-      inputs:
-        packageType: sdk
-        version: 3.1.x
         
     - task: DotNetCoreCLI@2
       displayName: Build API
@@ -81,9 +72,6 @@ stages:
     displayName: Tasks Function App
     steps:
     - task: UseDotNet@2
-      inputs:
-        packageType: sdk
-        version: 3.1.x
 
     - task: DotNetCoreCLI@2
       displayName: Build Tasks
