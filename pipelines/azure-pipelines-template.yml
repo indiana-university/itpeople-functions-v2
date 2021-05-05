@@ -4,7 +4,7 @@
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
 variables:
-  poolVmImage: 'ubuntu-20.04'
+  agentPool: "CSSD-Linux-ELA"
 
 resources:
   repositories:
@@ -16,21 +16,19 @@ resources:
 stages:
 - stage: Test
   displayName: Test
-  pool:
-    vmImage: $(poolVmImage)
+  pool: $(agentPool)
 
   jobs: 
-    - job: ApiTest
-      displayName: API
+    - job: Unit
       steps:
         - task: DotNetCoreCLI@2
-          displayName: Unit
           inputs:
             command: test
             projects: tests/API/Unit/Unit.csproj
             
+    - job: Integration
+      steps:
         - task: DotNetCoreCLI@2
-          displayName: Integration
           inputs:
             command: test
             projects: tests/API/Integration/Integration.csproj  
@@ -38,9 +36,7 @@ stages:
 - stage: Package
   displayName: Package  
   dependsOn: Test
-  condition: succeeded()
-  pool:
-    vmImage: $(poolVmImage)
+  pool: $(agentPool)
 
   jobs:
   - job: PackageApiApp
@@ -88,13 +84,11 @@ stages:
     - publish: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
       displayName: Publish Tasks Function App Artifacts
       artifact: TasksDeploymentPackage
-      
+
 - stage: Deploy
   displayName: Deploy
   dependsOn: Package
-  condition: succeeded()
-  pool:
-    vmImage: $(poolVmImage)
+  pool: $(agentPool)
 
   jobs:
   - job: API
