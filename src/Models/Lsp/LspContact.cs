@@ -16,7 +16,7 @@ namespace Models
             GroupInternalEmail = person.Notes ?? "";
             NetworkID = person.Netid;
             Phone = person.CampusPhone;
-            PreferredEmail = person.CampusEmail;
+            PreferredEmail = person.Notes ?? person.CampusEmail;
             IsLSPAdmin = person.IsServiceAdmin;
         }
 

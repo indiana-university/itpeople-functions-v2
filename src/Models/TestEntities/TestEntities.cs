@@ -206,6 +206,7 @@ namespace Models
 			};
 
 			public const int ServiceAdminId = 4;
+			public const string ServiceAdminEmail = "admin@pawnee.in.us";
 			public static readonly Person ServiceAdmin = new Person()
 			{
 				Id = ServiceAdminId,
@@ -217,7 +218,7 @@ namespace Models
 				Location = "",
 				Campus = "Pawnee",
 				CampusPhone = "812.856.4444",
-				CampusEmail = "admin@pawnee.in.us",
+				CampusEmail = ServiceAdminEmail,
 				Expertise = "Guarding the Precious",
 				Notes = "",
 				PhotoUrl = "",
@@ -278,13 +279,14 @@ namespace Models
 		public static class Units
 		{
 			public const int CityOfPawneeUnitId = 1;
+			public const string CityOfPawneeEmail = "city@pawnee.in.us";
 			public static readonly Unit CityOfPawnee = new Unit()
 			{
 				Id = CityOfPawneeUnitId,
 				Name = "City of Pawnee",
 				Description = "City of Pawnee, Indiana",
 				Url = "http://pawneeindiana.com/",
-				Email = "city@pawnee.in.us",
+				Email = CityOfPawneeEmail,
 				ParentId = null,
 				Parent = null
 			};
