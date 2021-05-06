@@ -91,23 +91,43 @@ namespace Integration
             CollectionAssert.AreEquivalent(expectedDepartments, actualDepartments);
         }
 
-        [Test]
-        public async Task GetDepartmentLSPs_Properties()
+        private async Task<LspContact> GetParksLsps()
         {
             var resp = await GetAnonymous($"LspdbWebService.svc/LspsInDept/{TestEntities.Departments.ParksName}");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var arr = await DeserializeXml<LspContactArray>(resp);
             Assert.NotNull(arr);
             Assert.NotNull(arr.LspContacts);
-            var expected = TestEntities.People.ServiceAdmin; 
-            var actual = arr.LspContacts.SingleOrDefault(c => c.NetworkID == expected.Netid);            
+            var expected = TestEntities.People.ServiceAdmin;
+            return arr.LspContacts.SingleOrDefault(c => c.NetworkID == expected.Netid);
+        }
+
+        [Test]
+        public async Task GetDepartmentLSPs_Properties()
+        {
+            var expected = TestEntities.People.ServiceAdmin;
+            var actual = await GetParksLsps();
             Assert.AreEqual(expected.CampusPhone, actual.Phone);
             Assert.AreEqual(expected.CampusEmail, actual.Email);
-            Assert.AreEqual(expected.CampusEmail, actual.PreferredEmail);
+            Assert.AreEqual(TestEntities.Units.CityOfPawnee.Email ?? expected.CampusEmail, actual.PreferredEmail);
             Assert.AreEqual(expected.Name, actual.FullName);
             Assert.AreEqual(TestEntities.Units.CityOfPawnee.Email, actual.GroupInternalEmail);
             Assert.True(actual.IsLSPAdmin);
         }
+
+        [TestCase(null, TestEntities.People.ServiceAdminEmail)]
+        [TestCase(TestEntities.Units.CityOfPawneeEmail, TestEntities.Units.CityOfPawneeEmail)]
+        public async Task GetsCorrectPreferredEmailForUnitMembers(string unitEmail, string expectedEmail)
+        {
+            var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+            var parks = await db.Units.FindAsync(TestEntities.Units.CityOfPawneeUnitId);
+            parks.Email = unitEmail;
+            await db.SaveChangesAsync();
+
+            var actual = await GetParksLsps();
+            Assert.AreEqual(expectedEmail, actual.PreferredEmail);
+        }
+
 
 
         private static async Task<T> DeserializeXml<T>(HttpResponseMessage resp) where T : class
