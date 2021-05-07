@@ -103,6 +103,8 @@ stages:
 
 - stage: Deploy
   displayName: Deploy
+  # Deploy if this is not a feature branch, or if the commit message contains '/deploy'
+  condition: or( not( contains( variables['Build.SourceBranch'], 'feature/' )), contains( variables['Build.SourceVersionMessage'], '/deploy' ) )
   dependsOn: Package
   pool: $(agentPool)
 

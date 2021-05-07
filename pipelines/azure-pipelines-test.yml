@@ -4,10 +4,5 @@ trigger:
 - release/*
 - hotfix/*
 
-pr:
-  branches:
-    exclude:
-    - '*' 
-
 extends:
   template: azure-pipelines-template.yml
