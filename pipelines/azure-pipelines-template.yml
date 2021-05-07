@@ -43,6 +43,7 @@ stages:
 
 - stage: Package
   displayName: Package  
+  dependsOn: []    # this removes the implicit dependency on Test stage and causes this to run in parallel
   pool: $(agentPool)
 
   jobs:
