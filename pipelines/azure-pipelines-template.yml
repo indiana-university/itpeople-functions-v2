@@ -4,7 +4,7 @@
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
 variables:
-  poolVmImage: 'ubuntu-20.04'
+  agentPool: 'CSSD-Linux-ELA'
 
 resources:
   repositories:
@@ -16,36 +16,43 @@ resources:
 stages:
 - stage: Test
   displayName: Test
-  pool:
-    vmImage: $(poolVmImage)
+  pool: $(agentPool)
 
   jobs: 
-    - job: ApiTest
-      displayName: API
-      steps:
-        - task: DotNetCoreCLI@2
-          displayName: Unit
-          inputs:
-            command: test
-            projects: tests/API/Unit/Unit.csproj
-            
-        - task: DotNetCoreCLI@2
-          displayName: Integration
-          inputs:
-            command: test
-            projects: tests/API/Integration/Integration.csproj  
+  - job: Unit
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: 3.1.x
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: test
+        projects: tests/API/Unit/Unit.csproj
+          
+  - job: Integration
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: 3.1.x
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: test
+        projects: tests/API/Integration/Integration.csproj  
 
 - stage: Package
   displayName: Package  
-  dependsOn: Test
-  condition: succeeded()
-  pool:
-    vmImage: $(poolVmImage)
+  pool: $(agentPool)
 
   jobs:
   - job: PackageApiApp
     displayName: API Function App
     steps:
+    - task: UseDotNet@2
+      inputs:
+        version: 3.1.x
+      
     - task: DotNetCoreCLI@2
       displayName: Build API
       inputs:
@@ -69,6 +76,10 @@ stages:
   - job: PackageTasksApp
     displayName: Tasks Function App
     steps:
+    - task: UseDotNet@2
+      inputs:
+        version: 3.1.x
+
     - task: DotNetCoreCLI@2
       displayName: Build Tasks
       inputs:
@@ -88,13 +99,15 @@ stages:
     - publish: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
       displayName: Publish Tasks Function App Artifacts
       artifact: TasksDeploymentPackage
-      
+
 - stage: Deploy
   displayName: Deploy
-  dependsOn: Package
-  condition: succeeded()
-  pool:
-    vmImage: $(poolVmImage)
+  pool: $(agentPool)
+  # Deploy if this is not a feature branch, or if the commit message contains '/deploy'
+  condition: or( not( contains( variables['Build.SourceBranch'], 'feature/' )), contains( variables['Build.SourceVersionMessage'], '/deploy' ) )
+  dependsOn: 
+    - Test
+    - Package
 
   jobs:
   - job: API
