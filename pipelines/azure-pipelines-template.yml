@@ -43,7 +43,6 @@ stages:
 
 - stage: Package
   displayName: Package  
-  dependsOn: Test
   pool: $(agentPool)
 
   jobs:
@@ -103,10 +102,12 @@ stages:
 
 - stage: Deploy
   displayName: Deploy
+  pool: $(agentPool)
   # Deploy if this is not a feature branch, or if the commit message contains '/deploy'
   condition: or( not( contains( variables['Build.SourceBranch'], 'feature/' )), contains( variables['Build.SourceVersionMessage'], '/deploy' ) )
-  dependsOn: Package
-  pool: $(agentPool)
+  dependsOn: 
+    - Test
+    - Package
 
   jobs:
   - job: API
