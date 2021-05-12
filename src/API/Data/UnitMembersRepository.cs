@@ -81,18 +81,18 @@ namespace API.Data
 
 		private static async Task<Result<Person, Error>> FindOrCreatePerson(PeopleContext db, UnitMemberRequest body)
 		{
-			if (string.IsNullOrWhiteSpace(body.Netid) && body.PersonId.HasValue == false)
+			if (string.IsNullOrWhiteSpace(body.NetId) && body.PersonId.HasValue == false)
 			{
 				return Pipeline.Success<Person>(null);
 			}
 			
-			var existing = await db.People.SingleOrDefaultAsync(p => p.Id == body.PersonId || p.Netid == body.Netid);
+			var existing = await db.People.SingleOrDefaultAsync(p => p.Id == body.PersonId || p.Netid == body.NetId);
 			if (existing != null)
 			{
 				return Pipeline.Success(existing);
 			}
 
-			var hrPerson = await db.HrPeople.SingleOrDefaultAsync(p => p.Netid == body.Netid);
+			var hrPerson = await db.HrPeople.SingleOrDefaultAsync(p => p.Netid == body.NetId);
 			if (hrPerson == null)
 			{
 				return Pipeline.NotFound("The specified person does not exist in the HR directory.");
