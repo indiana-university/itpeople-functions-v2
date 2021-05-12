@@ -75,7 +75,7 @@ namespace API.Data
             => db.HrPeople
                 .Where(h=>  EF.Functions.ILike(h.Netid, $"%{query.Q}%")
                             || EF.Functions.ILike(h.Name, $"%{query.Q}%"))
-                .Select(h => new PeopleLookupItem { Id = 0, Netid = h.Netid, Name = h.Name })
+                .Select(h => new PeopleLookupItem { Id = 0, NetId = h.Netid, Name = h.Name })
                 .AsNoTracking();
 
         private static IQueryable<PeopleLookupItem> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
@@ -84,14 +84,14 @@ namespace API.Data
             var peopleMatches = db.People
                 .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
                             || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
-                .Select(p => new PeopleLookupItem { Id = p.Id, Netid = p.Netid, Name = p.Name })
+                .Select(p => new PeopleLookupItem { Id = p.Id, NetId = p.Netid, Name = p.Name })
                 .Take(query.Limit)
                 .AsNoTracking();
-            var existingNetIds = peopleMatches.Select(p => p.Netid.ToLower()).ToList();
+            var existingNetIds = peopleMatches.Select(p => p.NetId.ToLower()).ToList();
 
             //Get possible matches from the HrPeople table, and exclude any existing users.
             var hrPeopleMatches = SearchHrPeopleByNameOrNetId(db, query)
-                .Where(h => existingNetIds.Contains(h.Netid.ToLower()) == false)
+                .Where(h => existingNetIds.Contains(h.NetId.ToLower()) == false)
                 .Take(query.Limit);
             
             return peopleMatches
