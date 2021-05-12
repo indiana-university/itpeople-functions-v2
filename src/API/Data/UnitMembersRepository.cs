@@ -114,7 +114,10 @@ namespace API.Data
 				Campus = hrPerson.Campus,
 				CampusPhone = hrPerson.CampusPhone,
 				CampusEmail = hrPerson.CampusEmail,
-				DepartmentId = matchingDepartment?.Id
+				DepartmentId = matchingDepartment?.Id,
+				Location = "",
+				Notes = body.Notes ?? "",
+				PhotoUrl = ""
 			};
 
 			db.People.Add(newPerson);
