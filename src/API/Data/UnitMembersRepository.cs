@@ -116,6 +116,7 @@ namespace API.Data
 				CampusEmail = hrPerson.CampusEmail,
 				DepartmentId = matchingDepartment?.Id,
 				Location = "",
+				Expertise = "",
 				Notes = body.Notes ?? "",
 				PhotoUrl = ""
 			};
