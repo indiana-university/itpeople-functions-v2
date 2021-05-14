@@ -235,6 +235,25 @@ namespace Integration
 				Assert.AreEqual(1, actual.Errors.Count);
 				Assert.Contains("The provided person is already a member of the provided unit.", actual.Errors);
 			}
+
+			[Test]
+			public async Task CreateUserFromHrPersonRecord()
+			{
+				// Based on the real request from react:
+				// {"unitId":"333","netId":"natsoto","personId":0,"title":"test","role":"Member","percentage":100}
+				var req = new UnitMemberRequest
+				{
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
+					NetId = TestEntities.HrPeople.Tammy1.Netid,
+					Title = "Harridan",
+					Role = Role.Member,
+					Percentage = 100,
+				};
+				var resp = await PostAuthenticated("memberships", req, ValidAdminJwt);
+				
+				AssertStatusCode(resp, HttpStatusCode.Created);
+				var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
+			}
 		}
 
 		public class UnitMembersEdit : ApiTest
