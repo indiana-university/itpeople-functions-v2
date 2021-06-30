@@ -17,6 +17,7 @@ namespace API.Data
 				var result = await db.SupportRelationships
 					.Include(r => r.Unit)
 					.Include(r => r.Department)
+					.Include(r => r.SupportType)
 					.AsNoTracking()
 					.ToListAsync();
 				return Pipeline.Success(result);
@@ -57,6 +58,7 @@ namespace API.Data
 			var result = await db.SupportRelationships
 				.Include(r => r.Unit)
 				.Include(r => r.Department)
+				.Include(r => r.SupportType)
 				.SingleOrDefaultAsync(r => r.Id == id);
 			return result == null
 				? Pipeline.NotFound("No support relationship was found with the ID provided.")
@@ -67,7 +69,8 @@ namespace API.Data
 			var relationship = new SupportRelationship
 			{
 				UnitId = body.UnitId,
-				DepartmentId = body.DepartmentId
+				DepartmentId = body.DepartmentId,
+				SupportTypeId = body.SupportTypeId
 			};
 
 			db.SupportRelationships.Add(relationship);
@@ -77,9 +80,9 @@ namespace API.Data
 
 		private static async Task<Result<SupportRelationshipRequest, Error>> ValidateRequest(PeopleContext db, SupportRelationshipRequest body, int? existingRelationshipId = null)
 		{
-			if (body.UnitId == 0 || body.DepartmentId == 0)
+			if (body.UnitId == 0 || body.DepartmentId == 0 || body.SupportTypeId == 0)
 			{
-				return Pipeline.BadRequest("The request body was malformed, the unitId and/or departmentId field was missing.");
+				return Pipeline.BadRequest("The request body was malformed, the unitId, departmentId, and/or supportTypeId field was missing or invalid.");
 			}
 			//Unit is already being checked/found in the Authorization step
 			if (await db.Departments.AnyAsync(d => d.Id == body.DepartmentId) == false)
@@ -90,6 +93,10 @@ namespace API.Data
 			{
 				return Pipeline.Conflict("The provided unit already has a support relationship with the provided department.");
 			}
+			if (body.SupportTypeId.HasValue && await db.SupportTypes.AnyAsync(t => t.Id == body.SupportTypeId) == false)
+			{
+				return Pipeline.NotFound("The specified support type does not exist.");
+			}
 			return Pipeline.Success(body);
 		}
 		
@@ -97,6 +104,7 @@ namespace API.Data
 		{
 			existing.UnitId = body.UnitId;
 			existing.DepartmentId = body.DepartmentId;
+			existing.SupportTypeId = body.SupportTypeId;
 
 			await db.SaveChangesAsync();
 			return Pipeline.Success(existing);
