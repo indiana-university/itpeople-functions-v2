@@ -50,6 +50,7 @@ namespace Database
         public DbSet<SupportRelationship> SupportRelationships { get; set; }
         public DbSet<HrPerson> HrPeople { get; set; }
         public DbSet<HistoricalPerson> HistoricalPeople { get; set; }
+        public DbSet<SupportType> SupportTypes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {   

@@ -14,6 +14,12 @@ namespace Models
         public Department Department { get; set; }
         /// The unit in this relationship.
         public Unit Unit { get; set; }
+
+        /// The ID of the support type in this relationship
+        public int? SupportTypeId { get; set; }
+
+        /// The support type in this relationship
+        public SupportType SupportType { get; set; }
     }
 
 }
