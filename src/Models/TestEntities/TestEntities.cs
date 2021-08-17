@@ -136,6 +136,14 @@ namespace Models
 				MembershipId = UnitMembers.AdminMemberId,
 				ToolId = Tools.HammerId
 			};
+
+			public const int ArchivedHammerId = 3;
+			public static readonly MemberTool ArchivedHammer = new MemberTool()
+			{
+				Id = ArchivedHammerId,
+				MembershipId = UnitMembers.ArchivedRonId,
+				ToolId = Tools.HammerId,
+			};
 		}
 		public static class People
 		{
@@ -227,6 +235,28 @@ namespace Models
 				Department = Departments.Parks,
 				IsServiceAdmin = true
 			};
+
+			public const int ALudgateId = 5;
+			public static readonly Person ALudgate = new Person()
+			{
+				Id = ALudgateId,
+				Netid = "aludgate",
+				Name = "Ludgate, April",
+				NameFirst = "April",
+				NameLast = "Ludgate",
+				Position = "Administrative Assistant",
+				Location = "",
+				Campus = "Pawnee",
+				CampusPhone = "812.856.5555",
+				CampusEmail = "aludgate@pawnee.in.us",
+				Expertise = "bored affectation",
+				Notes = "",
+				PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg",
+				Responsibilities = Responsibilities.None,
+				DepartmentId = Departments.Parks.Id,
+				Department = Departments.Parks,
+				IsServiceAdmin = false
+			};
 		}
 
 		public static class SupportRelationships
@@ -249,6 +279,16 @@ namespace Models
 				UnitId = TestEntities.Units.CityOfPawnee.Id,
 				DepartmentId = TestEntities.Departments.Fire.Id,
 				Unit = TestEntities.Units.CityOfPawnee,
+				Department = TestEntities.Departments.Fire
+			};
+
+			public const int ArchivedUnitRelationshipId = 3;
+			public static readonly SupportRelationship ArchivedUnitRelationship = new SupportRelationship
+			{
+				Id = ArchivedUnitRelationshipId,
+				UnitId = TestEntities.Units.ArchivedUnit.Id,
+				Unit = TestEntities.Units.ArchivedUnit,
+				DepartmentId = TestEntities.Departments.Fire.Id,
 				Department = TestEntities.Departments.Fire
 			};
 		}
@@ -310,6 +350,19 @@ namespace Models
 				Description = "City Auditors",
 				Url = "http://pawneeindiana.com/auditor/",
 				Email = "auditor@example.com",
+				ParentId = CityOfPawnee.Id,
+				Parent = CityOfPawnee
+			};
+
+			public const int ArchivedUnitId = 4;
+			public static readonly Unit ArchivedUnit = new Unit
+			{
+				Id = ArchivedUnitId,
+				Active = false,
+				Name = "Candlemakers",
+				Description = "They are at their wicks end.",
+				Url = "105 Rural Route 3",
+				Email = "P.O. Box 3",
 				ParentId = CityOfPawnee.Id,
 				Parent = CityOfPawnee
 			};
@@ -376,6 +429,38 @@ namespace Models
 				Unit = Units.CityOfPawnee,
 				UnitId = Units.CityOfPawneeUnitId,
 				MemberTools = new List<MemberTool>(){MemberTools.AdminMemberTool}
+			};
+
+			public const int ArchivedRonId = 5;
+			public static readonly UnitMember ArchivedRon = new UnitMember()
+			{
+				Id = ArchivedRonId,
+				Role = Role.Member,
+				Permissions = UnitPermissions.Viewer,
+				PersonId = People.RSwansonId,
+				Title = "Chandler",
+				Percentage = 100,
+				Notes = "",
+				Person = People.RSwanson,
+				Unit = Units.ArchivedUnit,
+				UnitId = Units.ArchivedUnit.Id,
+				MemberTools = new List<MemberTool>() {MemberTools.ArchivedHammer}
+			};
+
+			public const int ArchivedAprilId = 6;
+			public static readonly UnitMember ArchivedApril = new UnitMember()
+			{
+				Id = ArchivedAprilId,
+				Role = Role.Member,
+				Permissions = UnitPermissions.Viewer,
+				PersonId = People.ALudgateId,
+				Title = "Assistant Chandler",
+				Percentage = 100,
+				Notes = "",
+				Person = People.ALudgate,
+				Unit = Units.ArchivedUnit,
+				UnitId = Units.ArchivedUnit.Id,
+				MemberTools = new List<MemberTool>()
 			};
 		}
 	}
