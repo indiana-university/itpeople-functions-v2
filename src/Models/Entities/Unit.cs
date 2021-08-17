@@ -13,9 +13,12 @@ namespace Models
         public List<BuildingRelationship> BuildingRelationships { get; set; }
 
 
-        public Unit() {}
-        public Unit(string name, string description, string url, string email, int? parentId = null)
+        public Unit() {
+            Active = true;
+        }
+        public Unit(string name, string description, string url, string email, int? parentId = null, bool active = true)
         {
+            Active = active;
             Name = name;
             Description = description;
             Url = url;

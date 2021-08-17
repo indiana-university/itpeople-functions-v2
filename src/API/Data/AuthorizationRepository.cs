@@ -159,16 +159,16 @@ namespace API.Data
             => db.Units.FromSqlInterpolated($@"
                 WITH RECURSIVE parentage AS (
                 -- first row
-                SELECT id, name, parent_id
+                SELECT id, active, name, parent_id
                 FROM units
                 WHERE id = {unitId}
                 UNION
                 -- recurse
-                SELECT u.id, u.name, u.parent_id
+                SELECT u.id, u.active, u.name, u.parent_id
                 FROM units u
                 INNER JOIN parentage p ON p.parent_id = u.id
                 ) 
-                SELECT id, name, parent_id, '' AS description, '' AS email, '' AS url
+                SELECT id, active, name, parent_id, '' AS description, '' AS email, '' AS url
                 FROM parentage
             ")
             .ToListAsync();
