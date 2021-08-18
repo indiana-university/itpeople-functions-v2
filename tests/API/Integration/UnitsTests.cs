@@ -418,7 +418,7 @@ namespace Integration
             [TestCase(TestEntities.Units.CityOfPawneeUnitId, new []{TestEntities.UnitMembers.AdminMemberId})]
             [TestCase(TestEntities.Units.AuditorId, new []{TestEntities.UnitMembers.BWyattMemberId})]
             [TestCase(TestEntities.Units.ParksAndRecUnitId, new []{TestEntities.UnitMembers.RSwansonLeaderId, TestEntities.UnitMembers.LkNopeSubleadId})]
-            public async Task CanGetExpectedChildren(int unitId, int[] expectedMemberIds)
+            public async Task CanGetExpectedMembers(int unitId, int[] expectedMemberIds)
             {
                 var resp = await GetAuthenticated($"units/{unitId}/members");
                 AssertStatusCode(resp, HttpStatusCode.OK);
