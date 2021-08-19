@@ -13,6 +13,7 @@ namespace API.Data
 	public class UnitMemberToolsRepository : DataRepository
 	{
 		public const string MalformedBody = "The request body was malformed, the tool was missing, or the member was missing.";
+		public const string ArchivedUnit = "The unit for this request has been archived and is not available for new Unit Member Tools.";
 		public const string ToolNotFound = "The specified tool does not exist.";
 		public const string MemberNotFound = "The specified member does not exist.";
 		public const string MemberToolConflict = "The provided member already has access to the provided tool.";
