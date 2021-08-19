@@ -14,6 +14,8 @@ namespace Integration
 	[Category("UnitMemberTools")]
 	public class UnitMemberToolsTests : ApiTest
 	{
+		public const string ArchivedUnitError = "The unit for this request has been archived and is not available for new Unit Member Tools.";
+
 		public class GetAllUnitMemberTools : ApiTest
 		{
 			[Test]
@@ -244,6 +246,24 @@ namespace Integration
 				Assert.AreEqual(1, actual.Errors.Count);
 				Assert.Contains("The provided member already has access to the provided tool.", actual.Errors);
 			}
+
+			[Test]
+			public async Task CannotCreateForArchivedUnit()
+			{
+				var req = new MemberToolRequest
+				{
+					MembershipId = TestEntities.UnitMembers.ArchivedAprilId,
+					ToolId = TestEntities.Tools.HammerId
+				};
+
+				var resp = await PostAuthenticated("membertools", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains(ArchivedUnitError, actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
+			}
 		}
 
 		public class UnitMemberToolsEdit : ApiTest
@@ -341,6 +361,26 @@ namespace Integration
 
 				var resp = await PutAuthenticated($"membertools/{TestEntities.MemberTools.RonHammerId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
+			}
+
+			[TestCase(TestEntities.MemberTools.ArchivedHammerId, TestEntities.UnitMembers.ArchivedRonId, TestEntities.Tools.SawId, Description = "Try, and fail, to switch the hammer for a saw.")]
+			[TestCase(TestEntities.MemberTools.ArchivedHammerId, TestEntities.UnitMembers.ArchivedAprilId, TestEntities.Tools.HammerId, Description = "Try, and fail, to pass the hammer to April.")]
+			public async Task CannotUpdateForArchivedUnit(int memberToolId, int membershipId, int toolId)
+			{
+				var req = new MemberToolRequest
+				{
+					Id = memberToolId,
+					MembershipId = membershipId,
+					ToolId = toolId
+				};
+
+				var resp = await PutAuthenticated($"membertools/{memberToolId}", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains(ArchivedUnitError, actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
 			}
 		}
 
