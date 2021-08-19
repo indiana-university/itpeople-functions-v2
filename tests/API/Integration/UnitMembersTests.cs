@@ -14,6 +14,10 @@ namespace Integration
 	[Category("UnitMembers")]
 	public class UnitMembersTests : ApiTest
 	{
+		public const string MalformedError = "The request body was malformed or the unitId field was missing.";
+		public const string ValidationPercentageError = "The field Percentage must be between 0 and 100.";
+		public const string ArchivedUnitError = "The provided unit has been archived and is not available for new Unit Members.";
+
 		public class GetAll : ApiTest
 		{
 			[Test]
@@ -48,6 +52,7 @@ namespace Integration
 		public class GetOne : ApiTest
 		{
 			[TestCase(TestEntities.UnitMembers.RSwansonLeaderId, HttpStatusCode.OK)]
+			[TestCase(TestEntities.UnitMembers.ArchivedRonId, HttpStatusCode.OK)]
 			[TestCase(9999, HttpStatusCode.NotFound)]
 			public async Task UnitMemberHasCorrectStatusCode(int id, HttpStatusCode expectedStatus)
 			{
@@ -187,6 +192,35 @@ namespace Integration
 				};
 				var resp = await PostAuthenticated("memberships", req, ValidRswansonJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains(ValidationPercentageError, actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
+			}
+
+			[Test]
+			public async Task UnitMemberCannotCreateForArchivedUnit()
+			{
+				var req = new UnitMemberRequest
+				{
+					UnitId = TestEntities.Units.ArchivedUnitId,
+					Role = Role.Member,
+					Permissions = UnitPermissions.Viewer,
+					PersonId = TestEntities.People.BWyattId,
+					Title = "Title",
+					Percentage = 50,
+					Notes = ""
+				};
+				
+				var resp = await PostAuthenticated("memberships", req, ValidAdminJwt);
+				
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains(ArchivedUnitError, actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
 			}
 
 			[Test]
@@ -301,7 +335,31 @@ namespace Integration
 
 				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
 				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains(ValidationPercentageError, actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
+			}
 
+			[Test]
+			public async Task UnitMemberCannotUpdateToArchivedUnit()
+			{
+				var req = new UnitMemberRequest
+				{
+					UnitId = TestEntities.Units.ArchivedUnitId,
+					Role = Role.Sublead,
+					Permissions = UnitPermissions.Viewer,
+					PersonId = TestEntities.People.LKnopeId,
+					Title = "Title",
+					Percentage = 100,
+					Notes = ""
+				};
+
+				var resp = await PutAuthenticated($"memberships/{TestEntities.UnitMembers.LkNopeSubleadId}", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains(ArchivedUnitError, actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
 			}
 
 			[Test]

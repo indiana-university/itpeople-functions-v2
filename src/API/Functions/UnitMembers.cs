@@ -21,6 +21,7 @@ namespace API.Functions
 	public static class UnitMembers
 	{
 		public const string UnitMembersTitle = "Unit Memberships";
+		public const string PostPutBadResponseDescription = "The request body was malformed or the unitId field was missing.\\\n**or**\\\nThe field Percentage must be between 0 and 100.\\\n**or**\\\nThe provided unit has been archived and is not available for new Unit Members.";
 
 
 		[FunctionName(nameof(UnitMembers.UnitMembersGetAll))]
@@ -30,7 +31,7 @@ namespace API.Functions
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "memberships")] HttpRequest req)
 			=> Security.Authenticate(req)
 				.Bind(_ => UnitMembersRepository.GetAll())
-				.Bind(res => Pipeline.Success(res.Select(e => e.ToUnitMemberResponse(EntityPermissions.Get))))
+				.Bind(res => Pipeline.Success(res.Where(e => e.Unit.Active).Select(e => e.ToUnitMemberResponse(EntityPermissions.Get))))
 				.Finally(dtos => Response.Ok(req, dtos));
 
 		[FunctionName(nameof(UnitMembers.UnitMembersGetOne))]
@@ -56,7 +57,7 @@ namespace API.Functions
 		[OpenApiOperation(nameof(UnitMembers.CreateUnitMembers), UnitMembersTitle, Summary = "Create a unit membership", Description = "Authorization: Unit memberships can be created by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
 		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(UnitMemberRequest), Required = true)]
 		[OpenApiResponseWithBody(HttpStatusCode.Created, MediaTypeNames.Application.Json, typeof(UnitMemberResponse), Description = "The newly created unit membership record")]
-		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The request body was malformed or the unitId field was missing.")]
+		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = PostPutBadResponseDescription)]
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to modify this unit.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified unit and/or person does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided person is already a member of the provided unit.")]
@@ -81,7 +82,7 @@ namespace API.Functions
 		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(UnitMemberRequest), Required = true)]
 		[OpenApiParameter("membershipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit membership record")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(UnitMemberResponse), Description = "The updated unit membership record")]
-		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The request body was malformed or the unitId field was missing.")]
+		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = PostPutBadResponseDescription)]
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No membership was found with the ID provided or the specified unit and/or person does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided person is already a member of the provided unit.")]
@@ -108,7 +109,7 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No membership was found with the ID provided.")]
 		public static Task<IActionResult> DeleteUnitMembership(
-	[HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
+			[HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "memberships/{membershipId}")] HttpRequest req, int membershipId)
 		{
 			string requestorNetId = null;
 			return Security.Authenticate(req)
