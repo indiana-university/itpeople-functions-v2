@@ -251,7 +251,9 @@ namespace Models
 				UnitId = TestEntities.Units.CityOfPawnee.Id,
 				DepartmentId = TestEntities.Departments.Fire.Id,
 				Unit = TestEntities.Units.CityOfPawnee,
-				Department = TestEntities.Departments.Fire
+				Department = TestEntities.Departments.Fire,
+				SupportTypeId = SupportTypes.FullServiceId,
+				SupportType = SupportTypes.FullService
 			};
 		}
 
