@@ -211,6 +211,7 @@ namespace API.Data
             var relationships = await db.SupportRelationships
                 .Include(br => br.Unit)
                 .Include(br => br.Department)
+                .Include(br => br.SupportType)
                 .Where(br => br.UnitId == unitId)
                 .AsNoTracking()
                 .ToListAsync();
