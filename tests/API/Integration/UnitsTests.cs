@@ -236,6 +236,27 @@ namespace Integration
             }
 
             [Test]
+            public async Task EditingDoesNotChangeUnitActive()
+            {
+                var req = new Unit("Eagleton", "Gated Community of Eagleton, Indiana", null, "hoa@eagleton.biz", null, false);
+                req.Id = TestEntities.Units.CityOfPawnee.Id;
+
+                var resp = await PutAuthenticated($"units/{TestEntities.Units.CityOfPawnee.Id}", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<Unit>();
+
+                //The Active value should not have changed
+                Assert.IsTrue(actual.Active);
+                //The other values should have.
+                Assert.AreEqual(TestEntities.Units.CityOfPawnee.Id, actual.Id);
+                Assert.AreEqual(req.Name, actual.Name);
+                Assert.AreEqual(req.Description, actual.Description);
+                Assert.AreEqual(req.Url, actual.Url);
+                Assert.AreEqual(req.Email, actual.Email);
+                Assert.IsNull(actual.Parent);
+            }
+
+            [Test]
             public async Task ChangeUnitParent()
             {
                 //Create a unit to test.
@@ -301,7 +322,7 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
                 Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains("Unit 1 has child units, with ids: 2, 3. These must be reassigned prior to deletion.", actual.Errors);
+                Assert.Contains("Unit 1 has child units, with ids: 2, 4, 3. These must be reassigned prior to deletion.", actual.Errors);
                 Assert.AreEqual("(none)", actual.Details);
             }
 
@@ -312,6 +333,8 @@ namespace Integration
                 var resp = await DeleteAuthenticated($"units/{TestEntities.Units.AuditorId}", ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.NoContent);
                 resp = await DeleteAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.NoContent);
+                resp = await DeleteAuthenticated($"units/{TestEntities.Units.ArchivedUnitId}", ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.NoContent);
                 resp = await DeleteAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}", ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.NoContent);
@@ -354,6 +377,15 @@ namespace Integration
                 Assert.IsEmpty(buildingRelationships.Where(um => um.Unit == null));
                 Assert.IsEmpty(buildingRelationships.Where(um => um.Building == null));
             }
+
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin can archive a unit.")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Owner cannot archive a unit.")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidLknopeJwt, HttpStatusCode.Forbidden, Description = "Viewer cannot archive a unit.")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidCtraegerJwt, HttpStatusCode.Forbidden, Description = "Unassociated user cannot archive a unit.")]
+            public async Task ArchiveUnit(int unitId, string jwt, HttpStatusCode expectedCode)
+            {
+                Assert.Fail("Test not implemented");
+            }
         }
 
         [TestFixture]
@@ -373,7 +405,7 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.NotFound);
             }
 
-            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new[]{TestEntities.Units.AuditorId, TestEntities.Units.ParksAndRecUnitId})]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, new[]{TestEntities.Units.AuditorId, TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.ArchivedUnitId})]
             [TestCase(TestEntities.Units.AuditorId, new int[0])]
             [TestCase(TestEntities.Units.ParksAndRecUnitId, new int[0])]
             public async Task CanGetExpectedChildren(int unitId, int[] expectedChildIds)
