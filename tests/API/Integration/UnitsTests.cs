@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Models;
 using NUnit.Framework;
@@ -10,7 +9,7 @@ using Models.Enums;
 
 namespace Integration
 {
-	public class UnitsTests
+    public class UnitsTests
     {
         public class GetAll : ApiTest
         {
@@ -311,6 +310,19 @@ namespace Integration
             {
                 var resp = await DeleteAuthenticated($"units/{unitId}", jwt);
                 AssertStatusCode(resp, expectedCode);
+
+                // Verify the value was removed from the database
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                var actual = await db.Units.SingleOrDefaultAsync(u => u.Id == unitId);
+                if(expectedCode == HttpStatusCode.NoContent || expectedCode == HttpStatusCode.NotFound)
+                {
+                    Assert.Null(actual);
+                }
+                else
+                {
+                    Assert.NotNull(actual);
+                }
+
             }                     
             
             
@@ -378,13 +390,111 @@ namespace Integration
                 Assert.IsEmpty(buildingRelationships.Where(um => um.Building == null));
             }
 
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin can archive a unit.")]
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Owner cannot archive a unit.")]
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidLknopeJwt, HttpStatusCode.Forbidden, Description = "Viewer cannot archive a unit.")]
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, ValidCtraegerJwt, HttpStatusCode.Forbidden, Description = "Unassociated user cannot archive a unit.")]
-            public async Task ArchiveUnit(int unitId, string jwt, HttpStatusCode expectedCode)
+            [TestCase(ValidAdminJwt, HttpStatusCode.OK, Description = "Admin can archive a unit.")]
+            [TestCase(ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Owner cannot archive a unit.")]
+            [TestCase(ValidLknopeJwt, HttpStatusCode.Forbidden, Description = "Viewer cannot archive a unit.")]
+            [TestCase(ValidCtraegerJwt, HttpStatusCode.Forbidden, Description = "Unassociated user cannot archive a unit.")]
+            public async Task ArchiveUnit(string jwt, HttpStatusCode expectedCode)
             {
-                Assert.Fail("Test not implemented");
+                int unitId = TestEntities.Units.ParksAndRecUnitId;
+                var resp = await DeleteAuthenticated($"units/{unitId}/archive", jwt);
+                AssertStatusCode(resp, expectedCode);
+
+                var expectedActive = expectedCode == HttpStatusCode.OK ? false : true;
+                
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                var actual = await db.Units.SingleOrDefaultAsync(u => u.Id == unitId);
+
+                Assert.NotNull(actual);
+                Assert.AreEqual(expectedActive, actual.Active);
+            }
+
+            [TestCase(ValidAdminJwt, HttpStatusCode.OK, Description = "Admin can unarchive a unit.")]
+            [TestCase(ValidRswansonJwt, HttpStatusCode.Forbidden, Description = "Owner cannot unarchive a unit.")]
+            [TestCase(ValidLknopeJwt, HttpStatusCode.Forbidden, Description = "Viewer cannot unarchive a unit.")]
+            [TestCase(ValidCtraegerJwt, HttpStatusCode.Forbidden, Description = "Unassociated user cannot unarchive a unit.")]
+            public async Task UnarchiveUnit(string jwt, HttpStatusCode expectedCode)
+            {
+                int unitId = TestEntities.Units.ParksAndRecUnitId;
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+
+                // Make ParksAndRecUnit inactive so we can reactivate it.
+                var unit = await db.Units.SingleAsync(u => u.Id == unitId);
+                unit.Active = false;
+                await db.SaveChangesAsync();
+                db.Entry(unit).State = EntityState.Detached;// Stop tracking the unit so we can get an updated value later
+
+                // Request to re-active the unit
+                var resp = await DeleteAuthenticated($"units/{unitId}/archive", jwt);
+                AssertStatusCode(resp, expectedCode);
+
+                var expectedActive = expectedCode == HttpStatusCode.OK ? true : false;
+                
+                var actual = await db.Units.SingleOrDefaultAsync(u => u.Id == unitId);
+
+                Assert.NotNull(actual);
+                Assert.AreEqual(expectedActive, actual.Active);
+            }
+
+            [Test]
+            public async Task CannotArchiveUnitWithChildren()
+            {
+                var resp = await DeleteAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}/archive", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.Conflict);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains("Unit 1 has child units, with ids: 2, 3. These must be reassigned, deleted, or archived before this request can be completed.", actual.Errors);
+                Assert.AreEqual("(none)", actual.Details);
+            }
+
+            [Test]
+            public async Task ArchiveDoesNotBreakRelationships()
+            {
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                var orig = await GetUnitAndRelated(db, TestEntities.Units.ParksAndRecUnitId);
+                db.Entry(orig).State = EntityState.Detached;// Stop tracking the unit so we can get an updated value later
+
+                var resp = await DeleteAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}/archive", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                Unit actual = await GetUnitAndRelated(db, TestEntities.Units.ParksAndRecUnitId);
+
+                Assert.AreNotEqual(orig.Active, actual.Active);
+
+                Assert.AreEqual(orig.ParentId, actual.ParentId);
+
+                var am = actual.UnitMembers.Select(um => um.Id);
+                var om = orig.UnitMembers.Select(um => um.Id);
+                CollectionAssert.AreEqual(om, am, "Not all UnitMember relationshps are intact.");
+
+                // Person relationships are complex, so use a lambda to compare the items in the expected and actual collections.
+                // Make sure the UnitMember.Id and the person, their permission, and role have not changed.
+                AssertEntityCollectionEqual(orig.UnitMembers, actual.UnitMembers, (op, ap) => op.Id == ap.Id && ap.PersonId == op.PersonId && ap.Permissions == op.Permissions && ap.Role == op.Role, "Not all UnitMembers are intact.");
+
+                // Gather up all the tool memberships.
+                // In the previous test we ensured the person in each membershp hadn't changed.  Now make sure they have all the correct tools.
+                var amt = actual.UnitMembers.SelectMany(um => um.MemberTools);
+                var omt = orig.UnitMembers.SelectMany(um => um.MemberTools);
+                AssertEntityCollectionEqual(omt, amt, (o, e) => o.MembershipId == e.MembershipId && o.ToolId == e.ToolId, "Not all UnitMembers.MemberTools are intact.");
+
+                // Make sure all SupportRelationshps are intact.
+                AssertEntityCollectionEqual(orig.SupportRelationships, actual.SupportRelationships, (o, a) => o.Id == a.Id && o.DepartmentId == a.DepartmentId, "Not all SupportRelationships are intact.");
+
+                // Make sure all BuildingRelationships are intact.
+                AssertEntityCollectionEqual(orig.BuildingRelationships, actual.BuildingRelationships, (o, a) => o.Id == a.Id && o.BuildingId == a.BuildingId, "Not all BuildingRelationships are intact.");
+            }
+
+            private static async Task<Unit> GetUnitAndRelated(Database.PeopleContext db, int unitId)
+            {
+
+                //Ensure the relationships for the unit are still in place after it became inactive.
+                return await db.Units
+                    .Include(u => u.Parent)
+                    .Include(u => u.UnitMembers).ThenInclude(um => um.Person)
+                    .Include(u => u.UnitMembers).ThenInclude(um => um.MemberTools)
+                    .Include(u => u.SupportRelationships).ThenInclude(sr => sr.Department)
+                    .Include(u => u.BuildingRelationships).ThenInclude(sr => sr.Building)
+                    .SingleAsync(u => u.Id == unitId);
             }
         }
 
