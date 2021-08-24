@@ -377,10 +377,6 @@ namespace Database.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<bool>("Active")
-                        .HasColumnName("active")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Description")
                         .HasColumnName("description")
                         .HasColumnType("text");
