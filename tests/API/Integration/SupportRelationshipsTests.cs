@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -40,6 +41,7 @@ namespace Integration
 				Assert.AreEqual(expected.Id, actual.Id);
 				Assert.AreEqual(expected.Department.Id, actual.Department.Id);
 				Assert.AreEqual(expected.Unit.Id, actual.Unit.Id);
+				Assert.AreEqual(expected.SupportType.Id, actual.SupportType.Id);
 			}
 		}
 
@@ -48,7 +50,8 @@ namespace Integration
 			private SupportRelationshipRequest FireAuditor = new SupportRelationshipRequest
 			{
 				UnitId = TestEntities.Units.Auditor.Id,
-				DepartmentId = TestEntities.Departments.Fire.Id
+				DepartmentId = TestEntities.Departments.Fire.Id,
+				SupportTypeId = TestEntities.SupportTypes.DesktopEndpoint.Id
 			};
 
 			//201 
@@ -62,6 +65,7 @@ namespace Integration
 				Assert.NotZero(actual.Id);
 				Assert.AreEqual(FireAuditor.UnitId, actual.Unit.Id);
 				Assert.AreEqual(FireAuditor.DepartmentId, actual.Department.Id);
+				Assert.AreEqual(FireAuditor.SupportTypeId, actual.SupportType.Id);
 			}
 
 
@@ -78,7 +82,7 @@ namespace Integration
 
 				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
 				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains("The request body was malformed, the unitId and/or departmentId field was missing.", actual.Errors);
+				Assert.Contains("The request body was malformed, the unitId, departmentId, and/or supportTypeId field was missing or invalid.", actual.Errors);
 				Assert.AreEqual("(none)", actual.Details);
 			}
 
@@ -90,14 +94,16 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.Forbidden);
 			}
 
-			[TestCase(99999, TestEntities.Departments.FireId, Description = "Unit Id not found")]
-			[TestCase(TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Department Id not found")]
-			public async Task NotFoundCannotCreateSupportRelationship(int unitId, int departmentId)
+			[TestCase(99999, TestEntities.Departments.FireId, null, Description = "Unit Id not found")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, 99999, null, Description = "Department Id not found")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, TestEntities.Departments.AuditorId, 99999, Description = "Support Type Id not found")]
+			public async Task NotFoundCannotCreateSupportRelationship(int unitId, int departmentId, int? supportTypeId)
 			{
 				var req = new SupportRelationshipRequest
 				{
 					UnitId = unitId,
-					DepartmentId = departmentId
+					DepartmentId = departmentId,
+					SupportTypeId = supportTypeId
 				};
 				var resp = await PostAuthenticated($"supportRelationships", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
@@ -177,7 +183,7 @@ namespace Integration
 
 				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
 				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains("The request body was malformed, the unitId and/or departmentId field was missing.", actual.Errors);
+				Assert.Contains("The request body was malformed, the unitId, departmentId, and/or supportTypeId field was missing or invalid.", actual.Errors);
 				Assert.AreEqual("(none)", actual.Details);
 			}
 
@@ -193,15 +199,17 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.Forbidden);
 			}
 
-			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, 99999, TestEntities.Departments.FireId, Description = "Unit Id not found")]
-			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Department Id not found")]
-			[TestCase(99999, TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Department Support Relationship Id not found")]
-			public async Task NotFoundCannotUpdateSupportRelationship(int relationshipid, int unitId, int departmentId)
+			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, 99999, TestEntities.Departments.FireId, null, Description = "Unit Id not found")]
+			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.Units.CityOfPawneeUnitId, 99999, null, Description = "Department Id not found")]
+			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.Units.CityOfPawneeUnitId, TestEntities.Departments.AuditorId, 99999, Description = "Support Type Id not found")]
+			[TestCase(99999, TestEntities.Units.CityOfPawneeUnitId, 99999, null, Description = "Department Support Relationship Id not found")]
+			public async Task NotFoundCannotUpdateSupportRelationship(int relationshipid, int unitId, int departmentId, int? supportTypeId)
 			{
 				var req = new SupportRelationshipRequest
 				{
 					UnitId = unitId,
-					DepartmentId = departmentId
+					DepartmentId = departmentId,
+					SupportTypeId = supportTypeId
 				};
 				var resp = await PutAuthenticated($"supportRelationships/{relationshipid}", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();

@@ -20,7 +20,7 @@ namespace API.Functions
 	{
 		public const string SupportRelationshipsTitle = "Support Relationships";
 
-		public const string CombinedCreateUpdateError = "The request body was malformed, the unitId and/or departmentId field was missing\\\n**or**\\\nThe request body was malformed, the provided unit has been archived and is not available for new Support Relationships.";
+		public const string CombinedCreateUpdateError = "The request body was malformed, the unitId, departmentId, and/or supportTypeId field was missing or invalid.\\\n**or**\\\nThe request body was malformed, the provided unit has been archived and is not available for new Support Relationships.";
 		
 		
 
@@ -51,9 +51,8 @@ namespace API.Functions
 		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(SupportRelationshipRequest), Required = true)]
 		[OpenApiResponseWithBody(HttpStatusCode.Created, MediaTypeNames.Application.Json, typeof(SupportRelationshipResponse), Description = "The newly created department support relationship record")]
 		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = CombinedCreateUpdateError)]
-		// [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = ArchivedUnitError)]
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
-		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified unit and/or department does not exist.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified unit, department, and/or support type does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit already has a support relationship with the provided department.")]
 
 		public static Task<IActionResult> CreateSupportRelationship(
@@ -78,9 +77,8 @@ namespace API.Functions
 		[OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department support relationship record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(SupportRelationshipResponse), Description = "The updated department support relationship record")]
 		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = CombinedCreateUpdateError)]
-		// [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = ArchivedUnitError)]
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
-		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department support relationship was found with the ID provided, or the specified unit and/or department does not exist.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified unit, department, and/or support type does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit already has a support relationship with the provided department.")]
 		public static Task<IActionResult> UpdateSupportRelationship(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "supportRelationships/{relationshipId}")] HttpRequest req, int relationshipId)

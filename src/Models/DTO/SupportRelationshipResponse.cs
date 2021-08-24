@@ -16,6 +16,10 @@ namespace Models
         public Department Department { get; set; }
         /// The unit in this relationship.
         public UnitResponse Unit { get; set; }
+        /// The ID of the support type in this relationship
+        public int? SupportTypeId { get; set; }
+        /// The support type in this relationship
+        public SupportType SupportType { get; set; }
 
         public SupportRelationshipResponse()
         {
@@ -28,6 +32,8 @@ namespace Models
             Department = sr.Department;
             UnitId = sr.UnitId;
             Unit = new UnitResponse(sr.Unit);
+            SupportTypeId = sr.SupportTypeId;
+            SupportType = sr.SupportType;
         }
         
         public static List<SupportRelationshipResponse> ConvertList(List<SupportRelationship> relationships)

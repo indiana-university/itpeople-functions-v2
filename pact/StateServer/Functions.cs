@@ -40,6 +40,7 @@ namespace StateServer
                     public.departments,
                     public.people, 
                     public.hr_people,
+                    public.support_types, 
                     public.support_relationships, 
                     public.tools,
                     public.units,
@@ -82,6 +83,13 @@ namespace StateServer
                 TestEntities.People.ALudgate,
             });  
             
+            peopleContext.SupportTypes.AddRange(new List<SupportType> {
+                TestEntities.SupportTypes.FullService,
+                TestEntities.SupportTypes.DesktopEndpoint,
+                TestEntities.SupportTypes.WebAppInfrastructure,
+                TestEntities.SupportTypes.ResearchInfrastructure
+            });
+
             peopleContext.SupportRelationships.AddRange(new List<SupportRelationship> {
                 TestEntities.SupportRelationships.ParksAndRecRelationship,
                 TestEntities.SupportRelationships.PawneeUnitFire,
@@ -123,6 +131,11 @@ namespace StateServer
                 SELECT
                     setval(pg_get_serial_sequence('public.building_relationships', 'id'), 
                     (SELECT MAX(id) FROM public.building_relationships));
+                ");
+            peopleContext.Database.ExecuteSqlRaw(@"
+                SELECT
+                    setval(pg_get_serial_sequence('public.support_types', 'id'), 
+                    (SELECT MAX(id) FROM public.support_types));
                 ");
             peopleContext.Database.ExecuteSqlRaw(@"
                 SELECT

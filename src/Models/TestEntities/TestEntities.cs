@@ -269,7 +269,9 @@ namespace Models
 				UnitId = TestEntities.Units.CityOfPawnee.Id,
 				DepartmentId = TestEntities.Departments.Parks.Id,
 				Unit = TestEntities.Units.CityOfPawnee,
-				Department = TestEntities.Departments.Parks
+				Department = TestEntities.Departments.Parks,
+				SupportTypeId = SupportTypes.FullService.Id,
+				SupportType = SupportTypes.FullService
 			};
 			public const int PawneeUnitFireId = 2;
 
@@ -279,7 +281,9 @@ namespace Models
 				UnitId = TestEntities.Units.CityOfPawnee.Id,
 				DepartmentId = TestEntities.Departments.Fire.Id,
 				Unit = TestEntities.Units.CityOfPawnee,
-				Department = TestEntities.Departments.Fire
+				Department = TestEntities.Departments.Fire,
+				SupportTypeId = SupportTypes.FullServiceId,
+				SupportType = SupportTypes.FullService
 			};
 
 			public const int ArchivedUnitRelationshipId = 3;
@@ -461,6 +465,34 @@ namespace Models
 				Unit = Units.ArchivedUnit,
 				UnitId = Units.ArchivedUnit.Id,
 				MemberTools = new List<MemberTool>()
+			};
+		}
+
+		public static class SupportTypes
+		{
+			public const int FullServiceId = 1;
+			public static readonly SupportType FullService = new SupportType()
+			{
+				Id = FullServiceId,
+				Name = "Full Service"
+			};
+			public const int DesktopEndpointId = 2;
+			public static readonly SupportType DesktopEndpoint = new SupportType()
+			{
+				Id = DesktopEndpointId,
+				Name = "Desktop/Endpoint"
+			};
+			public const int WebAppInfrastructureId = 3;
+			public static readonly SupportType WebAppInfrastructure = new SupportType()
+			{
+				Id = WebAppInfrastructureId,
+				Name = "Web/app Infrastructure"
+			};
+			public const int ResearchInfrastructureId = 4;
+			public static readonly SupportType ResearchInfrastructure = new SupportType()
+			{
+				Id = ResearchInfrastructureId,
+				Name = "Research Infrastructure"
 			};
 		}
 	}
