@@ -449,6 +449,28 @@ namespace Integration
             }
 
             [Test]
+            public async Task CannotUnarchiveUnitWithInactiveParent()
+            {
+                //setup db for test having CityOfPawneeUnit and its child (ParksAndRecUnit) as inactive
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                var parentUnit = (await db.Units.SingleAsync(u => u.Id == TestEntities.Units.CityOfPawneeUnitId));
+                parentUnit.Active = false;
+                var childUnit = (await db.Units.SingleAsync(u => u.Id == TestEntities.Units.ParksAndRecUnitId));
+                childUnit.Active = false;
+                await db.SaveChangesAsync();
+                db.Entry(parentUnit).State = EntityState.Detached;// Stop tracking the unit so we can get an updated value later
+                db.Entry(childUnit).State = EntityState.Detached;// Stop tracking the unit so we can get an updated value later
+
+                var resp = await DeleteAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}/archive", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.Conflict);
+                var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.AreEqual(1, actual.Errors.Count);
+                Assert.Contains("Unit 2 has a parent unit 1 that is archived. This parent unit must be unarchived before this request can be completed.", actual.Errors);
+                Assert.AreEqual("(none)", actual.Details);
+            }
+
+            [Test]
             public async Task ArchiveDoesNotBreakRelationships()
             {
                 var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
