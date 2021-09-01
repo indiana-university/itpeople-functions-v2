@@ -36,8 +36,10 @@ namespace API.Data
             SELECT p.netid, MAX(um.Role) in (3,4) as is_service_admin 
             FROM people p
             JOIN unit_members um ON um.person_id = p.id
+            JOIN units u ON u.id = um.unit_id
             WHERE um.unit_id IN (SELECT sr.unit_id from support_relationships sr)
                 AND um.role <> 1
+                AND u.Active = True
             GROUP BY p.netid
             ORDER BY p.netid";
 
@@ -58,9 +60,11 @@ namespace API.Data
             FROM departments d
             JOIN support_relationships sr ON sr.department_id = d.id
             JOIN unit_members um ON um.unit_id = sr.unit_id
+            JOIN units u ON u.id = um.unit_id
             JOIN people p ON um.person_id = p.id
             WHERE p.netid ILIKE {0}
-                AND um.role <> 1";
+                AND um.role <> 1
+                AND u.Active = True";
 
         private static async Task<Result<LspContactArray, Error>> MapDepartmentLsps(string department, PeopleContext db)
         {
@@ -86,6 +90,7 @@ namespace API.Data
             JOIN units u on um.unit_id = u.id
             WHERE d.name ILIKE {0} 
                 AND um.role <> 1
+                AND u.Active = True
             GROUP BY 
                 p.id, p.name, p.netid, p.campus, p.position, p.location, p.campus_phone, p.campus_email, 
                 p.department_id, p.expertise, p.responsibilities, p.photo_url, u.email, 

@@ -7,12 +7,14 @@ using Models;
 using Database;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Linq;
 
 namespace API.Data
 {
 	public class UnitMemberToolsRepository : DataRepository
 	{
 		public const string MalformedBody = "The request body was malformed, the tool was missing, or the member was missing.";
+		public const string ArchivedUnit = "The unit for this request has been archived and is not available for new Unit Member Tools.";
 		public const string ToolNotFound = "The specified tool does not exist.";
 		public const string MemberNotFound = "The specified member does not exist.";
 		public const string MemberToolConflict = "The provided member already has access to the provided tool.";
@@ -23,6 +25,8 @@ namespace API.Data
 				var result = await db.MemberTools
 					.Include(mt => mt.Tool)
 					.Include(mt => mt.UnitMember)
+					.Include(mt => mt.UnitMember.Unit)
+					.Where(mt => mt.UnitMember.Unit.Active)
 					.AsNoTracking()
 					.ToListAsync();
 				return Pipeline.Success(result);
@@ -61,7 +65,7 @@ namespace API.Data
 			{
 				return Pipeline.BadRequest(MalformedBody);
 			}
-			//Unit is already being checked/found in the Authorization step
+
 			if (await db.Tools.AnyAsync(t => t.Id == body.ToolId) == false)
 			{
 				return Pipeline.NotFound(ToolNotFound);
@@ -78,6 +82,16 @@ namespace API.Data
 			if(existingMemberToolId.HasValue && existingMemberToolId != body.Id)
 			{
 				return Pipeline.BadRequest("The memberToolId in the URL does not match the id in the request body.");
+			}
+
+			//Unit is already being checked/found in the Authorization step, but we must verify it is active
+			var unit = db.UnitMembers
+				.Include(um => um.Unit)
+				.Single(um => um.Id == body.MembershipId)
+				.Unit;
+			if(unit.Active == false)
+			{
+				return Pipeline.BadRequest(ArchivedUnit);
 			}
 
 			return Pipeline.Success(body);

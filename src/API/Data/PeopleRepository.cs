@@ -35,9 +35,9 @@ namespace API.Data
                             query.Campus.Length == 0
                                 || query.Campus.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Campus, s)))
                         .Where(p => query.Roles.Length == 0
-                                || p.UnitMemberships.Any(m => query.Roles.Contains(m.Role)))
+                                || p.UnitMemberships.Any(m => query.Roles.Contains(m.Role) && m.Unit.Active))
                         .Where(p => query.Permissions.Length == 0
-                                || p.UnitMemberships.Any(m => query.Permissions.Contains(m.Permissions)))
+                                || p.UnitMemberships.Any(m => query.Permissions.Contains(m.Permissions) && m.Unit.Active))
                         .Include(p => p.Department)
                         .AsNoTracking()
                         .ToListAsync();
@@ -49,6 +49,9 @@ namespace API.Data
                     SELECT DISTINCT p.*
                     FROM public.people p
                     JOIN public.unit_members um ON um.person_id = p.id
+                    JOIN public.units u
+                        ON u.id = um.unit_id
+                        AND u.Active = True
                     WHERE CARDINALITY({query.Areas}) = 0 -- no area specified
                         OR {query.Areas} = ARRAY[1,2]    -- both uits and edge requested
                         -- Area=1: UITS unit members only
@@ -106,14 +109,17 @@ namespace API.Data
             => ExecuteDbPipeline("get a person by Netid", db => 
                 TryFindPerson(db, id));
 
+        private static Result<List<UnitMember>, Error> GetActiveMemberships(Person person)
+            => Pipeline.Success(person.UnitMemberships.Where(um => um.Unit.Active).ToList());
+
         public static Task<Result<List<UnitMember>, Error>> GetMemberships(int id) 
             => ExecuteDbPipeline("fetch unit memberships", db =>
                 TryFindPerson(db, id)
-                .Bind(person => Pipeline.Success(person.UnitMemberships)));
+                .Bind(person => GetActiveMemberships(person)));
         public static Task<Result<List<UnitMember>, Error>> GetMemberships(string username) 
             => ExecuteDbPipeline("fetch unit memberships", db =>
                 TryFindPerson(db, username)
-                .Bind(person => Pipeline.Success(person.UnitMemberships)));
+                .Bind(person => GetActiveMemberships(person)));
         public static Task<Result<Person, Error>> Update(HttpRequest req, int id, PersonUpdateRequest body)
             => ExecuteDbPipeline("update person", db =>
                 TryFindPerson(db, id)

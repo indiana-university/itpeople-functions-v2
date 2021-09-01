@@ -69,6 +69,7 @@ namespace Tasks
                 db.Tools
                     .Where(t => t.Id == tool.Id)
                     .SelectMany(t => t.MemberTools)
+                    .Where(mt => mt.UnitMember.Unit.Active)
                     .Select(mt => mt.UnitMember.Person.Netid)
                     .Distinct()
                     .OrderBy(m=>m)

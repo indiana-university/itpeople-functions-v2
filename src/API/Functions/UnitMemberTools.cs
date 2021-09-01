@@ -18,6 +18,7 @@ namespace API.Functions
 	public static class UnitMemberTools
 	{
 		public const string Title = "Unit Member Tools";
+		public const string CombinedError = UnitMemberToolsRepository.MalformedBody + "\\\n**or**\\\n" + UnitMemberToolsRepository.ArchivedUnit;
 
 		[FunctionName(nameof(UnitMemberTools.UnitMemberToolsGetAll))]
 		[OpenApiOperation(nameof(UnitMemberTools.UnitMemberToolsGetAll), Title, Summary = "List all unit member tools")]
@@ -52,7 +53,7 @@ namespace API.Functions
 		[OpenApiOperation(nameof(UnitMemberTools.UnitMemberToolsCreate), Title, Summary = "Create a unit member tool.", Description = "*Authorization*: Unit tool permissions can be created by any unit member that has either the `Owner` or `ManageTools` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitMembersGetAll).")]
 		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(MemberToolRequest), Required = true)]
 		[OpenApiResponseWithBody(HttpStatusCode.Created, MediaTypeNames.Application.Json, typeof(MemberToolResponse), Description = "The newly created unit member tool record")]
-		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = UnitMemberToolsRepository.MalformedBody)]
+		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = CombinedError)]
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified tool does not exist. **or** The specified member does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = UnitMemberToolsRepository.MemberToolConflict)]
@@ -76,7 +77,7 @@ namespace API.Functions
 		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(MemberToolRequest), Required = true)]
 		[OpenApiParameter("memberToolId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit member tool record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(MemberToolResponse), Description = "The updated unt member tool record")]
-		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = UnitMemberToolsRepository.MalformedBody)]
+		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = CombinedError)]
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified tool does not exist. **or** The specified member does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = UnitMemberToolsRepository.MemberToolConflict)]

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -100,6 +101,34 @@ namespace Integration
         protected static void AssertIdsMatchContent<T>(int[] expectedIds, IEnumerable<T> content) where T: Entity
         {
             CollectionAssert.AreEquivalent(expectedIds, content.Select(c => c.Id));
+        }
+
+        public static void AssertEntityCollectionEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual, Func<T, T, bool> areEqual, string errorMessage) where T : Entity
+        {
+            var missingExpectedItemIds = expected
+                .Where(exp => false == actual.Any(act => areEqual(exp, act)))
+                .Select(r => r.Id)
+                .ToList();
+            var missingActualIds = actual
+                .Where(act => false == expected.Any(exp => areEqual(exp, act)))
+                .Select(r => r.Id)
+                .ToList();
+
+            var error = errorMessage;
+            if(missingExpectedItemIds.Count > 0)
+            {
+                error = $"\n\tExpected Ids ({string.Join(", ", missingExpectedItemIds)}) had no exact match in Actual.";
+            }
+
+            if(missingActualIds.Count > 0)
+            {
+                error += $"\n\tActual Ids ({string.Join(", ", missingActualIds)}) had no exact match in Expected.";
+            }
+
+            if(missingExpectedItemIds.Count > 0 || missingActualIds.Count > 0)
+            {
+                Assert.Fail(error);
+            }
         }
     }
 

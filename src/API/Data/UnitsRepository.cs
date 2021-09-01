@@ -60,6 +60,12 @@ namespace API.Data
                 .Bind(unit => TryDeleteUnit(db, req, unit)));
         }
 
+        internal static async Task<Result<Unit, Error>> ChangeActive(HttpRequest req, int unitId)
+        {
+            return await ExecuteDbPipeline($"Change active for unit {unitId}", db => TryFindUnit(db, unitId)
+                .Bind(unit => TryArchiveUnit(db, req, unit)));
+        }
+
         private static async Task<Result<Unit,Error>> TryFindUnit (PeopleContext db, int id, bool findingParent = false)
         {
             var unit = await db.Units
@@ -108,6 +114,17 @@ namespace API.Data
             return Pipeline.Success(existing);
         }
 
+        private static Unit GetUnitAndRelated(PeopleContext db, int unitId)
+        {
+            return db.Units
+                .Include(u => u.Parent)
+                .Include(u => u.UnitMembers).ThenInclude(um => um.Person)
+                .Include(u => u.UnitMembers).ThenInclude(um => um.MemberTools)
+                .Include(u => u.SupportRelationships).ThenInclude(sr => sr.Department)
+                .Include(u => u.BuildingRelationships).ThenInclude(sr => sr.Building)
+                .Single(u => u.Id == unitId);
+        }
+
         private static async Task<Result<bool,Error>> TryDeleteUnit (PeopleContext db, HttpRequest req, Unit unit)
         {
             // Check for child Units
@@ -123,13 +140,7 @@ namespace API.Data
             else
             {
                 //Remove, and log, UnitMembers and SupportRelationships for this unit.
-                var unitAndRelated = db.Units
-                    .Include(u => u.Parent)
-                    .Include(u => u.UnitMembers).ThenInclude(um => um.Person)
-                    .Include(u => u.UnitMembers).ThenInclude(um => um.MemberTools)
-                    .Include(u => u.SupportRelationships).ThenInclude(sr => sr.Department)
-                    .Include(u => u.BuildingRelationships).ThenInclude(sr => sr.Building)
-                    .Single(u => u.Id == unit.Id);
+                var unitAndRelated = GetUnitAndRelated(db, unit.Id);
 
                 //Write the logs with the whole enchilada 
                 LogPrevious(req, unitAndRelated);
@@ -148,6 +159,50 @@ namespace API.Data
                 await db.SaveChangesAsync();
                 return Pipeline.Success(true);
             }
+        }
+
+        private static async Task<Result<Unit,Error>> TryArchiveUnit (PeopleContext db, HttpRequest req, Unit unit)
+        {
+            // Check for child Units
+            var activeChildUnitIds = await db.Units
+                .Include(c => c.Parent)
+                .Where(c => c.ParentId == unit.Id && c.Active)
+                .Select(c => c.Id)
+                .ToListAsync();
+                       
+            if(activeChildUnitIds.Count > 0)
+            {
+                return Pipeline.Conflict($"Unit {unit.Id} has child units, with ids: {string.Join(", ", activeChildUnitIds)}. These must be reassigned, deleted, or archived before this request can be completed.");
+            }
+            var parentsValidationResult = await ValidateActiveParents(db, unit);
+            if(parentsValidationResult.IsFailure)
+            {
+                return parentsValidationResult;
+            }
+            
+            var unitAndRelated = GetUnitAndRelated(db, unit.Id);
+            //Write the logs with the whole enchilada 
+            LogPrevious(req, unitAndRelated);
+
+            //Flip the value of unit.Active
+            unit.Active = !unit.Active;
+            await db.SaveChangesAsync();
+            return Pipeline.Success(unit);
+        }
+        private static async Task<Result<Unit,Error>> ValidateActiveParents (PeopleContext db, Unit unit)
+        {
+            if(unit.Parent == null) 
+            {
+                return Pipeline.Success(unit);
+            }
+            if(unit.Parent.Active == false) 
+            {
+                return Pipeline.Conflict($"Unit {unit.Id} has a parent unit {unit.Parent.Id} that is archived. This parent unit must be unarchived before this request can be completed.");
+            }
+            var fetchedParent = await db.Units
+                .Include(u => u.Parent)
+                .SingleOrDefaultAsync(p => p.Id == unit.Parent.Id);
+            return await ValidateActiveParents(db, fetchedParent);
         }
 
         internal static Task<Result<List<Unit>, Error>> GetChildren(HttpRequest req, int unitId) =>
