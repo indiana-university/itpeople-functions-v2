@@ -132,6 +132,13 @@ namespace API.Data
 			{
 				return Pipeline.Conflict("The provided person is already a member of the provided unit.");
 			}
+
+			var unit = await db.Units.SingleAsync(u => u.Id == body.UnitId);
+			if(unit.Active == false)
+			{
+				return Pipeline.BadRequest("The provided unit has been archived and is not available for new Unit Members.");
+			}
+
 			return Pipeline.Success(body);
 		}
 		private static async Task<Result<UnitMember, Error>> TryUpdateMembership(PeopleContext db, UnitMember existing, UnitMemberRequest body, Person person)

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Models;
 using Database;
 using Microsoft.AspNetCore.Http;
+using System.Linq;
 
 namespace API.Data
 {
@@ -18,6 +19,7 @@ namespace API.Data
 					.Include(r => r.Unit)
 					.Include(r => r.Department)
 					.Include(r => r.SupportType)
+					.Where(r => r.Unit.Active)
 					.AsNoTracking()
 					.ToListAsync();
 				return Pipeline.Success(result);
@@ -84,7 +86,13 @@ namespace API.Data
 			{
 				return Pipeline.BadRequest("The request body was malformed, the unitId, departmentId, and/or supportTypeId field was missing or invalid.");
 			}
-			//Unit is already being checked/found in the Authorization step
+			//Unit's existience is already confirmed in the Authorization step, but we must check if it is active.
+			var unit = await db.Units.SingleAsync(u => u.Id == body.UnitId);
+			if(unit.Active == false)
+			{
+				return Pipeline.BadRequest("The request body was malformed, the provided unit has been archived and is not available for new Support Relationships.");
+			}
+			
 			if (await db.Departments.AnyAsync(d => d.Id == body.DepartmentId) == false)
 			{
 				return Pipeline.NotFound("The specified department does not exist.");

@@ -10,7 +10,7 @@ namespace Integration
 {
 	public class SupportRelationshipsTests
 	{
-
+		public const string ArchivedUnitError = "The request body was malformed, the provided unit has been archived and is not available for new Support Relationships.";
 		public class GetAll : ApiTest
 		{
 			[Test]
@@ -127,6 +127,25 @@ namespace Integration
 				Assert.AreEqual(1, actual.Errors.Count);
 				Assert.Contains("The provided unit already has a support relationship with the provided department.", actual.Errors);
 			}
+
+			//400 Can't make a Support Relationship for an inactive(archived) Unit.
+			[Test]
+			public async Task CannotCreateSupportRelationshipForArchivedUnit()
+			{
+				var candlemakersSupportAudits = new SupportRelationshipRequest
+				{
+					UnitId = TestEntities.Units.ArchivedUnitId,
+					DepartmentId = TestEntities.Departments.AuditorId
+				};
+				var resp = await PostAuthenticated("supportRelationships", candlemakersSupportAudits, ValidAdminJwt);
+				
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains(ArchivedUnitError, actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
+			}
 		}
 	
 		public class SupportRelationshipEdit : ApiTest
@@ -209,6 +228,25 @@ namespace Integration
 
 				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.PawneeUnitFireId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
+			}
+
+			//Cannot update relationship to use an inactive Unit
+			[Test]
+			public async Task CannotUpdateSupportRelationshipToUseArchivedUnit()
+			{
+				var changeToInactiveUnit = new SupportRelationshipRequest {
+					UnitId = TestEntities.Units.ArchivedUnitId,
+					DepartmentId = TestEntities.Departments.FireId
+				};
+
+				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.PawneeUnitFireId}", changeToInactiveUnit, ValidAdminJwt);
+
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains(ArchivedUnitError, actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
 			}
 		}
 		public class SupportRelationshipDelete : ApiTest

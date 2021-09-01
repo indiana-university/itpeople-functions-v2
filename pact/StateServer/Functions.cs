@@ -72,13 +72,15 @@ namespace StateServer
                 TestEntities.Units.CityOfPawnee,
                 TestEntities.Units.ParksAndRecUnit,
                 TestEntities.Units.Auditor,
+                TestEntities.Units.ArchivedUnit,
             });
 
             peopleContext.People.AddRange(new List<Person> { 
                 TestEntities.People.RSwanson, 
                 TestEntities.People.LKnope,
                 TestEntities.People.BWyatt,
-                TestEntities.People.ServiceAdmin
+                TestEntities.People.ServiceAdmin,
+                TestEntities.People.ALudgate,
             });  
             
             peopleContext.SupportTypes.AddRange(new List<SupportType> {
@@ -90,14 +92,17 @@ namespace StateServer
 
             peopleContext.SupportRelationships.AddRange(new List<SupportRelationship> {
                 TestEntities.SupportRelationships.ParksAndRecRelationship,
-                TestEntities.SupportRelationships.PawneeUnitFire
+                TestEntities.SupportRelationships.PawneeUnitFire,
+                TestEntities.SupportRelationships.ArchivedUnitRelationship,
             });
 
             peopleContext.UnitMembers.AddRange(new List<UnitMember> { 
                 TestEntities.UnitMembers.RSwansonDirector,
                 TestEntities.UnitMembers.LkNopeSublead,
                 TestEntities.UnitMembers.BWyattAditor,
-                TestEntities.UnitMembers.AdminLeader
+                TestEntities.UnitMembers.AdminLeader,
+                TestEntities.UnitMembers.ArchivedRon,
+                TestEntities.UnitMembers.ArchivedApril,
             });
             
             peopleContext.Tools.AddRange(new List<Tool> { 
@@ -107,7 +112,8 @@ namespace StateServer
 
             peopleContext.MemberTools.AddRange(new List<MemberTool> { 
                 TestEntities.MemberTools.MemberTool,
-                TestEntities.MemberTools.AdminMemberTool
+                TestEntities.MemberTools.AdminMemberTool,
+                TestEntities.MemberTools.ArchivedHammer,
             });
             
             peopleContext.HrPeople.AddRange(new List<HrPerson> { TestEntities.HrPeople.Tammy1 });

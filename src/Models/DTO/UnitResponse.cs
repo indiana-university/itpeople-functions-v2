@@ -8,6 +8,11 @@ namespace Models
         /// The name of this unit.
         [Required]
         public string Name { get; set; }
+
+        /// If the Unit is currently active or "archived"
+        [Required]
+        public bool Active { get; set; }
+
         /// A description of this unit.
         public string Description { get; set; }
         /// A URL for the website of this unit.
@@ -25,6 +30,7 @@ namespace Models
         public UnitResponse(Unit unit)
         {
             Id = unit.Id;
+            Active = unit.Active;
             Name = unit.Name;
             Description = unit.Description;
             Url = unit.Url;
