@@ -25,6 +25,7 @@ namespace Tasks
         {
             try
             {
+                Logging.GetLogger(context).Information("Starting tools update.");
                 // Fetch all tools.
                 var tools = await context.CallActivityWithRetryAsync<IEnumerable<Tool>>(
                     nameof(FetchAllTools), RetryOptions, null);
