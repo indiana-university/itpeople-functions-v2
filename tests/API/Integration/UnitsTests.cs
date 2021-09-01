@@ -668,6 +668,7 @@ namespace Integration
                 Assert.True(actual.All(a => a.Unit != null));
                 Assert.True(actual.All(a => a.Unit.Id == unitId));
                 Assert.True(actual.All(a => a.Department != null));
+                Assert.True(actual.All(a => a.SupportType != null));
             }
         }
 
