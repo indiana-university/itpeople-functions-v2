@@ -25,6 +25,7 @@ namespace Tasks
         {
             try
             {
+                await Task.Delay(1000 * 60 * 60 * 2); // 2 hours to wait to test alerting function
                 Logging.GetLogger(context).Information("Starting tools update.");
                 // Fetch all tools.
                 var tools = await context.CallActivityWithRetryAsync<IEnumerable<Tool>>(
