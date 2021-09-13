@@ -90,18 +90,28 @@ namespace API.Data
         
         
         private static IQueryable<PeopleLookupItem> SearchHrPeopleByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
-            => db.HrPeople
+        {   
+            var parsedName = GetParsedName(query.Q);
+            return db.HrPeople
                 .Where(h=>  EF.Functions.ILike(h.Netid, $"%{query.Q}%")
-                            || EF.Functions.ILike(h.Name, $"%{query.Q}%"))
+                            || EF.Functions.ILike(h.Name, $"%{query.Q}%")
+							|| (string.IsNullOrWhiteSpace(parsedName.firstName) == false
+								&& string.IsNullOrWhiteSpace(parsedName.lastName) == false
+								&& EF.Functions.ILike(h.Name, $"{parsedName.firstName}%{parsedName.lastName}%")))
                 .Select(h => new PeopleLookupItem { Id = 0, NetId = h.Netid, Name = h.Name })
                 .AsNoTracking();
+        }
 
         private static IQueryable<PeopleLookupItem> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
         {
+            var parsedName = GetParsedName(query.Q);
             //Get existing people matches
             var peopleMatches = db.People
                 .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
-                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
+                            || EF.Functions.ILike(p.Name, $"%{query.Q}%")
+							|| (string.IsNullOrWhiteSpace(parsedName.firstName) == false
+								&& string.IsNullOrWhiteSpace(parsedName.lastName) == false
+								&& EF.Functions.ILike(p.Name, $"{parsedName.firstName}%{parsedName.lastName}%")))
                 .Select(p => new PeopleLookupItem { Id = p.Id, NetId = p.Netid, Name = p.Name })
                 .Take(query.Limit)
                 .AsNoTracking();

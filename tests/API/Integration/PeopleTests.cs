@@ -326,6 +326,23 @@ namespace Integration
                 Assert.AreEqual(2, actual.Count);
             }
             
+            [TestCase("Swanson, Ron", 1)]
+            [TestCase("Swanson, Ro", 1)]
+            [TestCase("  Swanson,  Ron  ", 1)]
+            [TestCase("Swanson", 2)]
+            [TestCase("Swanso", 2)]
+            [TestCase("Ron Swanson", 1)]
+            [TestCase("Tammy1", 1)]
+            [TestCase("Tamm", 1)]
+            public async Task WorksWithAlternateFormat(string q, int results)
+            {
+                //Searching for "Swan" should get Ron from the People table, and Tammy Swanson form the HrPeople table.
+                var resp = await GetAuthenticated($"people-lookup?q={q}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
+                Assert.AreEqual(results, actual.Count);
+            }
+            
             [TestCase(1)]
             [TestCase(5)]
             [TestCase(15)]
