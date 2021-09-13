@@ -68,6 +68,11 @@ namespace Integration
             }
 
             [TestCase("Ron", Description="Name match")]
+            [TestCase("Swanson,Ron", Description="Alternate format match")]
+            [TestCase("Swanson, Ron", Description="Alternate format with space match")]
+            [TestCase("Swanso, Ro", Description="Alternate format partial match")]
+            [TestCase(" Swanson  ,   Ron ", Description="Alternate format match with weird spacing")]
+            [TestCase("Ron Swanson", Description="Strict format match")]
             [TestCase("Ro", Description="Partial name match")]
             public async Task CanSearchByName(string name)
             {
