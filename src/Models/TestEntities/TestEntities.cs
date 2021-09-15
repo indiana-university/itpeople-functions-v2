@@ -152,7 +152,7 @@ namespace Models
 			{
 				Id = RSwansonId,
 				Netid = "rswanso",
-				Name = "Swanson, Ron",
+				Name = "Ron Swanson",
 				NameFirst = "Ron",
 				NameLast = "Swanson",
 				Position = "Parks and Rec Director",
