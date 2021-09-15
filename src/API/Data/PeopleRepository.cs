@@ -18,33 +18,48 @@ namespace API.Data
 
         internal static Task<Result<List<Person>, Error>> GetAll(PeopleSearchParameters query)
             => ExecuteDbPipeline("search all people", async db => {
+                    var parsedName = GetParsedName(query.Q);
                     var result = await GetPeopleFilteredByArea(db, query)
-                        .Where(p=> // partial match netid and/or name
-                            string.IsNullOrWhiteSpace(query.Q) 
+                        .Where(p => // partial match netid and/or name
+                            string.IsNullOrWhiteSpace(query.Q)
                                 || EF.Functions.ILike(p.Netid, $"%{query.Q}%")
-                                || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
-                        .Where(p=> // check for overlapping responsibilities / job classes
+                                || EF.Functions.ILike(p.Name, $"%{query.Q}%")
+                                || ((string.IsNullOrWhiteSpace(parsedName.firstName) == false
+                                    || string.IsNullOrWhiteSpace(parsedName.lastName) == false)
+                                    && EF.Functions.ILike(p.Name, $"{parsedName.firstName}%{parsedName.lastName}%")))
+                        .Where(p => // check for overlapping responsibilities / job classes
                             query.Responsibilities == Responsibilities.None
                                 || ((int)p.Responsibilities & (int)query.Responsibilities) != 0)
                                 // That & is a bitwise operator - go read-up!
                                 // https://stackoverflow.com/questions/12988260/how-do-i-test-if-a-bitwise-enum-contains-any-values-from-another-bitwise-enum-in
-                        .Where(p=> // partial match any supplied interest against any self-described expertise
+                        .Where(p => // partial match any supplied interest against any self-described expertise
                             query.Expertise.Length == 0
-                                || query.Expertise.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Expertise, s)))
-                        .Where(p=> // partial match campus
+                                || query.Expertise.Select(s => $"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Expertise, s)))
+                        .Where(p => // partial match campus
                             query.Campus.Length == 0
-                                || query.Campus.Select(s=>$"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Campus, s)))
+                                || query.Campus.Select(s => $"%{s}%").ToArray().Any(s => EF.Functions.ILike(p.Campus, s)))
                         .Where(p => query.Roles.Length == 0
-                                || p.UnitMemberships.Any(m => query.Roles.Contains(m.Role) && m.Unit.Active))
+                            || p.UnitMemberships.Any(m => query.Roles.Contains(m.Role) && m.Unit.Active))
                         .Where(p => query.Permissions.Length == 0
-                                || p.UnitMemberships.Any(m => query.Permissions.Contains(m.Permissions) && m.Unit.Active))
+                            || p.UnitMemberships.Any(m => query.Permissions.Contains(m.Permissions) && m.Unit.Active))
                         .Include(p => p.Department)
                         .AsNoTracking()
                         .ToListAsync();
                     return Pipeline.Success(result);
                 });
 
-        private static IQueryable<Person> GetPeopleFilteredByArea(PeopleContext db, PeopleSearchParameters query) 
+        private static (string firstName, string lastName) GetParsedName(string nameQuery)
+        {
+            if (string.IsNullOrWhiteSpace(nameQuery) == false && nameQuery.Count(q => q == ',') == 1)
+            {
+                //take something like Drake, Jared and make it Jared Drake, but return as (firstName, LastName) tuple
+                var parts = nameQuery.Split(',').Select(q => q.Trim()).ToArray();
+                return (parts[1], parts[0]);
+            }
+            return ("", "");
+        }
+
+        private static IQueryable<Person> GetPeopleFilteredByArea(PeopleContext db, PeopleSearchParameters query)
             => db.People .FromSqlInterpolated<Person>($@"
                     SELECT DISTINCT p.*
                     FROM public.people p
@@ -72,21 +87,30 @@ namespace API.Data
                             )
                             SELECT id FROM parentage
                             WHERE root_id <> 1))");
-        
-        
+
         private static IQueryable<PeopleLookupItem> SearchHrPeopleByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
-            => db.HrPeople
+        {
+            var parsedName = GetParsedName(query.Q);
+            return db.HrPeople
                 .Where(h=>  EF.Functions.ILike(h.Netid, $"%{query.Q}%")
-                            || EF.Functions.ILike(h.Name, $"%{query.Q}%"))
+                            || EF.Functions.ILike(h.Name, $"%{query.Q}%")
+                            || ((string.IsNullOrWhiteSpace(parsedName.firstName) == false
+                                || string.IsNullOrWhiteSpace(parsedName.lastName) == false)
+                                && EF.Functions.ILike(h.Name, $"{parsedName.firstName}%{parsedName.lastName}%")))
                 .Select(h => new PeopleLookupItem { Id = 0, NetId = h.Netid, Name = h.Name })
                 .AsNoTracking();
+        }
 
         private static IQueryable<PeopleLookupItem> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
         {
+            var parsedName = GetParsedName(query.Q);
             //Get existing people matches
             var peopleMatches = db.People
                 .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
-                            || EF.Functions.ILike(p.Name, $"%{query.Q}%"))
+                            || EF.Functions.ILike(p.Name, $"%{query.Q}%")
+                            || ((string.IsNullOrWhiteSpace(parsedName.firstName) == false
+                                || string.IsNullOrWhiteSpace(parsedName.lastName) == false)
+                                && EF.Functions.ILike(p.Name, $"{parsedName.firstName}%{parsedName.lastName}%")))
                 .Select(p => new PeopleLookupItem { Id = p.Id, NetId = p.Netid, Name = p.Name })
                 .Take(query.Limit)
                 .AsNoTracking();
@@ -96,27 +120,27 @@ namespace API.Data
             var hrPeopleMatches = SearchHrPeopleByNameOrNetId(db, query)
                 .Where(h => existingNetIds.Contains(h.NetId.ToLower()) == false)
                 .Take(query.Limit);
-            
+
             return peopleMatches
                 .Union(hrPeopleMatches)
                 .Take(query.Limit);
         }
 
-        public static Task<Result<Person, Error>> GetOne(int id) 
-            => ExecuteDbPipeline("get a person by ID", db => 
+        public static Task<Result<Person, Error>> GetOne(int id)
+            => ExecuteDbPipeline("get a person by ID", db =>
                 TryFindPerson(db, id));
-        public static Task<Result<Person, Error>> GetOne(string id) 
-            => ExecuteDbPipeline("get a person by Netid", db => 
+        public static Task<Result<Person, Error>> GetOne(string id)
+            => ExecuteDbPipeline("get a person by Netid", db =>
                 TryFindPerson(db, id));
 
         private static Result<List<UnitMember>, Error> GetActiveMemberships(Person person)
             => Pipeline.Success(person.UnitMemberships.Where(um => um.Unit.Active).ToList());
 
-        public static Task<Result<List<UnitMember>, Error>> GetMemberships(int id) 
+        public static Task<Result<List<UnitMember>, Error>> GetMemberships(int id)
             => ExecuteDbPipeline("fetch unit memberships", db =>
                 TryFindPerson(db, id)
                 .Bind(person => GetActiveMemberships(person)));
-        public static Task<Result<List<UnitMember>, Error>> GetMemberships(string username) 
+        public static Task<Result<List<UnitMember>, Error>> GetMemberships(string username)
             => ExecuteDbPipeline("fetch unit memberships", db =>
                 TryFindPerson(db, username)
                 .Bind(person => GetActiveMemberships(person)));
@@ -164,7 +188,5 @@ namespace API.Data
                     var result = await SearchBothByNameOrNetId(db, query).ToListAsync();
                     return Pipeline.Success(result);
                 });
-           
-        
     }
 }
