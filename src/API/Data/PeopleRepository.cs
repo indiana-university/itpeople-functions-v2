@@ -24,8 +24,8 @@ namespace API.Data
                             string.IsNullOrWhiteSpace(query.Q)
                                 || EF.Functions.ILike(p.Netid, $"%{query.Q}%")
                                 || EF.Functions.ILike(p.Name, $"%{query.Q}%")
-                                || (string.IsNullOrWhiteSpace(parsedName.firstName) == false
-                                    && string.IsNullOrWhiteSpace(parsedName.lastName) == false
+                                || ((string.IsNullOrWhiteSpace(parsedName.firstName) == false
+                                    || string.IsNullOrWhiteSpace(parsedName.lastName) == false)
                                     && EF.Functions.ILike(p.Name, $"{parsedName.firstName}%{parsedName.lastName}%")))
                         .Where(p => // check for overlapping responsibilities / job classes
                             query.Responsibilities == Responsibilities.None
@@ -53,8 +53,8 @@ namespace API.Data
             if (string.IsNullOrWhiteSpace(nameQuery) == false && nameQuery.Count(q => q == ',') == 1)
             {
                 //take something like Drake, Jared and make it Jared Drake, but return as (firstName, LastName) tuple
-                return (nameQuery.Substring(nameQuery.IndexOf(",") + 1).Trim(),
-                    nameQuery.Substring(0, nameQuery.IndexOf(",") - 1).Trim());
+                var parts = nameQuery.Split(',').Select(q => q.Trim()).ToArray();
+                return (parts[1], parts[0]);
             }
             return ("", "");
         }
@@ -94,8 +94,8 @@ namespace API.Data
             return db.HrPeople
                 .Where(h=>  EF.Functions.ILike(h.Netid, $"%{query.Q}%")
                             || EF.Functions.ILike(h.Name, $"%{query.Q}%")
-                            || (string.IsNullOrWhiteSpace(parsedName.firstName) == false
-                                && string.IsNullOrWhiteSpace(parsedName.lastName) == false
+                            || ((string.IsNullOrWhiteSpace(parsedName.firstName) == false
+                                || string.IsNullOrWhiteSpace(parsedName.lastName) == false)
                                 && EF.Functions.ILike(h.Name, $"{parsedName.firstName}%{parsedName.lastName}%")))
                 .Select(h => new PeopleLookupItem { Id = 0, NetId = h.Netid, Name = h.Name })
                 .AsNoTracking();
@@ -108,8 +108,8 @@ namespace API.Data
             var peopleMatches = db.People
                 .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
                             || EF.Functions.ILike(p.Name, $"%{query.Q}%")
-                            || (string.IsNullOrWhiteSpace(parsedName.firstName) == false
-                                && string.IsNullOrWhiteSpace(parsedName.lastName) == false
+                            || ((string.IsNullOrWhiteSpace(parsedName.firstName) == false
+                                || string.IsNullOrWhiteSpace(parsedName.lastName) == false)
                                 && EF.Functions.ILike(p.Name, $"{parsedName.firstName}%{parsedName.lastName}%")))
                 .Select(p => new PeopleLookupItem { Id = p.Id, NetId = p.Netid, Name = p.Name })
                 .Take(query.Limit)

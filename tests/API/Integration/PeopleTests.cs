@@ -74,6 +74,8 @@ namespace Integration
             [TestCase(" Swanson  ,   Ron ", Description="Alternate format match with weird spacing")]
             [TestCase("Ron Swanson", Description="Strict format match")]
             [TestCase("Ro", Description="Partial name match")]
+            [TestCase(",   Ron ", Description="Alternate format match with weird spacing")]
+            [TestCase("Swanson  ,", Description="Alternate format match with weird spacing")]
             public async Task CanSearchByName(string name)
             {
                 var resp = await GetAuthenticated($"people?q={name}");
@@ -85,13 +87,13 @@ namespace Integration
             }
 
             [TestCase(
-                Responsibilities.ItLeadership, 
+                Responsibilities.ItLeadership,
                 new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId })]
             [TestCase(
-                Responsibilities.ItProjectMgt, 
+                Responsibilities.ItProjectMgt,
                 new int[]{ TestEntities.People.LKnopeId, TestEntities.People.BWyattId })]
             [TestCase(
-                Responsibilities.ItLeadership | Responsibilities.ItProjectMgt, 
+                Responsibilities.ItLeadership | Responsibilities.ItProjectMgt,
                 new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId })]
             [TestCase(
                 Responsibilities.BizSysAnalysis,
@@ -134,8 +136,8 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
                 AssertIdsMatchContent(expectedMatches, actual);
-            }           
-           
+            }
+
             [TestCase("Leader", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.ServiceAdminId }, Description = "Return group Leader(s)")]
             [TestCase("Sublead", new int[]{ TestEntities.People.LKnopeId }, Description = "Return group Subleader(s)")]
             [TestCase("Member", new int[]{ TestEntities.People.BWyattId }, Description = "Return group Member(s)")]
@@ -148,7 +150,7 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
                 AssertIdsMatchContent(expectedMatches, actual);
             }
-            
+
             [TestCase("Owner", new int[]{ TestEntities.People.RSwansonId })]
             [TestCase("Viewer", new int[]{ TestEntities.People.LKnopeId })]
             [TestCase("ManageMembers", new int[]{ TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId })]
@@ -171,7 +173,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people?area={areas}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                AssertIdsMatchContent(expectedMatches, actual);                
+                AssertIdsMatchContent(expectedMatches, actual);
             }
         }
 
@@ -260,8 +262,8 @@ namespace Integration
         public class UpdatePerson : ApiTest
         {
             private static readonly PersonUpdateRequest TestUpdateRequest = new PersonUpdateRequest
-            { 
-                Location = "Timbuktu", 
+            {
+                Location = "Timbuktu",
                 Expertise = "Woodworking; Honor; Managering",
                 PhotoUrl = "http://flavorwire.files.wordpress.com/2011/11/ron-swanson-NEW.jpg",
                 Responsibilities = Responsibilities.ItLeadership & Responsibilities.ItProjectMgt,
@@ -325,7 +327,7 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
                 Assert.AreEqual(2, actual.Count);
             }
-            
+
             [TestCase("Swanson, Ron", 1)]
             [TestCase("Swanson, Ro", 1)]
             [TestCase("  Swanson,  Ron  ", 1)]
@@ -334,6 +336,8 @@ namespace Integration
             [TestCase("Ron Swanson", 1)]
             [TestCase("Tammy1", 1)]
             [TestCase("Tamm", 1)]
+            [TestCase(",  Ron", 1)]
+            [TestCase("swanson,", 2)]
             public async Task WorksWithAlternateFormat(string q, int results)
             {
                 //Searching for "Swan" should get Ron from the People table, and Tammy Swanson form the HrPeople table.
@@ -342,7 +346,7 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
                 Assert.AreEqual(results, actual.Count);
             }
-            
+
             [TestCase(1)]
             [TestCase(5)]
             [TestCase(15)]
