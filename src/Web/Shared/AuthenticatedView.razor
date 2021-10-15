@@ -1,0 +1,31 @@
+@implements IDisposable
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+
+@if(IsAuthenticated)
+{
+    @Authenticated
+}
+else
+{
+	@NotAuthenticated
+}
+
+@code {
+	[Parameter]
+	public RenderFragment Authenticated { get; set; }
+
+    [Parameter]
+	public RenderFragment NotAuthenticated { get; set; }
+
+	private bool IsAuthenticated = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		var user = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+		IsAuthenticated = user == null ? false : true;
+	}
+
+	public void Dispose()
+	{
+	}
+}
