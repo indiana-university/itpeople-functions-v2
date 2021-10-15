@@ -1,5 +1,6 @@
 @using Models
 @using RivetBlazor.Components
+@using web.Shared
 @using System.Net
 @using System.Linq
 @using System.Collections
@@ -10,61 +11,73 @@
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<h1>Units</h1>
-	<p>
-		IT Units are organizations of people doing IT work. Some IT Units are primarily responsible for departmental IT support, while others are principally engaged in IT service development and delivery.
-	</p>
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=/Units">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<p>
+				IT Units are organizations of people doing IT work. Some IT Units are primarily responsible for departmental IT support, while others are principally engaged in IT service development and delivery.
+			</p>
 
-	<p>
-		Use the search bar to find people or units doing IT work at IU.
-	</p>
+			<p>
+				Use the search bar to find people or units doing IT work at IU.
+			</p>
 
-	<DisplayException Ex=@GeneralException />
+			<DisplayException Ex=@GeneralException />
 
-	@if(MyUnits.Count() > 0)
-	{
-		<h2 class="rvt-ts-md">My Units</h2>
-		<div class="rvt-grid">
-			@foreach(var unit in MyUnits)
+			@if(MyUnits.Count() > 0)
 			{
-				<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
-					<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
-					<p class="rvt-m-top-remove">@unit.Description</p>
-				</div>
-			}
-		</div>
-	}
-
-	@if(ActiveUnits.Count() > 0)
-	{
-		<h2 class="rvt-ts-md">Active Units</h2>
-		<div class="rvt-grid">
-			@foreach(var unit in ActiveUnits)
-			{
-				<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
-					<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
-					<p class="rvt-m-top-remove">@unit.Description</p>
-				</div>
-			}
-		</div>
-	}
-
-	@if(ArchivedUnits.Count() > 0)
-	{
-		<h2 class="rvt-ts-md">Archived Units</h2>
-		<div class="rvt-grid">
-			@foreach(var unit in ArchivedUnits)
-			{
-				<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
-					<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
-					@if(unit.Active == false)
+				<h2 class="rvt-ts-md">My Units</h2>
+				<div class="rvt-grid">
+					@foreach(var unit in MyUnits)
 					{
-						<span class="rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-left-xs rvt-ts-xs">Archived</span>
+						<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
+							<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
+							<p class="rvt-m-top-remove">@unit.Description</p>
+						</div>
 					}
-					<p class="rvt-m-top-remove">@unit.Description</p>
 				</div>
 			}
-		</div>
-	}
+
+			@if(ActiveUnits.Count() > 0)
+			{
+				<h2 class="rvt-ts-md">Active Units</h2>
+				<div class="rvt-grid">
+					@foreach(var unit in ActiveUnits)
+					{
+						<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
+							<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
+							<p class="rvt-m-top-remove">@unit.Description</p>
+						</div>
+					}
+				</div>
+			}
+
+			@if(ArchivedUnits.Count() > 0)
+			{
+				<h2 class="rvt-ts-md">Archived Units</h2>
+				<div class="rvt-grid">
+					@foreach(var unit in ArchivedUnits)
+					{
+						<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
+							<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
+							@if(unit.Active == false)
+							{
+								<span class="rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-left-xs rvt-ts-xs">Archived</span>
+							}
+							<p class="rvt-m-top-remove">@unit.Description</p>
+						</div>
+					}
+				</div>
+			}
+		</Authenticated>
+	</AuthenticatedView>
 </div>
 
 @code {
@@ -78,14 +91,11 @@
 	protected override async Task OnInitializedAsync()
 	{
 		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
-		if(LoggedInUser == null)
+		if(LoggedInUser != null)
 		{
-			GeneralException = new Exception("You must be logged in to view this page.  Could not determine the username of the current user.");
-			return;
+			// Fetch my units and the whole list of units simultaneously.
+			await Task.WhenAll(new[] { FetchMyUnits(), FetchUnits() });
 		}
-
-		// Fetch my units and the whole list of units simultaneously.
-		await Task.WhenAll(new[] { FetchMyUnits(), FetchUnits() });
 	}
 
 	private async Task FetchMyUnits()
