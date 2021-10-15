@@ -37,11 +37,14 @@
 		AuthenticationDestination = new Uri(Navigation.Uri).PathAndQuery;
 		var signInUrl = $"/SignIn?Destination={System.Net.WebUtility.UrlEncode(AuthenticationDestination)}";
 		
-		NavLinks = new List<IHeaderItem> {
-			new HeaderLink("/People", "People"),
-			new HeaderLink("/Units", "Units"),
-			new HeaderProfile(loggedInUser, signInUrl, "/SignOut", ProfileLinks, null, isLoggedIn),
-			//new HeaderProfile("bbatson", "/SignIn", "/SignOut", ProfileLinks, "Totally not Captain Marvel", true, avatar),
-		};
+		// Build up NavLinks.
+		NavLinks = new List<IHeaderItem>();
+		if(isLoggedIn)
+		{
+			NavLinks.Add(new HeaderLink("/People", "People"));
+			NavLinks.Add(new HeaderLink("/Units", "Units"));
+		}
+
+		NavLinks.Add(new HeaderProfile(loggedInUser, signInUrl, "/SignOut", ProfileLinks, null, isLoggedIn));
 	}
 }
