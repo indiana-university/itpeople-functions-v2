@@ -23,14 +23,20 @@
 		<Authenticated>
 			<EditForm EditContext="@editContext" OnValidSubmit="SubmitForm">
 				<DataAnnotationsValidator />
-				<RivetInputText  @bind-Value="Q" Label="Search Term" Description="Enter a search term it can match any Person, Unit, Department, or Building." Disabled=@(ShowLoader) />
-				<button type="submit" class="rvt-button" disabled="@(formInvalid || ShowLoader)">
-					<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-						<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-magnifying-glass"></use>
-					</svg>
-					<span class="rvt-sr-only">magnifying-glass</span>
-					<span class="rvt-p-left-xxs rvt-p-top-xxs">Search</span>
-				</button>
+				<div class="rvt-grid rvt-items-center rvt-justify-center">
+					<div class="rvt-grid__item">
+						<RivetInputText @bind-Value="Q" class="rvt-input-group__input" Label="Search Term" Description="Enter a search term it can match any Person, Unit, Department, or Building." Disabled=@(ShowLoader) />
+					</div>
+					<div class="rvt-grid__item-lg">
+						<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(formInvalid || ShowLoader)">
+							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+								<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-magnifying-glass"></use>
+							</svg>
+							<span class="rvt-sr-only">magnifying-glass</span>
+							<span class="rvt-p-left-xxs rvt-p-top-xxs">Search</span>
+						</button>
+					</div>
+				</div>
 			</EditForm>
 			<div class="rvt-p-bottom-lg"/>
 			<DisplayException Ex=@GeneralException />
@@ -213,19 +219,20 @@
 	{
 		var result = default(T);
 
-		var resp = await Api().GetAsync(uri);
-		if(resp.StatusCode != HttpStatusCode.OK)
-		{
-			var message = string.IsNullOrWhiteSpace(error)
-				? $"Failed to Get {resp.RequestMessage.RequestUri} Status {resp.StatusCode} {resp.ReasonPhrase}"
-				: error;
-			GeneralException = new Exception(message);
-			return default(T);
-		}
-		
-		// The request succeeded, try to deserialize it.
 		try
 		{
+			var resp = await Api().GetAsync(uri);
+
+			if(resp.StatusCode != HttpStatusCode.OK)
+			{
+				var message = string.IsNullOrWhiteSpace(error)
+					? $"Failed to Get {resp.RequestMessage.RequestUri} Status {resp.StatusCode} {resp.ReasonPhrase}"
+					: error;
+				GeneralException = new Exception(message);
+				return result;
+			}
+			
+			// The request succeeded, try to deserialize it.
 			var stringResult = await resp.Content.ReadAsStringAsync();
 			// We have to use Newtonsoft to make sure our StringEnumConverter work.
 			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
@@ -233,6 +240,7 @@
 		catch(Exception ex)
 		{
 			GeneralException = ex;
+			return result;
 		}
 		
 		return result;
