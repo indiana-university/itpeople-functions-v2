@@ -1,0 +1,70 @@
+@using Models
+@using Models.Enums
+@using RivetBlazor.Components
+@using web.Shared
+@using System.Net
+@using System.Linq
+@using System.Collections
+@inject IHttpClientFactory ClientFactory
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@implements IDisposable
+@page "/People"
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	
+	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">		
+		<div class="rvt-m-right-sm-md-up">
+			<h1>People</h1>
+		</div>		
+	</div>
+
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=/People">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<p>
+				Use the filters below to find IT People based on their role within a unit, their job classification, and/or campus.
+			</p>
+
+			<p>
+				Use the search bar to find people or units doing IT work at IU.
+			</p>
+
+			<DisplayException Ex=@GeneralException />
+
+            <EditForm  EditContext="@editContext">
+		        <RivetInputFlag @bind-Value="roleValue" Legend="Unit Role" Inline=@inline />
+		        <RivetInputFlag @bind-Value="areaValue" Legend="Area" Inline=@inline />
+		        <RivetInputFlag @bind-Value="responsibility" Legend="Responsibility" Inline=@inline />
+	        </EditForm>
+			<p>
+                <button class="rvt-button" > Apply Filters </button>
+	        </p>
+
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+@code {
+	private Role roleValue;
+	private Area areaValue;
+	private Responsibilities responsibility;
+	private EntityPermissions CrudPerms;
+	private EditContext editContext;
+	private Exception GeneralException;
+	private bool inline = false; 
+    protected override async Task OnInitializedAsync()
+	{
+		editContext = new EditContext(roleValue);
+
+	}    
+    
+	public void Dispose(){}
+    
+}
