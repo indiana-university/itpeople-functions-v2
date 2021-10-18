@@ -24,8 +24,8 @@
 			<DisplayException Ex=@GeneralException />
 			<EditForm EditContext="@editContext" OnValidSubmit="SubmitForm">
 				<DataAnnotationsValidator />
-				<RivetInputText  @bind-Value="Q" Label="Search Term" Description="Enter a search term it can match any Person, Unit, Department, or Building." />
-				<button type="submit" class="rvt-button" disabled="@(formInvalid)">
+				<RivetInputText  @bind-Value="Q" Label="Search Term" Description="Enter a search term it can match any Person, Unit, Department, or Building." Disabled=@(ShowLoader) />
+				<button type="submit" class="rvt-button" disabled="@(formInvalid || ShowLoader)">
 					<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
 						<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-magnifying-glass"></use>
 					</svg>
@@ -33,6 +33,17 @@
 					<span class="rvt-p-left-xxs rvt-p-top-xxs">Search</span>
 				</button>
 			</EditForm>
+			<div class="rvt-p-bottom-lg"/>
+			@if (ShowLoader)
+			{
+				<div class="rvt-flex rvt-items-center rvt-justify-center rvt-m-bottom-sm">
+					<div class="rvt-loader" aria-label="Content loading"></div>
+				</div>
+			}
+			else
+			{
+				<p>We'll be showing stuff here.</p>
+			}
 		</Authenticated>
 	</AuthenticatedView>
 </div>
@@ -42,6 +53,8 @@
 	private Exception GeneralException;
 	private EditContext editContext;
 	private bool formInvalid = false;
+	protected bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 
 	private IEnumerable<UnitResponse> Units = new List<UnitResponse>();
 	private IEnumerable<Person> People = new List<Person>();
@@ -73,14 +86,17 @@
 
 	private async Task SubmitForm()
 	{
-		// Reset GeneralException
-		GeneralException = null;
+		using (Loading())
+		{
+			// Reset GeneralException
+			GeneralException = null;
 
-		// Update the browser's URI to match the new Q
-		var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-		Navigation.NavigateTo($"{uri.AbsolutePath}?q={HttpUtility.UrlEncode(Q)}");
+			// Update the browser's URI to match the new Q
+			var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+			Navigation.NavigateTo($"{uri.AbsolutePath}?q={HttpUtility.UrlEncode(Q)}");
 
-		await PerformSearch();
+			await PerformSearch();
+		}
 	}
 
 	private async Task PerformSearch()
