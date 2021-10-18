@@ -1,0 +1,130 @@
+@using Models
+@using Models.Enums
+@using RivetBlazor.Components
+@using web.Shared
+@using System.Net
+@using System.Linq
+@using System.Collections
+@inject IHttpClientFactory ClientFactory
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@implements IDisposable
+@page "/Units/{unitId}"
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=/Units">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
+				<!-- our title -->
+				<div class="rvt-m-right-sm-md-up">
+					<h1>@PageUnit.Name</h1>
+				</div>
+				<!-- a place for buttons/actions to live -->
+				<div class="rvt-bg-blue rvt-m-right-sm-md-up">
+					@if(CrudPerms.HasFlag(EntityPermissions.Post))
+					{
+						<a class="rvt-button" href="/Units/TODO">TODO Delete</a>
+						<a class="rvt-button" href="/Units/TODO">TODO Archive</a>
+						<a class="rvt-button" href="/Units/TODO">TODO Edit</a>
+					}
+				</div>
+				<section class="">
+					<div class="group-describer rvt-m-top-sm">
+						<span>TODO description</span>
+					</div>
+					<div class="rvt-grid"></div>
+				</section>
+			</div>
+
+			<DisplayException Ex=@GeneralException />
+
+			@*@if(UnitMembers.Count() > 0)
+			{
+				<h2 class="rvt-ts-md">Leaders (TODO)</h2>
+				<div class="rvt-grid">
+					@foreach(var unit in MyUnits)
+					{
+						<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
+							<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
+							<p class="rvt-m-top-remove">@unit.Description</p>
+						</div>
+					}
+				</div>
+			}*@
+
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+@code {
+	private HttpClient Api() => ClientFactory.CreateClient("Api");
+	private UnitResponse PageUnit = new UnitResponse();
+	private AuthenticatedUser LoggedInUser;
+	private EntityPermissions CrudPerms;
+	private Exception GeneralException;
+
+	[Parameter]
+	public string UnitId { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+		if(LoggedInUser != null)
+		{
+			// Fetch my units and the whole list of units simultaneously.
+			await Task.WhenAll(new[] { FetchUnit() });
+		}
+	}
+
+	private async Task FetchUnit()
+	{
+		var resp = await Api().GetAsync($"/Units/{UnitId}");
+		if (resp.StatusCode != HttpStatusCode.OK)
+		{
+			GeneralException = new Exception($"Failed to fetch Unit.");
+			return;
+		}
+		PageUnit = await resp.Content.ReadFromJsonAsync<UnitResponse>();
+		GetEntityPermissions(resp);
+	}
+
+
+
+	//private async Task FetchUnits()
+	//{
+	//	var resp = await Api().GetAsync($"/Units");
+	//	if(resp.StatusCode != HttpStatusCode.OK)
+	//	{
+	//		GeneralException = new Exception($"Failed to fetch Units.");
+	//		return;
+	//	}
+	//	var units = await resp.Content.ReadFromJsonAsync<List<UnitResponse>>();
+	//	ActiveUnits = units.Where(u => u.Active);
+	//	ArchivedUnits = units.Where(u => u.Active == false);
+
+	//	GetEntityPermissions(resp);
+	//}
+
+	private void GetEntityPermissions(HttpResponseMessage resp)
+	{
+		// Pluck the user permissions from the response header. Eg. "GET, PUT"
+		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+
+		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+		CrudPerms = 0;// Reset permissions to 0.
+		foreach(var p in permsString.Split(','))
+		{
+			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+			CrudPerms |= ep;
+		}
+	}
+
+	public void Dispose(){}
+}
