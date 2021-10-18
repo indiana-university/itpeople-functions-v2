@@ -1,0 +1,157 @@
+@using Models
+@using Models.Enums
+@using RivetBlazor.Components
+@using web.Shared
+@using System.Net
+@using System.Linq
+@using System.Collections
+@inject IHttpClientFactory ClientFactory
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@implements IDisposable
+@page "/People/profile"
+
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=/People">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>            
+			@foreach (var person in peopleList)
+            {
+               <div class="rvt-grid__item-9-md-up rvt-text-center rvt-m-top-md">
+                   <h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@person.Name</h1>
+                   <div class="rvt-ts-26">@person.Position</div>
+                </div>
+                <div className="rvt-grid rvt-p-top-lg">
+                    <div class="rvt-grid__item-6-md-up rvt-p-all-lg"> 
+                        <div class="rvt-grid">
+                        <div class="rvt-grid__item rvt-border-all rvt-border-radius rvt-bg-white" style="overflow: auto;">
+                            <div class="rvt-grid">
+                                <div class="rvt-grid__item rvt-bg-cream rvt-border-bottom rvt-p-all-xs rvt-p-left-md rvt-p-right-md rvt-ts-18 rvt-text-bold" style="color: rgb(51, 51, 51);">Contact Information</div>
+                            </div>
+                        <div class="rvt-grid">
+                        <div class="rvt-grid__item rvt-p-all-md">
+                            <div class="list-dividers">
+                                <div>              
+                                    <div><strong>Location: </strong>@person.Location</div>
+                                    <div><strong>Campus: </strong>@person.Campus</div>
+                                    <div><strong>Email: </strong>@person.CampusEmail</div>
+                                    <div><strong>Phone: </strong>@person.CampusPhone</div>
+                                    <div><strong>Department: </strong><a href="/departments/@person.DepartmentId">@person.Department.Name</a></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                </div>
+
+                </div>
+                <div class="rvt-grid__item-6-md-up rvt-p-all-lg">
+                    <div class="rvt-grid"><div class="rvt-grid__item rvt-border-all rvt-border-radius rvt-bg-white" style="overflow: auto;">
+                        <div class="rvt-grid">
+                            <div class="rvt-grid__item rvt-bg-cream rvt-border-bottom rvt-p-all-xs rvt-p-left-md rvt-p-right-md rvt-ts-18 rvt-text-bold" style="color: rgb(51, 51, 51);">IT Units</div>
+                        </div>
+                        <div class="rvt-grid">
+                            <div class="rvt-grid__item rvt-p-all-md">
+                                <div class="list-dividers profile-units">
+                                    <div>
+                                        <div class="rvt-grid"><div class="rvt-grid__item">
+                                            @* @foreach (var unit in person.UnitMemberships)
+                                            {
+                                                <a href="/units/@unit.Id"><h2 class="rvt-ts-23 rvt-text-bold">@unit.Name</h2></a>
+                                                <div class="rvt-m-bottom-sm">@unit.Description</div>
+                                                
+                                            } *@
+                                            
+                                        </div>
+                                        <div class="rvt-grid__item-1-sm-up">
+                                            <button class="rvt-button--plain" style="position: absolute; right: 0px;">
+                                                <span class="sr-only">Toggle</span><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="currentColor" d="M8,12.46a2,2,0,0,1-1.52-.7L1.24,5.65a1,1,0,1,1,1.52-1.3L8,10.46l5.24-6.11a1,1,0,0,1,1.52,1.3L9.52,11.76A2,2,0,0,1,8,12.46Z"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                </div>
+            }
+			<DisplayException Ex=@GeneralException />
+
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+@code {
+	private EntityPermissions CrudPerms;
+	private Exception GeneralException;
+	private AuthenticatedUser LoggedInUser;
+    private Person person = new Person();
+	private IEnumerable<Person> peopleList = new List<Person>();
+    private string netid = "vbhupath";
+
+
+	private bool inline = false; 
+	private HttpClient Api() => ClientFactory.CreateClient("Api");
+
+    protected override async Task OnInitializedAsync()
+	{
+        @* var resp = await Api().GetAsync($"/people?q={netid}");
+        if(resp.StatusCode != HttpStatusCode.OK)
+		{
+			GeneralException = new Exception($"Failed to fetch people.");
+			return;
+		}
+		var umResponse = await resp.Content.ReadFromJsonAsync<List<Person>>();
+        foreach (var personItem in umResponse)
+        {
+            Console.WriteLine($"People: {personItem.Netid}"); *@
+
+            await Task.WhenAll(new[] { GetPersonProfile() });     
+        @* }       
+        GetEntityPermissions(resp); *@
+
+    }
+    private async Task GetPersonProfile()
+	{
+		var resp = await Api().GetAsync($"/people?q={netid}");
+		if(resp.StatusCode != HttpStatusCode.OK)
+		{
+			GeneralException = new Exception($"Failed to fetch details..");
+			return;
+		}
+		var umpeopleList = await resp.Content.ReadFromJsonAsync<List<UnitMemberResponse>>();
+        peopleList = umpeopleList.Select(p => p.Person).ToList();
+        Console.WriteLine($"umpeopleList count: {umpeopleList.Count()}");
+        Console.WriteLine($"Type: {umpeopleList.GetType().ToString()}");
+        Console.WriteLine($"People: {peopleList.Select(p => p.Name).SingleOrDefault()} and {peopleList.Select(p => p.Netid).SingleOrDefault()}");
+		GetEntityPermissions(resp);
+
+	}
+    private void GetEntityPermissions(HttpResponseMessage resp)
+	{
+		// Pluck the user permissions from the response header. Eg. "GET, PUT"
+		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+		
+		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+		CrudPerms = 0;// Reset permissions to 0.
+		foreach(var p in permsString.Split(','))
+		{
+			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+			CrudPerms |= ep;
+		}
+	}
+
+    
+	public void Dispose(){}
+    
+}
