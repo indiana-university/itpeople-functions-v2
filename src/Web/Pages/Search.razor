@@ -1,0 +1,144 @@
+@using Models
+@using RivetBlazor.Components
+@using web.Shared
+@using System.Web
+@using System.Net
+@using Newtonsoft.Json
+@inject NavigationManager Navigation
+@inject IHttpClientFactory ClientFactory
+@implements IDisposable
+@page "/Search"
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<h1 class="rvt-ts-xxl">Search</h1>
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=/Search?q=@HttpUtility.UrlEncode(Q)">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<DisplayException Ex=@GeneralException />
+			<EditForm EditContext="@editContext" OnValidSubmit="SubmitForm">
+				<DataAnnotationsValidator />
+				<RivetInputText  @bind-Value="Q" Label="Search Term" Description="Enter a search term it can match any Person, Unit, Department, or Building." />
+				<button type="submit" class="rvt-button" disabled="@(formInvalid)">
+					<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+						<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-magnifying-glass"></use>
+					</svg>
+					<span class="rvt-sr-only">magnifying-glass</span>
+					<span class="rvt-p-left-xxs rvt-p-top-xxs">Search</span>
+				</button>
+			</EditForm>
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+@code {
+	private string Q = "";
+	private HttpClient Api() => ClientFactory.CreateClient("Api");
+	private Exception GeneralException;
+	private EditContext editContext;
+	private bool formInvalid = false;
+
+	private IEnumerable<UnitResponse> Units = new List<UnitResponse>();
+	private IEnumerable<Person> People = new List<Person>();
+	private IEnumerable<Department> Departments = new List<Department>();
+	private IEnumerable<Building> Buildings = new List<Building>();
+	
+
+	protected override async Task OnInitializedAsync()
+	{
+		// Setup our editcontext
+		editContext = new EditContext(Q);
+		editContext.OnFieldChanged += HandleFieldChanged;
+
+		// Read the queryString from the Uri, if it has the value for Q set it and use it.
+		var query = new Uri(Navigation.Uri).Query;
+		var queryDict = HttpUtility.ParseQueryString(query);
+		Q = queryDict.Get(nameof(Q));
+		if(string.IsNullOrWhiteSpace(Q) == false)
+		{
+			await PerformSearch();
+		}
+	}
+
+	private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
+	{
+		formInvalid = !editContext.Validate();
+		StateHasChanged();
+	}
+
+	private async Task SubmitForm()
+	{
+		// Reset GeneralException
+		GeneralException = null;
+
+		// Update the browser's URI to match the new Q
+		var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+		Navigation.NavigateTo($"{uri.AbsolutePath}?q={HttpUtility.UrlEncode(Q)}");
+
+		await PerformSearch();
+	}
+
+	private async Task PerformSearch()
+	{
+		Console.WriteLine($"Q is: {Q}");
+		await Task.WhenAll(new[] { SearchUnits(), SearchPeople(), SearchDepartments(), SearchBuildings() });
+	}
+	
+	private async Task SearchUnits()
+	{
+		Units = await GetWithErrorHandling<List<UnitResponse>>($"/Units?q={HttpUtility.UrlEncode(Q)}");
+	}
+
+	private async Task SearchPeople()
+	{
+		People = await GetWithErrorHandling<List<Person>>($"/People?q={HttpUtility.UrlEncode(Q)}");
+	}
+
+	private async Task SearchDepartments()
+	{
+		Departments = await GetWithErrorHandling<List<Department>>($"/Departments?q={HttpUtility.UrlEncode(Q)}");
+	}
+
+	private async Task SearchBuildings()
+	{
+		Buildings = await GetWithErrorHandling<List<Building>>($"/Buildings?q={HttpUtility.UrlEncode(Q)}");
+	}
+
+	private async Task<T> GetWithErrorHandling<T>(string uri, string error = null)
+	{
+		var result = default(T);
+
+		var resp = await Api().GetAsync(uri);
+		if(resp.StatusCode != HttpStatusCode.OK)
+		{
+			var message = string.IsNullOrWhiteSpace(error)
+				? $"Failed to Get {resp.RequestMessage.RequestUri} Status {resp.StatusCode} {resp.ReasonPhrase}"
+				: error;
+			GeneralException = new Exception(message);
+			return default(T);
+		}
+		
+		// The request succeeded, try to deserialize it.
+		try
+		{
+			var stringResult = await resp.Content.ReadAsStringAsync();
+			// We have to use Newtonsoft to make sure our StringEnumConverter work.
+			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
+		}
+		catch(Exception ex)
+		{
+			GeneralException = ex;
+		}
+		
+		return result;
+	}
+
+	public void Dispose(){
+		editContext.OnFieldChanged -= HandleFieldChanged;
+	}
+}
