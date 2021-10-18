@@ -40,11 +40,12 @@
 
             <EditForm  EditContext="@editContext">
 		        <RivetInputFlag @bind-Value="roleValue" Legend="Unit Role" Inline=@inline />
+		        <RivetInputFlag @bind-Value="campus" Legend="Campus" Inline=@inline />
 		        <RivetInputFlag @bind-Value="areaValue" Legend="Area" Inline=@inline />
 		        <RivetInputFlag @bind-Value="responsibility" Legend="Responsibility" Inline=@inline />
 	        </EditForm>
 			<p>
-                <button class="rvt-button" > Apply Filters </button>
+                <button class="rvt-button" @onclick=@GetFilteredResults> Apply Filters </button>
 	        </p>
 
 		</Authenticated>
@@ -54,16 +55,39 @@
 @code {
 	private Role roleValue;
 	private Area areaValue;
+    private Campus campus;
 	private Responsibilities responsibility;
 	private EntityPermissions CrudPerms;
 	private EditContext editContext;
 	private Exception GeneralException;
+	private AuthenticatedUser LoggedInUser;
+	private IEnumerable<Person> peopleList = new List<Person>();
+
+
 	private bool inline = false; 
+	private HttpClient Api() => ClientFactory.CreateClient("Api");
+
     protected override async Task OnInitializedAsync()
 	{
+		editContext = new EditContext(areaValue);
+		editContext = new EditContext(campus);
+		editContext = new EditContext(responsibility);
 		editContext = new EditContext(roleValue);
+        
+        LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+		if(LoggedInUser != null)
+		{
+			await Task.WhenAll(new[] { GetFilteredResults()  });
+		}
 
-	}    
+    }    
+
+    public async Task GetFilteredResults()
+    {
+        // TODO Get the people based on the checkbox selection.
+
+
+    }    
     
 	public void Dispose(){}
     
