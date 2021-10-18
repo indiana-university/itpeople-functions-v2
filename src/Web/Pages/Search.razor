@@ -195,26 +195,11 @@
 		await Task.WhenAll(new[] { SearchUnits(), SearchPeople(), SearchDepartments(), SearchBuildings() });
 	}
 	
-	private async Task SearchUnits()
-	{
-		Units = await GetWithErrorHandling<List<UnitResponse>>($"/Units?q={HttpUtility.UrlEncode(Q)}");
-	}
-
-	private async Task SearchPeople()
-	{
-		People = await GetWithErrorHandling<List<Person>>($"/People?q={HttpUtility.UrlEncode(Q)}");
-	}
-
-	private async Task SearchDepartments()
-	{
-		Departments = await GetWithErrorHandling<List<Department>>($"/Departments?q={HttpUtility.UrlEncode(Q)}");
-	}
-
-	private async Task SearchBuildings()
-	{
-		Buildings = await GetWithErrorHandling<List<Building>>($"/Buildings?q={HttpUtility.UrlEncode(Q)}");
-	}
-
+	private async Task SearchUnits() => Units = await GetWithErrorHandling<List<UnitResponse>>($"/Units?q={HttpUtility.UrlEncode(Q)}");
+	private async Task SearchPeople() => People = await GetWithErrorHandling<List<Person>>($"/People?q={HttpUtility.UrlEncode(Q)}");
+	private async Task SearchDepartments() => Departments = await GetWithErrorHandling<List<Department>>($"/Departments?q={HttpUtility.UrlEncode(Q)}");
+	private async Task SearchBuildings() => Buildings = await GetWithErrorHandling<List<Building>>($"/Buildings?q={HttpUtility.UrlEncode(Q)}");
+	
 	private async Task<T> GetWithErrorHandling<T>(string uri, string error = null)
 	{
 		var result = default(T);
