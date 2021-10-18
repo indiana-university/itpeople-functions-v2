@@ -30,7 +30,10 @@
 				<div class="rvt-bg-blue rvt-m-right-sm-md-up">
 					@if(CrudPerms.HasFlag(EntityPermissions.Post))
 					{
-						<a class="rvt-button" href="/Units/TODO">TODO Delete</a>
+						<a class="rvt-button" href="/Units/TODO">
+							<rvt-icon name="trash"></rvt-icon>
+							<span class="rvt-sr-only">Delete Unit</span>
+						</a>
 						<a class="rvt-button" href="/Units/TODO">TODO Archive</a>
 						<a class="rvt-button" href="/Units/TODO">TODO Edit</a>
 					}
