@@ -8,7 +8,7 @@
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @implements IDisposable
-@page "/People/profile"
+@page "/People/{NetId}"
 
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
@@ -97,40 +97,27 @@
 	private AuthenticatedUser LoggedInUser;
     private Person person = new Person();
 	private IEnumerable<Person> peopleList = new List<Person>();
-    private string netid = "vbhupath";
+    [Parameter]    public string NetId {get; set; }
 
 
 	private bool inline = false; 
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 
     protected override async Task OnInitializedAsync()
-	{
-        @* var resp = await Api().GetAsync($"/people?q={netid}");
-        if(resp.StatusCode != HttpStatusCode.OK)
-		{
-			GeneralException = new Exception($"Failed to fetch people.");
-			return;
-		}
-		var umResponse = await resp.Content.ReadFromJsonAsync<List<Person>>();
-        foreach (var personItem in umResponse)
-        {
-            Console.WriteLine($"People: {personItem.Netid}"); *@
-
-            await Task.WhenAll(new[] { GetPersonProfile() });     
-        @* }       
-        GetEntityPermissions(resp); *@
-
+	{   
+        await Task.WhenAll(new[] { GetPersonProfile() });     
+       
     }
     private async Task GetPersonProfile()
 	{
-		var resp = await Api().GetAsync($"/people?q={netid}");
+		var resp = await Api().GetAsync($"/people/{NetId}");
 		if(resp.StatusCode != HttpStatusCode.OK)
 		{
 			GeneralException = new Exception($"Failed to fetch details..");
 			return;
 		}
-		var umpeopleList = await resp.Content.ReadFromJsonAsync<List<UnitMemberResponse>>();
-        peopleList = umpeopleList.Select(p => p.Person).ToList();
+		var umpeopleList = await resp.Content.ReadFromJsonAsync<List<Person>>();
+        peopleList = umpeopleList.Where(u => u.Netid == NetId);
         Console.WriteLine($"umpeopleList count: {umpeopleList.Count()}");
         Console.WriteLine($"Type: {umpeopleList.GetType().ToString()}");
         Console.WriteLine($"People: {peopleList.Select(p => p.Name).SingleOrDefault()} and {peopleList.Select(p => p.Netid).SingleOrDefault()}");
