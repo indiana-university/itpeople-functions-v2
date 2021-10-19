@@ -5,6 +5,7 @@
 
 variables:
   agentPool: 'CSSD-Linux-ELA'
+  poolVmImage: 'ubuntu-20.04'
 
 resources:
   repositories:
@@ -16,7 +17,8 @@ resources:
 stages:
 - stage: Test
   displayName: Test
-  pool: $(agentPool)
+  pool:
+    vmImage: $(poolVmImage)
 
   jobs: 
   - job: Unit
@@ -30,21 +32,22 @@ stages:
         command: test
         projects: tests/API/Unit/Unit.csproj
           
-  - job: Integration
-    steps:
-    - task: UseDotNet@2
-      inputs:
-        version: 3.1.x
+  # - job: Integration
+  #   steps:
+  #   - task: UseDotNet@2
+  #     inputs:
+  #       version: 3.1.x
 
-    - task: DotNetCoreCLI@2
-      inputs:
-        command: test
-        projects: tests/API/Integration/Integration.csproj  
+  #   - task: DotNetCoreCLI@2
+  #     inputs:
+  #       command: test
+  #       projects: tests/API/Integration/Integration.csproj  
 
 - stage: Package
   displayName: Package  
   dependsOn: []    # this removes the implicit dependency on Test stage and causes this to run in parallel
-  pool: $(agentPool)
+  pool:
+    vmImage: $(poolVmImage)
 
   jobs:
   - job: PackageApiApp
@@ -103,7 +106,8 @@ stages:
 
 - stage: Deploy
   displayName: Deploy
-  pool: $(agentPool)
+  pool:
+    vmImage: $(poolVmImage)
   # Deploy if this is not a feature branch, or if the commit message contains '/deploy'
   condition: or( not( contains( variables['Build.SourceBranch'], 'feature/' )), contains( variables['Build.SourceVersionMessage'], '/deploy' ) )
   dependsOn: 
