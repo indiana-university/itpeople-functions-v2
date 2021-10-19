@@ -15,22 +15,22 @@ resources:
     endpoint: 'IU GitHub Enterprise'
 
 stages:
-- stage: Test
-  displayName: Test
-  pool:
-    vmImage: $(poolVmImage)
+# - stage: Test
+#   displayName: Test
+#   pool:
+#     vmImage: $(poolVmImage)
 
-  jobs: 
-  - job: Unit
-    steps:
-    - task: UseDotNet@2
-      inputs:
-        version: 3.1.x
+#   jobs: 
+#   - job: Unit
+#     steps:
+#     - task: UseDotNet@2
+#       inputs:
+#         version: 3.1.x
 
-    - task: DotNetCoreCLI@2
-      inputs:
-        command: test
-        projects: tests/API/Unit/Unit.csproj
+#     - task: DotNetCoreCLI@2
+#       inputs:
+#         command: test
+#         projects: tests/API/Unit/Unit.csproj
           
   # - job: Integration
   #   steps:
@@ -77,32 +77,32 @@ stages:
       displayName: Publish API Function App Artifacts
       artifact: ApiDeploymentPackage
 
-  - job: PackageTasksApp
-    displayName: Tasks Function App
-    steps:
-    - task: UseDotNet@2
-      inputs:
-        version: 3.1.x
+  # - job: PackageTasksApp
+  #   displayName: Tasks Function App
+  #   steps:
+  #   - task: UseDotNet@2
+  #     inputs:
+  #       version: 3.1.x
 
-    - task: DotNetCoreCLI@2
-      displayName: Build Tasks
-      inputs:
-        command: 'build'
-        projects: src/Tasks/Tasks.csproj
-        arguments: --output $(System.DefaultWorkingDirectory)/TasksFunctionApp --configuration Release
+  #   - task: DotNetCoreCLI@2
+  #     displayName: Build Tasks
+  #     inputs:
+  #       command: 'build'
+  #       projects: src/Tasks/Tasks.csproj
+  #       arguments: --output $(System.DefaultWorkingDirectory)/TasksFunctionApp --configuration Release
 
-    - task: ArchiveFiles@2
-      displayName: 'Archive Tasks files'
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/TasksFunctionApp'
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
-        replaceExistingArchive: true
+  #   - task: ArchiveFiles@2
+  #     displayName: 'Archive Tasks files'
+  #     inputs:
+  #       rootFolderOrFile: '$(System.DefaultWorkingDirectory)/TasksFunctionApp'
+  #       includeRootFolder: false
+  #       archiveType: zip
+  #       archiveFile: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
+  #       replaceExistingArchive: true
 
-    - publish: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
-      displayName: Publish Tasks Function App Artifacts
-      artifact: TasksDeploymentPackage
+  #   - publish: $(Build.ArtifactStagingDirectory)/TasksFunctionApp.zip
+  #     displayName: Publish Tasks Function App Artifacts
+  #     artifact: TasksDeploymentPackage
 
 - stage: Deploy
   displayName: Deploy
@@ -124,7 +124,7 @@ stages:
       inputs:
         artifact: 'ApiDeploymentPackage'
 
-    - task: AzureCLI@2
+    - task: AzureCLI@2.28.0
       displayName: Publish to Staging Slot
       inputs:
         azureSubscription: '$(azureSubscription)'
@@ -148,20 +148,20 @@ stages:
           -AppServiceName $(apiFunctionAppName) 
           -DeploymentSlot staging
 
-  - job: Tasks
-    steps:
-    - checkout: scripts
+  # - job: Tasks
+  #   steps:
+  #   - checkout: scripts
     
-    - task: DownloadPipelineArtifact@2
-      displayName: Download Deployment Package
-      inputs:
-        artifact: 'TasksDeploymentPackage'
+  #   - task: DownloadPipelineArtifact@2
+  #     displayName: Download Deployment Package
+  #     inputs:
+  #       artifact: 'TasksDeploymentPackage'
 
-    - task: AzureFunctionApp@1
-      displayName: Publish Tasks Function App
-      inputs:
-        azureSubscription: '$(azureSubscription)'
-        appType: functionApp
-        appName: '$(tasksFunctionAppName)'
-        package: '$(Pipeline.Workspace)/TasksFunctionApp.zip'
+  #   - task: AzureFunctionApp@1
+  #     displayName: Publish Tasks Function App
+  #     inputs:
+  #       azureSubscription: '$(azureSubscription)'
+  #       appType: functionApp
+  #       appName: '$(tasksFunctionAppName)'
+  #       package: '$(Pipeline.Workspace)/TasksFunctionApp.zip'
               
