@@ -33,7 +33,8 @@
 		User = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
 		var loggedInUser = User?.Username ?? "";
 		var isLoggedIn = User != null;
-		
+		var personalProfile = new HeaderLink($"/People/{loggedInUser}", "Profile", "Manage your profile information");
+		ProfileLinks.Insert(0, personalProfile);
 		AuthenticationDestination = new Uri(Navigation.Uri).PathAndQuery;
 		var signInUrl = $"/SignIn?Destination={System.Net.WebUtility.UrlEncode(AuthenticationDestination)}";
 		
