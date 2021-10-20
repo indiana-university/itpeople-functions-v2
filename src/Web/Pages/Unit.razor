@@ -5,6 +5,7 @@
 @using System.Net
 @using System.Linq
 @using System.Collections
+@using Newtonsoft.Json
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @implements IDisposable
@@ -236,13 +237,16 @@
 	}
 	private async Task FetchUnitMembers()
 	{
+
 		var resp = await Api().GetAsync($"/Units/{UnitId}/members");
 		if (resp.StatusCode != HttpStatusCode.OK)
 		{
 			GeneralException = new Exception($"Failed to fetch Unit Members");
 			return;
 		}
-		UnitMembers = await resp.Content.ReadFromJsonAsync<List<UnitMemberResponse>>();
+
+		var stringResult = await resp.Content.ReadAsStringAsync();
+		UnitMembers = JsonConvert.DeserializeObject<List<UnitMemberResponse>>(stringResult, Json.JsonSerializerSettings);
 		//TODO GetEntityPermissions(resp);
 
 	}
