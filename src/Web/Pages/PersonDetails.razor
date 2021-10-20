@@ -6,11 +6,15 @@
 @using System.Linq
 @using Newtonsoft.Json
 @using System.Collections
+@using System;
+@using System.ComponentModel.DataAnnotations;
+@using System.Reflection;
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @implements IDisposable
 @page "/People/{NetId}"
 
+<br />
 <div class="rvt-container" style="max-width: 1440px; margin: auto;">
     <div class="rvt-grid">
         <div class="rvt-grid__item">
@@ -28,6 +32,7 @@
         </div>
     </div>
 </div>
+ 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<AuthenticatedView>
 		<NotAuthenticated>
@@ -76,27 +81,23 @@
                                                     </div>
                                                     <div>
                                                         <div style="float: right;">                                                           
-                                                            <button type="button" title="@("Edit Responsibilities")" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form" @onclick="@(e => UpdateResponsibilities())">
+                                                            <button type="button" title="Edit Responsibilities" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form" @onclick="@(e => UpdateResponsibilities())">
                                                                 <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                                                     <use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-pencil"></use>
                                                                 </svg>
                                                                 <span class="rvt-m-left-xs rvt-sr-only">Edit Responsibilities</span>
-                                                            </button>
+                                                            </button>                                                                                                                            
                                                         <div class="rvt-modal" id="id_a85838" role="dialog" aria-labelledby="id_a85838-title" aria-hidden="true" tabindex="-1" current="">                                                            
-                                                            @* <ModalForm Id="modal-form" Title="Update" SubmitButtonText="Update" Item=@person.Responsibilities OnSubmit=@UpdateResponsibilities @ref=form>
-                                                                <RivetInputFlag @bind-Value="SelectedResponsibilities" Legend="Edit Responsibilities" Inline=@inline />
-                                                            </ModalForm>*@
                                                         </div>
-                                                    </div>
+                                                            <ModalForm Id="modal-form" Title="Edit Responsibilities" SubmitButtonText="Update" Item=@SelectedResponsibilities OnSubmit=@UpdateResponsibilities @ref=form>
+                                                                <RivetInputFlag @bind-Value="SelectedResponsibilities" Description="Check all the relevant responsibilities performed"  Inline=@inline />
+                                                            </ModalForm>
+                                                        </div>
                                                     <h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
-                                                    <p>What kinds of work do you do on a day-to-day basis?</p>
-                                                    @foreach (var item in SelectedResps)
-                                                    {
+                                                    <p>What kinds of work do you do on a day-to-day basis?</p>                                                  
                                                         <ul class="rvt-list rvt-plain-list">
-                                                        <li>@item</li>                                                        
-                                                    </ul>
-                                                    }
-                                                    
+                                                            <li>@SelectedResponsibilities</li>
+                                                        </ul> 
                                                 </div>
                                                     <div>
                                                          <div style="float: right;">                                                            
@@ -205,9 +206,10 @@
     private Person person = new Person();
 	private List<Person> peopleList = new List<Person>();
 	private IEnumerable<UnitResponse> PersonUnits = new List<UnitResponse>();
-	private IEnumerable<Responsibilities> SelectedResps = new List<Responsibilities>();
-	private string[] SelectedInterests;
 	private Responsibilities SelectedResponsibilities = Responsibilities.None;
+	private string[] SelectedResps = new string[]{ Responsibilities.None.ToString()};
+	private string[] SelectedInterests;
+
     [Parameter]    public string NetId {get; set; }
     private EditContext editContext;
 	private bool inline = false; 
@@ -217,8 +219,7 @@
 
     protected override async Task OnInitializedAsync()
 	{   
-        await Task.WhenAll(new[] { GetPersonProfile(), GetPersonUnitMemberships() });     
-       
+        await Task.WhenAll(new[] { GetPersonProfile(), GetPersonUnitMemberships() }); 
     }
     private async Task GetPersonProfile()
 	{
@@ -226,7 +227,6 @@
 		if(response.IsSuccessStatusCode)
 		{
             string responsemsg = await response.Content.ReadAsStringAsync();
-            @* Console.WriteLine(responsemsg); *@
             var person = JsonConvert.DeserializeObject<Person>(responsemsg);
             peopleList.Add(person);			
 		}
@@ -237,7 +237,6 @@
         }
        		
 		GetEntityPermissions(response);
-
 	}
     private async Task GetPersonUnitMemberships()
 	{
@@ -259,11 +258,21 @@
         try
         {
             @* TODO collect selected Responsibilities *@
+            SelectedResps = SelectedResponsibilities.ToString().Split(",").ToArray();
         }
         catch (Exception ex)
         {
             ModalException = ex;
         }
+    }
+
+    public static string GetDisplayName(Enum enumValue)
+    {
+    
+      return enumValue.GetType()
+        .GetMember(enumValue.ToString()).FirstOrDefault()
+        .GetCustomAttribute<DisplayAttribute>()
+        ?.GetName();
     }
     private async Task UpdateInterests()
     {
