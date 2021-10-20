@@ -27,9 +27,14 @@ namespace API.Functions
             var output = "start of output\n";
             var success = true;
 			
-			RunDnsRequest(ref output, ref success, "itpeople.iu.edu", "8.8.8.8");
+			// Make requests directly.
+            RunDnsRequest(ref output, ref success, "itpeople.iu.edu", "8.8.8.8");
 			RunDnsRequest(ref output, ref success, "itpeople.iu.edu", "129.79.1.1");
 			RunDnsRequest(ref output, ref success, "esdbp57p.uits.iu.edu", "129.79.1.1");
+            
+            // Attempt to resolve with the OS's native DNS.
+            RunNativeDns(ref output, ref success, "itpeople.iu.edu");
+            RunNativeDns(ref output, ref success, "esdbp57p.uits.iu.edu");
             
             if(success == false)
             {
@@ -39,6 +44,23 @@ namespace API.Functions
             //return Response.Ok(req, Pipeline.Success(output));
             return Task.FromResult(Response.ContentResponse(req, HttpStatusCode.OK, "text/plain", output));
         }
+
+        private static void RunNativeDns(ref string output, ref bool success, string hostname)
+		{
+			output += $"Resolve {hostname} with Dns.GetHostEntry()... ";
+			try
+			{
+				var systemResolved = Dns.GetHostEntry(hostname);
+				output += $"Got {string.Join(", ", systemResolved.AddressList.Select(a => a.ToString()))}";
+			}
+			catch(Exception e)
+			{
+				success = false;
+                output += $"Error: {e.Message}";
+			}
+
+			output += "\n";
+		}
 
         private static void RunDnsRequest(ref string output, ref bool success, string hostname, string dnsServerIp, int dnsServerPort = 53)
 		{
