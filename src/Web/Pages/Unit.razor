@@ -11,94 +11,103 @@
 @implements IDisposable
 @page "/Units/{unitId}"
 
-<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+<div>
 	<AuthenticatedView>
 		<NotAuthenticated>
-			<p>
-				You must login to view this resource.
-			</p>
-			<p>
-				<a class="rvt-button" href="/SignIn?Destination=/Units">Log In</a>
-			</p>
+			<div class="rvt-bg-white rvt-p-tb-lg rvt-m-bottom-sm">
+				<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+					<p>
+						You must login to view this resource.
+					</p>
+					<p>
+						<a class="rvt-button" href="/SignIn?Destination=/Units">Log In</a>
+					</p>
+				</div>
+			</div>
 		</NotAuthenticated>
 		<Authenticated>
-			<div class="rvt-bg-white rvt-p-tb-lg rvt-m-bottom-xxl" style="max-width: 1440px; margin: auto;">
-				<div style="display: flex; justify-content: space-between; float: right;">
-					@if (CrudPerms.HasFlag(EntityPermissions.Delete))
-					{
-						<a class="rvt-button rvt-button--danger rvt-m-right-xs" href="/Units/TODO" title="Delete Unit">
-							<rvt-icon name="trash"></rvt-icon>
-							<span class="rvt-sr-only">Delete Unit</span>
-						</a>
-						@if (PageUnit.Active)
+			<div class="rvt-bg-white rvt-p-tb-lg rvt-m-bottom-sm">
+				<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+					<div style="display: flex; justify-content: space-between; float: right;">
+						@if (CrudPerms.HasFlag(EntityPermissions.Delete))
 						{
-							<a class="rvt-button rvt-m-right-xs" href="/Units/TODO" title="Archive Unit">
-								<rvt-icon name="lock-closed"></rvt-icon>
+							<a class="rvt-button rvt-button--danger rvt-m-right-xs" href="/Units/TODO" title="Delete Unit">
+								<rvt-icon name="trash"></rvt-icon>
+								<span class="rvt-sr-only">Delete Unit</span>
+							</a>
+							@if (PageUnit.Active)
+							{
+								<a class="rvt-button rvt-m-right-xs" href="/Units/TODO" title="Archive Unit">
+									<rvt-icon name="lock-closed"></rvt-icon>
+								</a>
+							}
+							else
+							{
+								<a class="rvt-button rvt-m-right-xs" href="/Units/TODO" title="Unarchive Unit">
+									<rvt-icon name="lock-open"></rvt-icon>
+								</a>
+							}
+							<a class="rvt-button" href="/Units/TODO">
+								<rvt-icon name="pencil"></rvt-icon>
 							</a>
 						}
-						else
+					</div>
+					<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">
+						@PageUnit.Name
+					</h1>
+					<section class="">
+						@if (string.IsNullOrWhiteSpace(PageUnit.Description) == false)
 						{
-							<a class="rvt-button rvt-m-right-xs" href="/Units/TODO" title="Unarchive Unit">
-								<rvt-icon name="lock-open"></rvt-icon>
-							</a>
+							<div class="group-describer rvt-m-top-sm">
+								<span>Endpoint Management Services,  Log-Alert Administration, Windows Hosted Environment</span>
+							</div>
 						}
-						<a class="rvt-button" href="/Units/TODO">
-							<rvt-icon name="pencil"></rvt-icon>
-						</a>
-					}
+						@if (string.IsNullOrWhiteSpace(PageUnit.Email) == false)
+						{
+							<div class="rvt-grid">
+								<a href="mailto:sct2@iu.edu" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Contact</a>
+							</div>
+						}
+					</section>
+					<DisplayException Ex=@GeneralException />
 				</div>
-				<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">
-					@PageUnit.Name
-				</h1>
-				<section class="">
-					@if (string.IsNullOrWhiteSpace(PageUnit.Description) == false)
-					{
-						<div class="group-describer rvt-m-top-sm">
-							<span>Endpoint Management Services,  Log-Alert Administration, Windows Hosted Environment</span>
-						</div>
-					}
-					@if (string.IsNullOrWhiteSpace(PageUnit.Email) == false)
-					{
-						<div class="rvt-grid">
-							<a href="mailto:sct2@iu.edu" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Contact</a>
-						</div>
-					}
-				</section>
-				<DisplayException Ex=@GeneralException />
 			</div>
-			<div class="rvt-bg-white rvt-p-tb-xxl">
+			<div class="rvt-bg-white rvt-p-tb-sm">
 				<div class="rvt-container" style="max-width: 1440px; margin: auto;">
 					<div class="rvt-grid">
 						<div class="rvt-grid__item-6-lg-up">
 							<section class="">
 								<div class="rvt-grid">
 									<div class="rvt-grid__item">
-
 										@if (UnitMembers.Count() > 0)
 										{
-											foreach (var role in new List<Role> { Role.Leader, Role.Sublead, Role.Member, Role.Related })
+											@foreach (var role in new List<Role> { Role.Leader, Role.Sublead, Role.Member, Role.Related })
 											{
-												if (UnitMembers.Any(m => m.Role == role))
+												@if (UnitMembers.Any(m => m.Role == role))
 												{
 													<section class="rvt-m-bottom-lg">
-														<h3 class="rvt-ts-20 rvt-ts-26-lg-up rvt-m-bottom-sm rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h3>
-														<div class="list-dividers list-dividers--show-last">
-															<div>
-																<div class="rvt-grid">
-																	<div class="rvt-grid__item" style="align-self: center;">
-																		<a href="/people/1002" data-modal-trigger="modal-edit-person" class="rvt-m-bottom-remove person-list-item-new-name rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
-																			<span class="viewIcons delFaceName _delete fl">Jason Tratta</span>
-																		</a>
-																		<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">JAMF Lead</p>
-																	</div>
+														<h3 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h3>
+														@foreach (var member in UnitMembers.Where(m => m.Role == role))
+														{
+															<div class="rvt-grid">
+																<div class="rvt-grid__item rvt-border-bottom rvt-p-all-md" style="align-self: center;">
+																	<a href="/people/@member.Person.Id" data-modal-trigger="modal-edit-person" class="rvt-m-bottom-remove person-list-item-new-name rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
+																		<span class="viewIcons delFaceName _delete fl">@member.Person.Name</span>
+																	</a>
+																	<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
+																		@member.Title
+																		@if (member.Percentage != 100)
+																		{
+																			<span style="padding-left:0.25rem">@member.Percentage% </span>
+																		}
+																	</p>
 																</div>
 															</div>
-														</div>
+														}
 													</section>
 												}
 											}
 										}
-
 									</div>
 								</div>
 							</section>
@@ -179,26 +188,6 @@
 					</div>
 				</div>
 			</div>
-			<div class="rvt-bg-white rvt-p-tb-lg rvt-m-bottom-xxl" style="max-width: 1440px; margin: auto;">
-				<div class="row">
-
-				</div>
-			</div>
-
-			@*@if(UnitMembers.Count() > 0)
-				{
-					<h2 class="rvt-ts-md">Leaders (TODO)</h2>
-					<div class="rvt-grid">
-						@foreach(var unit in MyUnits)
-						{
-							<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
-								<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
-								<p class="rvt-m-top-remove">@unit.Description</p>
-							</div>
-						}
-					</div>
-				}*@
-
 		</Authenticated>
 	</AuthenticatedView>
 </div>
