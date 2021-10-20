@@ -1,0 +1,127 @@
+@typeparam TEnum
+@implements IDisposable
+@inject IJSRuntime JSRuntime;
+
+<div class="rvt-modal"
+    id=@Id
+    role="dialog"
+    aria-labelledby="modal-form-title"
+    aria-hidden="true"
+    tabindex=-1>
+    <div class="rvt-modal__inner">
+        <header class="rvt-modal__header">
+            <h1 class="rvt-modal__title" id="modal-form-title">@Title</h1>
+        </header>
+        <div class="rvt-modal__body">
+            <EditForm OnValidSubmit="DoSubmit" EditContext="@editContext">
+                <DataAnnotationsValidator />
+                <div class="rvt-p-bottom-md">
+                    @* All the form inputs are rendered here. *@
+                    @ChildContent
+                </div>
+                <div class="rvt-modal__controls">
+                    <button type="submit" class="rvt-button" disabled="@(formInvalid || submitting)">
+                        @if(submitting)
+                        {
+                            <div class="rvt-loader rvt-display-inline-block" aria-label="Submitting device"></div>
+                            <span class="rvt-m-left-xs">@SubmitButtonText</span>
+                        }
+                        else
+                        {
+                            @SubmitButtonText
+                        }
+                    </button>
+                    <button type="button" class="rvt-button rvt-button--secondary" data-modal-close=@Id>Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+        <button type="button" class="rvt-button rvt-modal__close" data-modal-close=@Id>
+            <span class="rvt-sr-only">Close</span>
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                <path fill="currentColor" d="M9.41,8l5.29-5.29a1,1,0,0,0-1.41-1.41L8,6.59,2.71,1.29A1,1,0,0,0,1.29,2.71L6.59,8,1.29,13.29a1,1,0,1,0,1.41,1.41L8,9.41l5.29,5.29a1,1,0,0,0,1.41-1.41Z"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+
+@code {
+
+    ///<summary> The ID for this modal form. This is useful if you want to programatically close the form using Modal.close().</summary>
+    [Parameter]
+    public string Id {get; set;}
+    
+    ///<summary> The title text that should appear at the top of the modal.</summary>
+    [Parameter]
+    public string Title {get;set;}
+    
+    ///<summary> The object that holds the form data.</summary>
+    [Parameter]
+    public TEnum Item {get;set;}
+
+    ///<summary> The text that should appear on the submit button. This should start with a verb, e.g. "Update widget".</summary>
+    [Parameter]
+    public string SubmitButtonText {get;set;}
+
+    ///<summary> An async method that will be invoked when the user submits the form.</summary>
+    [Parameter]
+    public Func<Task> OnSubmit {get;set;}
+
+    ///<summary> The form input and label elements. These should be specific to the type of Item.</summary>
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    private bool formInvalid = true;
+    private bool submitting = false;
+    
+    private EditContext editContext;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(Item);
+        editContext.OnFieldChanged += HandleFieldChanged;
+    }
+    
+    private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
+    {
+        formInvalid = !editContext.Validate();
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        editContext.OnFieldChanged -= HandleFieldChanged;
+    }
+
+    public void ResetState()
+    {
+        //Mark the form as unmodified, reset validation.
+        editContext.MarkAsUnmodified();
+        editContext.NotifyValidationStateChanged();
+
+        //A form should be un-submittable until it has been modified.
+        formInvalid = true;
+
+        // No longer submitting;
+        submitting = false;
+
+    }
+    
+    private async Task DoSubmit()
+    {
+        submitting = true;
+        try
+        {
+            await OnSubmit();
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    public async Task Close()
+    {
+        await JSRuntime.InvokeVoidAsync("Modal.close", Id);
+    }
+}
