@@ -247,22 +247,6 @@
 
 	}
 
-
-	//private async Task FetchUnits()
-	//{
-	//	var resp = await Api().GetAsync($"/Units");
-	//	if(resp.StatusCode != HttpStatusCode.OK)
-	//	{
-	//		GeneralException = new Exception($"Failed to fetch Units.");
-	//		return;
-	//	}
-	//	var units = await resp.Content.ReadFromJsonAsync<List<UnitResponse>>();
-	//	ActiveUnits = units.Where(u => u.Active);
-	//	ArchivedUnits = units.Where(u => u.Active == false);
-
-	//	GetEntityPermissions(resp);
-	//}
-
 	private void GetEntityPermissions(HttpResponseMessage resp)
 	{
 		// Pluck the user permissions from the response header. Eg. "GET, PUT"
