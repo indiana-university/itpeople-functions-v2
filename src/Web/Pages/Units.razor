@@ -5,6 +5,7 @@
 @using System.Net
 @using System.Linq
 @using System.Collections
+@using Newtonsoft.Json
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @implements IDisposable
@@ -95,7 +96,11 @@
 			GeneralException = new Exception($"Failed to fetch UnitMemberships for {LoggedInUser.Username}.");
 			return;
 		}
-		var memberships = await resp.Content.ReadFromJsonAsync<List<UnitMemberResponse>>();
+
+		// The request succeeded, try to deserialize it.
+		var stringResult = await resp.Content.ReadAsStringAsync();
+		// We have to use Newtonsoft to make sure our StringEnumConverter work.
+		var memberships = JsonConvert.DeserializeObject<List<UnitMemberResponse>>(stringResult, Json.JsonSerializerSettings);
 		MyUnits = memberships.Select(m => m.Unit).Distinct();
 	}
 
@@ -107,7 +112,10 @@
 			GeneralException = new Exception($"Failed to fetch Units.");
 			return;
 		}
-		var units = await resp.Content.ReadFromJsonAsync<List<UnitResponse>>();
+		// Use Newtonsoft to deserialize for consistency's sake.
+		var stringResult = await resp.Content.ReadAsStringAsync();
+		var units = JsonConvert.DeserializeObject<List<UnitResponse>>(stringResult, Json.JsonSerializerSettings);
+		
 		ActiveUnits = units.Where(u => u.Active);
 		ArchivedUnits = units.Where(u => u.Active == false);
 
