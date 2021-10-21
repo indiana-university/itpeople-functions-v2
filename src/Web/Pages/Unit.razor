@@ -67,180 +67,184 @@
 				</div>
 				<DisplayException Ex=@GeneralException />
 			</section>
-			<div class="rvt-grid">
-				<div class="rvt-grid__item-6-lg-up">
-					<section class="">
-						<div class="rvt-grid">
-							<div class="rvt-grid__item">
-								@if (UnitMembers.Count() > 0)
-								{
-									@foreach (var role in new List<Role> { Role.Leader, Role.Sublead, Role.Member, Role.Related })
+			<Loader Loading="ShowLoader">
+				<div class="rvt-grid">
+					<div class="rvt-grid__item-6-lg-up">
+						<section class="">
+							<div class="rvt-grid">
+								<div class="rvt-grid__item">
+									@if (UnitMembers.Count() > 0)
 									{
-										@if (UnitMembers.Any(m => m.Role == role))
+										@foreach (var role in new List<Role> { Role.Leader, Role.Sublead, Role.Member, Role.Related })
 										{
-											<section class="rvt-m-bottom-lg">
-												<h3 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h3>
-												@foreach (var member in UnitMembers.Where(m => m.Role == role))
-												{
-													<div class="rvt-grid">
-														<div class="rvt-grid__item rvt-border-bottom rvt-p-all-md" style="align-self: center;">
-															<a href="/people/@member.Person.Id" class="rvt-m-bottom-remove rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
-																<span>@member.Person.Name</span>
-															</a>
-															<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-																@member.Title
-																@if (member.Percentage != 100)
-																{
-																	<span style="padding-left:0.25rem">@member.Percentage% </span>
-																}
-															</p>
+											@if (UnitMembers.Any(m => m.Role == role))
+											{
+												<section class="rvt-m-bottom-lg">
+													<h3 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h3>
+													@foreach (var member in UnitMembers.Where(m => m.Role == role))
+													{
+														<div class="rvt-grid">
+															<div class="rvt-grid__item rvt-border-bottom rvt-p-all-md" style="align-self: center;">
+																<a href="/people/@member.Person.Id" class="rvt-m-bottom-remove rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
+																	<span>@member.Person.Name</span>
+																</a>
+																<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
+																	@member.Title
+																	@if (member.Percentage != 100)
+																	{
+																		<span style="padding-left:0.25rem">@member.Percentage% </span>
+																	}
+																</p>
+															</div>
 														</div>
-													</div>
-												}
-											</section>
+													}
+												</section>
+											}
 										}
 									}
-								}
+								</div>
 							</div>
-						</div>
-					</section>
-				</div>
-				<div class="rvt-grid__item--last rvt-grid__item-5-lg-up">
-					@if (PageUnit.Parent != null || UnitChildren.Count > 0)
-					{
-						<Collapse>
-							<Title>Parent and Children</Title>
-							<Content>
-								@if (PageUnit.Parent != null)
-								{
-									<div>
-										<div class="rvt-m-bottom-xl">
+						</section>
+					</div>
+					<div class="rvt-grid__item--last rvt-grid__item-5-lg-up">
+						@if (PageUnit.Parent != null || UnitChildren.Count > 0)
+						{
+							<Collapse>
+								<Title>Parent and Children</Title>
+								<Content>
+									@if (PageUnit.Parent != null)
+									{
+										<div>
+											<div class="rvt-m-bottom-xl">
+												<div class="rvt-grid">
+													<div class="rvt-grid__item-2-sm-up">
+														<svg width="100%" height="35" viewBox="0 0 41 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+															<g clip-path="url(#clip0)">
+																<rect width="41" height="35"></rect>
+																<rect x="15.3528" y="0.5" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
+																<rect x="15.3528" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+																<rect x="30.2056" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+																<rect x="0.5" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+																<line x1="20.0001" y1="23.71" x2="20.0001" y2="11.2905" stroke="black"></line>
+																<path d="M35.585 24.1118V16.334H5.4151V24.1118" stroke="black"></path>
+															</g>
+															<defs>
+																<clipPath id="clip0">
+																	<rect width="41" height="35" fill="white"></rect>
+																</clipPath>
+															</defs>
+														</svg>
+													</div>
+													<div class="rvt-grid__item">
+														<a href="/units/@PageUnit.Parent.Id" class="rvt-m-bottom-remove rvt-text-bold">@PageUnit.Parent.Name</a>
+														@if (string.IsNullOrWhiteSpace(PageUnit.Parent.Description))
+														{
+															<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
+																@PageUnit.Parent.Description
+															</p>
+														}
+													</div>
+												</div>
+											</div>
+										</div>
+									}
+									@if (UnitChildren.Count > 0)
+									{
+										@foreach (var child in UnitChildren)
+										{
 											<div class="rvt-grid">
 												<div class="rvt-grid__item-2-sm-up">
 													<svg width="100%" height="35" viewBox="0 0 41 35" fill="none" xmlns="http://www.w3.org/2000/svg">
 														<g clip-path="url(#clip0)">
 															<rect width="41" height="35"></rect>
-															<rect x="15.3528" y="0.5" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
-															<rect x="15.3528" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
-															<rect x="30.2056" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
-															<rect x="0.5" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+															<rect x="15.3528" y="0.5" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+															<rect x="15.3528" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
+															<rect x="30.2056" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
+															<rect x="0.5" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
 															<line x1="20.0001" y1="23.71" x2="20.0001" y2="11.2905" stroke="black"></line>
 															<path d="M35.585 24.1118V16.334H5.4151V24.1118" stroke="black"></path>
 														</g>
 														<defs>
-															<clipPath id="clip0">
-																<rect width="41" height="35" fill="white"></rect>
-															</clipPath>
+															<clipPath id="clip0"><rect width="41" height="35" fill="white"></rect></clipPath>
 														</defs>
 													</svg>
 												</div>
 												<div class="rvt-grid__item">
-													<a href="/units/@PageUnit.Parent.Id" class="rvt-m-bottom-remove rvt-text-bold">@PageUnit.Parent.Name</a>
-													@if (string.IsNullOrWhiteSpace(PageUnit.Parent.Description))
-													{
-														<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-															@PageUnit.Parent.Description
-														</p>
-													}
+													<div class="rvt-m-bottom-md">
+														<a href="/units/@child.Id" class="rvt-m-bottom-remove rvt-text-bold">@child.Name</a>
+														@if (string.IsNullOrWhiteSpace(child.Description))
+														{
+															<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
+																@child.Description
+															</p>
+														}
+													</div>
 												</div>
 											</div>
-										</div>
-									</div>
-								}
-								@if (UnitChildren.Count > 0)
-								{
-									@foreach (var child in UnitChildren)
-									{
-										<div class="rvt-grid">
-											<div class="rvt-grid__item-2-sm-up">
-												<svg width="100%" height="35" viewBox="0 0 41 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-													<g clip-path="url(#clip0)">
-														<rect width="41" height="35"></rect>
-														<rect x="15.3528" y="0.5" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
-														<rect x="15.3528" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
-														<rect x="30.2056" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
-														<rect x="0.5" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
-														<line x1="20.0001" y1="23.71" x2="20.0001" y2="11.2905" stroke="black"></line>
-														<path d="M35.585 24.1118V16.334H5.4151V24.1118" stroke="black"></path>
-													</g>
-													<defs>
-														<clipPath id="clip0"><rect width="41" height="35" fill="white"></rect></clipPath>
-													</defs>
-												</svg>
-											</div>
-											<div class="rvt-grid__item">
-												<div class="rvt-m-bottom-md">
-													<a href="/units/@child.Id" class="rvt-m-bottom-remove rvt-text-bold">@child.Name</a>
-													@if (string.IsNullOrWhiteSpace(child.Description))
-													{
-														<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-															@child.Description
-														</p>
-													}
-												</div>
-											</div>
-										</div>
+										}
 									}
-								}
-							</Content>
-						</Collapse>
-					}
-					@if (SupportRelationships.Count > 0)
-					{
-						<Collapse>
-							<Title>Supported Departments</Title>
-							<Content>
-								<ul class="rvt-list rvt-plain-list">
-									@foreach (var supportRelationship in SupportRelationships)
-									{
-										<li>
-											<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
-											@if (supportRelationship.SupportType != null)
-											{
-												<div>
-													<span style="font-size:smaller;">@supportRelationship.SupportType.Name</span>
-												</div>
-											}
-											@if (supportRelationship.Department.Description != null)
-											{
-												<div>
-													<span style="font-size:smaller;">@supportRelationship.Department.Description</span>
-												</div>
-											}
-										</li>
-									}
-								</ul>
-							</Content>
-						</Collapse>
-					}
-					@if (BuildingRelationships.Count > 0)
-					{
-						<Collapse>
-							<Title>Supported Buildings</Title>
-							<Content>
-								<ul class="rvt-list rvt-plain-list">
-									@foreach (var buildingRelationship in BuildingRelationships)
-									{
-										<li>
-											<a href="/departments/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
-											@if (string.IsNullOrWhiteSpace(buildingRelationship.Building.Address) == false || string.IsNullOrWhiteSpace(buildingRelationship.Building.City) == false)
-											{
-												<br />
-												<span style="font-size:smaller;">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
-											}
-										</li>
-									}
-								</ul>
-							</Content>
-						</Collapse>
-					}
+								</Content>
+							</Collapse>
+						}
+						@if (SupportRelationships.Count > 0)
+						{
+							<Collapse>
+								<Title>Supported Departments</Title>
+								<Content>
+									<ul class="rvt-list rvt-plain-list">
+										@foreach (var supportRelationship in SupportRelationships)
+										{
+											<li>
+												<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
+												@if (supportRelationship.SupportType != null)
+												{
+													<div>
+														<span style="font-size:smaller;">@supportRelationship.SupportType.Name</span>
+													</div>
+												}
+												@if (supportRelationship.Department.Description != null)
+												{
+													<div>
+														<span style="font-size:smaller;">@supportRelationship.Department.Description</span>
+													</div>
+												}
+											</li>
+										}
+									</ul>
+								</Content>
+							</Collapse>
+						}
+						@if (BuildingRelationships.Count > 0)
+						{
+							<Collapse>
+								<Title>Supported Buildings</Title>
+								<Content>
+									<ul class="rvt-list rvt-plain-list">
+										@foreach (var buildingRelationship in BuildingRelationships)
+										{
+											<li>
+												<a href="/departments/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
+												@if (string.IsNullOrWhiteSpace(buildingRelationship.Building.Address) == false || string.IsNullOrWhiteSpace(buildingRelationship.Building.City) == false)
+												{
+													<br />
+													<span style="font-size:smaller;">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
+												}
+											</li>
+										}
+									</ul>
+								</Content>
+							</Collapse>
+						}
+					</div>
 				</div>
-			</div>
+			</Loader>
 		</Authenticated>
 	</AuthenticatedView>
 </div>
 
 @code {
+	[Parameter]
+	public string UnitId { get; set; }
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private UnitResponse PageUnit = new UnitResponse();
 	private List<UnitMemberResponse> UnitMembers = new List<UnitMemberResponse>();
@@ -250,21 +254,24 @@
 	private AuthenticatedUser LoggedInUser;
 	private EntityPermissions UnitPermissions;
 	private Exception GeneralException;
-	[Parameter]
-	public string UnitId { get; set; }
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 
 	protected override async Task OnInitializedAsync()
 	{
 		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
 		if (LoggedInUser != null)
 		{
-			await Task.WhenAll(new[] { 
-				FetchUnit(), 
-				FetchUnitMembers(), 
-				FetchUnitChildren(), 
-				FetchSupportRelationships(), 
-				FetchBuildingRelationships() 
-			});
+			using (Loading())
+			{
+				await Task.WhenAll(new[] {
+					FetchUnit(),
+					FetchUnitMembers(),
+					FetchUnitChildren(),
+					FetchSupportRelationships(),
+					FetchBuildingRelationships()
+				});
+			}
 		}
 	}
 
