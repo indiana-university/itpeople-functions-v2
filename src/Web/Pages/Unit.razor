@@ -224,42 +224,26 @@
 									</Content>
 								</Collapse>
 							}
-							@if (SupportRelationships.Count > 0)
+							@if (BuildingRelationships.Count > 0)
 							{
-								<div class="rvt-m-bottom-lg">
-									<div class="rvt-collapsible rvt-collapsible--panel">
-										<h3 class="rvt-collapsible__title">
-											<button type="button" aria-expanded="true">
-												<rvt-icon name="chevron-right"></rvt-icon>
-												<span>Supported Departments</span>
-											</button>
-										</h3>
-										<div class="rvt-collapsible__content">
-											<div class="rvt-m-all-remove">
-												<ul class="rvt-list rvt-plain-list">
-													@foreach (var supportRelationship in SupportRelationships)
-													{
-														<li>
-															<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
-															@if (supportRelationship.SupportType != null)
-															{
-																<div>
-																	<span style="font-size:smaller">@supportRelationship.SupportType.Name</span>
-																</div>
-															}
-															@if (supportRelationship.Department.Description != null)
-															{
-																<div>
-																	<span style="font-size:smaller">@supportRelationship.Department.Description</span>
-																</div>
-															}
-														</li>
-													}
-												</ul>
-											</div>
-										</div>
-									</div>
-								</div>
+								<Collapse>
+									<Title>Supported Buildings</Title>
+									<Content>
+										<ul class="rvt-list rvt-plain-list">
+											@foreach (var buildingRelationship in BuildingRelationships)
+											{
+											<li>
+												<a href="/departments/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
+												@if (string.IsNullOrWhiteSpace(buildingRelationship.Building.Address) == false || string.IsNullOrWhiteSpace(buildingRelationship.Building.City) == false)
+												{
+													<br />
+													<span style="font-size:smaller">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
+												}
+											</li>
+											}
+										</ul>
+									</Content>
+								</Collapse>
 							}
 						</div>
 					</div>
@@ -275,10 +259,10 @@
 	private List<UnitMemberResponse> UnitMembers = new List<UnitMemberResponse>();
 	private List<UnitResponse> UnitChildren = new List<UnitResponse>();
 	private List<SupportRelationshipResponse> SupportRelationships = new List<SupportRelationshipResponse>();
+	private List<BuildingRelationship> BuildingRelationships = new List<BuildingRelationship>();
 	private AuthenticatedUser LoggedInUser;
 	private EntityPermissions CrudPerms;
 	private Exception GeneralException;
-
 	[Parameter]
 	public string UnitId { get; set; }
 
@@ -287,7 +271,7 @@
 		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
 		if (LoggedInUser != null)
 		{
-			await Task.WhenAll(new[] { FetchUnit(), FetchUnitMembers(), FetchUnitChildren(), FetchSupportRelationships() });
+			await Task.WhenAll(new[] { FetchUnit(), FetchUnitMembers(), FetchUnitChildren(), FetchSupportRelationships(), FetchBuildingRelationships() });
 		}
 	}
 
@@ -335,6 +319,16 @@
 			return;
 		}
 		SupportRelationships = await resp.Content.ReadFromJsonAsync<List<SupportRelationshipResponse>>();
+	}
+	private async Task FetchBuildingRelationships()
+	{
+		var resp = await Api().GetAsync($"/Units/{UnitId}/supportedBuildings");
+		if (resp.StatusCode != HttpStatusCode.OK)
+		{
+			GeneralException = new Exception($"Failed to fetch Supported Buildings for this Unit");
+			return;
+		}
+		BuildingRelationships = await resp.Content.ReadFromJsonAsync<List<BuildingRelationship>>();
 	}
 	private void GetEntityPermissions(HttpResponseMessage resp)
 	{
