@@ -4,14 +4,7 @@
 	<div class="rvt-collapsible rvt-collapsible--panel">
 		<h3 class="rvt-collapsible__title">
 			<button type="button" aria-expanded="@(Open ? "true" : "false")">
-				@if (Open)
-				{
-					<rvt-icon name="chevron-down" @onclick="ToggleOpenStatus"></rvt-icon>
-				}
-				else
-				{
-					<rvt-icon name="chevron-right" @onclick="ToggleOpenStatus"></rvt-icon>
-				}
+				<rvt-icon name="chevron-@(Open ? "down" : "right")" @onclick="ToggleOpenStatus"></rvt-icon>
 				<span>@Title</span>
 			</button>
 		</h3>
