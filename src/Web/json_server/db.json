@@ -13,7 +13,7 @@
       "campusEmail": "rswanso@iu.edu",
       "campus": "Bloomington",
       "expertise": "Wood-working,javascript,c#,mysql,unit-testing",
-      "responsibilities": "BizSysAnalysis;DataAdminAnalysis;DatabaseArchDesign;InstructionalTech;ItProjectMgt;ItSecurityPrivacy",
+      "responsibilities": "BizSysAnalysis,DataAdminAnalysis,DatabaseArchDesign,InstructionalTech,ItProjectMgt,ItSecurityPrivacy",
       "photoUrl": "https://a1cf74336522e87f135f-2f21ace9a6cf0052456644b80fa06d4f.ssl.cf2.rackcdn.com/images/characters/p-parks-and-recreation-nick-offerman.jpg",
       "departmentId": 1,
       "department": {
@@ -32,7 +32,7 @@
       "campusEmail": "lknope@iu.edu",
       "campus": "IUBLA",
       "expertise": "Canvasing,Organizing",
-      "responsibilities": "IT Leadership",
+      "responsibilities": "ITLeadership",
       "photoUrl": "http://pawneeindiana.com/wp-content/themes/g6f07bu02zdv3txfv7a8t621759/files/images/parks-and-recreation/leslie-knope.jpg",
       "departmentId": 1,
       "department": {
@@ -51,7 +51,7 @@
       "campusEmail": "lsebastian@iu.edu",
       "campus": "IUBLA",
       "expertise": "Horsin' around",
-      "responsibilities": "Being a horse",
+      "responsibilities": "None",
       "departmentId": 1,
       "department": {
         "id": 1,
@@ -69,7 +69,7 @@
       "campusEmail": "terry@pawnee.in.us",
       "campus": "Bloomington",
       "expertise": "screwing up",
-      "responsibilities": "butt of jokes",
+      "responsibilities": "None",
       "departmentId": 1,
       "department": {
         "id": 1,
@@ -211,8 +211,8 @@
       "personId": 1,
       "netId": "rswanso",
       "title": "Manager",
-      "role": 4,
-      "permissions": 1,
+      "role": "Leader",
+      "permissions": "Owner",
       "percentage": 75,
       "notes": "This guy gets a note!"
     },
@@ -222,8 +222,8 @@
       "personId": 2,
       "netId": "lknope",
       "title": "Developer",
-      "role": 2,
-      "permissions": 4,
+      "role": "Member",
+      "permissions": "ManageTools",
       "percentage": 100
     },
     {
@@ -232,8 +232,8 @@
       "personId": 4,
       "netId": "lsebastian",
       "title": "Outside consultant",
-      "role": 1,
-      "permissions": 2,
+      "role": "Related",
+      "permissions": "Viewer",
       "percentage": "100"
     },
     {
@@ -242,8 +242,8 @@
       "personId": 1,
       "netId": "rswanso",
       "percentage": 25,
-      "permissions": 3,
-      "role": 4,
+      "permissions": "Editor",
+      "role": "Leader",
       "title": "Manager"
     },
     {
@@ -251,12 +251,12 @@
       "personId": 5,
       "netId": "garryg",
       "title": "Person",
-      "role": 2,
+      "role": "Member",
       "percentage": 100,
       "id": 6
     },
     {
-      "permissions": 1,
+      "permissions": "Owner",
       "id": 7
     },
     {
@@ -264,8 +264,8 @@
       "personId": 7,
       "netId": "johndoe",
       "title": "Employee",
-      "role": 4,
-      "permissions": 1,
+      "role": "Leader",
+      "permissions": "Owner",
       "percentage": 100,
       "id": 8
     },
@@ -274,7 +274,7 @@
       "personId": 5,
       "netId": "garryg",
       "title": "Person",
-      "role": 2,
+      "role": "Member",
       "percentage": 100,
       "id": 9
     }
