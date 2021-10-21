@@ -117,7 +117,10 @@
 		Q = queryDict.Get(nameof(Q));
 		if(string.IsNullOrWhiteSpace(Q) == false)
 		{
-			await PerformSearch();
+			using (Loading())
+			{
+				await PerformSearch();
+			}
 		}
 	}
 
