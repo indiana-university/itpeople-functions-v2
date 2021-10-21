@@ -59,15 +59,19 @@
 						@if (string.IsNullOrWhiteSpace(PageUnit.Description) == false)
 						{
 							<div class="group-describer rvt-m-top-sm">
-								<span>Endpoint Management Services,  Log-Alert Administration, Windows Hosted Environment</span>
+								<span>@PageUnit.Description</span>
 							</div>
 						}
-						@if (string.IsNullOrWhiteSpace(PageUnit.Email) == false)
-						{
-							<div class="rvt-grid">
+						<div class="rvt-grid">
+							@if (string.IsNullOrWhiteSpace(PageUnit.Url) == false)
+							{
+								<a href="@PageUnit.Url" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Visit Website</a>
+							}
+							@if (string.IsNullOrWhiteSpace(PageUnit.Email) == false)
+							{
 								<a href="mailto:sct2@iu.edu" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Contact</a>
-							</div>
-						}
+							}
+						</div>
 					</section>
 					<DisplayException Ex=@GeneralException />
 				</div>
