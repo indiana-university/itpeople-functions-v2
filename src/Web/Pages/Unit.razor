@@ -15,19 +15,19 @@
 	<AuthenticatedView>
 		<NotAuthenticated>
 			<div class="rvt-bg-white rvt-p-tb-lg rvt-m-bottom-sm">
-				<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+				<div class="rvt-container rvt-container--senior rvt-container--center">
 					<p>
 						You must login to view this resource.
 					</p>
 					<p>
-						<a class="rvt-button" href="/SignIn?Destination=/Units">Log In</a>
+						<a class="rvt-button" href="/SignIn?Destination=/Units/@UnitId">Log In</a>
 					</p>
 				</div>
 			</div>
 		</NotAuthenticated>
 		<Authenticated>
 			<div class="rvt-bg-white rvt-p-tb-lg rvt-m-bottom-sm">
-				<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+				<div class="rvt-container rvt-container--senior rvt-container--center">
 					<div style="display: flex; justify-content: space-between; float: right;">
 						@if (CrudPerms.HasFlag(EntityPermissions.Delete))
 						{
@@ -58,7 +58,7 @@
 					<section class="">
 						@if (string.IsNullOrWhiteSpace(PageUnit.Description) == false)
 						{
-							<div class="group-describer rvt-m-top-sm">
+							<div class="rvt-m-top-sm">
 								<span>@PageUnit.Description</span>
 							</div>
 						}
@@ -69,7 +69,7 @@
 							}
 							@if (string.IsNullOrWhiteSpace(PageUnit.Email) == false)
 							{
-								<a href="mailto:sct2@iu.edu" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Contact</a>
+								<a href="mailto:@PageUnit.Email" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Contact</a>
 							}
 						</div>
 					</section>
@@ -77,7 +77,7 @@
 				</div>
 			</div>
 			<div class="rvt-bg-white rvt-p-tb-sm">
-				<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+				<div class="rvt-container rvt-container--senior rvt-container--center">
 					<div class="rvt-grid">
 						<div class="rvt-grid__item-6-lg-up">
 							<section class="">
@@ -95,8 +95,8 @@
 														{
 															<div class="rvt-grid">
 																<div class="rvt-grid__item rvt-border-bottom rvt-p-all-md" style="align-self: center;">
-																	<a href="/people/@member.Person.Id" data-modal-trigger="modal-edit-person" class="rvt-m-bottom-remove person-list-item-new-name rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
-																		<span class="viewIcons delFaceName _delete fl">@member.Person.Name</span>
+																	<a href="/people/@member.Person.Id" class="rvt-m-bottom-remove rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
+																		<span>@member.Person.Name</span>
 																	</a>
 																	<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
 																		@member.Title
@@ -146,7 +146,7 @@
 															</svg>
 														</div>
 														<div class="rvt-grid__item">
-															<a href="/units/@PageUnit.Parent.Id" class="rvt-m-bottom-remove related-group-item-name rvt-text-bold">@PageUnit.Parent.Name</a>
+															<a href="/units/@PageUnit.Parent.Id" class="rvt-m-bottom-remove rvt-text-bold">@PageUnit.Parent.Name</a>
 															@if (string.IsNullOrWhiteSpace(PageUnit.Parent.Description))
 															{
 																<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
@@ -180,8 +180,8 @@
 														</svg>
 													</div>
 													<div class="rvt-grid__item">
-														<div class="related-group rvt-m-bottom-md" id="user-research">
-															<a href="/units/@child.Id" class="rvt-m-bottom-remove related-group-item-name rvt-text-bold">@child.Name</a>
+														<div class="rvt-m-bottom-md" id="user-research">
+															<a href="/units/@child.Id" class="rvt-m-bottom-remove rvt-text-bold">@child.Name</a>
 															@if (string.IsNullOrWhiteSpace(child.Description))
 															{
 																<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
@@ -209,13 +209,13 @@
 													@if (supportRelationship.SupportType != null)
 													{
 														<div>
-															<span style="font-size:smaller">@supportRelationship.SupportType.Name</span>
+															<span style="font-size:smaller;">@supportRelationship.SupportType.Name</span>
 														</div>
 													}
 													@if (supportRelationship.Department.Description != null)
 													{
 														<div>
-															<span style="font-size:smaller">@supportRelationship.Department.Description</span>
+															<span style="font-size:smaller;">@supportRelationship.Department.Description</span>
 														</div>
 													}
 												</li>
@@ -237,7 +237,7 @@
 												@if (string.IsNullOrWhiteSpace(buildingRelationship.Building.Address) == false || string.IsNullOrWhiteSpace(buildingRelationship.Building.City) == false)
 												{
 													<br />
-													<span style="font-size:smaller">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
+													<span style="font-size:smaller;">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
 												}
 											</li>
 											}
