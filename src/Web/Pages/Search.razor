@@ -21,14 +21,14 @@
 			</p>
 		</NotAuthenticated>
 		<Authenticated>
-			<EditForm EditContext="@editContext" OnValidSubmit="SubmitForm">
+			<EditForm EditContext="@FormContext" OnValidSubmit="SubmitForm">
 				<DataAnnotationsValidator />
 				<div class="rvt-grid rvt-items-center rvt-justify-center">
 					<div class="rvt-grid__item">
-						<RivetInputText @bind-Value="Q" class="rvt-input-group__input" Label="Search Term" Description="Enter a search term it can match any Person, Unit, Department, or Building." Disabled=@(ShowLoader) />
+						<RivetInputText @bind-Value="Q" Label="Search Term" Description="Enter a search term it can match any Person, Unit, Department, or Building." Disabled=@(ShowLoader) />
 					</div>
 					<div class="rvt-grid__item-lg">
-						<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(formInvalid || ShowLoader)">
+						<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(FormInvalid || ShowLoader)">
 							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
 								<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-magnifying-glass"></use>
 							</svg>
@@ -93,8 +93,8 @@
 	private string Q = "";
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private Exception GeneralException;
-	private EditContext editContext;
-	private bool formInvalid = false;
+	private EditContext FormContext;
+	private bool FormInvalid = false;
 	private bool ShowLoader = false;
 	private bool HasSearched = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
@@ -108,8 +108,8 @@
 	protected override async Task OnInitializedAsync()
 	{
 		// Setup our editcontext
-		editContext = new EditContext(Q);
-		editContext.OnFieldChanged += HandleFieldChanged;
+		FormContext = new EditContext(Q);
+		FormContext.OnFieldChanged += HandleFieldChanged;
 
 		// Read the queryString from the Uri, if it has the value for Q set it and use it.
 		var query = new Uri(Navigation.Uri).Query;
@@ -123,7 +123,7 @@
 
 	private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
 	{
-		formInvalid = !editContext.Validate();
+		FormInvalid = !FormContext.Validate();
 		StateHasChanged();
 	}
 
@@ -185,6 +185,6 @@
 	}
 
 	public void Dispose(){
-		editContext.OnFieldChanged -= HandleFieldChanged;
+		FormContext.OnFieldChanged -= HandleFieldChanged;
 	}
 }
