@@ -1,0 +1,56 @@
+﻿@using Models
+@using Models.Enums
+@using System.Net
+@using Newtonsoft.Json
+
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Navigation
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+
+@code {
+	protected HttpClient Api() => ClientFactory.CreateClient("Api");
+	protected Exception GeneralException;
+	protected AuthenticatedUser LoggedInUser;
+
+	protected async Task SetLoggedInUser()
+	{
+		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+	}
+	protected async Task<(T Value, EntityPermissions Permissions)> Fetch<T>(string uri, string error = null)
+	{
+		var result = default(T);
+		HttpResponseMessage response = null;
+		var permissions = EntityPermissions.Get;
+		try
+		{
+			response = await Api().GetAsync(uri);
+			if (response.StatusCode != HttpStatusCode.OK)
+			{
+				var message = string.IsNullOrWhiteSpace(error)
+					? $"Failed to Get {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}"
+					: error;
+				GeneralException = new Exception(message);
+				return (result, permissions);
+			}
+			// The request succeeded, try to deserialize it.
+			var stringResult = await response.Content.ReadAsStringAsync();
+			// We have to use Newtonsoft to make sure our StringEnumConverter work.
+			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
+			// Pluck the user permissions from the response header. Eg. "GET, PUT"
+			var permsString = response.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+			// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+			foreach (var p in permsString.Split(','))
+			{
+				var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+				permissions |= ep;
+			}
+		}
+		catch (Exception ex)
+		{
+			GeneralException = ex;
+			return (result, permissions);
+		}
+
+		return (result, permissions);
+	}
+}
