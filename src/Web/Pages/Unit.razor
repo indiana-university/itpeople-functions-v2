@@ -119,92 +119,110 @@
 						<div class="rvt-grid__item--last rvt-grid__item-5-lg-up">
 							@if (PageUnit.Parent != null || UnitChildren.Count > 0)
 							{
-								<div class="rvt-m-bottom-lg">
-									<div class="rvt-collapsible rvt-collapsible--panel">
-										<h3 class="rvt-collapsible__title">
-											<button type="button" aria-expanded="true">
-												<rvt-icon name="chevron-down"></rvt-icon>
-												<span>Parent and Children</span>
-											</button>
-										</h3>
-										<div class="rvt-collapsible__content">
-											<div class="rvt-m-all-remove">
-												@if (PageUnit.Parent != null)
-												{
-													<div>
-														<div class="rvt-m-bottom-xl">
-															<div class="rvt-grid">
-																<div class="rvt-grid__item-2-sm-up">
-																	<svg width="100%" height="35" viewBox="0 0 41 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-																		<g clip-path="url(#clip0)">
-																			<rect width="41" height="35"></rect>
-																			<rect x="15.3528" y="0.5" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
-																			<rect x="15.3528" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
-																			<rect x="30.2056" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
-																			<rect x="0.5" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
-																			<line x1="20.0001" y1="23.71" x2="20.0001" y2="11.2905" stroke="black"></line>
-																			<path d="M35.585 24.1118V16.334H5.4151V24.1118" stroke="black"></path>
-																		</g>
-																		<defs>
-																			<clipPath id="clip0">
-																				<rect width="41" height="35" fill="white"></rect>
-																			</clipPath>
-																		</defs>
-																	</svg>
-																</div>
-																<div class="rvt-grid__item">
-																	<a href="/units/@PageUnit.Parent.Id" class="rvt-m-bottom-remove related-group-item-name rvt-text-bold">@PageUnit.Parent.Name</a>
-																	@if (string.IsNullOrWhiteSpace(PageUnit.Parent.Description))
-																	{
-																		<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-																			@PageUnit.Parent.Description
-																		</p>
-																	}
-
-																</div>
-															</div>
+								<Collapse>
+									<Title>Parent and Children</Title>
+									<Content>
+										@if (PageUnit.Parent != null)
+										{
+											<div>
+												<div class="rvt-m-bottom-xl">
+													<div class="rvt-grid">
+														<div class="rvt-grid__item-2-sm-up">
+															<svg width="100%" height="35" viewBox="0 0 41 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+																<g clip-path="url(#clip0)">
+																	<rect width="41" height="35"></rect>
+																	<rect x="15.3528" y="0.5" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
+																	<rect x="15.3528" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+																	<rect x="30.2056" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+																	<rect x="0.5" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+																	<line x1="20.0001" y1="23.71" x2="20.0001" y2="11.2905" stroke="black"></line>
+																	<path d="M35.585 24.1118V16.334H5.4151V24.1118" stroke="black"></path>
+																</g>
+																<defs>
+																	<clipPath id="clip0">
+																		<rect width="41" height="35" fill="white"></rect>
+																	</clipPath>
+																</defs>
+															</svg>
+														</div>
+														<div class="rvt-grid__item">
+															<a href="/units/@PageUnit.Parent.Id" class="rvt-m-bottom-remove related-group-item-name rvt-text-bold">@PageUnit.Parent.Name</a>
+															@if (string.IsNullOrWhiteSpace(PageUnit.Parent.Description))
+															{
+																<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
+																	@PageUnit.Parent.Description
+																</p>
+															}
 														</div>
 													</div>
-												}
-												@if (UnitChildren.Count > 0)
-												{
-													@foreach (var child in UnitChildren)
+												</div>
+											</div>
+										}
+										@if (UnitChildren.Count > 0)
+										{
+											@foreach (var child in UnitChildren)
+											{
+												<div class="rvt-grid">
+													<div class="rvt-grid__item-2-sm-up">
+														<svg width="100%" height="35" viewBox="0 0 41 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+															<g clip-path="url(#clip0)">
+																<rect width="41" height="35"></rect>
+																<rect x="15.3528" y="0.5" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+																<rect x="15.3528" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
+																<rect x="30.2056" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
+																<rect x="0.5" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
+																<line x1="20.0001" y1="23.71" x2="20.0001" y2="11.2905" stroke="black"></line>
+																<path d="M35.585 24.1118V16.334H5.4151V24.1118" stroke="black"></path>
+															</g>
+															<defs>
+																<clipPath id="clip0"><rect width="41" height="35" fill="white"></rect></clipPath>
+															</defs>
+														</svg>
+													</div>
+													<div class="rvt-grid__item">
+														<div class="related-group rvt-m-bottom-md" id="user-research">
+															<a href="/units/@child.Id" class="rvt-m-bottom-remove related-group-item-name rvt-text-bold">@child.Name</a>
+															@if (string.IsNullOrWhiteSpace(child.Description))
+															{
+																<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
+																	@child.Description
+																</p>
+															}
+														</div>
+													</div>
+												</div>
+											}
+										}
+									</Content>
+								</Collapse>
+							}
+							@if (SupportRelationships.Count > 0)
+							{
+								<Collapse>
+									<Title>Supported Departments</Title>
+									<Content>
+										<ul class="rvt-list rvt-plain-list">
+											@foreach (var supportRelationship in SupportRelationships)
+											{
+												<li>
+													<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
+													@if (supportRelationship.SupportType != null)
 													{
-														<div class="rvt-grid">
-															<div class="rvt-grid__item-2-sm-up">
-																<svg width="100%" height="35" viewBox="0 0 41 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-																	<g clip-path="url(#clip0)">
-																		<rect width="41" height="35"></rect>
-																		<rect x="15.3528" y="0.5" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
-																		<rect x="15.3528" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
-																		<rect x="30.2056" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
-																		<rect x="0.5" y="24.21" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
-																		<line x1="20.0001" y1="23.71" x2="20.0001" y2="11.2905" stroke="black"></line>
-																		<path d="M35.585 24.1118V16.334H5.4151V24.1118" stroke="black"></path>
-																	</g>
-																	<defs>
-																		<clipPath id="clip0"><rect width="41" height="35" fill="white"></rect></clipPath>
-																	</defs>
-																</svg>
-															</div>
-															<div class="rvt-grid__item">
-																<div class="related-group rvt-m-bottom-md" id="user-research">
-																	<a href="/units/@child.Id" class="rvt-m-bottom-remove related-group-item-name rvt-text-bold">@child.Name</a>
-																	@if (string.IsNullOrWhiteSpace(child.Description))
-																	{
-																		<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-																			@child.Description
-																		</p>
-																	}
-																</div>
-															</div>
+														<div>
+															<span style="font-size:smaller">@supportRelationship.SupportType.Name</span>
 														</div>
 													}
-												}
-											</div>
-										</div>
-									</div>
-								</div>
+													@if (supportRelationship.Department.Description != null)
+													{
+														<div>
+															<span style="font-size:smaller">@supportRelationship.Department.Description</span>
+														</div>
+													}
+												</li>
+											}
+										</ul>
+									</Content>
+								</Collapse>
 							}
 							@if (SupportRelationships.Count > 0)
 							{
