@@ -29,7 +29,7 @@
 							<rvt-icon name="trash"></rvt-icon>
 							<span class="rvt-sr-only">Delete Unit</span>
 						</a>
-						@if (PageUnit.Active)
+						@if (CurrentUnit.Active)
 						{
 							<a class="rvt-button rvt-m-right-xs" href="/Units/TODO" title="Archive Unit">
 								<rvt-icon name="lock-closed"></rvt-icon>
@@ -47,22 +47,22 @@
 					}
 				</div>
 				<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">
-					@PageUnit.Name
+					@CurrentUnit.Name
 				</h1>
-				@if (string.IsNullOrWhiteSpace(PageUnit.Description) == false)
+				@if (string.IsNullOrWhiteSpace(CurrentUnit.Description) == false)
 				{
 					<div class="rvt-m-top-sm">
-						<span>@PageUnit.Description</span>
+						<span>@CurrentUnit.Description</span>
 					</div>
 				}
 				<div class="rvt-grid">
-					@if (string.IsNullOrWhiteSpace(PageUnit.Url) == false)
+					@if (string.IsNullOrWhiteSpace(CurrentUnit.Url) == false)
 					{
-						<a href="@PageUnit.Url" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Visit Website</a>
+						<a href="@CurrentUnit.Url" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Visit Website</a>
 					}
-					@if (string.IsNullOrWhiteSpace(PageUnit.Email) == false)
+					@if (string.IsNullOrWhiteSpace(CurrentUnit.Email) == false)
 					{
-						<a href="mailto:@PageUnit.Email" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Contact</a>
+						<a href="mailto:@CurrentUnit.Email" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Contact</a>
 					}
 				</div>
 				<DisplayException Ex=@GeneralException />
@@ -107,12 +107,12 @@
 						</section>
 					</div>
 					<div class="rvt-grid__item--last rvt-grid__item-5-lg-up">
-						@if (PageUnit.Parent != null || UnitChildren.Count > 0)
+						@if (CurrentUnit.Parent != null || UnitChildren.Count > 0)
 						{
 							<Collapse>
 								<Title>Parent and Children</Title>
 								<Content>
-									@if (PageUnit.Parent != null)
+									@if (CurrentUnit.Parent != null)
 									{
 										<div>
 											<div class="rvt-m-bottom-xl">
@@ -136,11 +136,11 @@
 														</svg>
 													</div>
 													<div class="rvt-grid__item">
-														<a href="/units/@PageUnit.Parent.Id" class="rvt-m-bottom-remove rvt-text-bold">@PageUnit.Parent.Name</a>
-														@if (string.IsNullOrWhiteSpace(PageUnit.Parent.Description))
+														<a href="/units/@CurrentUnit.Parent.Id" class="rvt-m-bottom-remove rvt-text-bold">@CurrentUnit.Parent.Name</a>
+														@if (string.IsNullOrWhiteSpace(CurrentUnit.Parent.Description))
 														{
 															<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-																@PageUnit.Parent.Description
+																@CurrentUnit.Parent.Description
 															</p>
 														}
 													</div>
@@ -246,7 +246,7 @@
 	[Parameter]
 	public string UnitId { get; set; }
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
-	private UnitResponse PageUnit = new UnitResponse();
+	private UnitResponse CurrentUnit = new UnitResponse();
 	private List<UnitMemberResponse> UnitMembers = new List<UnitMemberResponse>();
 	private List<UnitResponse> UnitChildren = new List<UnitResponse>();
 	private List<SupportRelationshipResponse> SupportRelationships = new List<SupportRelationshipResponse>();
@@ -278,7 +278,7 @@
 	private async Task FetchUnit()
 	{
 		var response = await Fetch<UnitResponse>($"/Units/{UnitId}");
-		PageUnit = response.Value;
+		CurrentUnit = response.Value;
 		UnitPermissions = response.Permissions;
 	}
 	private async Task FetchUnitMembers()
