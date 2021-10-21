@@ -23,7 +23,7 @@
                     <button type="submit" class="rvt-button" disabled="@(formInvalid || submitting)">
                         @if(submitting)
                         {
-                            <div class="rvt-loader rvt-display-inline-block" aria-label="Submitting device"></div>
+                            <div class="rvt-loader rvt-display-inline-block" aria-label="Submitting"></div>
                             <span class="rvt-m-left-xs">@SubmitButtonText</span>
                         }
                         else
@@ -31,7 +31,7 @@
                             @SubmitButtonText
                         }
                     </button>
-                    <button type="button" class="rvt-button rvt-button--secondary" data-modal-close=@Id>Cancel</button>
+                    @* <button type="button" class="rvt-button rvt-button--secondary" data-modal-close=@Id>Cancel</button> *@
                 </div>
             </EditForm>
         </div>
