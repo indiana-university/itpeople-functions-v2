@@ -211,8 +211,8 @@
       "personId": 1,
       "netId": "rswanso",
       "title": "Manager",
-      "role": 4,
-      "permissions": 1,
+      "role": "Leader",
+      "permissions": "Owner",
       "percentage": 75,
       "notes": "This guy gets a note!"
     },
@@ -222,8 +222,8 @@
       "personId": 2,
       "netId": "lknope",
       "title": "Developer",
-      "role": 2,
-      "permissions": 4,
+      "role": "Member",
+      "permissions": "ManageTools",
       "percentage": 100
     },
     {
@@ -232,8 +232,8 @@
       "personId": 4,
       "netId": "lsebastian",
       "title": "Outside consultant",
-      "role": 1,
-      "permissions": 2,
+      "role": "Related",
+      "permissions": "Viewer",
       "percentage": "100"
     },
     {
@@ -242,8 +242,8 @@
       "personId": 1,
       "netId": "rswanso",
       "percentage": 25,
-      "permissions": 3,
-      "role": 4,
+      "permissions": "Editor",
+      "role": "Leader",
       "title": "Manager"
     },
     {
@@ -251,12 +251,12 @@
       "personId": 5,
       "netId": "garryg",
       "title": "Person",
-      "role": 2,
+      "role": "Member",
       "percentage": 100,
       "id": 6
     },
     {
-      "permissions": 1,
+      "permissions": "Owner",
       "id": 7
     },
     {
@@ -264,8 +264,8 @@
       "personId": 7,
       "netId": "johndoe",
       "title": "Employee",
-      "role": 4,
-      "permissions": 1,
+      "role": "Leader",
+      "permissions": "Owner",
       "percentage": 100,
       "id": 8
     },
@@ -274,7 +274,7 @@
       "personId": 5,
       "netId": "garryg",
       "title": "Person",
-      "role": 2,
+      "role": "Member",
       "percentage": 100,
       "id": 9
     }

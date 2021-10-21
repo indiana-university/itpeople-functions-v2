@@ -1,0 +1,193 @@
+@using Models
+@using RivetBlazor.Components
+@using web.Shared
+@using System.Web
+@using System.Net
+@using Newtonsoft.Json
+@inject NavigationManager Navigation
+@inject IHttpClientFactory ClientFactory
+@implements IDisposable
+@page "/Search"
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<h1 class="rvt-ts-xxl">Search</h1>
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=/Search?q=@HttpUtility.UrlEncode(Q)">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<EditForm EditContext="@FormContext" OnValidSubmit="SubmitForm">
+				<DataAnnotationsValidator />
+				<div class="rvt-grid rvt-items-center rvt-justify-center">
+					<div class="rvt-grid__item">
+						<RivetInputText @bind-Value="Q" Label="Search Term" Description="Enter a search term it can match any Person, Unit, Department, or Building." Disabled=@(ShowLoader) />
+					</div>
+					<div class="rvt-grid__item-lg">
+						<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(FormInvalid || ShowLoader)">
+							<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+								<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-magnifying-glass"></use>
+							</svg>
+							<span class="rvt-sr-only">magnifying-glass</span>
+							<span class="rvt-p-left-xxs rvt-p-top-xxs">Search</span>
+						</button>
+					</div>
+				</div>
+			</EditForm>
+			<div class="rvt-p-bottom-lg"/>
+			<DisplayException Ex=@GeneralException />
+			@if (ShowLoader)
+			{
+				<div class="rvt-flex rvt-items-center rvt-justify-center rvt-m-bottom-sm">
+					<div class="rvt-loader" aria-label="Content loading"></div>
+				</div>
+			}
+			else if(HasSearched)
+			{
+				<h2 class="rvt-ts-xl">Results for "@Q"</h2>
+				<div class="rvt-tabs">
+					<div class="rvt-tabs__tablist" role="tablist" aria-label="Rivet tabs">
+						<button class="rvt-tabs__tab" role="tab" aria-selected="true" data-tab="tab-people" id="t-people">
+							People (@People.Count())
+						</button>
+						<button class="rvt-tabs__tab" role="tab" aria-selected="false" data-tab="tab-units" id="t-units" tabindex="-1">
+							Units (@Units.Count())
+						</button>
+						<button class="rvt-tabs__tab" role="tab" aria-selected="false" data-tab="tab-departments" id="t-departments" tabindex="-1">
+							Departments (@Departments.Count())
+						</button>
+						<button class="rvt-tabs__tab" role="tab" aria-selected="false" data-tab="tab-buildings" id="t-buildings" tabindex="-1">
+							Buildings (@Buildings.Count())
+						</button>
+					</div>
+					<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-people" aria-labelledby="t-people">
+						<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">People</div>
+						<GridListItems Collection=@People LinkText=@(p => p.Name) LinkUri=@(p => $"/People/{HttpUtility.UrlEncode(p.Netid)}") Details=@(p => p.Position) />
+					</div>
+					<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-units" aria-labelledby="t-units" hidden="">
+						<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">Units</div>
+						<GridListItems Collection=@Units LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) Archived=@(u => !u.Active) />
+					</div>
+					<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-departments" aria-labelledby="t-departments" hidden="">
+						<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">Departments</div>
+						<GridListItems Collection=@Departments LinkText=@(d => d.Name) LinkUri=@(d => $"/Departments/{d.Id}") Details=@(d => d.Description) />
+					</div>
+					<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-buildings" aria-labelledby="t-buildings" hidden="">
+						<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">Buildings</div>
+						<GridListItems Collection=@Buildings LinkText=@(b => b.Name) LinkUri=@(b => $"/Buildings/{b.Id}") Details=@(b => b.Address) />
+					</div>
+				</div>
+			}
+			else
+			{
+				<p>Please enter a search term and click the Search button.</p>
+			}
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+@code {
+	private string Q = "";
+	private HttpClient Api() => ClientFactory.CreateClient("Api");
+	private Exception GeneralException;
+	private EditContext FormContext;
+	private bool FormInvalid = false;
+	private bool ShowLoader = false;
+	private bool HasSearched = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+
+	private IEnumerable<UnitResponse> Units = new List<UnitResponse>();
+	private IEnumerable<Person> People = new List<Person>();
+	private IEnumerable<Department> Departments = new List<Department>();
+	private IEnumerable<Building> Buildings = new List<Building>();
+	
+
+	protected override async Task OnInitializedAsync()
+	{
+		// Setup our editcontext
+		FormContext = new EditContext(Q);
+		FormContext.OnFieldChanged += HandleFieldChanged;
+
+		// Read the queryString from the Uri, if it has the value for Q set it and use it.
+		var query = new Uri(Navigation.Uri).Query;
+		var queryDict = HttpUtility.ParseQueryString(query);
+		Q = queryDict.Get(nameof(Q));
+		if(string.IsNullOrWhiteSpace(Q) == false)
+		{
+			using (Loading())
+			{
+				await PerformSearch();
+			}
+		}
+	}
+
+	private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
+	{
+		FormInvalid = !FormContext.Validate();
+		StateHasChanged();
+	}
+
+	private async Task SubmitForm()
+	{
+		using (Loading())
+		{
+			// Reset GeneralException
+			GeneralException = null;
+
+			// Update the browser's URI to match the new Q
+			var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+			Navigation.NavigateTo($"{uri.AbsolutePath}?q={HttpUtility.UrlEncode(Q)}");
+
+			await PerformSearch();
+		}
+	}
+
+	private async Task PerformSearch()
+	{
+		HasSearched = true;
+		await Task.WhenAll(new[] { SearchUnits(), SearchPeople(), SearchDepartments(), SearchBuildings() });
+	}
+	
+	private async Task SearchUnits() => Units = await GetWithErrorHandling<List<UnitResponse>>($"/Units?q={HttpUtility.UrlEncode(Q)}");
+	private async Task SearchPeople() => People = await GetWithErrorHandling<List<Person>>($"/People?q={HttpUtility.UrlEncode(Q)}");
+	private async Task SearchDepartments() => Departments = await GetWithErrorHandling<List<Department>>($"/Departments?q={HttpUtility.UrlEncode(Q)}");
+	private async Task SearchBuildings() => Buildings = await GetWithErrorHandling<List<Building>>($"/Buildings?q={HttpUtility.UrlEncode(Q)}");
+	
+	private async Task<T> GetWithErrorHandling<T>(string uri, string error = null)
+	{
+		var result = default(T);
+
+		try
+		{
+			var resp = await Api().GetAsync(uri);
+
+			if(resp.StatusCode != HttpStatusCode.OK)
+			{
+				var message = string.IsNullOrWhiteSpace(error)
+					? $"Failed to Get {resp.RequestMessage.RequestUri} Status {resp.StatusCode} {resp.ReasonPhrase}"
+					: error;
+				GeneralException = new Exception(message);
+				return result;
+			}
+			
+			// The request succeeded, try to deserialize it.
+			var stringResult = await resp.Content.ReadAsStringAsync();
+			// We have to use Newtonsoft to make sure our StringEnumConverter work.
+			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
+		}
+		catch(Exception ex)
+		{
+			GeneralException = ex;
+			return result;
+		}
+		
+		return result;
+	}
+
+	public void Dispose(){
+		FormContext.OnFieldChanged -= HandleFieldChanged;
+	}
+}
