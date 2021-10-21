@@ -3,16 +3,26 @@
 <div class="rvt-m-bottom-lg">
 	<div class="rvt-collapsible rvt-collapsible--panel">
 		<h3 class="rvt-collapsible__title">
-			<button type="button" aria-expanded="true">
-				<rvt-icon name="chevron-right"></rvt-icon>
+			<button type="button" aria-expanded="@(Open ? "true" : "false")">
+				@if (Open)
+				{
+					<rvt-icon name="chevron-down" @onclick="ToggleOpenStatus"></rvt-icon>
+				}
+				else
+				{
+					<rvt-icon name="chevron-right" @onclick="ToggleOpenStatus"></rvt-icon>
+				}
 				<span>@Title</span>
 			</button>
 		</h3>
-		<div class="rvt-collapsible__content">
-			<div class="rvt-m-all-remove">
-				@Content
+		@if (Open)
+		{
+			<div class="rvt-collapsible__content">
+				<div class="rvt-m-all-remove">
+					@Content
+				</div>
 			</div>
-		</div>
+		}
 	</div>
 </div>
 
@@ -20,12 +30,20 @@
 	[Parameter]
 	public RenderFragment Title { get; set; }
 
-    [Parameter]
+	[Parameter]
 	public RenderFragment Content { get; set; }
+
+	[Parameter]
+	public bool Open { get; set; } = true;
 
 
 	protected override async Task OnInitializedAsync()
 	{
+	}
+
+	private void ToggleOpenStatus()
+	{
+		Open = !Open;
 	}
 
 	public void Dispose()
