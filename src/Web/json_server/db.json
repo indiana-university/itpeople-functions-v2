@@ -32,7 +32,7 @@
       "campusEmail": "lknope@iu.edu",
       "campus": "IUBLA",
       "expertise": "Canvasing,Organizing",
-      "responsibilities": "IT Leadership",
+      "responsibilities": "BizSysAnalysis,InstructionalTech,ItProjectMgt,ItSecurityPrivacy",
       "photoUrl": "http://pawneeindiana.com/wp-content/themes/g6f07bu02zdv3txfv7a8t621759/files/images/parks-and-recreation/leslie-knope.jpg",
       "departmentId": 1,
       "department": {
@@ -51,7 +51,7 @@
       "campusEmail": "lsebastian@iu.edu",
       "campus": "IUBLA",
       "expertise": "Horsin' around",
-      "responsibilities": "Being a horse",
+      "responsibilities": "DatabaseArchDesign,InstructionalTech,ItProjectMgt,ItSecurityPrivacy",
       "departmentId": 1,
       "department": {
         "id": 1,
@@ -69,7 +69,7 @@
       "campusEmail": "terry@pawnee.in.us",
       "campus": "Bloomington",
       "expertise": "screwing up",
-      "responsibilities": "butt of jokes",
+      "responsibilities": "BizSysAnalysis,DataAdminAnalysis,DatabaseArchDesign,InstructionalTech",
       "departmentId": 1,
       "department": {
         "id": 1,
