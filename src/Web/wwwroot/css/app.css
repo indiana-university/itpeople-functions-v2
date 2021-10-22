@@ -52,3 +52,36 @@ a, .btn-link {
     padding-bottom: 2em;
     margin-bottom: 2em;
 }
+button.expanded svg {
+    transform: rotate(180deg);
+  }
+  .m-top-sm, .rvt-m-top-sm {
+    margin-top: 1rem!important;
+}
+body {
+    color: #333;
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+}
+.rvt-grid__item {
+    max-width: 100%;
+    -ms-flex-preferred-size: 0;
+    flex-basis: 0;
+    -ms-flex-positive: 1;
+    flex-grow: 1;
+    padding: 0 .75rem;
+    position: relative;
+}
+
+.rvt-grid {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    margin-right: -.75rem;
+    margin-left: -.75rem;
+}
+button {
+    overflow: visible;
+}
