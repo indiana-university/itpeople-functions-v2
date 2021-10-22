@@ -181,6 +181,7 @@
                                                                     <li><span class="rvt-badge">@Interest</span></li>
                                                                 </ul>
                                                             }
+                                                            <p>@person.Expertise</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -296,7 +297,7 @@
 
     private bool isExpanded = false;
     private bool isInterestEntered = false;
-    private string EnteredTerm {get; set;} ="";
+    private string EnteredTerm;
     protected bool ShowLoader = false;
 
     protected IDisposable Loading()
@@ -403,7 +404,6 @@
     }
     private async Task UpdateInterests()
     {
-        @* TODO collect enterd interests and update person's expertise *@
         InterestList.Add(EnteredTerm);
         try
         {
@@ -432,31 +432,30 @@
     {
         foreach (var member in peopleList)
         {
-                Console.WriteLine($"inside foreach ...{member.Responsibilities.ToString().Split(',').Count()}");
-
             if (member.Responsibilities.ToString().Split(',').Count() == 0 && member.Netid == NetId)
             {
-                Console.WriteLine($"inside post ...");
+                formResponse = await Api().PostAsJsonAsync<Person>("/people", member);
+            }
+            else if (member.Expertise.Split(',').Count() == 0 && member.Netid == NetId)
+            {
                 formResponse = await Api().PostAsJsonAsync<Person>("/people", member);
             }
             else if (member.Netid == NetId)
             {
-                Console.WriteLine($"inside Put ...");
                 string memberOutput = JsonConvert.SerializeObject(member);
                 var deserializedMember = JsonConvert.DeserializeObject<Person>(memberOutput);
                 deserializedMember.Responsibilities = person.Responsibilities;
-                InterestList.Select(e => e = deserializedMember.Expertise);
+                deserializedMember.Expertise = InterestList.Aggregate((a, b) => a + ", " + b);
                 formResponse = await Api().PutAsJsonAsync<Person>($"/people/{deserializedMember.Id}", deserializedMember);
 
-            }
+
+            }            
         }
 
         if (formResponse.IsSuccessStatusCode == true)
         { 
             string responsemsg = await formResponse.Content.ReadAsStringAsync();
             updatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg);
-            Console.WriteLine($"inside formResponse ...{updatedPerson.Responsibilities.ToString()}");
-            Console.WriteLine($"inside formResponse ...{updatedPerson.Expertise}");
             UpdateInput(updatedPerson);
             await form.Close();
         }
