@@ -34,195 +34,245 @@
 </div>
  
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
-	<AuthenticatedView>
-		<NotAuthenticated>
-			<p>
-				You must login to view this resource.
-			</p>
-			<p>
-				<a class="rvt-button" href="/SignIn?Destination=/People">Log In</a>
-			</p>
-		</NotAuthenticated>
-		<Authenticated>
-        @if( peopleList.Count() != 0)
-        {            
-			@foreach (var person in peopleList)
-            {               
-                <div>
-                    <div class="rvt-container" style="max-width: 1440px; margin: auto;">
-                        <div class="rvt-bg-white">
-                            <div class="rvt-grid" style="justify-content: center;">
-                                <div class="rvt-grid__item-9-md-up rvt-text-center rvt-m-top-md">
-                                    <h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@person.Name</h1>
-                                    <div class="rvt-ts-26">@person.Position</div>
+    @if (ShowLoader)
+    {
+        <div class="rvt-flex rvt-items-center rvt-justify-center rvt-m-bottom-sm">
+            <div class="rvt-loader" aria-label="Content loading"></div>
+        </div>
+    }
+    else
+    {
+
+        <AuthenticatedView>
+            <NotAuthenticated>
+                <p>
+                    You must login to view this resource.
+                </p>
+                <p>
+                    <a class="rvt-button" href="/SignIn?Destination=/People">Log In</a>
+                </p>
+            </NotAuthenticated>
+            <Authenticated>
+            @if( peopleList.Count() != 0)
+            {            
+                @foreach (var person in peopleList)
+                {               
+                    <div>
+                        <div class="rvt-container" style="max-width: 1440px; margin: auto;">
+                            <div class="rvt-bg-white">
+                                <div class="rvt-grid" style="justify-content: center;">
+                                    <div class="rvt-grid__item-9-md-up rvt-text-center rvt-m-top-md">
+                                        <h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@person.Name</h1>
+                                        <div class="rvt-ts-26">@person.Position</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>                
-                <div class="rvt-bg-white">
-                    <div class="rvt-container" style="max-width: 1440px; margin: auto;">
-                        <div class="rvt-grid rvt-p-top-lg" data-testid="profile-page">
-                            <div class="rvt-grid__item-6-md-up rvt-p-all-lg">
-                                <div class="rvt-grid">
-                                    <div class="rvt-grid__item rvt-border-all rvt-border-radius rvt-bg-white" style="overflow: auto;">
-                                        <div class="rvt-grid">
-                                            <div class="rvt-grid__item rvt-bg-cream rvt-border-bottom rvt-p-all-xs rvt-p-left-md rvt-p-right-md rvt-ts-18 rvt-text-bold" style="color: rgb(51, 51, 51);">Contact Information</div>
-                                        </div>
-                                        <div class="rvt-grid">
-                                            <div class="rvt-grid__item rvt-p-all-md">
-                                                <div class="list-dividers">
-                                                    <div>
-                                                        <div><strong>Location: </strong>@person.Location</div>
-                                                        <div><strong>Campus: </strong>@person.Campus</div>
-                                                        <div><strong>Email: </strong><a href="mailto:@person.CampusEmail">@person.CampusEmail</a></div>
-                                                        <div><strong>Phone: </strong>@person.CampusPhone</div>
-                                                        <div><strong>Department: </strong><a href="/departments/@person.DepartmentId">@person.Department.Name</a></div>
-                                                    </div>
-                                                    <div>
-                                                        <div style="float: right;">                                                           
-                                                            <button type="button" title="Edit Responsibilities" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-r" @onclick="@(e => EditResponsibilities())">
-                                                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                                                                    <use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-pencil"></use>
-                                                                </svg>
-                                                                <span class="rvt-m-left-xs rvt-sr-only">Edit Responsibilities</span>
-                                                            </button>  
-                                                            <ModalForm Id="modal-form-r" Title="Edit Responsibilities" SubmitButtonText="Update" Item=@person.Responsibilities OnSubmit=@UpdateResponsibilities @ref=form>
-                                                                <RivetInputFlag @bind-Value="SelectedResponsibilities" Description="Check all the relevant responsibilities performed"  Inline=@inline />
-                                                            </ModalForm>
-                                                        </div>
-                                                        <h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
-                                                        <p>What kinds of work do you do on a day-to-day basis?</p>                                                  
-                                                            @* <ul class="rvt-list rvt-plain-list">
-                                                                <li>@SelectedResponsibilities</li>
-                                                            </ul>  *@
-                                                            @foreach (var item in SelectedResponsibilities.ToString().Split(','))
+                    </div>                
+                    <div class="rvt-bg-white">
+                        <div class="rvt-container" style="max-width: 1440px; margin: auto;">
+                            <div class="rvt-grid rvt-p-top-lg" data-testid="profile-page">
+                                <div class="rvt-grid__item-6-md-up rvt-p-all-lg">
+                                    <div class="rvt-grid">
+                                        <div class="rvt-grid__item rvt-border-all rvt-border-radius rvt-bg-white" style="overflow: auto;">
+                                            <div class="rvt-grid">
+                                                <div class="rvt-grid__item rvt-bg-cream rvt-border-bottom rvt-p-all-xs rvt-p-left-md rvt-p-right-md rvt-ts-18 rvt-text-bold" style="color: rgb(51, 51, 51);">Contact Information</div>
+                                            </div>
+                                            <div class="rvt-grid">
+                                                <div class="rvt-grid__item rvt-p-all-md">
+                                                    <div class="list-dividers">
+                                                        <div>
+                                                            @if (@person.Location != null)
                                                             {
-                                                                <ul class="rvt-list rvt-plain-list">
-                                                                    <li>@GetEnumDisplayName(item)</li>
-                                                                </ul>
+                                                                <div><strong>Location: </strong>@person.Location</div>
+
                                                             }
-                                                            
-                                                            @* @foreach (var selecedEnum in SelectedResps)
-                                                            {
-                                                                <ul class="rvt-list rvt-plain-list">
-                                                                    <li>@selecedEnum</li>
-                                                                </ul>
-                                                            }   *@
-                                                            
-                                                    </div>
-                                                    <div>
-                                                         <div style="float: right;">                                                            
-                                                            <button type="button" title="Edit Interests" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-i" @onclick="@(e => UpdateInterests())">
-                                                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                                                                    <use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-pencil"></use>
-                                                                </svg>
-                                                                <span class="rvt-m-left-xs rvt-sr-only">Edit Interests</span>
-                                                            </button>
-                                                            <div class="rvt-modal" id="modal-form-i" role="dialog" aria-labelledby="modal-form-i-title" aria-hidden="true" tabindex="-1" current="">  
-                                                                <div class="rvt-modal__inner">
-                                                                    <header class="rvt-modal__header">
-                                                                        <h1 class="rvt-modal__title" id="modal-form-title">Edit Interests</h1>
-                                                                    </header>
-                                                                    <div class="rvt-modal__body">
-                                                                        <EditForm OnValidSubmit="UpdateInterests" EditContext="@editContext">
-                                                                            <DataAnnotationsValidator />                                                                            
-                                                                            <div class="rvt-modal__body">
-                                                                                <ul class="rvt-list rvt-inline-list"></ul>
-                                                                                <div>
-                                                                                    <div class="rvt-input rvt-m-bottom-sm">                                                                                        
-                                                                                        <label for="search" class="rvt-sr-only">Search</label>
-                                                                                        <input id="search" class="rvt-input-group__input" aria-describedby="" aria-invalid="false" type="text" name="q" input="[object Object]" meta="[object Object]" value=""> 
+                                                            <div><strong>Campus: </strong>@person.Campus</div>
+                                                            <div><strong>Email: </strong><a href="mailto:@person.CampusEmail">@person.CampusEmail</a></div>
+                                                            <div><strong>Phone: </strong>@person.CampusPhone</div>
+                                                            <div><strong>Department: </strong><a href="/departments/@person.DepartmentId">@person.Department.Name</a></div>
+                                                        </div>
+                                                        <div>
+                                                            <div style="float: right;">                                                           
+                                                                <button type="button" title="Edit Responsibilities" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-r">
+                                                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                                                        <use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-pencil"></use>
+                                                                    </svg>
+                                                                    <span class="rvt-m-left-xs rvt-sr-only">Edit Responsibilities</span>
+                                                                </button>  
+                                                                <ModalForm Id="modal-form-r" Title="Edit Responsibilities" SubmitButtonText="Update" Item=@person.Responsibilities OnSubmit=@UpdateResponsibilities @ref=form>
+                                                                    <RivetInputFlag @bind-Value="SelectedResponsibilities" Description="Check all the relevant responsibilities performed"  Inline=@inline />
+                                                                </ModalForm>
+                                                            </div>
+                                                            <h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
+                                                            <p>What kinds of work do you do on a day-to-day basis?</p>                                                 
+                                                                
+                                                                @foreach (var item in person.Responsibilities.ToString().Split(',').Select(r => r.Trim()))
+                                                                {
+                                                                    <ul class="rvt-list rvt-plain-list">
+                                                                        <li>@GetEnumDisplayName(item)</li>
+                                                                    </ul>
+                                                                }
+                                                        </div>
+                                                        <div>
+                                                            <div style="float: right;">                                                            
+                                                                <button title="Edit Interests" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-i">
+                                                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                                                        <use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-pencil"></use>
+                                                                    </svg>
+                                                                    <span class="rvt-m-left-xs rvt-sr-only">Edit Interests</span>
+                                                                </button>
+                                                                <div class="rvt-modal" id="modal-form-i" role="dialog" aria-labelledby="modal-form-i-title" aria-hidden="true" tabindex="-1" current="">  
+                                                                    <div class="rvt-modal__inner">
+                                                                        <header class="rvt-modal__header">
+                                                                            <h1 class="rvt-modal__title" id="modal-form-title">Edit Interests</h1>
+                                                                        </header>
+                                                                        
+                                                                            <EditForm OnValidSubmit="UpdateInterests" EditContext="@editContext">
+                                                                                <DataAnnotationsValidator />                                                       
+                                                                                <div class="rvt-modal__body">
+                                                                                        @if (isInterestEntered)
+                                                                                        {
+                                                                                             @foreach (var Interest in InterestList.Distinct())
+                                                                                            { 
+                                                                                                <ul class="rvt-list rvt-inline-list">
+                                                                                                    <li>
+                                                                                                        <span class="rvt-badge">@Interest
+                                                                                                            <button id="id_67b129" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(e => RemoveInterests(Interest))">
+                                                                                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                                                                <path d="M10.5 11.5V7.5C10.5 6.9 10.1 6.5 9.5 6.5C8.9 6.5 8.5 6.9 8.5 7.5V11.5C8.5 12.1 8.9 12.5 9.5 12.5C10.1 12.5 10.5 12.1 10.5 11.5Z" fill="currentColor"></path>
+                                                                                                                <path d="M7.5 11.5V7.5C7.5 6.9 7.1 6.5 6.5 6.5C5.9 6.5 5.5 6.9 5.5 7.5V11.5C5.5 12.1 5.9 12.5 6.5 12.5C7.1 12.5 7.5 12.1 7.5 11.5Z" fill="currentColor"></path>
+                                                                                                                <path d="M15 3H11V1C11 0.4 10.6 0 10 0H6C5.4 0 5 0.4 5 1V3H1C0.4 3 0 3.4 0 4C0 4.6 0.4 5 1 5H2V15C2 15.6 2.4 16 3 16H13C13.6 16 14 15.6 14 15V5H15C15.6 5 16 4.6 16 4C16 3.4 15.6 3 15 3ZM7 2H9V3H7V2ZM12 5V14H4V5H12Z" fill="currentColor"></path>
+                                                                                                                </svg>
+                                                                                                            </button>
+                                                                                                        </span>
+                                                                                                    </li>
+                                                                                                </ul>
+                                                                                            }
+                                                                                        }
+                                                                                    <div>
+                                                                                        <div class="rvt-input rvt-m-bottom-sm">
+                                                                                            <label for="modal-form-i" class="">Search</label>
+                                                                                            <input type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}"/>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="rvt-dropdown__menu" style="position: relative; padding: 0px;">
+                                                                                        <div>
+                                                                                            <button id="modal-form-i" class="rvt-button" @onclick="@(e => UpdateInterests())">@EnteredTerm </button>
+                                                                                        </div>
                                                                                     </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        </EditForm>
+                                                                            </EditForm>
+                                                                        
+                                                                        <button type="button" class="rvt-button rvt-modal__close" data-modal-close="modal-form-i">
+                                                                            <span class="rvt-sr-only">Close</span>
+                                                                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                                                                <path fill="currentColor" d="M9.41,8l5.29-5.29a1,1,0,0,0-1.41-1.41L8,6.59,2.71,1.29A1,1,0,0,0,1.29,2.71L6.59,8,1.29,13.29a1,1,0,1,0,1.41,1.41L8,9.41l5.29,5.29a1,1,0,0,0,1.41-1.41Z"/>
+                                                                            </svg>
+                                                                        </button>                                                                    
                                                                     </div>
-                                                                    <button type="button" class="rvt-button rvt-modal__close" data-modal-close="modal-form-i">
-                                                                        <span class="rvt-sr-only">Close</span>
-                                                                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                                                                            <path fill="currentColor" d="M9.41,8l5.29-5.29a1,1,0,0,0-1.41-1.41L8,6.59,2.71,1.29A1,1,0,0,0,1.29,2.71L6.59,8,1.29,13.29a1,1,0,1,0,1.41,1.41L8,9.41l5.29,5.29a1,1,0,0,0,1.41-1.41Z"/>
-                                                                        </svg>
-                                                                    </button>                                                                    
                                                                 </div>
-                                                            </div>
-                                                        </div>  
-                                                        <h2 class="rvt-ts-23 rvt-text-bold">Professional interests</h2>
-                                                        <p>What kinds of skills, technologies, or languages do you want to work with or learn about?</p>
-                                                        @foreach (var Interest in person.Expertise.Split(','))
-                                                        {
-                                                            <ul class="rvt-list rvt-plain-list rvt-inline-list">
-                                                                <li><span class="rvt-badge">@Interest</span></li>
-                                                            </ul>
-                                                        }                                                        
+                                                            </div>  
+                                                            <h2 class="rvt-ts-23 rvt-text-bold">Professional interests</h2>
+                                                            <p>What kinds of skills, technologies, or languages do you want to work with or learn about?</p>
+                                                            @foreach (var Interest in InterestList.Distinct())
+                                                            {                                                           
+                                                                <ul class="rvt-list rvt-plain-list rvt-inline-list">
+                                                                    <li><span class="rvt-badge">@Interest</span></li>
+                                                                </ul>
+                                                            }                                                        
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        <div class="rvt-grid__item-6-md-up rvt-p-all-lg">
-                            <div class="rvt-grid">
-                                <div class="rvt-grid__item rvt-border-all rvt-border-radius rvt-bg-white" style="overflow: auto;">
-                                    <div class="rvt-grid"><div class="rvt-grid__item rvt-bg-cream rvt-border-bottom rvt-p-all-xs rvt-p-left-md rvt-p-right-md rvt-ts-18 rvt-text-bold" style="color: rgb(51, 51, 51);">IT Units</div>
-                                </div>
+                            <div class="rvt-grid__item-6-md-up rvt-p-all-lg">
                                 <div class="rvt-grid">
-                                    <div class="rvt-grid__item rvt-p-all-md">
-                                        <div class="list-dividers profile-units">
-                                            <div>
-                                                <div class="rvt-grid">
-                                                    <div class="rvt-grid__item">
-                                                        @if (PersonUnits.Count() != 0)
-                                                        {
-                                                            @foreach (var unit in PersonUnits)
-                                                            {
-                                                                <a href="/units/@unit.Id"><h2 class="rvt-ts-23 rvt-text-bold">@unit.Name</h2></a>
-                                                                <div class="rvt-m-bottom-sm">@unit.Description</div>
-                                                                <div style="float: right;">                                                           
-                                                                <button type="button" title="Show Unit Details" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-r" @onclick="@(e => ShowUnitDetails())">
-                                                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                                                                        <use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-toggle"></use>
-                                                                    </svg>
-                                                                    <span class="rvt-m-left-xs rvt-sr-only">Show Unit Details</span>
-                                                                </button> 
-                                                            </div>
-                                                            <button class="rvt-button--plain expanded" style="position: absolute; right: 0px;">
-                                                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                                                                    <path fill="currentColor" d="M8,12.46a2,2,0,0,1-1.52-.7L1.24,5.65a1,1,0,1,1,1.52-1.3L8,10.46l5.24-6.11a1,1,0,0,1,1.52,1.3L9.52,11.76A2,2,0,0,1,8,12.46Z"></path>
-                                                                </svg>
-                                                            </button>
-                                                            }                                                            
-                                                        }
-                                                        else 
-                                                        {
-                                                            <p> No Units</p>
+                                    <div class="rvt-grid__item rvt-border-all rvt-border-radius rvt-bg-white" style="overflow: auto;">
+                                        <div class="rvt-grid"><div class="rvt-grid__item rvt-bg-cream rvt-border-bottom rvt-p-all-xs rvt-p-left-md rvt-p-right-md rvt-ts-18 rvt-text-bold" style="color: rgb(51, 51, 51);">IT Units</div>
+                                    </div>
+                                    <div class="rvt-grid">
+                                        <div class="rvt-grid__item rvt-p-all-md">
+                                            @if (ProfileUnits.Count() >= 0)
+                                                {
+                                                    @foreach (var unit in ProfileUnits)
+                                                    {
+                                                        <div class="list-dividers profile-units">
+                                                            <div>                                                
+                                                                <div class="rvt-grid">                                                                
+                                                                    <div class="rvt-grid__item">
+                                                                        <a href="/units/@unit.Id"><h2 class="rvt-ts-23 rvt-text-bold">@unit.Name</h2></a>
+                                                                        <div class="rvt-m-bottom-sm">@unit.Description</div>
+                                                                    </div>
+                                                                    <div>
+                                                                        @if(isExpanded)
+                                                                        {
+                                                                            <div class="rvt-grid__item-1-sm-up">                                                                
+                                                                                <button id="@unit.Id-modal-form-u" title="Show Unit Details" class="rvt-button--plain" data-modal-trigger="@unit.Id-modal-form-u" style="position: absolute; right: 0px;" @onclick="@(e => ShowOrHideProfileUnitDetails())">
+                                                                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                                                                        <use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-chevron-down"></use>
+                                                                                    </svg>                                                                    
+                                                                                </button>
+                                                                            </div>
 
-                                                        }                                                       
-                                                       
-                                                    </div>                                                
-                                                </div>
-                                            </div>                                  
-                                        </div>
-                                    </div>  
+                                                                        }                                                                
+                                                                        else
+                                                                        {
+                                                                            <div class="rvt-grid__item-1-sm-up">                                                                
+                                                                                <button id="@unit.Id-modal-form-u" title="Show Unit Details" class="rvt-button--plain expand" data-modal-trigger="@unit.Id-modal-form-u" style="position: absolute; right: 0px;" @onclick="@(e => ShowOrHideProfileUnitDetails())" >
+                                                                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                                                                        <use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-chevron-up"></use>
+                                                                                    </svg>                                                                    
+                                                                                </button>
+                                                                            </div>                                                                        
+                                                                        }                                                                    
+                                                                    </div>
+                                                                </div>
+                                                                @if (isExpanded)
+                                                                {
+                                                                    <div class="rvt-grid">
+                                                                        <div class="rvt-grid__item rvt-p-all-md">
+                                                                            <div class="rvt-m-top-sm"> 
+                                                                                @if (Memberships.Select(pu => pu.Title).FirstOrDefault() != null)
+                                                                                {
+                                                                                    <div><strong>Title: </strong>@Memberships.Select(pu => pu.Title).FirstOrDefault() </div>
+                                                                                    
+                                                                                }
+                                                                                <div><strong>Role: </strong>@Memberships.Select(pu => pu.Role).FirstOrDefault().ToString() </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div> 
+                                                                }
+                                                                
+                                                            </div>                                  
+                                                        </div>                                                                
+                                                    }                                                            
+                                                }
+                                                else 
+                                                {
+                                                    <p> No Units</p>
+
+                                                } 
+                                        </div>  
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-  
+    
+                }
+                <DisplayException Ex=@GeneralException />
             }
-			<DisplayException Ex=@GeneralException />
-        }
-        else
-        {
-            <p> Couldn't find a profile with the given username: @NetId. Check the username and try again. </p> 
-        }
+            
 
-		</Authenticated>
-	</AuthenticatedView>
+            </Authenticated>
+        </AuthenticatedView>
+    }
+    
 </div>
 
 @code {
@@ -232,22 +282,29 @@
 	private AuthenticatedUser LoggedInUser;
     private Person person = new Person();
 	private List<Person> peopleList = new List<Person>();
-	private IEnumerable<UnitResponse> PersonUnits = new List<UnitResponse>();
+	private IEnumerable<UnitResponse> ProfileUnits = new List<UnitResponse>();
+    private IEnumerable<UnitMemberResponse> Memberships = new List<UnitMemberResponse>();
 	private Responsibilities SelectedResponsibilities = Responsibilities.None;
     private static int enumLength = Enum.GetNames(typeof(Responsibilities)).Length;
-    private string[] SelectedResps;
-    [Parameter]    public string NetId {get; set; }
-    public string InterestList {get; set; } = "None";
+    [Parameter] public string NetId {get; set; }
+    public List<string> InterestList = new List<string>();
     private EditContext editContext;
 	private bool inline = false; 
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
     private ModalForm<Responsibilities> form;
     private HttpResponseMessage formResponse = null;
 
-
-    protected override async Task OnInitializedAsync()
+    private bool isExpanded = false;
+    private bool isInterestEntered = false;
+    private string EnteredTerm {get; set;} ="";
+    protected bool ShowLoader = false;
+   
+    protected IDisposable Loading() 
+        => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+    protected override async Task OnInitializedAsync() 
 	{   
         editContext = new EditContext(InterestList);
+        using (Loading())
         await Task.WhenAll(new[] { GetPersonProfile(), GetPersonUnitMemberships() }); 
     }
     private async Task GetPersonProfile()
@@ -258,9 +315,8 @@
             string responsemsg = await response.Content.ReadAsStringAsync();
             var person = JsonConvert.DeserializeObject<Person>(responsemsg);
             SelectedResponsibilities = person.Responsibilities;
-            SelectedResps = person.Responsibilities.ToString().Split(','); 
-            InterestList = person.Expertise;
-            @* await GetDisplayName(); *@
+            InterestList.AddRange(person.Expertise.Split(","));
+            isInterestEntered = true;
             peopleList.Add(person);			
 		}
         else
@@ -276,130 +332,103 @@
 		var response = await Api().GetAsync($"/people/{NetId}/memberships");
 		if(response.IsSuccessStatusCode)
 		{
-           var memberships = await response.Content.ReadFromJsonAsync<List<UnitMemberResponse>>();
-		    PersonUnits = memberships.Select(m => m.Unit).Distinct();		
+            Memberships = await response.Content.ReadFromJsonAsync<List<UnitMemberResponse>>();
+		    ProfileUnits = Memberships.Select(m => m.Unit).Distinct();
 		}
         else
         {
             GeneralException = new Exception($"Failed to fetch UnitMemberships for {NetId}.");
 			return;
         }		
-	}
-
-    private async Task EditResponsibilities()
-    {
-    }
-    private async Task ShowUnitDetails()
-    {
-    }
+	}    
+    private void ShowOrHideProfileUnitDetails() => isExpanded = !isExpanded;
     private async Task UpdateResponsibilities()
     {
         @* TODO collect selected Responsibilities and update person's responsibilities *@
-        
+        person.Responsibilities = SelectedResponsibilities;  
         try
         {
-            if (person.Responsibilities == 0)
+            foreach (var member in peopleList)
             {
-                formResponse = await Api().PostAsJsonAsync<Person>("/people", person);
-            }
-            else
-            {
-                formResponse = await Api().PutAsJsonAsync<Person>($"/people/{person.Netid}", person);
+                    Console.WriteLine($"inside foreach ...{member.Responsibilities.ToString().Split(',').Count()}");
+
+                if (member.Responsibilities.ToString().Split(',').Count() == 0 && member.Netid == NetId)
+                {
+                    Console.WriteLine($"inside post ...");
+                    formResponse = await Api().PostAsJsonAsync<Person>("/people", person);
+                }
+                else if (member.Netid == NetId)
+                {
+                    Console.WriteLine($"inside Put ...");
+                    formResponse = await Api().PutAsJsonAsync<Person>($"/people/{member.Netid}", person);
+                }
             }
 
             if (formResponse.IsSuccessStatusCode == true)
             {
                 string responsemsg = await formResponse.Content.ReadAsStringAsync();
                 var updatedPersonDetails = JsonConvert.DeserializeObject<Person>(responsemsg);
-                person.Responsibilities = updatedPersonDetails.Responsibilities;                            
-                InterestList = person.Expertise;                
+                UpdateInput(updatedPersonDetails);                          
                 await form.Close();
             }
-            @* await GetDisplayName(); *@
         }
         catch (Exception ex)
         {
             ModalException = ex;
         }
-        @* try
-        {
-            @* SelectedResps = GetDisplayName(SelectedResponsibilities).ToString().Split(",").ToArray(); *@   
-            //SelectedItems = SelectedResps.Select(a => (Responsibilities)Enum.Parse(typeof(Responsibilities), a));    
-            @* await GetDisplayName();
-
-        }
-        catch (Exception ex)
-        {
-            ModalException = ex;
-        }
-               
-        await form.Close(); *@
+         
         StateHasChanged();
 
-        @* if (form != null)
+    }
+    private void UpdateInput(Person input)
+    {
+        person.Id = input.Id;
+        person.Name = input.Name;
+        person.NameFirst = input.NameFirst;
+        person.NameLast = input.NameLast;
+        person.Position = input.Position;
+        person.Location = input.Location;
+        person.Campus = input.Campus;
+        person.CampusEmail = input.CampusEmail;
+        person.CampusPhone = input.CampusPhone;
+        person.Expertise = input.Expertise;
+        person.Notes = input.Notes;
+        person.PhotoUrl = input.PhotoUrl;
+        person.Responsibilities = input.Responsibilities;
+        person.IsServiceAdmin = input.IsServiceAdmin;
+        person.DepartmentId = input.DepartmentId;
+        person.Department = input.Department;
+        person.UnitMemberships = input.UnitMemberships;
+        StateHasChanged();
+        if (form != null)
         {
             form.ResetState();
             formResponse = null;
-        } *@
+        }
+        GeneralException = null;
+        ModalException = null;       
 
     }
     public string GetEnumDisplayName(string enumValue)
     {
-        Console.WriteLine($"From GetEnumDisplayName: {enumValue}");
-
-        var fieldInfo = SelectedResponsibilities.GetType().GetFields();
-        Console.WriteLine($"From fieldInfo: {fieldInfo.Length} and {enumValue}");
+        var fieldInfo = SelectedResponsibilities.GetType().GetFields();       
         var field = fieldInfo.FirstOrDefault(f =>f.Name == enumValue);
-        if(field == null)
-        {
-            return enumValue;
-
-        }
-        Console.WriteLine($"From field: {field}");
-        var step3= field.GetCustomAttribute<DisplayAttribute>();
-        Console.WriteLine($"From step3: {step3}");
-        var step4= step3?.GetName() ?? field.Name;
-        Console.WriteLine($"From step4: {step4}");
-
-        return step4;
+        return field != null ? field.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? field.Name : enumValue;
     }
-
-    public async Task GetDisplayName(string enumValue)
+    private void AddEnteredValue(string Value)
     {
-        List<string> FinalEnumName = new List<string>();
-        var selected = SelectedResponsibilities.ToString().Split(',').ToArray();
-        Console.WriteLine($"{selected.Count()}");
-
-        Console.WriteLine($"{string.Join("," , selected)}");
-        FinalEnumName.AddRange(selected);
-        Console.WriteLine($"{FinalEnumName.Count()}");
-        @* for (int i = 0; i < FinalEnumName.Count(); i++)
-        {
-            string s = FinalEnumName[i].TrimEnd(' ');
-            Console.WriteLine($"{s}");
-
-            var finalEnumName = await GetEnumDisplayName(s);
-
-            Console.WriteLine($"{finalEnumName}");
-            SelectedResps.Add(finalEnumName);
-            StateHasChanged();            
-        } *@
-        foreach (var enumItem in FinalEnumName)
-        {
-            Console.WriteLine($"{enumItem}");
-
-            var finalEnumName = GetEnumDisplayName(enumItem);
-
-            Console.WriteLine($"{finalEnumName}");
-            SelectedResps.Append(finalEnumName);
-        }        
-      
+        EnteredTerm = Value;
+        isInterestEntered = true;
+    }
+    private async Task RemoveInterests(string interest)
+    {
+        InterestList.Remove(interest);
     }
     private async Task UpdateInterests()
     {
         @* TODO collect enterd interests and update person's expertise *@
-
-        try
+        InterestList.Add(EnteredTerm);
+        @* try
         {
             if (person.Expertise == null)
             {
@@ -412,17 +441,20 @@
 
             if (formResponse.IsSuccessStatusCode == true)
             {
+                string responsemsg = await formResponse.Content.ReadAsStringAsync();
+                var updatedPersonDetails = JsonConvert.DeserializeObject<Person>(responsemsg);
+                UpdateInput(updatedPersonDetails);                          
                 await form.Close();
             }
         }
         catch (Exception ex)
         {
             ModalException = ex;
-        }        
+        }         *@
     }    
     private void GetEntityPermissions(HttpResponseMessage resp)
 	{
-		// Pluck the user permissions from the response header. Eg. "GET, PUT"
+		@* Pluck the user permissions from the response header. Eg. "GET, PUT" *@
 		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
 		
 		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
@@ -433,8 +465,26 @@
 			CrudPerms |= ep;
 		}
 	}
-
+   
     
 	public void Dispose(){}
-    
+    private class DisposableLoader : IDisposable
+    {
+        Action<bool> _setLoaderState;
+        Action _stateChanged;
+        
+        public DisposableLoader(Action<bool> setLoaderState, Action stateChanged)
+        {
+            _stateChanged = stateChanged;
+            _setLoaderState = setLoaderState;
+            _setLoaderState(true);
+            _stateChanged();
+        }
+
+        public void Dispose()
+        {
+            _setLoaderState(false);
+            _stateChanged();
+        }
+    }
 }
