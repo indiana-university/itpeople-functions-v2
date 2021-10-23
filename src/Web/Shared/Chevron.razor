@@ -1,0 +1,53 @@
+@implements IDisposable
+
+
+<div class="rvt-m-bottom-lg">
+	<div class="rvt-grid">
+		<div class="rvt-grid__item">				
+			@ChildContent 
+		</div>
+		<div class="rvt-grid__item-1-sm-up">
+			@if (Open)
+			{
+				<button type="button" class="rvt-button--plain" aria-expanded="@(Open ? "true" : "false")" @onclick="ToggleOpenStatus">
+					<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+						<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-chevron-down"></use>
+					</svg>
+				</button>
+			}
+			else
+			{
+				<button type="button" class="rvt-button--plain" aria-expanded="@(Open ? "true" : "false")" @onclick="ToggleOpenStatus">
+					<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+						<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-chevron-up"></use>
+					</svg>
+				</button>
+			}				
+		</div>
+	</div>
+			
+	@if (Open)
+	{
+		<div class="rvt-grid">
+			<div class="rvt-grid__item rvt-p-all-md">
+				<div class="rvt-m-top-sm">
+					@HidenContent
+				</div>
+			</div>
+		</div>
+	}
+</div>
+
+@code {
+	[Parameter]
+	public RenderFragment ChildContent { get; set; }
+
+	[Parameter]
+	public RenderFragment HidenContent { get; set; }
+
+	[Parameter]
+	public bool Open { get; set; } = true;
+	protected override async Task OnInitializedAsync(){}
+	private void ToggleOpenStatus() => Open = !Open;
+	public void Dispose(){}
+}
