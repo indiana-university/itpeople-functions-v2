@@ -39,7 +39,7 @@
 							</a>
 						}
 					}
-					@if (UnitPermissions.HasFlag(EntityPermissions.Post) || UnitMembers.Any(m => m.Permissions & Models.UnitPermissions.ManageMembers || m.Permissions & Models.UnitPermissions.ManageTools)
+					@if (UnitPermissions.HasFlag(EntityPermissions.Post) || UnitMembers.Any(m => m.Permissions.HasFlag(Models.UnitPermissions.ManageMembers) || m.Permissions.HasFlag(Models.UnitPermissions.ManageTools)))
 					{
 						<a class="rvt-button" href="/Units/@UnitId/Edit">
 							<rvt-icon name="pencil"></rvt-icon>
