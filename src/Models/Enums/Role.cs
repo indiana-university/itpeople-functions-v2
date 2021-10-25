@@ -1,18 +1,41 @@
+using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.ComponentModel.DataAnnotations;
+
 
 namespace Models
 {
-    [JsonConverter(typeof(StringEnumConverter))]
+    [Flags]
     public enum Role
     {
+        [Display(Name="None")]
+        None        = 0b00000000000000000,
+
+        [Display(Name="Related")]
+        Related     = 0b00000000000000001,
+        
+        [Display(Name="Member")]
+        Member      = 0b00000000000000010,
+        [Display(Name="Sublead")]
+
+        Sublead     = 0b00000000000000100,
+        
+        [Display(Name="Leader")]
+
+        Leader      = 0b00000000000001000,
+        
+    }
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum RolePropDoc
+    {
         /// This person has an ancillary relationship to this unit. This can apply to administrative assistants or self-supporting faculty.
-        Related=1,
+        Related = Role.Related,
         /// This person is a regular member of this unit.
-        Member=2,
+        Member = Role.Member,
         /// This person has some delegated authority within this unit. 
-        Sublead=3,
+        Sublead = Role.Sublead,
         /// This person has primary responsibility for and authority over this unit. 
-        Leader=4
+        Leader = Role.Leader
     }
 }
