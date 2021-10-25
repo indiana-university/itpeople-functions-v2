@@ -38,6 +38,9 @@
 								<rvt-icon name="lock-open"></rvt-icon>
 							</a>
 						}
+					}
+					@if (UnitPermissions.HasFlag(EntityPermissions.Post) || UnitMembers.Any(m => m.Permissions & Models.UnitPermissions.ManageMembers || m.Permissions & Models.UnitPermissions.ManageTools)
+					{
 						<a class="rvt-button" href="/Units/@UnitId/Edit">
 							<rvt-icon name="pencil"></rvt-icon>
 						</a>
