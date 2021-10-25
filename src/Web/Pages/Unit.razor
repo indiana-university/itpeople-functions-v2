@@ -39,7 +39,7 @@
 							</a>
 						}
 					}
-					@if (UnitPermissions.HasFlag(EntityPermissions.Post) || UnitMembers.Any(m => m.Permissions.HasFlag(Models.UnitPermissions.ManageMembers) || m.Permissions.HasFlag(Models.UnitPermissions.ManageTools)))
+					@if (UnitPermissions.HasFlag(EntityPermissions.Put) || UnitMembers.Any(m => m.Permissions.HasFlag(Models.UnitPermissions.ManageMembers) || m.Permissions.HasFlag(Models.UnitPermissions.ManageTools)))
 					{
 						<a class="rvt-button" href="/Units/@UnitId/Edit">
 							<rvt-icon name="pencil"></rvt-icon>
@@ -282,7 +282,6 @@
 	{
 		var response = await Fetch<List<UnitMemberResponse>>($"/Units/{UnitId}/members");
 		UnitMembers = response.Value;
-		//TODO set permissions?
 	}
 
 	private async Task FetchUnitChildren()
