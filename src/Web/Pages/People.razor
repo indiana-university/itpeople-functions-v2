@@ -3,50 +3,86 @@
 @using RivetBlazor.Components
 @using web.Shared
 @using System.Net
+@using System.Web
 @using System.Linq
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.WebUtilities
 @using System.Collections
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime;
 @implements IDisposable
 @page "/People"
 
-<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
-	
-	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">		
-		<div class="rvt-m-right-sm-md-up">
-			<h1>People</h1>
-		</div>		
-	</div>
+<HeaderNavBar Page="People" />
 
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<AuthenticatedView>
-		<NotAuthenticated>
+		<NotAuthenticated>			
 			<p>
 				You must login to view this resource.
 			</p>
 			<p>
-				<a class="rvt-button" href="/SignIn?Destination=/People">Log In</a>
+				<a class="rvt-button" href="/SignIn?Destination=/People">Login</a>
+				
 			</p>
 		</NotAuthenticated>
 		<Authenticated>
-			<p>
-				Use the filters below to find IT People based on their role within a unit, their job classification, and/or campus.
-			</p>
-
-			<p>
-				Use the search bar to find people or units doing IT work at IU.
-			</p>
+			<div class="rvt-grid">
+				<div class="rvt-grid__item">
+					<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">IT People</h1>
+						<p>Use the filters below to find IT People based on their role within a unit, their job classification, and/or campus.</p>
+				</div>
+			</div>
 
 			<DisplayException Ex=@GeneralException />
 
-            <EditForm  EditContext="@editContext">
-		        <RivetInputFlag @bind-Value="roleValue" Legend="Unit Role" Inline=@inline />
-		        <RivetInputFlag @bind-Value="campus" Legend="Campus" Inline=@inline />
-		        <RivetInputFlag @bind-Value="areaValue" Legend="Area" Inline=@inline />
-		        <RivetInputFlag @bind-Value="responsibility" Legend="Responsibility" Inline=@inline />
-	        </EditForm>
-			<p>
-                <button class="rvt-button" @onclick=@GetFilteredResults> Apply Filters </button>
-	        </p>
+            <div class="rvt-grid rvt-m-top-md">
+				<div class="rvt-grid__item-5-md-up">
+					<EditForm  EditContext="@editContext">
+                		<DataAnnotationsValidator />
+						
+							<RivetInputFlag @bind-Value="roleValue" Legend="Unit Role" Description="" Inline=@inline />   
+							<RivetInputFlag @bind-Value="campus" Legend="Campus" Description="" Inline=@inline />
+							<RivetInputFlag @bind-Value="areaValue" Legend="Area" Description="" Inline=@inline />
+                            <RivetInputFlag @bind-Value="responsibility" Legend="Responsibility" Description=""  Inline=@inline />
+						
+					</EditForm> 
+				</div>
+				@if (LoggedInUser != null)		
+				{
+					<div class="rvt-grid__item-7-md-up">
+						@if (IsMatchFound)
+						{
+							<div class="rvt-grid rvt-p-bottom-lg">								
+								<button type="button" class="rvt-button" @onclick="ExportResultsToCSV" role="menuitemradio">
+									<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+										<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-download"></use>
+									</svg>
+									<span class="rvt-m-left-xs">Export results to CSV</span>
+								</button>
+							</div>
+
+							@foreach(var person in peopleList)
+							{
+								<div class="rvt-grid rvt-p-bottom-md">
+									<div><a href="/people/@person.Id" class="rvt-link-bold">@person.Name</a> (<a href="mailto:@person.CampusEmail">@person.Netid</a>) <br>@person.Position<br></div>
+								</div>
+							}
+						
+						}
+						else
+						{
+							<div class="rvt-panel"><p>No people found matching those filters. You can make yourself easier to find by <a href="/people/@LoggedInUser.Username">keeping your profile up to date.</a></p></div>
+						}		
+						
+					</div>						
+				}
+						
+			</div>
+				<p>
+					<button id="apply-filter" class="rvt-button" type="submit" @onclick=@GetFilteredPeople>Apply Filters</button>
+				</p>
 
 		</Authenticated>
 	</AuthenticatedView>
@@ -61,34 +97,109 @@
 	private EditContext editContext;
 	private Exception GeneralException;
 	private AuthenticatedUser LoggedInUser;
+    private Person Person = new Person();
 	private IEnumerable<Person> peopleList = new List<Person>();
-
-
+	private bool IsMatchFound;
 	private bool inline = false; 
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
+	private string RequestUri;
 
     protected override async Task OnInitializedAsync()
 	{
 		editContext = new EditContext(areaValue);
 		editContext = new EditContext(campus);
 		editContext = new EditContext(responsibility);
-		editContext = new EditContext(roleValue);
-        
+		editContext = new EditContext(roleValue);  
+    }
+   
+    public async Task GetFilteredPeople()
+    {
         LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
-		if(LoggedInUser != null)
+		await GetPeople();
+		IsMatchFound = true;
+    }
+	private string MakeUpRequestUri()
+	{
+		//role=Leader,Related&class=ItLeadership&campus=BL&area=uits
+		var queryParams = new Dictionary<string, string>()
+								{
+									{"role",	roleValue.ToString().Split(',').Select(r => r.Trim()).Aggregate((a, b) => a + "," + b) },
+									{"class",	responsibility.ToString().Split(',').Select(r => r.Trim()).Aggregate((a, b) => a + "," + b) },
+									{"campus",	campus.ToString().Split(',').Select(r => r.Trim()).Aggregate((a, b) => a + "," + b) },
+									{"area",	areaValue.ToString().Split(',').Select(r => r.Trim()).Aggregate((a, b) => a + "," + b) }
+								};
+		return QueryHelpers.AddQueryString("/people", queryParams);
+	}
+	private async Task<List<string>> GetCheckedItems()
+	{
+		List<string> CheckedItems = new List<string>();
+		CheckedItems.AddRange(roleValue.ToString().Split(',', ' '));
+		CheckedItems.AddRange(campus.ToString().Split(',', ' '));
+		CheckedItems.AddRange(areaValue.ToString().Split(',', ' '));
+		CheckedItems.AddRange(responsibility.ToString().Split(',').Select(r => r.Trim()));
+		CheckedItems.Remove("None");
+		CheckedItems.RemoveAll(i => i == "0");
+		return CheckedItems;
+	}
+	private async Task GetPeople()
+	{
+		var CheckedItems = await GetCheckedItems();
+		RequestUri = MakeUpRequestUri();
+		Console.WriteLine($"CheckedItems Count : {CheckedItems.Count()} and {string.Join(',', CheckedItems)}");	
+
+		if (CheckedItems.Count() == 0)
 		{
-			await Task.WhenAll(new[] { GetFilteredResults()  });
+			Console.WriteLine($"CheckedItems Count : {CheckedItems.Count()} and {string.Join(",", CheckedItems)}");			
+
+			peopleList = await GetWithErrorHandling<List<Person>>("/people");
+				Console.WriteLine($"People Count : {peopleList.Count()}");			
+		}
+		else
+		{			
+			peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
+		}
+	} 
+	private async Task ExportResultsToCSV()
+    {
+        var builder = new System.Text.StringBuilder();
+        builder.AppendLine(Person.CsvHeader);
+        foreach (var person in peopleList)
+        {
+            builder.AppendLine(person.AsCsvRow);
+        }
+        await JSRuntime.InvokeVoidAsync("saveAsFile", Person.CsvFileName, System.Text.Encoding.UTF8.GetBytes(builder.ToString()));
+    }
+	private async Task<T> GetWithErrorHandling<T>(string uri, string error = null)
+	{
+		var result = default(T);
+
+		try
+		{
+			var resp = await Api().GetAsync(uri);
+
+			if(resp.StatusCode != HttpStatusCode.OK)
+			{
+				var message = string.IsNullOrWhiteSpace(error)
+					? $"Failed to Get {resp.RequestMessage.RequestUri} Status {resp.StatusCode} {resp.ReasonPhrase}"
+					: error;
+				GeneralException = new Exception(message);
+				return result;
+			}
+
+			// The request succeeded, try to deserialize it.
+			var stringResult = await resp.Content.ReadAsStringAsync();
+			// We have to use Newtonsoft to make sure our StringEnumConverter work.
+			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
+		}
+		catch(Exception ex)
+		{
+			GeneralException = ex;
+			return result;
 		}
 
-    }    
-
-    public async Task GetFilteredResults()
-    {
-        // TODO Get the people based on the checkbox selection.
-
-
-    }    
+		return result;
+	}   
     
-	public void Dispose(){}
+	public void Dispose(){ }
     
 }
