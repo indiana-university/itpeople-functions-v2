@@ -102,6 +102,9 @@
 	private bool IsMatchFound;
 	private bool inline = false; 
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
+	List<string> finalCheckedValues = new List<string>();
+	private Dictionary<string, string> queryParams = new Dictionary<string, string>();	
+
 	private string RequestUri;
 
     protected override async Task OnInitializedAsync()
@@ -121,87 +124,49 @@
 	private async Task<string> MakeUpRequestUri()
 	{
 		//role=Leader,Sublead,Member,Related&class=ItLeadership,BizSysAnalysis,DatabaseArchDesign,DataAdminAnalysis,InstructionalTech,ItProjectMgt,ItSecurityPrivacy,ItUserSupport,ItMultiDiscipline,Networks,SoftwareAdminAnalysis,SoftwareDevEng,SystemDevEng,UserExperience,WebAdminDevEng&campus=BL,IN,CO,EA,FW,KO,NW,SB,SE&area=uits,edge
-		var queryParams = new Dictionary<string, string>();
-		var checkedItems = await GetCheckedItems();
-		if (checkedItems.Contains(GetSelctedValues(roleValue)))
-		{
-			var roleValues = roleValue.ToString().Split(',').Select(r => r.Trim());
-			List<string> finalCheckedRoles = new List<string>();
-			foreach (var roleItem in roleValues)
-			{
-				finalCheckedRoles.Add(checkedItems.Find(r => r == roleItem));
-			}
-			
-			queryParams.Add("role", finalCheckedRoles.Aggregate((a, b) => a + "," + b));
-		}
-
-		if (checkedItems.Contains(GetSelctedValues(responsibility)))
-		{
-			var resValues = responsibility.ToString().Split(',').Select(r => r.Trim());
-			List<string> finalCheckedResponsibilities = new List<string>();
-			foreach (var resItem in resValues)
-			{
-				finalCheckedResponsibilities.Add(checkedItems.Find(r => r == resItem));
-			}
-			
-			queryParams.Add("class", finalCheckedResponsibilities.Aggregate((a, b) => a + "," + b));
+		if ( roleValue != 0)
+		{			
+			queryParams.Add("role", roleValue.ToString());		
 		}
 		
-		if (checkedItems.Contains(GetSelctedValues(campus)))
-		{
-			var campusValues = campus.ToString().Split(',').Select(r => r.Trim());
-			List<string> finalCheckedCampuses = new List<string>();
-			foreach (var campusItem in campusValues)
-			{
-				finalCheckedCampuses.Add(checkedItems.Find(r => r == campusItem));
-			}
-			
-			queryParams.Add("campus", finalCheckedCampuses.Aggregate((a, b) => a + "," + b));
-		}
-
-		if (checkedItems.Contains(GetSelctedValues(areaValue)))
-		{
-			var areaValues = areaValue.ToString().Split(',').Select(r => r.Trim());
-			List<string> finalCheckedAreas = new List<string>();
-			foreach (var areaItem in areaValues)
-			{
-				finalCheckedAreas.Add(checkedItems.Find(r => r == areaItem));
-			}
-			
-			queryParams.Add("area", finalCheckedAreas.Aggregate((a, b) => a + "," + b));
+		if (responsibility != Responsibilities.None)
+		{			
+			queryParams.Add("class", responsibility.ToString());			
 		}
 		
+		if (campus != 0)
+		{			
+			queryParams.Add("campus", campus.ToString());			
+		}
+		
+		if (areaValue != 0)
+		{			
+			queryParams.Add("area", areaValue.ToString());		
+		}
 
 		return QueryHelpers.AddQueryString("/people", queryParams);
 	}
 
-	private string GetSelctedValues(Enum enumValue)
+	private List<string> GetSelctedValues(Enum enumValue)
 	{
-		return enumValue.ToString().Split(',').Select(r => r.Trim()).Aggregate((a, b) => a + "," + b); 
+		List<string> checkedValues = new List<string>();
+		checkedValues = enumValue.ToString().Split(',').Select(r => r.Trim()).ToList(); 
+		checkedValues.RemoveAll(i => i == "None");
+		checkedValues.RemoveAll(i => i == "0");
+		return checkedValues;
 	}
-	private async Task<List<string>> GetCheckedItems()
-	{
-		List<string> CheckedItems = new List<string>();
-		CheckedItems.AddRange(roleValue.ToString().Split(',', ' '));
-		CheckedItems.AddRange(campus.ToString().Split(',', ' '));
-		CheckedItems.AddRange(areaValue.ToString().Split(',', ' '));
-		CheckedItems.AddRange(responsibility.ToString().Split(',').Select(r => r.Trim()));
-		CheckedItems.Remove("None");
-		CheckedItems.RemoveAll(i => i == "0");
-		return CheckedItems;
-	}
+	
 	private async Task GetPeople()
 	{
-		var CheckedItems = await GetCheckedItems();
 		RequestUri = await MakeUpRequestUri();
-		Console.WriteLine($"CheckedItems Count : {CheckedItems.Count()} and {string.Join(',', CheckedItems)}");	
+		Console.WriteLine($"finalCheckedValues Count : {queryParams.Count()} and {string.Join(",", queryParams.Values)}");			
 
-		if (CheckedItems.Count() == 0)
+		if (queryParams.Values.Count() == 0)
 		{
-			Console.WriteLine($"CheckedItems Count : {CheckedItems.Count()} and {string.Join(",", CheckedItems)}");			
+			Console.WriteLine($"finalCheckedValues Count : {queryParams.Count()} and {string.Join(",", queryParams.Values)}");			
 
 			peopleList = await GetWithErrorHandling<List<Person>>("/people");
-				Console.WriteLine($"People Count : {peopleList.Count()}");			
+			Console.WriteLine($"People Count : {peopleList.Count()}");			
 		}
 		else
 		{			
