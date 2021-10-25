@@ -41,12 +41,12 @@
 				<div class="rvt-grid__item-5-md-up">
 					<EditForm  EditContext="@editContext">
                 		<DataAnnotationsValidator />
-						
-							<RivetInputFlag @bind-Value="roleValue" Legend="Unit Role" Description="" Inline=@inline />   
-							<RivetInputFlag @bind-Value="campus" Legend="Campus" Description="" Inline=@inline />
-							<RivetInputFlag @bind-Value="areaValue" Legend="Area" Description="" Inline=@inline />
-                            <RivetInputFlag @bind-Value="responsibility" Legend="Responsibility" Description=""  Inline=@inline />
-						
+							<div class="rvt-p-bottom-md">
+								<RivetInputFlag @bind-Value="roleValue" Legend="Unit Role" Description="" Inline=@inline />   
+								<RivetInputFlag @bind-Value="campus" Legend="Campus" Description="" Inline=@inline />
+								<RivetInputFlag @bind-Value="areaValue" Legend="Area" Description="" Inline=@inline />
+								<RivetInputFlag @bind-Value="responsibility" Legend="Responsibility" Description=""  Inline=@inline />
+							</div>
 					</EditForm> 
 				</div>
 				@if (LoggedInUser != null)		
@@ -118,17 +118,66 @@
 		await GetPeople();
 		IsMatchFound = true;
     }
-	private string MakeUpRequestUri()
+	private async Task<string> MakeUpRequestUri()
 	{
-		//role=Leader,Related&class=ItLeadership&campus=BL&area=uits
-		var queryParams = new Dictionary<string, string>()
-								{
-									{"role",	roleValue.ToString().Split(',').Select(r => r.Trim()).Aggregate((a, b) => a + "," + b) },
-									{"class",	responsibility.ToString().Split(',').Select(r => r.Trim()).Aggregate((a, b) => a + "," + b) },
-									{"campus",	campus.ToString().Split(',').Select(r => r.Trim()).Aggregate((a, b) => a + "," + b) },
-									{"area",	areaValue.ToString().Split(',').Select(r => r.Trim()).Aggregate((a, b) => a + "," + b) }
-								};
+		//role=Leader,Sublead,Member,Related&class=ItLeadership,BizSysAnalysis,DatabaseArchDesign,DataAdminAnalysis,InstructionalTech,ItProjectMgt,ItSecurityPrivacy,ItUserSupport,ItMultiDiscipline,Networks,SoftwareAdminAnalysis,SoftwareDevEng,SystemDevEng,UserExperience,WebAdminDevEng&campus=BL,IN,CO,EA,FW,KO,NW,SB,SE&area=uits,edge
+		var queryParams = new Dictionary<string, string>();
+		var checkedItems = await GetCheckedItems();
+		if (checkedItems.Contains(GetSelctedValues(roleValue)))
+		{
+			var roleValues = roleValue.ToString().Split(',').Select(r => r.Trim());
+			List<string> finalCheckedRoles = new List<string>();
+			foreach (var roleItem in roleValues)
+			{
+				finalCheckedRoles.Add(checkedItems.Find(r => r == roleItem));
+			}
+			
+			queryParams.Add("role", finalCheckedRoles.Aggregate((a, b) => a + "," + b));
+		}
+
+		if (checkedItems.Contains(GetSelctedValues(responsibility)))
+		{
+			var resValues = responsibility.ToString().Split(',').Select(r => r.Trim());
+			List<string> finalCheckedResponsibilities = new List<string>();
+			foreach (var resItem in resValues)
+			{
+				finalCheckedResponsibilities.Add(checkedItems.Find(r => r == resItem));
+			}
+			
+			queryParams.Add("class", finalCheckedResponsibilities.Aggregate((a, b) => a + "," + b));
+		}
+		
+		if (checkedItems.Contains(GetSelctedValues(campus)))
+		{
+			var campusValues = campus.ToString().Split(',').Select(r => r.Trim());
+			List<string> finalCheckedCampuses = new List<string>();
+			foreach (var campusItem in campusValues)
+			{
+				finalCheckedCampuses.Add(checkedItems.Find(r => r == campusItem));
+			}
+			
+			queryParams.Add("campus", finalCheckedCampuses.Aggregate((a, b) => a + "," + b));
+		}
+
+		if (checkedItems.Contains(GetSelctedValues(areaValue)))
+		{
+			var areaValues = areaValue.ToString().Split(',').Select(r => r.Trim());
+			List<string> finalCheckedAreas = new List<string>();
+			foreach (var areaItem in areaValues)
+			{
+				finalCheckedAreas.Add(checkedItems.Find(r => r == areaItem));
+			}
+			
+			queryParams.Add("area", finalCheckedAreas.Aggregate((a, b) => a + "," + b));
+		}
+		
+
 		return QueryHelpers.AddQueryString("/people", queryParams);
+	}
+
+	private string GetSelctedValues(Enum enumValue)
+	{
+		return enumValue.ToString().Split(',').Select(r => r.Trim()).Aggregate((a, b) => a + "," + b); 
 	}
 	private async Task<List<string>> GetCheckedItems()
 	{
@@ -144,7 +193,7 @@
 	private async Task GetPeople()
 	{
 		var CheckedItems = await GetCheckedItems();
-		RequestUri = MakeUpRequestUri();
+		RequestUri = await MakeUpRequestUri();
 		Console.WriteLine($"CheckedItems Count : {CheckedItems.Count()} and {string.Join(',', CheckedItems)}");	
 
 		if (CheckedItems.Count() == 0)
