@@ -311,17 +311,11 @@
 		confirmMessage += (CurrentUnit.Active)
 			? "All members will lose their assigned tools, and the unit will be listed as Archived."
 			: "All members' assigned tools and relationships will be reactivated.";
-		Console.WriteLine("toggling");
 		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
 		{
-			Console.WriteLine("confirmed");
-
 			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}/archive");
 			CurrentUnit = deleteResponse.Value;
-			return;
 		}
-		Console.WriteLine("not confirmed");
-
 	}
 
 	public void Dispose() { }
