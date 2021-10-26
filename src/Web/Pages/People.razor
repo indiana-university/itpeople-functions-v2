@@ -116,7 +116,10 @@
     {
         LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");	
 		await GetPeople();
-		IsMatchFound = true;
+		if (peopleList.Count() != 0)
+		{
+			IsMatchFound = true;
+		}
     }
 	private async Task<Dictionary<string, string>> GetQueryParams()
 	{				
