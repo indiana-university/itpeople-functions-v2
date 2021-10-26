@@ -4,6 +4,7 @@
 @using web.Shared
 @using System.Linq
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 @implements IDisposable
 @page "/Units/{unitId}"
 @inherits PageBase
@@ -23,7 +24,7 @@
 				<div style="display: flex; justify-content: space-between; float: right;">
 					@if (UnitPermissions.HasFlag(EntityPermissions.Delete))
 					{
-						<a class="rvt-button rvt-button--danger rvt-m-right-xs" href="/Units/TODO" title="Delete Unit">
+						<a class="rvt-button rvt-button--danger rvt-m-right-xs" title="Delete Unit" @onclick="DeleteUnit">
 							<rvt-icon name="trash"></rvt-icon>
 							<span class="rvt-sr-only">Delete Unit</span>
 						</a>
@@ -316,6 +317,17 @@
 			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}/archive");
 			CurrentUnit = deleteResponse.Value;
 		}
+	}
+
+	private async Task DeleteUnit()
+	{
+		var confirmMessage = $"Are you sure you want to delete {CurrentUnit.Name}? This can't be undone.";
+		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
+		{
+			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}");
+			CurrentUnit = deleteResponse.Value;
+		}
+		Navigation.NavigateTo("/units");
 	}
 
 	public void Dispose() { }
