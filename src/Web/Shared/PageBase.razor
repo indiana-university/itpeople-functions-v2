@@ -16,18 +16,29 @@
 	{
 		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
 	}
-	protected async Task<(T Value, EntityPermissions Permissions)> Fetch<T>(string uri, string error = null)
+
+	protected async Task<(T Value, EntityPermissions Permissions)> Get<T>(string uri, string error = null)
+	{
+		return await MakeRequest<T>(HttpMethod.Get, Api().GetAsync(uri), error);
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions)> Delete<T>(string uri, string error = null)
+	{
+		return await MakeRequest<T>(HttpMethod.Get, Api().DeleteAsync(uri), error);
+	}
+
+	private async Task<(T Value, EntityPermissions Permissions)> MakeRequest<T>(HttpMethod method, Task<HttpResponseMessage> request, string error = null)
 	{
 		var result = default(T);
 		HttpResponseMessage response = null;
 		var permissions = EntityPermissions.Get;
 		try
 		{
-			response = await Api().GetAsync(uri);
+			response = await request;
 			if (response.StatusCode != HttpStatusCode.OK)
 			{
 				var message = string.IsNullOrWhiteSpace(error)
-					? $"Failed to Get {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}"
+					? $"Failed to {method} {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}"
 					: error;
 				GeneralException = new Exception(message);
 				return (result, permissions);

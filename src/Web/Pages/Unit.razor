@@ -3,6 +3,7 @@
 @using RivetBlazor.Components
 @using web.Shared
 @using System.Linq
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 @page "/Units/{unitId}"
 @inherits PageBase
@@ -28,13 +29,13 @@
 						</a>
 						@if (CurrentUnit.Active)
 						{
-							<a class="rvt-button rvt-m-right-xs" href="/Units/TODO" title="Archive Unit">
+							<a class="rvt-button rvt-m-right-xs" title="Archive Unit" @onclick="ToggleArchiveStatus">
 								<rvt-icon name="lock-closed"></rvt-icon>
 							</a>
 						}
 						else
 						{
-							<a class="rvt-button rvt-m-right-xs" href="/Units/TODO" title="Unarchive Unit">
+							<a class="rvt-button rvt-m-right-xs" title="Unarchive Unit" @onclick="ToggleArchiveStatus">
 								<rvt-icon name="lock-open"></rvt-icon>
 							</a>
 						}
@@ -262,48 +263,66 @@
 			using (Loading())
 			{
 				await Task.WhenAll(new[] {
-					FetchUnit(),
-					FetchUnitMembers(),
-					FetchUnitChildren(),
-					FetchSupportRelationships(),
-					FetchBuildingRelationships()
+					GetUnit(),
+					GetUnitMembers(),
+					GetUnitChildren(),
+					GetSupportRelationships(),
+					GetBuildingRelationships()
 				});
 			}
 		}
 	}
 
-	private async Task FetchUnit()
+	private async Task GetUnit()
 	{
-		var response = await Fetch<UnitResponse>($"/Units/{UnitId}");
+		var response = await Get<UnitResponse>($"/Units/{UnitId}");
 		CurrentUnit = response.Value;
 		UnitPermissions = response.Permissions;
 	}
-	private async Task FetchUnitMembers()
+	private async Task GetUnitMembers()
 	{
-		var response = await Fetch<List<UnitMemberResponse>>($"/Units/{UnitId}/members");
+		var response = await Get<List<UnitMemberResponse>>($"/Units/{UnitId}/members");
 		UnitMembers = response.Value;
 	}
 
-	private async Task FetchUnitChildren()
+	private async Task GetUnitChildren()
 	{
-		var response = await Fetch<List<UnitResponse>>($"/Units/{UnitId}/children");
+		var response = await Get<List<UnitResponse>>($"/Units/{UnitId}/children");
 		UnitChildren = response.Value;
 		//TODO set permissions?
 	}
 
-	private async Task FetchSupportRelationships()
+	private async Task GetSupportRelationships()
 	{
-		var response = await Fetch<List<SupportRelationshipResponse>>($"/Units/{UnitId}/supportedDepartments");
+		var response = await Get<List<SupportRelationshipResponse>>($"/Units/{UnitId}/supportedDepartments");
 		SupportRelationships = response.Value;
 		//TODO set permissions?
 	}
-	private async Task FetchBuildingRelationships()
+	private async Task GetBuildingRelationships()
 	{
-		var response = await Fetch<List<BuildingRelationship>>($"/Units/{UnitId}/supportedBuildings");
+		var response = await Get<List<BuildingRelationship>>($"/Units/{UnitId}/supportedBuildings");
 		BuildingRelationships = response.Value;
 		//TODO set permissions?
 	}
 
+	private async Task ToggleArchiveStatus()
+	{
+		var confirmMessage = $"Are you sure you want to {(CurrentUnit.Active ? "archive" : "unarchive")} {CurrentUnit.Name}? ";
+		confirmMessage += (CurrentUnit.Active)
+			? "All members will lose their assigned tools, and the unit will be listed as Archived."
+			: "All members' assigned tools and relationships will be reactivated.";
+		Console.WriteLine("toggling");
+		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
+		{
+			Console.WriteLine("confirmed");
+
+			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}/archive");
+			CurrentUnit = deleteResponse.Value;
+			return;
+		}
+		Console.WriteLine("not confirmed");
+
+	}
 
 	public void Dispose() { }
 }
