@@ -157,3 +157,13 @@ ul {
 li {
     text-align: -webkit-match-parent;
 }
+.p-left-md, .rvt-p-left-md {
+    padding-left: 1.5rem!important;
+}
+.p-right-md, .rvt-p-right-md {
+    padding-right: 1.5rem!important;
+}
+.plain-list, .rvt-plain-list {
+    list-style: none;
+    padding: 0;
+}
