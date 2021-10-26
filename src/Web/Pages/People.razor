@@ -196,15 +196,15 @@
 		}
 	} 
 	private async Task ExportResultsToCSV()
-    {
-        var builder = new System.Text.StringBuilder();
-        builder.AppendLine(Person.CsvHeader);
-        foreach (var person in peopleList)
-        {
-            builder.AppendLine(person.AsCsvRow);
-        }
-        await JSRuntime.InvokeVoidAsync("saveAsFile", Person.CsvFileName, System.Text.Encoding.UTF8.GetBytes(builder.ToString()));
-    }
+	{
+		var builder = new System.Text.StringBuilder();
+		builder.AppendLine(Person.CsvHeader);
+		foreach (var person in peopleList)
+		{
+			builder.AppendLine(person.AsCsvRow);
+		}
+		await JSRuntime.InvokeVoidAsync("saveAsFile", Person.CsvFileName, System.Text.Encoding.UTF8.GetBytes(builder.ToString()));
+	}
 	private async Task<T> GetWithErrorHandling<T>(string uri, string error = null)
 	{
 		var result = default(T);
