@@ -1,0 +1,56 @@
+@typeparam T
+@implements IDisposable;
+
+<div class="rvt-grid">
+	@if(Collection == null || Collection.Count() == 0)
+	{
+		<p><em>No Results</em></p>
+	}
+	else
+	{
+		@foreach(var item in Collection)
+		{
+			<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
+				<a class="rvt-link-bold" href=@LinkUri(item)>@LinkText(item)</a>
+				@if(Archived(item))
+				{
+					<span class="rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-left-xs rvt-ts-xs">Archived</span>
+				}
+				<p class="rvt-m-top-remove">@Details(item)</p>
+			</div>
+		}
+	}
+</div>
+
+@code
+{
+	///<summary> The Collection of items to be displayed as a Rivet Grid.</summary>
+	[Parameter]
+	public IEnumerable<T> Collection { get; set; }
+	
+	///<summary> A Func that takes one of the provided Items and gives the text for a link to the item.</summary>
+	[Parameter]
+	public Func<T, string> LinkText { get; set; }
+	
+	///<summary> A Func that takes one of the provided Items and gives the URI for a link to the item.</summary>
+	[Parameter]
+	public Func<T, string> LinkUri { get; set; }
+	
+	///<summary> A Func that takes one of the provided Items and gives description text for the item.</summary>
+	[Parameter]
+	public Func<T, string> Details { get; set; }
+
+	///<summary> A Func that takes one of the provided Items and determines if it is Archived.</summary>
+	[Parameter]
+	public Func<T, bool> Archived { get; set; }
+	
+	protected override void OnInitialized()
+	{
+		// make sure Archived has a value since it's an optional parameter.
+		Archived = Archived == null
+			? (i => false)
+			: Archived;
+	}
+
+	public void Dispose(){}
+}

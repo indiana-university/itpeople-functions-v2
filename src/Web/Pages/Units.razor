@@ -5,6 +5,7 @@
 @using System.Net
 @using System.Linq
 @using System.Collections
+@using Newtonsoft.Json
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @implements IDisposable
@@ -49,47 +50,19 @@
 			@if(MyUnits.Count() > 0)
 			{
 				<h2 class="rvt-ts-md">My Units</h2>
-				<div class="rvt-grid">
-					@foreach(var unit in MyUnits)
-					{
-						<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
-							<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
-							<p class="rvt-m-top-remove">@unit.Description</p>
-						</div>
-					}
-				</div>
+				<GridListItems Collection=@MyUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) />
 			}
 
 			@if(ActiveUnits.Count() > 0)
 			{
 				<h2 class="rvt-ts-md">Active Units</h2>
-				<div class="rvt-grid">
-					@foreach(var unit in ActiveUnits)
-					{
-						<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
-							<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
-							<p class="rvt-m-top-remove">@unit.Description</p>
-						</div>
-					}
-				</div>
+				<GridListItems Collection=@ActiveUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) />
 			}
 
 			@if(ArchivedUnits.Count() > 0)
 			{
 				<h2 class="rvt-ts-md">Archived Units</h2>
-				<div class="rvt-grid">
-					@foreach(var unit in ArchivedUnits)
-					{
-						<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
-							<a class="rvt-link-bold" href="/units/@unit.Id">@unit.Name</a>
-							@if(unit.Active == false)
-							{
-								<span class="rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-left-xs rvt-ts-xs">Archived</span>
-							}
-							<p class="rvt-m-top-remove">@unit.Description</p>
-						</div>
-					}
-				</div>
+				<GridListItems Collection=@ArchivedUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) Archived=@(u => !u.Active) />
 			}
 		</Authenticated>
 	</AuthenticatedView>
@@ -123,7 +96,11 @@
 			GeneralException = new Exception($"Failed to fetch UnitMemberships for {LoggedInUser.Username}.");
 			return;
 		}
-		var memberships = await resp.Content.ReadFromJsonAsync<List<UnitMemberResponse>>();
+
+		// The request succeeded, try to deserialize it.
+		var stringResult = await resp.Content.ReadAsStringAsync();
+		// We have to use Newtonsoft to make sure our StringEnumConverter work.
+		var memberships = JsonConvert.DeserializeObject<List<UnitMemberResponse>>(stringResult, Json.JsonSerializerSettings);
 		MyUnits = memberships.Select(m => m.Unit).Distinct();
 	}
 
@@ -135,7 +112,10 @@
 			GeneralException = new Exception($"Failed to fetch Units.");
 			return;
 		}
-		var units = await resp.Content.ReadFromJsonAsync<List<UnitResponse>>();
+		// Use Newtonsoft to deserialize for consistency's sake.
+		var stringResult = await resp.Content.ReadAsStringAsync();
+		var units = JsonConvert.DeserializeObject<List<UnitResponse>>(stringResult, Json.JsonSerializerSettings);
+		
 		ActiveUnits = units.Where(u => u.Active);
 		ArchivedUnits = units.Where(u => u.Active == false);
 
