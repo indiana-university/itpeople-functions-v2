@@ -9,9 +9,6 @@ namespace Models
     [Flags]
     public enum Role
     {
-        [Display(Name="None")]
-        None        = 0b00000000000000000,
-
         [Display(Name="Related")]
         Related     = 0b00000000000000001,
         
