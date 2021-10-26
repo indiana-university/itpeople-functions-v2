@@ -163,7 +163,7 @@
 
 		return queryParams;
 	}
-	async Task<Dictionary<string, string>> GetIndividualQueryStrings(Enum enumValue, string key)
+	private async Task<Dictionary<string, string>> GetIndividualQueryStrings(Enum enumValue, string key)
 	{
 		
 		if (!queryParams.ContainsKey(key))
