@@ -197,19 +197,19 @@
 </div>
 
 @code {
-	private EntityPermissions CrudPerms;
-	private Exception GeneralException;
-	private Exception ModalException;
-	private AuthenticatedUser LoggedInUser;
+    private EntityPermissions CrudPerms;
+    private Exception GeneralException;
+    private Exception ModalException;
+    private AuthenticatedUser LoggedInUser;
     private Person updatedPerson = new Person();
-	private List<Person> peopleList = new List<Person>();
-	private IEnumerable<UnitResponse> ProfileUnits = new List<UnitResponse>();
+    private List<Person> peopleList = new List<Person>();
+    private IEnumerable<UnitResponse> ProfileUnits = new List<UnitResponse>();
     private IEnumerable<UnitMemberResponse> Memberships = new List<UnitMemberResponse>();
-    [Parameter] public string NetId {get; set; }
+    [Parameter] public string NetId { get; set; }
     public List<string> InterestList = new List<string>();
     private EditContext editContext;
-	private bool inline = false;
-	private HttpClient Api() => ClientFactory.CreateClient("Api");
+    private bool inline = false;
+    private HttpClient Api() => ClientFactory.CreateClient("Api");
     private ModalForm<Responsibilities> form;
     private HttpResponseMessage formResponse = null;
 
@@ -222,16 +222,16 @@
     protected IDisposable Loading()
         => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
     protected override async Task OnInitializedAsync()
-	{
+    {
         editContext = new EditContext(InterestList);
         using (Loading())
-        await Task.WhenAll(new[] { GetPersonProfile(), GetPersonUnitMemberships() });
+            await Task.WhenAll(new[] { GetPersonProfile(), GetPersonUnitMemberships() });
     }
     private async Task GetPersonProfile()
-	{
-		var response = await Api().GetAsync($"/people/{NetId}");
-		if(response.IsSuccessStatusCode)
-		{
+    {
+        var response = await Api().GetAsync($"/people/{NetId}");
+        if (response.IsSuccessStatusCode)
+        {
             string responsemsg = await response.Content.ReadAsStringAsync();
             var personResponse = JsonConvert.DeserializeObject<Person>(responsemsg);
             InterestList.AddRange(personResponse.Expertise.Split(","));
@@ -240,30 +240,29 @@
             isInterestEntered = true;
             ProfileName = personResponse.Name;
             peopleList.Add(personResponse);
-		}
+        }
         else
         {
             GeneralException = new Exception($"Failed to fetch the person's details..");
-			return;
+            return;
         }
 
-		GetEntityPermissions(response);
-	}
+        GetEntityPermissions(response);
+    }
     private async Task GetPersonUnitMemberships()
-	{
-		var response = await Api().GetAsync($"/people/{NetId}/memberships");
-		if(response.IsSuccessStatusCode)
-		{
+    {
+        var response = await Api().GetAsync($"/people/{NetId}/memberships");
+        if (response.IsSuccessStatusCode)
+        {
             Memberships = await response.Content.ReadFromJsonAsync<List<UnitMemberResponse>>();
-		    ProfileUnits = Memberships.Select(m => m.Unit).Distinct();
-		}
+            ProfileUnits = Memberships.Select(m => m.Unit).Distinct();
+        }
         else
         {
             GeneralException = new Exception($"Failed to fetch UnitMemberships for {NetId}.");
-			return;
+            return;
         }
-	}
-    private void ShowOrHideProfileUnitDetails() => isExpanded = !isExpanded;
+    }
     private async Task UpdateResponsibilities()
     {
         try
@@ -279,7 +278,7 @@
     public string GetEnumDisplayName(string enumValue)
     {
         var fieldInfo = updatedPerson.Responsibilities.GetType().GetFields();
-        var field = fieldInfo.FirstOrDefault(f =>f.Name == enumValue);
+        var field = fieldInfo.FirstOrDefault(f => f.Name == enumValue);
         return field != null ? field.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? field.Name : enumValue;
     }
     private void AddEnteredValue(string Value)
@@ -306,18 +305,18 @@
         StateHasChanged();
     }
     private void GetEntityPermissions(HttpResponseMessage resp)
-	{
-		@* Pluck the user permissions from the response header. Eg. "GET, PUT" *@
-		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+    {
+        @* Pluck the user permissions from the response header. Eg. "GET, PUT" *@
+        var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
 
-		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-		CrudPerms = 0;// Reset permissions to 0.
-		foreach(var p in permsString.Split(','))
-		{
-			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-			CrudPerms |= ep;
-		}
-	}
+        // Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+        CrudPerms = 0;// Reset permissions to 0.
+        foreach (var p in permsString.Split(','))
+        {
+            var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+            CrudPerms |= ep;
+        }
+    }
 
     private async Task UpdatePerson(List<Person> peopleList)
     {
@@ -349,7 +348,7 @@
         }
     }
 
-	public void Dispose(){}
+    public void Dispose() { }
     private class DisposableLoader : IDisposable
     {
         Action<bool> _setLoaderState;

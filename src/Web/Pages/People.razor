@@ -92,42 +92,42 @@
 @code {
 	private Role roleValue;
 	private Area areaValue;
-    private Campus campus;
+	private Campus campus;
 	private Responsibilities responsibility;
 	private EntityPermissions CrudPerms;
 	private EditContext editContext;
 	private Exception GeneralException;
 	private AuthenticatedUser LoggedInUser;
-    private Person Person = new Person();
+	private Person Person = new Person();
 	private IEnumerable<Person> peopleList = new List<Person>();
 	private bool IsMatchFound;
-	private bool inline = false; 
+	private bool inline = false;
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private string finalCheckedValues;
-	private Dictionary<string, string> queryParams = new Dictionary<string, string>();	
+	private Dictionary<string, string> queryParams = new Dictionary<string, string>();
 
-    protected override async Task OnInitializedAsync()
+	protected override async Task OnInitializedAsync()
 	{
 		editContext = new EditContext(areaValue);
 		editContext = new EditContext(campus);
 		editContext = new EditContext(responsibility);
-		editContext = new EditContext(roleValue);  
-    }
-   
-    public async Task GetFilteredPeople()
-    {
-        LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");	
+		editContext = new EditContext(roleValue);
+	}
+
+	public async Task GetFilteredPeople()
+	{
+		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
 		await GetPeople();
 		if (peopleList.Count() != 0)
 		{
 			IsMatchFound = true;
 		}
-    }
+	}
 	private async Task<Dictionary<string, string>> GetQueryParams()
-	{				
+	{
 		if (roleValue != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(roleValue, "role");			
+			queryParams = await GetIndividualQueryStrings(roleValue, "role");
 		}
 		else
 		{
@@ -136,16 +136,16 @@
 
 		if (responsibility != Responsibilities.None)
 		{
-			queryParams = await GetIndividualQueryStrings(responsibility, "class");			
+			queryParams = await GetIndividualQueryStrings(responsibility, "class");
 		}
 		else
 		{
 			queryParams.Remove("class");
 		}
 
-		if ( campus != 0)
+		if (campus != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(campus, "campus");			
+			queryParams = await GetIndividualQueryStrings(campus, "campus");
 		}
 		else
 		{
@@ -154,31 +154,31 @@
 
 		if (areaValue != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(areaValue, "area");			
+			queryParams = await GetIndividualQueryStrings(areaValue, "area");
 		}
 		else
 		{
 			queryParams.Remove("area");
-		}		
+		}
 
 		return queryParams;
 	}
 	private async Task<Dictionary<string, string>> GetIndividualQueryStrings(Enum enumValue, string key)
 	{
-		
+
 		if (!queryParams.ContainsKey(key))
 		{
-			finalCheckedValues = (enumValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
+			finalCheckedValues = (enumValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a, b) => a + "," + b);
 			queryParams.Add(key, finalCheckedValues);
 		}
 		else
 		{
 			List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains(key)).ToList();
 			keyPairsToRemove.ForEach(k => queryParams.Remove(k));
-			finalCheckedValues = (enumValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
+			finalCheckedValues = (enumValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a, b) => a + "," + b);
 			queryParams[key] = finalCheckedValues;
-		}			
-		
+		}
+
 		return queryParams;
 	}
 
@@ -189,12 +189,12 @@
 			peopleList = await GetWithErrorHandling<List<Person>>("/people");
 		}
 		else
-		{	
+		{
 			queryParams = await GetQueryParams();
 			var RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
 			peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
 		}
-	} 
+	}
 	private async Task ExportResultsToCSV()
 	{
 		var builder = new System.Text.StringBuilder();
@@ -213,7 +213,7 @@
 		{
 			var resp = await Api().GetAsync(uri);
 
-			if(resp.StatusCode != HttpStatusCode.OK)
+			if (resp.StatusCode != HttpStatusCode.OK)
 			{
 				var message = string.IsNullOrWhiteSpace(error)
 					? $"Failed to Get {resp.RequestMessage.RequestUri} Status {resp.StatusCode} {resp.ReasonPhrase}"
@@ -227,15 +227,15 @@
 			// We have to use Newtonsoft to make sure our StringEnumConverter work.
 			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
 		}
-		catch(Exception ex)
+		catch (Exception ex)
 		{
 			GeneralException = ex;
 			return result;
 		}
 
 		return result;
-	}   
-    
-	public void Dispose(){ }
-    
+	}
+
+	public void Dispose() { }
+
 }
