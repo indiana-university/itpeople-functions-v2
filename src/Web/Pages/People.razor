@@ -68,8 +68,7 @@
 								<div class="rvt-grid rvt-p-bottom-md">
 									<div><a href="/people/@person.Id" class="rvt-link-bold">@person.Name</a> (<a href="mailto:@person.CampusEmail">@person.Netid</a>) <br>@person.Position<br></div>
 								</div>
-							}
-						
+							}						
 						}
 						else
 						{
@@ -105,8 +104,6 @@
 	private string finalCheckedValues;
 	private Dictionary<string, string> queryParams = new Dictionary<string, string>();	
 
-	private string RequestUri = $"/people";
-
     protected override async Task OnInitializedAsync()
 	{
 		editContext = new EditContext(areaValue);
@@ -121,104 +118,75 @@
 		await GetPeople();
 		IsMatchFound = true;
     }
-	private async Task<Dictionary<string, string>> MakeUpRequestUri()
-	{
-		//role=Leader,Sublead,Member,Related&class=ItLeadership,BizSysAnalysis,DatabaseArchDesign,DataAdminAnalysis,InstructionalTech,ItProjectMgt,ItSecurityPrivacy,ItUserSupport,ItMultiDiscipline,Networks,SoftwareAdminAnalysis,SoftwareDevEng,SystemDevEng,UserExperience,WebAdminDevEng&campus=BL,IN,CO,EA,FW,KO,NW,SB,SE&area=uits,edge
-		if ( roleValue != 0)
+	private async Task<Dictionary<string, string>> GetQueryParams()
+	{				
+		if (roleValue != 0)
 		{
-			if (!queryParams.ContainsKey("role"))
-			{
-				finalCheckedValues = (roleValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
-				Console.WriteLine($"trimmedRoleValues:{finalCheckedValues}");
-				queryParams.Add("role", finalCheckedValues);
-			}
-			else
-			{
-				List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains("role")).ToList();
-				keyPairsToRemove.ForEach(k => queryParams.Remove(k));
-				finalCheckedValues = (roleValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
-				queryParams["role"] = finalCheckedValues;
-			}			
+			queryParams = await GetIndividualQueryStrings(roleValue, "role");			
 		}
-		
-		if ( responsibility != Responsibilities.None)
+		else
 		{
-			if (!queryParams.ContainsKey("class"))
-			{
-				finalCheckedValues = (responsibility.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
-				Console.WriteLine($"trimmedRoleValues:{finalCheckedValues}");
-				queryParams.Add("class", finalCheckedValues);
-			}
-			else
-			{
-				List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains("class")).ToList();
-				keyPairsToRemove.ForEach(k => queryParams.Remove(k));
-				finalCheckedValues = (responsibility.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
-				queryParams["class"] = finalCheckedValues;
-			}			
+			queryParams.Remove("role");
+		}
+
+		if (responsibility != Responsibilities.None)
+		{
+			queryParams = await GetIndividualQueryStrings(responsibility, "class");			
+		}
+		else
+		{
+			queryParams.Remove("class");
 		}
 
 		if ( campus != 0)
 		{
-			if (!queryParams.ContainsKey("campus"))
-			{
-				finalCheckedValues = (campus.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
-				Console.WriteLine($"trimmedRoleValues:{finalCheckedValues}");
-				queryParams.Add("campus", finalCheckedValues);
-			}
-			else
-			{
-				List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains("campus")).ToList();
-				keyPairsToRemove.ForEach(k => queryParams.Remove(k));
-				finalCheckedValues = (campus.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
-				queryParams["campus"] = finalCheckedValues;
-			}			
+			queryParams = await GetIndividualQueryStrings(campus, "campus");			
+		}
+		else
+		{
+			queryParams.Remove("campus");
 		}
 
 		if (areaValue != 0)
 		{
-			if (!queryParams.ContainsKey("area"))
-			{
-				finalCheckedValues = (areaValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
-				Console.WriteLine($"trimmedRoleValues:{finalCheckedValues}");
-				queryParams.Add("area", finalCheckedValues);
-			}
-			else
-			{
-				List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains("area")).ToList();
-				keyPairsToRemove.ForEach(k => queryParams.Remove(k));
-				finalCheckedValues = (areaValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
-				queryParams["area"] = finalCheckedValues;
-			}			
+			queryParams = await GetIndividualQueryStrings(areaValue, "area");			
 		}
-		
-		Console.WriteLine($"The query params : {queryParams.Count()} And {string.Join(",", queryParams)}");			
+		else
+		{
+			queryParams.Remove("area");
+		}		
 
 		return queryParams;
 	}
-
-	private string GetSelctedValues(Enum enumValue)
+	async Task<Dictionary<string, string>> GetIndividualQueryStrings(Enum enumValue, string key)
 	{
-		List<string> checkedValues = new List<string>();
-		checkedValues = enumValue.ToString().Split(',').Select(r => r.Trim()).ToList(); 
-		checkedValues.RemoveAll(i => i == "None");
-		checkedValues.RemoveAll(i => i == "0");
-		Console.WriteLine($"From GetSelectValues : {checkedValues.Count()} And {string.Join(",", checkedValues)}");			
-		return checkedValues.Count != 0 ? checkedValues.Aggregate((a,b) => a + "," + b) : "";
+		
+		if (!queryParams.ContainsKey(key))
+		{
+			finalCheckedValues = (enumValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
+			queryParams.Add(key, finalCheckedValues);
+		}
+		else
+		{
+			List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains(key)).ToList();
+			keyPairsToRemove.ForEach(k => queryParams.Remove(k));
+			finalCheckedValues = (enumValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a,b) => a + "," + b);
+			queryParams[key] = finalCheckedValues;
+		}			
+		
+		return queryParams;
 	}
-	
+
 	private async Task GetPeople()
 	{
 		if (roleValue == 0 && responsibility == Responsibilities.None && campus == 0 && areaValue == 0)
 		{
 			peopleList = await GetWithErrorHandling<List<Person>>("/people");
-			Console.WriteLine($"People Count : {peopleList.Count()}");			
 		}
 		else
 		{	
-			queryParams = await MakeUpRequestUri();
-			RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
-			Console.WriteLine($"The RquestUri : {RequestUri}");			
+			queryParams = await GetQueryParams();
+			var RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
 			peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
 		}
 	} 
