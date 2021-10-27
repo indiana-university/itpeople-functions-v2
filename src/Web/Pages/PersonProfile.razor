@@ -246,8 +246,6 @@
             GeneralException = new Exception($"Failed to fetch the person's details..");
             return;
         }
-
-        GetEntityPermissions(response);
     }
     private async Task GetPersonUnitMemberships()
     {
@@ -303,19 +301,6 @@
         }
 
         StateHasChanged();
-    }
-    private void GetEntityPermissions(HttpResponseMessage resp)
-    {
-        @* Pluck the user permissions from the response header. Eg. "GET, PUT" *@
-        var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
-
-        // Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-        CrudPerms = 0;// Reset permissions to 0.
-        foreach (var p in permsString.Split(','))
-        {
-            var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-            CrudPerms |= ep;
-        }
     }
 
     private async Task UpdatePerson(List<Person> peopleList)
