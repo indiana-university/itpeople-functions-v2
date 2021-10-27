@@ -54,7 +54,7 @@
 				@if (LoggedInUser != null)		
 				{
 					<div class="rvt-grid__item-7-md-up">
-						@if (IsMatchFound)
+						@if (IsMatchFound && peopleList.Count() != 0)
 						{
 							<div class="rvt-grid rvt-p-bottom-lg">								
 								<button type="button" class="rvt-button" @onclick="ExportResultsToCSV" role="menuitemradio">
