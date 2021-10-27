@@ -16,13 +16,13 @@
 @code {
 
     [Parameter]
-	public String Title { get; set; }
+    public String Title { get; set; }
 
-	[Parameter]
-	public RenderFragment ChildContent { get; set; }
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
 
-	[Parameter]
-	public RenderFragment SubContent { get; set; }
-	protected override async Task OnInitializedAsync(){}
-	public void Dispose(){}
+    [Parameter]
+    public RenderFragment SubContent { get; set; }
+    protected override async Task OnInitializedAsync() { }
+    public void Dispose() { }
 }
