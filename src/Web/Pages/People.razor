@@ -43,16 +43,16 @@
                 		<DataAnnotationsValidator />
 							<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
 							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">								
-								<li><RivetEnumCheckbox @bind-Value="Roles" Type=@typeof(Role) Inline=@inline /></li></ul> 
+								<li><RivetEnumCheckbox @bind-Value="Roles" Inline=@inline /></li></ul> 
 							<h2 class="rvt-ts-23 rvt-text-bold">Campus</h2>
 							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">
-								<li><RivetEnumCheckbox @bind-Value="Campuses" Type=@typeof(Campus) Inline=@inline /></li></ul>
+								<li><RivetEnumCheckbox @bind-Value="Campuses" Inline=@inline /></li></ul>
 							<h2 class="rvt-ts-23 rvt-text-bold">Area</h2>
 							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">
-								<li><RivetEnumCheckbox @bind-Value="Areas" Type=@typeof(Area) Inline=@inline /></li></ul>
+								<li><RivetEnumCheckbox @bind-Value="Areas" Inline=@inline /></li></ul>
 							<h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
 							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">
-								<li><RivetEnumCheckbox @bind-Value="Responsibilities" Type=@typeof(Responsibilities) Inline=@inline /></li></ul>
+								<li><RivetEnumCheckbox @bind-Value="Responsibilities" Inline=@inline /></li></ul>
 					</EditForm> 
 				</div>
 				@if (LoggedInUser != null)		
@@ -105,10 +105,10 @@
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private string finalCheckedValues;
 	private Dictionary<string, string> queryParams = new Dictionary<string, string>();
-	private List<string> Roles = new List<string>();
-	private List<string> Campuses = new List<string>();
-	private List<string> Areas = new List<string>();
-	private List<string> Responsibilities = new List<string>();
+	private List<Role> Roles = new List<Role>();
+	private List<Campus> Campuses = new List<Campus>();
+	private List<Area> Areas = new List<Area>();
+	private List<Responsibilities> Responsibilities = new List<Responsibilities>();
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -117,7 +117,6 @@
 		editContext = new EditContext(Areas);
 		editContext = new EditContext(Responsibilities);
 	}
-
 
 	public async Task GetFilteredPeople()
 	{
@@ -128,12 +127,12 @@
 			IsMatchFound = true;
 		}
 	}
-	
+
 	private async Task<Dictionary<string, string>> GetQueryParams()
 	{
 		if (Roles.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(Roles, "role");
+			queryParams = await GetIndividualQueryStrings<Role>(Roles, "role");
 		}
 		else
 		{
@@ -142,7 +141,7 @@
 
 		if (Responsibilities.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(Responsibilities, "class");
+			queryParams = await GetIndividualQueryStrings<Responsibilities>(Responsibilities, "class");
 		}
 		else
 		{
@@ -151,7 +150,7 @@
 
 		if (Campuses.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(Campuses, "campus");
+			queryParams = await GetIndividualQueryStrings<Campus>(Campuses, "campus");
 		}
 		else
 		{
@@ -160,7 +159,7 @@
 
 		if (Areas.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(Areas, "area");
+			queryParams = await GetIndividualQueryStrings<Area>(Areas, "area");
 		}
 		else
 		{
@@ -169,36 +168,18 @@
 
 		return queryParams;
 	}
-	private async Task<Dictionary<string,string>> GetIndividualQueryStrings(List<string> values, string key)
+	private async Task<Dictionary<string, string>> GetIndividualQueryStrings<T>(List<T> values, string key)
 	{
 		if (!queryParams.ContainsKey(key))
 		{
-			finalCheckedValues = string.Join(',',values.Select(v => v.Trim()));
+			finalCheckedValues = string.Join(',',values);
 			queryParams.Add(key, finalCheckedValues);
 		}
 		else
 		{
 			List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains(key)).ToList();
 			keyPairsToRemove.ForEach(k => queryParams.Remove(k));
-			finalCheckedValues = string.Join(',',values.Select(v => v.Trim()));
-			queryParams[key] = finalCheckedValues;
-		}
-
-		return queryParams;
-	}
-	private async Task<Dictionary<string, string>> GetIndividualQueryStrings(Enum enumValue, string key)
-	{
-
-		if (!queryParams.ContainsKey(key))
-		{
-			finalCheckedValues = (enumValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a, b) => a + "," + b);
-			queryParams.Add(key, finalCheckedValues);
-		}
-		else
-		{
-			List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains(key)).ToList();
-			keyPairsToRemove.ForEach(k => queryParams.Remove(k));
-			finalCheckedValues = (enumValue.ToString().Split(',').Select(r => r.Trim())).Aggregate((a, b) => a + "," + b);
+			finalCheckedValues = string.Join(',',values);
 			queryParams[key] = finalCheckedValues;
 		}
 
@@ -218,6 +199,7 @@
 			peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
 		}
 	}
+
 	private async Task ExportResultsToCSV()
 	{
 		var builder = new System.Text.StringBuilder();
@@ -228,6 +210,7 @@
 		}
 		await JSRuntime.InvokeVoidAsync("saveAsFile", Person.CsvFileName, System.Text.Encoding.UTF8.GetBytes(builder.ToString()));
 	}
+
 	private async Task<T> GetWithErrorHandling<T>(string uri, string error = null)
 	{
 		var result = default(T);
