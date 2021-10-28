@@ -42,13 +42,17 @@
 					<EditForm  EditContext="@editContext">
                 		<DataAnnotationsValidator />
 							<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
-							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md"><li><RivetInputFlag @bind-Value="roleValue" Inline=@inline /></li></ul>
+							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">								
+								<li><RivetEnumCheckbox @bind-Value="Roles" Type=@typeof(Role) Inline=@inline /></li></ul> 
 							<h2 class="rvt-ts-23 rvt-text-bold">Campus</h2>
-							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md"><li><RivetInputFlag @bind-Value="campus" Inline=@inline /></li></ul>
+							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">
+								<li><RivetEnumCheckbox @bind-Value="Campuses" Type=@typeof(Campus) Inline=@inline /></li></ul>
 							<h2 class="rvt-ts-23 rvt-text-bold">Area</h2>
-							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md"><li><RivetInputFlag @bind-Value="areaValue" Inline=@inline /></li></ul>
+							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">
+								<li><RivetEnumCheckbox @bind-Value="Areas" Type=@typeof(Area) Inline=@inline /></li></ul>
 							<h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
-							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md"><li><RivetInputFlag @bind-Value="responsibility" Inline=@inline /></li></ul>
+							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">
+								<li><RivetEnumCheckbox @bind-Value="Responsibilities" Type=@typeof(Responsibilities) Inline=@inline /></li></ul>
 					</EditForm> 
 				</div>
 				@if (LoggedInUser != null)		
@@ -89,11 +93,7 @@
 	</AuthenticatedView>
 </div>
 
-@code {
-	private Role roleValue;
-	private Area areaValue;
-	private Campus campus;
-	private Responsibilities responsibility;
+@code {	
 	private EntityPermissions CrudPerms;
 	private EditContext editContext;
 	private Exception GeneralException;
@@ -105,14 +105,19 @@
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private string finalCheckedValues;
 	private Dictionary<string, string> queryParams = new Dictionary<string, string>();
+	private List<string> Roles = new List<string>();
+	private List<string> Campuses = new List<string>();
+	private List<string> Areas = new List<string>();
+	private List<string> Responsibilities = new List<string>();
 
 	protected override async Task OnInitializedAsync()
 	{
-		editContext = new EditContext(areaValue);
-		editContext = new EditContext(campus);
-		editContext = new EditContext(responsibility);
-		editContext = new EditContext(roleValue);
+		editContext = new EditContext(Roles);
+		editContext = new EditContext(Campuses);
+		editContext = new EditContext(Areas);
+		editContext = new EditContext(Responsibilities);
 	}
+
 
 	public async Task GetFilteredPeople()
 	{
@@ -123,42 +128,60 @@
 			IsMatchFound = true;
 		}
 	}
+	
 	private async Task<Dictionary<string, string>> GetQueryParams()
 	{
-		if (roleValue != 0)
+		if (Roles.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(roleValue, "role");
+			queryParams = await GetIndividualQueryStrings(Roles, "role");
 		}
 		else
 		{
 			queryParams.Remove("role");
 		}
 
-		if (responsibility != Responsibilities.None)
+		if (Responsibilities.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(responsibility, "class");
+			queryParams = await GetIndividualQueryStrings(Responsibilities, "class");
 		}
 		else
 		{
 			queryParams.Remove("class");
 		}
 
-		if (campus != 0)
+		if (Campuses.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(campus, "campus");
+			queryParams = await GetIndividualQueryStrings(Campuses, "campus");
 		}
 		else
 		{
 			queryParams.Remove("campus");
 		}
 
-		if (areaValue != 0)
+		if (Areas.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings(areaValue, "area");
+			queryParams = await GetIndividualQueryStrings(Areas, "area");
 		}
 		else
 		{
 			queryParams.Remove("area");
+		}
+
+		return queryParams;
+	}
+	private async Task<Dictionary<string,string>> GetIndividualQueryStrings(List<string> values, string key)
+	{
+		if (!queryParams.ContainsKey(key))
+		{
+			finalCheckedValues = string.Join(',',values.Select(v => v.Trim()));
+			queryParams.Add(key, finalCheckedValues);
+		}
+		else
+		{
+			List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains(key)).ToList();
+			keyPairsToRemove.ForEach(k => queryParams.Remove(k));
+			finalCheckedValues = string.Join(',',values.Select(v => v.Trim()));
+			queryParams[key] = finalCheckedValues;
 		}
 
 		return queryParams;
@@ -184,7 +207,7 @@
 
 	private async Task GetPeople()
 	{
-		if (roleValue == 0 && responsibility == Responsibilities.None && campus == 0 && areaValue == 0)
+		if (Roles.Count() == 0 && Responsibilities.Count() == 0 && Campuses.Count() == 0 && Areas.Count() == 0)
 		{
 			peopleList = await GetWithErrorHandling<List<Person>>("/people");
 		}
