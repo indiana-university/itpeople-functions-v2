@@ -44,9 +44,11 @@
                     </ProfileHeader>
                     <div class="rvt-bg-white">
                         <div class="rvt-container" style="max-width: 1440px; margin: auto;">
-                            <div class="rvt-grid rvt-p-top-lg" data-testid="profile-page">                                    
+                            <div class="rvt-grid rvt-p-top-lg" data-testid="profile-page">                                                                
                                 <ProfileContactInformation Title="Contact Information">
                                     <ChildContent>
+                                    <div class="rvt-border-bottom">
+
                                         <div>
                                             @if (@person.Location != null)
                                             {
@@ -58,6 +60,9 @@
                                             <div><strong>Phone: </strong>@person.CampusPhone</div>
                                             <div><strong>Department: </strong><a href="/departments/@person.DepartmentId">@person.Department.Name</a></div>
                                         </div>
+                                    </div>
+                                    <div class="rvt-border-bottom">
+
                                         <div>
                                             <div style="float: right;">
                                                 <button type="button" title="Edit Responsibilities" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-r">
@@ -80,7 +85,8 @@
                                                     </ul>
                                                 }
                                         </div>
-                                    
+                                    </div>
+                                    <div class="rvt-border-bottom">
                                         <ProfileInterestsHelper Title="Edit Interests">
                                             <ChildContent>
                                             <div class="rvt-modal" id="modal-form-i" role="dialog" aria-labelledby="modal-form-i-title" aria-hidden="true" tabindex="-1" current="">
@@ -143,8 +149,9 @@
                                                     </ul>
                                                 }
                                             </SubContent> 
-                                        </ProfileInterestsHelper>                        
-                                    </ChildContent>                                                                            
+                                        </ProfileInterestsHelper>
+                                    </div>                                                          
+                                    </ChildContent>                                                                                                             
                                 </ProfileContactInformation>
                                 <ProfileUnitsHelper Title="IT Units">
                                     <ChildContent>
@@ -152,26 +159,22 @@
                                         {
                                             @foreach (var unit in ProfileUnits)
                                             {
-                                               <div class="list-dividers profile-units">
+                                               <div class="rvt-border-bottom profile-units">
                                                     <div>
-                                                        <div class="rvt-grid">
-                                                            <div class="rvt-grid__item">
-                                                                <Chevron Open=isExpanded>
-                                                                    <ChildContent>
-                                                                        <a href="/units/@unit.Id"><h2 class="rvt-ts-23 rvt-text-bold">@unit.Name</h2></a>
-                                                                        <div class="rvt-m-bottom-sm">@unit.Description</div>
-                                                                    </ChildContent>
-                                                                    <HidenContent>
-                                                                        @if (Memberships.Select(pu => pu.Title).FirstOrDefault() != null)
-                                                                        {
-                                                                            <div><strong>Title: </strong>@Memberships.Select(pu => pu.Title).FirstOrDefault() </div>
+                                                        <Chevron Open=isExpanded>
+                                                            <ChildContent>
+                                                                <a href="/units/@unit.Id"><h2 class="rvt-ts-23 rvt-text-bold">@unit.Name</h2></a>
+                                                                <div class="rvt-m-bottom-sm">@unit.Description</div>
+                                                            </ChildContent>
+                                                            <HidenContent>
+                                                                @if (Memberships.Select(pu => pu.Title).FirstOrDefault() != null)
+                                                                {
+                                                                    <div><strong>Title: </strong>@Memberships.Select(pu => pu.Title).FirstOrDefault() </div>
 
-                                                                        }
-                                                                        <div><strong>Role: </strong>@Memberships.Select(pu => pu.Role).FirstOrDefault().ToString() </div>
-                                                                    </HidenContent>
-                                                                </Chevron>
-                                                            </div>
-                                                        </div>
+                                                                }
+                                                                <div><strong>Role: </strong>@Memberships.Select(pu => pu.Role).FirstOrDefault().ToString() </div>
+                                                            </HidenContent>
+                                                        </Chevron>
                                                     </div>
                                                 </div>
                                             }
