@@ -5,27 +5,26 @@ using Newtonsoft.Json.Converters;
 
 namespace Models
 {
-    [Flags]    
     [JsonConverter(typeof(StringEnumConverter))]
     public enum Campus
     { 
         [Display(Name="Bloomington")]
-        BL  =   0b0000000001,
+        BL  =   1,
         [Display(Name="IUPUI (Indianapolis)")]
-        IN  =   0b0000000010, 
+        IN  =   2, 
         [Display(Name="IUPUC (Columbus)")]
-        CO  =   0b000000100,
+        CO  =   3,
         [Display(Name="East (Richmond)")]
-        EA  =   0b000001000,
+        EA  =   4,
         [Display(Name="Fort Wayne")]
-        FW  =   0b000010000,
+        FW  =   5,
         [Display(Name="Kokomo")]
-        KO  =   0b000100000,
+        KO  =   6,
         [Display(Name="Northwest (Gary)")]
-        NW  =   0b001000000,
+        NW  =   7,
         [Display(Name="South Bend")]
-        SB  =   0b010000000,
+        SB  =   8,
         [Display(Name="Southeast (New Albany)")]
-        SE  =   0b100000000
+        SE  =   9
     }
 }
