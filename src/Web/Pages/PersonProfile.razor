@@ -34,9 +34,9 @@
                 </p>
             </NotAuthenticated>
             <Authenticated>
-            @if( peopleList.Count() != 0)
+            @if( People.Count() != 0)
             {
-                @foreach (var person in peopleList)
+                @foreach (var person in People)
                 {
                     <ProfileHeader>
                         <h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@person.Name</h1>
@@ -73,7 +73,7 @@
                                             <h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
                                             <p>What kinds of work do you do on a day-to-day basis?</p>
 
-                                                @foreach (var item in updatedPerson.Responsibilities.ToString().Split(',').Select(r => r.Trim()))
+                                                @foreach (var item in UpdatedPerson.Responsibilities.ToString().Split(',').Select(r => r.Trim()))
                                                 {
                                                     <ul class="rvt-list rvt-plain-list">
                                                         <li>@GetEnumDisplayName(item)</li>
@@ -89,7 +89,7 @@
                                                         <h1 class="rvt-modal__title" id="modal-form-title">Edit Interests</h1>
                                                     </header>
                                                     <div class="rvt-modal__body">
-                                                        <EditForm OnValidSubmit="UpdateInterests" EditContext="@editContext">
+                                                        <EditForm OnValidSubmit="UpdateInterests" EditContext="@FormContext">
                                                             <DataAnnotationsValidator />
                                                                     @if (isInterestEntered)
                                                                     {
@@ -201,13 +201,13 @@
     private Exception GeneralException;
     private Exception ModalException;
     private AuthenticatedUser LoggedInUser;
-    private Person updatedPerson = new Person();
-    private List<Person> peopleList = new List<Person>();
+    private Person UpdatedPerson = new Person();
+    private List<Person> People = new List<Person>();
     private IEnumerable<UnitResponse> ProfileUnits = new List<UnitResponse>();
     private IEnumerable<UnitMemberResponse> Memberships = new List<UnitMemberResponse>();
     [Parameter] public string NetId { get; set; }
     public List<string> InterestList = new List<string>();
-    private EditContext editContext;
+    private EditContext FormContext;
     private bool inline = false;
     private HttpClient Api() => ClientFactory.CreateClient("Api");
     private ModalForm<Responsibilities> form;
@@ -223,7 +223,7 @@
         => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
     protected override async Task OnInitializedAsync()
     {
-        editContext = new EditContext(InterestList);
+        FormContext = new EditContext(InterestList);
         using (Loading())
             await Task.WhenAll(new[] { GetPersonProfile(), GetPersonUnitMemberships() });
     }
@@ -235,11 +235,11 @@
             string responsemsg = await response.Content.ReadAsStringAsync();
             var personResponse = JsonConvert.DeserializeObject<Person>(responsemsg);
             InterestList.AddRange(personResponse.Expertise.Split(","));
-            updatedPerson.Responsibilities = personResponse.Responsibilities;
-            updatedPerson.Expertise = personResponse.Expertise;
+            UpdatedPerson.Responsibilities = personResponse.Responsibilities;
+            UpdatedPerson.Expertise = personResponse.Expertise;
             isInterestEntered = true;
             ProfileName = personResponse.Name;
-            peopleList.Add(personResponse);
+            People.Add(personResponse);
         }
         else
         {
@@ -265,7 +265,7 @@
     {
         try
         {
-            await UpdatePerson(peopleList);
+            await UpdatePerson(People);
         }
         catch (Exception ex)
         {
@@ -275,7 +275,7 @@
     }
     public string GetEnumDisplayName(string enumValue)
     {
-        var fieldInfo = updatedPerson.Responsibilities.GetType().GetFields();
+        var fieldInfo = UpdatedPerson.Responsibilities.GetType().GetFields();
         var field = fieldInfo.FirstOrDefault(f => f.Name == enumValue);
         return field != null ? field.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? field.Name : enumValue;
     }
@@ -293,7 +293,7 @@
         InterestList.Add(EnteredTerm);
         try
         {
-            await UpdatePerson(peopleList);
+            await UpdatePerson(People);
         }
         catch (Exception ex)
         {
@@ -303,9 +303,9 @@
         StateHasChanged();
     }
 
-    private async Task UpdatePerson(List<Person> peopleList)
+    private async Task UpdatePerson(List<Person> People)
     {
-        foreach (var member in peopleList)
+        foreach (var member in People)
         {
             if (member.Responsibilities.ToString().Split(',').Count() == 0 && member.Netid == NetId)
             {
@@ -328,7 +328,7 @@
         if (formResponse.IsSuccessStatusCode == true)
         {
             string responsemsg = await formResponse.Content.ReadAsStringAsync();
-            updatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg);
+            UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg);
             await form.Close();
         }
     }
