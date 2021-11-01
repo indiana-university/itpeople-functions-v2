@@ -65,12 +65,12 @@
 
                                         <div>
                                             <div style="float: right;">
-                                                <button type="button" title="Edit Responsibilities" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-r">
+                                                <button type="button" title="Edit Responsibilities" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-r" @onclick=@(() => ResponsibilitiesInput = UpdatedPerson.Responsibilities)>
                                                     <rvt-icon name="pencil" />
                                                     <span class="rvt-m-left-xs rvt-sr-only">Edit Responsibilities</span>
                                                 </button>
                                                 <ModalForm Id="modal-form-r" Title="Edit Responsibilities" SubmitButtonText="Update" Item=@UpdatedPerson.Responsibilities OnSubmit=@UpdateResponsibilities @ref=form>
-                                                    <RivetInputFlag @bind-Value="UpdatedPerson.Responsibilities" Description="Check all the relevant responsibilities performed"  Inline=@inline />
+                                                    <RivetInputFlag @bind-Value="ResponsibilitiesInput" Description="Check all the relevant responsibilities performed"  Inline=@inline />
                                                 </ModalForm>
                                             </div>
                                             <h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
@@ -212,6 +212,7 @@
     private EditContext FormContext;
     private bool inline = false;
     private HttpClient Api() => ClientFactory.CreateClient("Api");
+    private Responsibilities ResponsibilitiesInput;
     private ModalForm<Responsibilities> form;
     private HttpResponseMessage formResponse = null;
 
@@ -319,7 +320,8 @@
 
     private async Task UpdatePerson(Person member)
     {
-    
+        member.Responsibilities = ResponsibilitiesInput;
+
         if (member.Responsibilities.ToString().Split(',').Count() == 0 && member.Netid == NetId)
         {
             var postContent = new StringContent(JsonConvert.SerializeObject(member), System.Text.Encoding.UTF8, "application/json");
