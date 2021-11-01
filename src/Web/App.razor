@@ -33,8 +33,6 @@
 		User = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
 		var loggedInUser = User?.Username ?? "";
 		var isLoggedIn = User != null;
-		var personalProfile = new HeaderLink($"/People/{loggedInUser}", "Profile", "Manage your profile information");
-		ProfileLinks.Insert(0, personalProfile);
 		AuthenticationDestination = new Uri(Navigation.Uri).PathAndQuery;
 		var signInUrl = $"/SignIn?Destination={System.Net.WebUtility.UrlEncode(AuthenticationDestination)}";
 		
@@ -45,6 +43,7 @@
 			NavLinks.Add(new HeaderLink("/People", "People"));
 			NavLinks.Add(new HeaderLink("/Units", "Units"));
 			NavLinks.Add(new HeaderLink("/Search", "Search"));
+			ProfileLinks.Insert(0, new HeaderLink($"/People/{loggedInUser}", "Profile", "Manage your profile information"));
 		}
 
 		NavLinks.Add(new HeaderProfile(loggedInUser, signInUrl, "/SignOut", ProfileLinks, null, isLoggedIn));
