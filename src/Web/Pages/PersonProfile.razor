@@ -34,13 +34,13 @@
                 </p>
             </NotAuthenticated>
             <Authenticated>
-            @if( People.Count() != 0)
+            @if( UpdatedPerson != null)
             {
-                @foreach (var person in People)
-                {
+                @* @foreach (var person in People)
+                { *@
                     <ProfileHeader>
-                        <h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@person.Name</h1>
-                        <div class="rvt-ts-26">@person.Position</div>
+                        <h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@UpdatedPerson.Name</h1>
+                        <div class="rvt-ts-26">@UpdatedPerson.Position</div>
                     </ProfileHeader>
                     <div class="rvt-bg-white">
                         <div class="rvt-container" style="max-width: 1440px; margin: auto;">
@@ -50,15 +50,15 @@
                                     <div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
 
                                         <div>
-                                            @if (@person.Location != null)
+                                            @if (@UpdatedPerson.Location != null)
                                             {
-                                                <div><strong>Location: </strong>@person.Location</div>
+                                                <div><strong>Location: </strong>@UpdatedPerson.Location</div>
 
                                             }
-                                            <div><strong>Campus: </strong>@person.Campus</div>
-                                            <div><strong>Email: </strong><a href="mailto:@person.CampusEmail">@person.CampusEmail</a></div>
-                                            <div><strong>Phone: </strong>@person.CampusPhone</div>
-                                            <div><strong>Department: </strong><a href="/departments/@person.DepartmentId">@person.Department.Name</a></div>
+                                            <div><strong>Campus: </strong>@UpdatedPerson.Campus</div>
+                                            <div><strong>Email: </strong><a href="mailto:@UpdatedPerson.CampusEmail">@UpdatedPerson.CampusEmail</a></div>
+                                            <div><strong>Phone: </strong>@UpdatedPerson.CampusPhone</div>
+                                            <div><strong>Department: </strong><a href="/departments/@UpdatedPerson.DepartmentId">@UpdatedPerson.Department.Name</a></div>
                                         </div>
                                     </div>
                                     <div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
@@ -71,8 +71,8 @@
                                                     </svg>
                                                     <span class="rvt-m-left-xs rvt-sr-only">Edit Responsibilities</span>
                                                 </button>
-                                                <ModalForm Id="modal-form-r" Title="Edit Responsibilities" SubmitButtonText="Update" Item=@person.Responsibilities OnSubmit=@UpdateResponsibilities @ref=form>
-                                                    <RivetInputFlag @bind-Value="person.Responsibilities" Description="Check all the relevant responsibilities performed"  Inline=@inline />
+                                                <ModalForm Id="modal-form-r" Title="Edit Responsibilities" SubmitButtonText="Update" Item=@UpdatedPerson.Responsibilities OnSubmit=@UpdateResponsibilities @ref=form>
+                                                    <RivetInputFlag @bind-Value="UpdatedPerson.Responsibilities" Description="Check all the relevant responsibilities performed"  Inline=@inline />
                                                 </ModalForm>
                                             </div>
                                             <h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
@@ -190,7 +190,7 @@
                             </div>
                         </div>
                     </div>
-                }
+                @* } *@
                 <DisplayException Ex=@GeneralException />
             }
             </Authenticated>
@@ -248,13 +248,13 @@
         if (response.IsSuccessStatusCode)
         {
             string responsemsg = await response.Content.ReadAsStringAsync();
-            var personResponse = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
-            InterestList.AddRange(personResponse.Expertise.Split(","));
-            UpdatedPerson.Responsibilities = personResponse.Responsibilities;
-            UpdatedPerson.Expertise = personResponse.Expertise;
+            UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
+            InterestList.AddRange(UpdatedPerson.Expertise.Split(","));
+            @* UpdatedPerson.Responsibilities = personResponse.Responsibilities;
+            UpdatedPerson.Expertise = personResponse.Expertise;  *@
             isInterestEntered = true;
-            ProfileName = personResponse.Name;
-            People.Add(personResponse);
+            ProfileName = UpdatedPerson.Name;
+            @* People.Add(personResponse); *@
         }
         else
         {
@@ -281,7 +281,7 @@
     {
         try
         {
-            await UpdatePerson(People);
+            await UpdatePerson(UpdatedPerson);
         }
         catch (Exception ex)
         {
@@ -309,7 +309,7 @@
         InterestList.Add(EnteredTerm);
         try
         {
-            await UpdatePerson(People);
+            await UpdatePerson(UpdatedPerson);
         }
         catch (Exception ex)
         {
@@ -319,33 +319,36 @@
         StateHasChanged();
     }
 
-    private async Task UpdatePerson(List<Person> People)
+    private async Task UpdatePerson(Person member)
     {
-        foreach (var member in People)
+    
+        if (member.Responsibilities.ToString().Split(',').Count() == 0 && member.Netid == NetId)
         {
-            if (member.Responsibilities.ToString().Split(',').Count() == 0 && member.Netid == NetId)
-            {
-                formResponse = await Api().PostAsJsonAsync<Person>("/people", member);
-            }
-            else if (member.Expertise.Split(',').Count() == 0 && member.Netid == NetId)
-            {
-                formResponse = await Api().PostAsJsonAsync<Person>("/people", member);
-            }
-            else if (member.Netid == NetId)
-            {
-                string memberOutput = JsonConvert.SerializeObject(member, Json.JsonSerializerSettings);
-                var deserializedMember = JsonConvert.DeserializeObject<Person>(memberOutput, Json.JsonSerializerSettings);
-                deserializedMember.Responsibilities = member.Responsibilities;
-                deserializedMember.Expertise = InterestList.Aggregate((a, b) => a + ", " + b);
-                formResponse = await Api().PutAsJsonAsync<Person>($"/people/{deserializedMember.Id}", deserializedMember);
-            }
+            formResponse = await Api().PostAsJsonAsync<Person>("/people", member);
         }
+        else if (member.Expertise.Split(',').Count() == 0 && member.Netid == NetId)
+        {
+            formResponse = await Api().PostAsJsonAsync<Person>("/people", member);
+        }
+        else if (member.Netid == NetId)
+        {
+            string memberOutput = JsonConvert.SerializeObject(member, Json.JsonSerializerSettings);
+            var deserializedMember = JsonConvert.DeserializeObject<Person>(memberOutput, Json.JsonSerializerSettings);
+            deserializedMember.Responsibilities = member.Responsibilities;
+            deserializedMember.Expertise = InterestList.Aggregate((a, b) => a + ", " + b);
+            formResponse = await Api().PutAsJsonAsync<Person>($"/people/{deserializedMember.Id}", deserializedMember);
+        }
+       
 
         if (formResponse.IsSuccessStatusCode == true)
         {
+            Console.WriteLine($"Before .... update the updatedPerson ");
+
             string responsemsg = await formResponse.Content.ReadAsStringAsync();
             UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
             await form.Close();
+            Console.WriteLine($"After .... update the updatedPerson ");
+
         }
     }
 
