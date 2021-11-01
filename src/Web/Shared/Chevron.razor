@@ -10,17 +10,13 @@
 			@if (Open)
 			{
 				<button type="button" class="rvt-button--plain" aria-expanded="@(Open ? "true" : "false")" @onclick="ToggleOpenStatus">
-					<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-						<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-chevron-down"></use>
-					</svg>
+				 	<rvt-icon name="chevron-down" />
 				</button>
 			}
 			else
 			{
 				<button type="button" class="rvt-button--plain" aria-expanded="@(Open ? "true" : "false")" @onclick="ToggleOpenStatus">
-					<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-						<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-chevron-up"></use>
-					</svg>
+					<rvt-icon name="chevron-up" />
 				</button>
 			}				
 		</div>
