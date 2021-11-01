@@ -27,7 +27,7 @@
 		return await MakeRequest<T>(HttpMethod.Get, Api().DeleteAsync(uri), error);
 	}
 
-	private async Task<(T Value, EntityPermissions Permissions)> MakeRequest<T>(HttpMethod method, Task<HttpResponseMessage> request, string error = null)
+	protected async Task<(T Value, EntityPermissions Permissions)> MakeRequest<T>(HttpMethod method, Task<HttpResponseMessage> request, string error = null)
 	{
 		var result = default(T);
 		HttpResponseMessage response = null;

@@ -7,6 +7,7 @@
 @inject NavigationManager Navigation
 @implements IDisposable
 @page "/Units/{unitId}"
+@page "/Units/{unitId}/edit"
 @inherits PageBase
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
@@ -21,56 +22,73 @@
 		</NotAuthenticated>
 		<Authenticated>
 			<section class="rvt-p-bottom-xxl">
-				<div style="display: flex; justify-content: space-between; float: right;">
-					@if (UnitPermissions.HasFlag(EntityPermissions.Delete))
-					{
-						<a class="rvt-button rvt-button--danger rvt-m-right-xs" title="Delete Unit" @onclick="DeleteUnit">
-							<rvt-icon name="trash"></rvt-icon>
-							<span class="rvt-sr-only">Delete Unit</span>
-						</a>
-						@if (CurrentUnit.Active)
-						{
-							<a class="rvt-button rvt-m-right-xs" title="Archive Unit" @onclick="ToggleArchiveStatus">
-								<rvt-icon name="lock-closed"></rvt-icon>
-							</a>
-						}
-						else
-						{
-							<a class="rvt-button rvt-m-right-xs" title="Unarchive Unit" @onclick="ToggleArchiveStatus">
-								<rvt-icon name="lock-open"></rvt-icon>
-							</a>
-						}
-					}
-					@if (UnitPermissions.HasFlag(EntityPermissions.Put) || UnitMembers.Any(m => m.Permissions.HasFlag(Models.UnitPermissions.ManageMembers) || m.Permissions.HasFlag(Models.UnitPermissions.ManageTools)))
-					{
-						<a class="rvt-button" href="/Units/@UnitId/Edit">
-							<rvt-icon name="pencil"></rvt-icon>
-						</a>
-					}
-				</div>
-				<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">
-					@CurrentUnit.Name
-					@if (CurrentUnit.Active == false)
-					{
-						<span class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-ts-xs">Archived</span>
-					}
-				</h1>
-				@if (string.IsNullOrWhiteSpace(CurrentUnit.Description) == false)
+				@if (EditMode)
 				{
-					<div class="rvt-m-top-sm">
-						<span>@CurrentUnit.Description</span>
+					<h1>Edit</h1>
+					<EditForm EditContext="@UnitEditContext">
+						<RivetInputText @bind-Value="UnitToUpdate.Name" Label="Name" />
+						<RivetInputTextArea @bind-Value="UnitToUpdate.Description" Label="Description" />
+						<RivetInputText @bind-Value="UnitToUpdate.Url" Label="URL" />
+						<RivetInputText @bind-Value="UnitToUpdate.Email" Label="Contact Email" />
+						<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(UnitFormInvalid || ShowLoader)" @onclick="UpdateUnit">
+							Save
+						</button>
+						<a class="rvt-button rvt-button--danger" href="/Units/@CurrentUnit.Id">Cancel</a>
+					</EditForm>
+				}
+				else
+				{
+					<div style="display: flex; justify-content: space-between; float: right;">
+						@if (UnitPermissions.HasFlag(EntityPermissions.Delete))
+						{
+							<a class="rvt-button rvt-button--danger rvt-m-right-xs" title="Delete Unit" @onclick="DeleteUnit">
+								<rvt-icon name="trash"></rvt-icon>
+								<span class="rvt-sr-only">Delete Unit</span>
+							</a>
+							@if (CurrentUnit.Active)
+							{
+								<a class="rvt-button rvt-m-right-xs" title="Archive Unit" @onclick="ToggleArchiveStatus">
+									<rvt-icon name="lock-closed"></rvt-icon>
+								</a>
+							}
+							else
+							{
+								<a class="rvt-button rvt-m-right-xs" title="Unarchive Unit" @onclick="ToggleArchiveStatus">
+									<rvt-icon name="lock-open"></rvt-icon>
+								</a>
+							}
+						}
+						@if (UnitPermissions.HasFlag(EntityPermissions.Put) || UnitMembers.Any(m => m.Permissions.HasFlag(Models.UnitPermissions.ManageMembers) || m.Permissions.HasFlag(Models.UnitPermissions.ManageTools)))
+						{
+							<a class="rvt-button" href="/Units/@UnitId/Edit">
+								<rvt-icon name="pencil"></rvt-icon>
+							</a>
+						}
+					</div>
+					<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">
+						@CurrentUnit.Name
+						@if (CurrentUnit.Active == false)
+						{
+							<span class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-ts-xs">Archived</span>
+						}
+					</h1>
+					@if (string.IsNullOrWhiteSpace(CurrentUnit.Description) == false)
+					{
+						<div class="rvt-m-top-sm">
+							<span>@CurrentUnit.Description</span>
+						</div>
+					}
+					<div class="rvt-grid">
+						@if (string.IsNullOrWhiteSpace(CurrentUnit.Url) == false)
+						{
+							<a href="@CurrentUnit.Url" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Visit Website</a>
+						}
+						@if (string.IsNullOrWhiteSpace(CurrentUnit.Email) == false)
+						{
+							<a href="mailto:@CurrentUnit.Email" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Contact</a>
+						}
 					</div>
 				}
-				<div class="rvt-grid">
-					@if (string.IsNullOrWhiteSpace(CurrentUnit.Url) == false)
-					{
-						<a href="@CurrentUnit.Url" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Visit Website</a>
-					}
-					@if (string.IsNullOrWhiteSpace(CurrentUnit.Email) == false)
-					{
-						<a href="mailto:@CurrentUnit.Email" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Contact</a>
-					}
-				</div>
 				<DisplayException Ex=@GeneralException />
 			</section>
 			<Loader Loading="ShowLoader">
@@ -257,8 +275,8 @@
 </div>
 
 @code {
-	[Parameter]
-	public string UnitId { get; set; }
+		[Parameter]
+		public string UnitId { get; set; }
 	private UnitResponse CurrentUnit = new UnitResponse();
 	private List<UnitMemberResponse> UnitMembers = new List<UnitMemberResponse>();
 	private List<UnitResponse> UnitChildren = new List<UnitResponse>();
@@ -267,6 +285,10 @@
 	private EntityPermissions UnitPermissions;
 	private bool ShowLoader = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+	private bool EditMode = false;
+	private EditContext UnitEditContext;
+	private UnitRequest UnitToUpdate;
+	private bool UnitFormInvalid = false;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -282,7 +304,47 @@
 					GetSupportRelationships(),
 					GetBuildingRelationships()
 				});
+				SetEditMode();
+				UnitToUpdate = new UnitRequest
+				{
+					Name = CurrentUnit.Name,
+					Description = CurrentUnit.Description,
+					Url = CurrentUnit.Url,
+					Email = CurrentUnit.Email
+				};
+				UnitEditContext = new EditContext(UnitToUpdate);
+				UnitEditContext.OnFieldChanged += HandleFieldChanged;
 			}
+		}
+		Navigation.LocationChanged += HandleLocationChanged;
+	}
+
+	private void SetEditMode()
+	{
+		var path = Navigation.Uri.Substring(Navigation.BaseUri.Length - 1);
+		EditMode = path.ToLower().StartsWith($"/units/{CurrentUnit.Id}/edit");
+	}
+
+	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+	{
+		SetEditMode();
+		StateHasChanged();
+	}
+
+	private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
+	{
+		UnitFormInvalid = !UnitEditContext.Validate();
+		StateHasChanged();
+	}
+
+	public async Task UpdateUnit()
+	{
+		using (Loading())
+		{
+			GeneralException = null;
+			var response = await MakeRequest<UnitResponse>(HttpMethod.Put, Api().PutAsJsonAsync($"/Units/{UnitId}", UnitToUpdate));
+			CurrentUnit = response.Value;
+			UnitPermissions = response.Permissions;
 		}
 	}
 
@@ -339,5 +401,8 @@
 		Navigation.NavigateTo("/units");
 	}
 
-	public void Dispose() { }
+	public void Dispose()
+	{
+		Navigation.LocationChanged -= HandleLocationChanged;
+	}
 }
