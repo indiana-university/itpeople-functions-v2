@@ -52,7 +52,7 @@
 					@CurrentUnit.Name
 					@if (CurrentUnit.Active == false)
 					{
-						  <span class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-ts-xs">Archived</span>
+						<span class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-ts-xs">Archived</span>
 					}
 				</h1>
 				@if (string.IsNullOrWhiteSpace(CurrentUnit.Description) == false)
@@ -302,20 +302,17 @@
 	{
 		var response = await Get<List<UnitResponse>>($"/Units/{UnitId}/children");
 		UnitChildren = response.Value;
-		//TODO set permissions?
 	}
 
 	private async Task GetSupportRelationships()
 	{
 		var response = await Get<List<SupportRelationshipResponse>>($"/Units/{UnitId}/supportedDepartments");
 		SupportRelationships = response.Value;
-		//TODO set permissions?
 	}
 	private async Task GetBuildingRelationships()
 	{
 		var response = await Get<List<BuildingRelationship>>($"/Units/{UnitId}/supportedBuildings");
 		BuildingRelationships = response.Value;
-		//TODO set permissions?
 	}
 
 	private async Task ToggleArchiveStatus()
