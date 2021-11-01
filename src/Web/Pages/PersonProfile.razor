@@ -236,7 +236,7 @@
         if (response.IsSuccessStatusCode)
         {
             string responsemsg = await response.Content.ReadAsStringAsync();
-            var personResponse = JsonConvert.DeserializeObject<Person>(responsemsg);
+            var personResponse = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
             InterestList.AddRange(personResponse.Expertise.Split(","));
             UpdatedPerson.Responsibilities = personResponse.Responsibilities;
             UpdatedPerson.Expertise = personResponse.Expertise;
@@ -255,7 +255,8 @@
         var response = await Api().GetAsync($"/people/{NetId}/memberships");
         if (response.IsSuccessStatusCode)
         {
-            Memberships = await response.Content.ReadFromJsonAsync<List<UnitMemberResponse>>();
+            string responsemsg = await response.Content.ReadAsStringAsync();
+            Memberships = JsonConvert.DeserializeObject<List<UnitMemberResponse>>(responsemsg, Json.JsonSerializerSettings);
             ProfileUnits = Memberships.Select(m => m.Unit).Distinct();
         }
         else
@@ -320,8 +321,8 @@
             }
             else if (member.Netid == NetId)
             {
-                string memberOutput = JsonConvert.SerializeObject(member);
-                var deserializedMember = JsonConvert.DeserializeObject<Person>(memberOutput);
+                string memberOutput = JsonConvert.SerializeObject(member, Json.JsonSerializerSettings);
+                var deserializedMember = JsonConvert.DeserializeObject<Person>(memberOutput, Json.JsonSerializerSettings);
                 deserializedMember.Responsibilities = member.Responsibilities;
                 deserializedMember.Expertise = InterestList.Aggregate((a, b) => a + ", " + b);
                 formResponse = await Api().PutAsJsonAsync<Person>($"/people/{deserializedMember.Id}", deserializedMember);
@@ -331,7 +332,7 @@
         if (formResponse.IsSuccessStatusCode == true)
         {
             string responsemsg = await formResponse.Content.ReadAsStringAsync();
-            UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg);
+            UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
             await form.Close();
         }
     }
