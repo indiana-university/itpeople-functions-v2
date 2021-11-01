@@ -322,11 +322,13 @@
     
         if (member.Responsibilities.ToString().Split(',').Count() == 0 && member.Netid == NetId)
         {
-            formResponse = await Api().PostAsJsonAsync<Person>("/people", member);
+            var postContent = new StringContent(JsonConvert.SerializeObject(member), System.Text.Encoding.UTF8, "application/json");
+            formResponse = await Api().PostAsync($"/people/", postContent);
         }
         else if (member.Expertise.Split(',').Count() == 0 && member.Netid == NetId)
         {
-            formResponse = await Api().PostAsJsonAsync<Person>("/people", member);
+            var postContent = new StringContent(JsonConvert.SerializeObject(member), System.Text.Encoding.UTF8, "application/json");
+            formResponse = await Api().PostAsync($"/people/", postContent);
         }
         else if (member.Netid == NetId)
         {
@@ -334,7 +336,9 @@
             var deserializedMember = JsonConvert.DeserializeObject<Person>(memberOutput, Json.JsonSerializerSettings);
             deserializedMember.Responsibilities = member.Responsibilities;
             deserializedMember.Expertise = InterestList.Aggregate((a, b) => a + ", " + b);
-            formResponse = await Api().PutAsJsonAsync<Person>($"/people/{deserializedMember.Id}", deserializedMember);
+            
+            var putContent = new StringContent(JsonConvert.SerializeObject(deserializedMember), System.Text.Encoding.UTF8, "application/json");
+            formResponse = await Api().PutAsync($"/people/{deserializedMember.Id}", putContent);
         }
        
 
