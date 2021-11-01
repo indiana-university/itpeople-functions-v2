@@ -42,11 +42,7 @@ html, body {
     right: 0.75rem;
     top: 0.5rem;
 }
-.rvt-border-bottom {
-    border-bottom: 1px solid #bdbdbd;
-    padding-bottom: 2em;
-    margin-bottom: 2em;
-}
+
 button.expanded svg {
     transform: rotate(180deg);
   }
@@ -137,7 +133,5 @@ div {
     font-size: .875rem;
     line-height: 1;
 }
-.m-bottom-lg, .rvt-m-bottom-lg {
-    margin-bottom: 0rem!important;
-}
+
 
