@@ -5,6 +5,8 @@
 @using System.Net
 @using System.Linq
 @using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using System.Web
 @using System.Collections
 @using System;
 @using System.ComponentModel.DataAnnotations;
@@ -101,7 +103,7 @@
                                                             <h1 class="rvt-modal__title" id="modal-form-title">Edit Interests</h1>
                                                         </header>
                                                         <div class="rvt-modal__body">
-                                                            <EditForm OnValidSubmit="UpdateInterests" EditContext="@FormContext">
+                                                            <EditForm EditContext="@FormContext">
                                                                 <DataAnnotationsValidator />
                                                                         @if (isInterestEntered)
                                                                         {
@@ -111,6 +113,7 @@
                                                                                     <li>
                                                                                         <span class="rvt-badge">@Interest
                                                                                             <button id="id_67b129" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(e => RemoveInterests(Interest))">
+                                                                                            @* <button id="@Interest" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(e => RemoveInterests(Interest))"> *@
                                                                                                 <rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
                                                                                             </button>
                                                                                         </span>
@@ -123,12 +126,21 @@
                                                                             <label for="modal-form-i" class="">Search</label>
                                                                             <div class="rvt-input-group">
                                                                                 <input class="rvt-input-group__input" id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}"/>
+                                                                                @* <input class=@(EnteredTerm==null ? "" : "rvt-validation-success") id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}"/> *@
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-                                                                    <div class="rvt-dropdown__menu" aria-hidden=@(EnteredTerm==null ? "true" : "false") style="position: relative; padding: 0px;">
-                                                                        <button type="button" id="modal-form-i" class="rvt-button" @onclick=@(() => UpdateInterests()) >@EnteredTerm </button>
-                                                                    </div>
+                                                                    </div>                                                                    
+                                                                        @if (EnteredTerm != null)
+                                                                        {
+                                                                            <div class="rvt-dropdown__menu" aria-hidden="false" style="position: relative; padding: 0px;">
+                                                                                @foreach (var enteredItem in EnteredTerm.Split(","))
+                                                                                {
+                                                                                    <div>
+                                                                                        <button type="button" id="@enteredItem-modal-form-i" class="rvt-button" @onclick=@(() => UpdateInterests(enteredItem)) >@enteredItem </button>
+                                                                                    </div>
+                                                                                }
+                                                                             </div>
+                                                                        }                                                                       
                                                             </EditForm>
                                                         </div>
 
@@ -167,7 +179,6 @@
                                                             @if (Memberships.Select(pu => pu.Title).FirstOrDefault() != null)
                                                             {
                                                                 <div><strong>Title: </strong>@Memberships.Select(pu => pu.Title).FirstOrDefault() </div>
-
                                                             }
                                                             <div><strong>Role: </strong>@Memberships.Select(pu => pu.Role).FirstOrDefault().ToString() </div>
                                                         </HidenContent>
@@ -242,8 +253,9 @@
         {
             string responsemsg = await response.Content.ReadAsStringAsync();
             UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
-            ProfileName = UpdatedPerson.Name;            
-            if(UpdatedPerson.Expertise != null)
+            ProfileName = UpdatedPerson.Name;
+            InterestList.Clear();           
+            if(UpdatedPerson.Expertise != null && UpdatedPerson.Netid == NetId)
             {
                 InterestList.AddRange(UpdatedPerson.Expertise.Split(","));
                 isInterestEntered = true;            
@@ -303,9 +315,25 @@
         var field = fieldInfo.FirstOrDefault(f => f.Name == enumValue);
         return field != null ? field.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? field.Name : enumValue;
     }
-    private void AddEnteredValue(string Value)
+    private async Task AddEnteredValue(string Value)
     {
-        EnteredTerm = Value;
+        @* The API we are using to get the tech tags : https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname=vuejs *@
+
+        var response = await Api().GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(Value)}");
+        if(response.IsSuccessStatusCode)
+        {
+            var responsemsg = await response.Content.ReadAsStringAsync();
+            var jsonResponse = JObject.Parse(responsemsg);
+            var jItems = (JArray)jsonResponse["items"];
+            var interestsTags = jItems.Select(i => (string)i["name"]).ToList();
+            EnteredTerm = string.Join(",", interestsTags) ?? Value;
+        }
+        else
+        {
+            EnteredTerm = Value;
+            GeneralException = new Exception($"Failed to fetch tech tags.");
+            return;
+        }
         isInterestEntered = true;
     }
     private async Task RemoveInterests(string interest)
@@ -314,10 +342,10 @@
         UpdatedPerson.Expertise = InterestList.Aggregate((a, b) => a + "," + b);
         await InterestsModalFormClose();
 
-    }
-    private async Task UpdateInterests()
+    }  
+    private async Task UpdateInterests(string selectedInterest)
     {
-        InterestList.Add(EnteredTerm);
+        InterestList.Add(selectedInterest);
         try
         {
 
