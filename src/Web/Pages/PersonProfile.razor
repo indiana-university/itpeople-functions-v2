@@ -105,26 +105,28 @@
                                                         <div class="rvt-modal__body">
                                                             <EditForm EditContext="@FormContext">
                                                                 <DataAnnotationsValidator />
-                                                                        @if (isInterestEntered)
+                                                                    <div>
+                                                                        @if (isInterestEntered && !string.IsNullOrEmpty(UpdatedPerson.Expertise))
                                                                         {
-                                                                            @foreach (var Interest in UpdatedPerson.Expertise.Split(","))
-                                                                            {
-                                                                                <ul class="rvt-inline-list">
+                                                                            <ul class="rvt-list rvt-plain-list rvt-inline-list">
+                                                                                @foreach (var Interest in UpdatedPerson.Expertise.Split(","))
+                                                                                {
                                                                                     <li>
                                                                                         <span class="rvt-badge">@Interest
-                                                                                            <button id="@Interest" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(e => RemoveInterests(Interest))">
+                                                                                            <button id="@Interest" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterests(Interest))">
                                                                                                 <rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
                                                                                             </button>
                                                                                         </span>
                                                                                     </li>
-                                                                                </ul>
-                                                                            }
+                                                                                }
+                                                                            </ul>
                                                                         }
+                                                                    </div>
                                                                     <div>
                                                                         <div class="rvt-input rvt-m-bottom-sm">
                                                                             <label for="modal-form-i" class="">Search</label>
                                                                             <div class="rvt-input-group">
-                                                                                <input class=@(EnteredTerm==null ? "" : "rvt-validation-success") id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}"/>
+                                                                                <input class=@(EnteredTerm==null ? "" : "rvt-validation-success") id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}" @onkeypress="@KeyPressHandler"/>
                                                                             </div>
                                                                         </div>
                                                                     </div>                                                                    
@@ -150,12 +152,20 @@
                                             </div>
                                             <h2 class="rvt-ts-23 rvt-text-bold">Professional interests</h2>
                                             <p>What kinds of skills, technologies, or languages do you want to work with or learn about?</p>
-                                            @foreach (var Interest in UpdatedPerson.Expertise.Split(","))
-                                            {
-                                                <ul class="rvt-list rvt-plain-list">
-                                                    <li><span class="rvt-badge">@Interest</span></li>
+                                                <ul class="rvt-list rvt-plain-list rvt-inline-list">
+                                                    @if (UpdatedPerson.Expertise != null)
+                                                    {
+                                                        @foreach (var Interest in UpdatedPerson.Expertise.Split(","))
+                                                        {
+                                                            <li><span class="rvt-badge">@Interest</span></li>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <li></li>
+                                                    }                                                    
                                                 </ul>
-                                            }
+
                                         </div>
                                     </div>
                                 </ChildContent>                                                                                                             
@@ -324,22 +334,37 @@
             var jsonResponse = JObject.Parse(responsemsg);
             var jItems = (JArray)jsonResponse["items"];
             var interestsTags = jItems.Select(i => (string)i["name"]).ToList();
-            EnteredTerm = string.Join(",", interestsTags) ?? Value;
+            interestsTags.Insert(0, Value);
+            EnteredTerm = string.Join(",", interestsTags);
         }
         else
         {
             EnteredTerm = Value;
-            GeneralException = new Exception($"Failed to fetch tech tags.");
-            return;
         }
+
         isInterestEntered = true;
     }
     private async Task RemoveInterests(string interest)
     {
         InterestList.Remove(interest);
-        UpdatedPerson.Expertise = InterestList.Aggregate((a, b) => a + "," + b);
+        if (InterestList.Count() != 0)
+        {
+            UpdatedPerson.Expertise = InterestList.Aggregate((a, b) => a + "," + b);        
+        }
+        else
+        {
+            UpdatedPerson.Expertise = null;
+            isInterestEntered = false;
+        }       
         await InterestsModalFormClose();
-
+    }
+    private void KeyPressHandler(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {            
+            if(EnteredTerm != null)
+            UpdateInterests(EnteredTerm.Split(",").First());
+        }
     }  
     private async Task UpdateInterests(string selectedInterest)
     {
