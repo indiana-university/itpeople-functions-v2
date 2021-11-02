@@ -112,8 +112,7 @@
                                                                                 <ul class="rvt-inline-list">
                                                                                     <li>
                                                                                         <span class="rvt-badge">@Interest
-                                                                                            <button id="id_67b129" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(e => RemoveInterests(Interest))">
-                                                                                            @* <button id="@Interest" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(e => RemoveInterests(Interest))"> *@
+                                                                                            <button id="@Interest" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(e => RemoveInterests(Interest))">
                                                                                                 <rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
                                                                                             </button>
                                                                                         </span>
@@ -125,8 +124,7 @@
                                                                         <div class="rvt-input rvt-m-bottom-sm">
                                                                             <label for="modal-form-i" class="">Search</label>
                                                                             <div class="rvt-input-group">
-                                                                                <input class="rvt-input-group__input" id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}"/>
-                                                                                @* <input class=@(EnteredTerm==null ? "" : "rvt-validation-success") id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}"/> *@
+                                                                                <input class=@(EnteredTerm==null ? "" : "rvt-validation-success") id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}"/>
                                                                             </div>
                                                                         </div>
                                                                     </div>                                                                    
@@ -348,7 +346,6 @@
         InterestList.Add(selectedInterest);
         try
         {
-
             await UpdatePerson(UpdatedPerson);
         }
         catch (Exception ex)
