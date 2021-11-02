@@ -3,6 +3,7 @@
 @using RivetBlazor.Components
 @using web.Shared
 @using System.Linq
+@using Newtonsoft.Json
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @implements IDisposable
@@ -113,41 +114,59 @@
 													@foreach (var member in UnitMembers.Where(m => m.Role == role))
 													{
 														<div class="rvt-p-all-sm">
-															<div class="rvt-grid rvt-border-bottom rvt-p-bottom-sm">
-																<div class="rvt-grid__item" style="align-self: center;">
-																	<a href="/people/@member.Person.Id" class="rvt-m-bottom-remove rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
-																		<span>@member.Person.Name</span>
-																	</a>
-																	<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-																		@member.Title
-																		@if (member.Percentage != 100)
-																		{
-																			<span style="padding-left:0.25rem">@member.Percentage% </span>
-																		}
-																	</p>
+															<div class="rvt-border-bottom rvt-p-bottom-sm">
+																<div class="rvt-grid ">
+																	<div class="rvt-grid__item" style="align-self: center;">
+																		<a href="/people/@member.Person.Id" class="rvt-m-bottom-remove rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
+																			<span>@member.Person.Name</span>
+																		</a>
+																		<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
+																			@member.Title
+																			@if (member.Percentage != 100)
+																			{
+																				<span style="padding-left:0.25rem">@member.Percentage% </span>
+																			}
+																		</p>
+																	</div>
+																	@if (EditMode)
+																	{
+																		<div class="rvt-text-right">
+																			@if (CanEditMemberTools)
+																			{
+																				<button class="rvt-button rvt-button--plain" title="Edit tool permissions for @member.Person.Name" @onclick="@(() => EditMemberTools(member))">
+																					<rvt-icon name="gear"></rvt-icon>
+																					<span class="rvt-sr-only">Edit tool permissions for @member.Person.Name</span>
+																				</button>
+																			}
+																			@if (CanEditUnitMembers)
+																			{
+																				<button class="rvt-button rvt-button--plain" title="Edit member: @member.Person.Name">
+																					<rvt-icon name="pencil"></rvt-icon>
+																					<span class="rvt-sr-only">Edit member: @member.Person.Name</span>
+																				</button>
+																				<button class="rvt-button rvt-button--plain" title="Remove @member.Person.Name" @onclick="@(async () => await RemoveMember(member))">
+																					<rvt-icon name="trash"></rvt-icon>
+																					<span class="rvt-sr-only">Remove @member.Person.Name</span>
+																				</button>
+																			}
+																		</div>
+																	}
 																</div>
 																@if (EditMode)
 																{
-																	<div class="rvt-text-right">
-																		@if (CanEditMemberTools)
+																	@if (member.Id == MemberToUpdate?.Id)
+																	{
+																		@if (MemberToolsToUpdate != null)
 																		{
-																			<button class="rvt-button rvt-button--plain" title="Edit tool permissions for @member.Person.Name">
-																				<rvt-icon name="gear"></rvt-icon>
-																				<span class="rvt-sr-only">Edit tool permissions for @member.Person.Name</span>
-																			</button>
+																			<EditForm EditContext="@MemberToolEditContext">
+																				<RivetInputCheckbox @bind-Value="MemberToolsToUpdate" Legend="@("Edit tools permissions: " + member.Person.Name)" Options=UnitTools DisplayLambda=@(c => $"{c.Name}") />
+																				<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader)" @onclick="UpdateMemberTools">
+																					Save
+																				</button>
+																				<a class="rvt-button rvt-button--danger" @onclick="@(() => EditMemberTools(null))">Cancel</a>
+																			</EditForm>
 																		}
-																		@if (CanEditUnitMembers)
-																		{
-																			<button class="rvt-button rvt-button--plain" title="Edit member: @member.Person.Name">
-																				<rvt-icon name="pencil"></rvt-icon>
-																				<span class="rvt-sr-only">Edit member: @member.Person.Name</span>
-																			</button>
-																			<button class="rvt-button rvt-button--plain" title="Remove @member.Person.Name" @onclick="@(async () => await RemoveMember(member))">
-																				<rvt-icon name="trash"></rvt-icon>
-																				<span class="rvt-sr-only">Remove @member.Person.Name</span>
-																			</button>
-																		}
-																	</div>
+																	}
 																}
 															</div>
 														</div>
@@ -317,7 +336,11 @@
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	private bool EditMode = false;
 	private EditContext UnitEditContext;
+	private EditContext MemberToolEditContext;
+	private EditContext MemberEditContext;
 	private UnitRequest UnitToUpdate;
+	private List<ToolResponse> MemberToolsToUpdate;
+	private UnitMemberResponse MemberToUpdate;
 	private bool UnitFormInvalid = false;
 	private bool CanEditUnitDetails = false;
 	private bool CanEditMemberTools = false;
@@ -353,16 +376,63 @@
 		Navigation.LocationChanged += HandleLocationChanged;
 	}
 
-	private void SetEditMode()
+	public void Dispose()
 	{
-		var path = Navigation.Uri.Substring(Navigation.BaseUri.Length - 1);
-		EditMode = path.ToLower().StartsWith($"/units/{CurrentUnit.Id}/edit");
+		Navigation.LocationChanged -= HandleLocationChanged;
 	}
 
-	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+	private async Task DeleteUnit()
 	{
-		SetEditMode();
-		StateHasChanged();
+		var confirmMessage = $"Are you sure you want to delete {CurrentUnit.Name}? This can't be undone.";
+		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
+		{
+			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}");
+			CurrentUnit = deleteResponse.Value;
+		}
+		Navigation.NavigateTo("/units");
+	}
+
+	private void EditMember(UnitMemberResponse member)
+	{
+		MemberToolsToUpdate = null; //reset tools as we are working on just the member here
+		MemberToUpdate = member != null
+			? JsonConvert.DeserializeObject<UnitMemberResponse>(JsonConvert.SerializeObject(member), Json.JsonSerializerSettings)
+			: null;
+		if (member == null)
+		{
+			return;
+		}
+		if (MemberEditContext == null)
+		{
+			MemberEditContext = new EditContext(MemberToUpdate);
+			MemberEditContext.OnFieldChanged += HandleFieldChanged;
+		}
+		else
+		{
+			MemberEditContext = new EditContext(MemberToUpdate);
+		}
+	}
+
+	private void EditMemberTools(UnitMemberResponse member)
+	{
+		MemberToUpdate = member;
+		EditMember(member); //set member so we have the id around when editing tools as ToolResponse
+		MemberToolsToUpdate = member?.MemberTools.Select(t => new ToolResponse { Id = t.ToolId }).ToList();
+		if (member == null)
+		{
+			return;
+		}
+		if (MemberToolEditContext == null)
+		{
+			Console.WriteLine("MemberToolEditContext == null");
+			MemberToolEditContext = new EditContext(MemberToolsToUpdate);
+			MemberToolEditContext.OnFieldChanged += HandleFieldChanged;
+		}
+		else
+		{
+			Console.WriteLine("MemberToolEditContext != null");
+			MemberToolEditContext = new EditContext(MemberToolsToUpdate);
+		}
 	}
 
 	private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
@@ -371,39 +441,10 @@
 		StateHasChanged();
 	}
 
-	public async Task UpdateUnit()
+	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
 	{
-		using (Loading())
-		{
-			GeneralException = null;
-			var response = await MakeRequest<UnitResponse>(HttpMethod.Put, Api().PutAsJsonAsync($"/Units/{UnitId}", UnitToUpdate));
-			CurrentUnit = response.Value;
-		}
-	}
-
-	private async Task GetUnit()
-	{
-		var response = await Get<UnitResponse>($"/Units/{UnitId}");
-		CurrentUnit = response.Value;
-		CanEditUnitDetails = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
-	}
-	private async Task GetUnitMembers()
-	{
-		var response = await Get<List<UnitMemberResponse>>($"/Units/{UnitId}/members");
-		UnitMembers = response.Value;
-		CanEditUnitMembers = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
-	}
-
-	private async Task GetUnitChildren()
-	{
-		var response = await Get<List<UnitResponse>>($"/Units/{UnitId}/children");
-		UnitChildren = response.Value;
-	}
-
-	private async Task GetSupportRelationships()
-	{
-		var response = await Get<List<SupportRelationshipResponse>>($"/Units/{UnitId}/supportedDepartments");
-		SupportRelationships = response.Value;
+		SetEditMode();
+		StateHasChanged();
 	}
 
 	private async Task GetBuildingRelationships()
@@ -412,11 +453,48 @@
 		BuildingRelationships = response.Value;
 	}
 
+	private async Task GetSupportRelationships()
+	{
+		var response = await Get<List<SupportRelationshipResponse>>($"/Units/{UnitId}/supportedDepartments");
+		SupportRelationships = response.Value;
+	}
+
+	private async Task GetUnit()
+	{
+		var response = await Get<UnitResponse>($"/Units/{UnitId}");
+		CurrentUnit = response.Value;
+		CanEditUnitDetails = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
+	}
+
+	private async Task GetUnitChildren()
+	{
+		var response = await Get<List<UnitResponse>>($"/Units/{UnitId}/children");
+		UnitChildren = response.Value;
+	}
+
+	private async Task GetUnitMembers()
+	{
+		var response = await Get<List<UnitMemberResponse>>($"/Units/{UnitId}/members");
+		UnitMembers = response.Value;
+		CanEditUnitMembers = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
+	}
+
 	private async Task GetUnitTools()
 	{
 		var response = await Get<List<ToolResponse>>($"/Units/{UnitId}/tools");
 		UnitTools = response.Value;
 		CanEditMemberTools = response.Permissions.HasFlag(PermsGroups.All);
+	}
+
+	private async Task RemoveMember(UnitMemberResponse member)
+	{
+		var confirmMessage = $"Are you sure you want to remove {member.Person.Name} from this unit?";
+		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
+		{
+			var deleteResponse = await Delete<UnitResponse>($"/memberships/{member.Id}");
+			await GetUnitMembers();
+		}
+		StateHasChanged();
 	}
 
 	private async Task ToggleArchiveStatus()
@@ -432,30 +510,52 @@
 		}
 	}
 
-	private async Task RemoveMember(UnitMemberResponse member)
+	private void SetEditMode()
 	{
-		var confirmMessage = $"Are you sure you want to remove {member.Person.Name} from this unit?";
-		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
-		{
-			var deleteResponse = await Delete<UnitResponse>($"/memberships/{member.Id}");
-			await GetUnitMembers();
-		}
-		StateHasChanged();
+		var path = Navigation.Uri.Substring(Navigation.BaseUri.Length - 1);
+		EditMode = path.ToLower().StartsWith($"/units/{CurrentUnit.Id}/edit");
 	}
 
-	private async Task DeleteUnit()
+	public async Task UpdateUnit()
 	{
-		var confirmMessage = $"Are you sure you want to delete {CurrentUnit.Name}? This can't be undone.";
-		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
+		using (Loading())
 		{
-			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}");
-			CurrentUnit = deleteResponse.Value;
+			GeneralException = null;
+			var response = await MakeRequest<UnitResponse>(HttpMethod.Put, Api().PutAsJsonAsync($"/Units/{UnitId}", UnitToUpdate));
+			CurrentUnit = response.Value;
 		}
-		Navigation.NavigateTo("/units");
 	}
-
-	public void Dispose()
+	public async Task UpdateMemberTools()
 	{
-		Navigation.LocationChanged -= HandleLocationChanged;
+		using (Loading())
+		{
+			GeneralException = null;
+			foreach (var tool in UnitTools)
+			{
+				var memberToolMatch = MemberToUpdate.MemberTools.SingleOrDefault(t => t.ToolId == tool.Id);
+				// if they already have the tool and it's still selected, ignore it
+				if (memberToolMatch != null && MemberToolsToUpdate.Any(t => t.Id == tool.Id))
+				{
+					continue;
+				}
+				else if (MemberToolsToUpdate.Any(t => t.Id == tool.Id)) // add it
+				{
+					await MakeRequest<MemberToolResponse>(HttpMethod.Post, Api().PostAsJsonAsync($"/memberTools", new MemberToolRequest
+					{
+						MembershipId = MemberToUpdate.Id,
+						ToolId = tool.Id
+					}));
+				}
+				else // delete it
+				{
+					if (memberToolMatch == null)
+					{
+						GeneralException = new Exception($"Could not delete tool permission ({tool.Name}) for {MemberToUpdate.Person.Name}");
+					}
+					await Delete<MemberToolResponse>($"/memberTools/{memberToolMatch.Id}");
+				}
+
+			}
+		}
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -5,7 +6,7 @@ using System.Linq;
 
 namespace Models
 {
-	public class ToolResponse : Entity
+	public class ToolResponse : Entity, IComparable
 	{
 		/// The name of this tool.
 		public string Name { get; set; }
@@ -22,5 +23,27 @@ namespace Models
 
 		public static List<ToolResponse> ConvertList(List<Tool> source)
             => source.Select(t => t.ToToolResponse()).ToList();
+
+		public int CompareTo(object obj)
+		{
+			Console.Write("is null"); ;
+			if (obj == null) return 1;
+
+			ToolResponse other = obj as ToolResponse;
+			Console.Write(other.Id);
+			Console.Write(other.Name) ;
+			Console.Write("---");
+			Console.Write(Id);
+			Console.Write(Name);
+			Console.Write("xxxxx");
+			if (other != null)
+			{
+				return Id.CompareTo(other.Id);
+			}
+			else
+			{
+				throw new ArgumentException($"Object is not a {nameof(ToolResponse)}.");
+			}
+		}
 	}
 }
