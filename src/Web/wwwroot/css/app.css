@@ -42,11 +42,7 @@ html, body {
     right: 0.75rem;
     top: 0.5rem;
 }
-.list-dividers>* {
-    border-bottom: 1px solid #bdbdbd;
-    padding-bottom: 2em;
-    margin-bottom: 2em;
-}
+
 button.expanded svg {
     transform: rotate(180deg);
   }
@@ -128,23 +124,6 @@ div {
     list-style: none;
     padding: 0;
 }
-ol, ul {
-    margin: 0;
-}
-ol ul {
-    list-style-type: circle;
-    margin-block-start: 0px;
-    margin-block-end: 0px;
-}
-ul {
-    display: block;
-    list-style-type: disc;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
-    padding-inline-start: 40px;
-}
 .rvt-breadcrumbs li:last-child {
     color: #666;
 }
@@ -154,16 +133,5 @@ ul {
     font-size: .875rem;
     line-height: 1;
 }
-li {
-    text-align: -webkit-match-parent;
-}
-.p-left-md, .rvt-p-left-md {
-    padding-left: 1.5rem!important;
-}
-.p-right-md, .rvt-p-right-md {
-    padding-right: 1.5rem!important;
-}
-.plain-list, .rvt-plain-list {
-    list-style: none;
-    padding: 0;
-}
+
+

@@ -242,7 +242,7 @@
       "personId": 1,
       "netId": "rswanso",
       "percentage": 25,
-      "permissions": "Editor",
+      "permissions": "ManageMembers",
       "role": "Leader",
       "title": "Manager"
     },

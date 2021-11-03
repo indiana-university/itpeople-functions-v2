@@ -19,13 +19,13 @@
 
 @code {
 
-	[Parameter]
+    [Parameter]
     public string Page { get; set; }
     [Parameter]
     public string CurrentPage { get; set; }
-    
+
     [Parameter]
-	public RenderFragment ChildContent { get; set; }
-	protected override async Task OnInitializedAsync(){}
-	public void Dispose(){}
-}
+    public RenderFragment ChildContent { get; set; }
+    protected override async Task OnInitializedAsync() { }
+    public void Dispose() { }
+    }
