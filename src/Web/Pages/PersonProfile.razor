@@ -129,18 +129,26 @@
                                                                                 <input class=@(EnteredTerm==null ? "" : "rvt-validation-success") id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}" @onkeypress="@KeyPressHandler"/>
                                                                             </div>
                                                                         </div>
-                                                                    </div>                                                                    
-                                                                        @if (EnteredTerm != null)
-                                                                        {
-                                                                            <div class="rvt-dropdown__menu" aria-hidden="false" style="position: relative; padding: 0px;">
+                                                                    </div>
+                                                                    @if (EnteredValue != null)
+                                                                    {
+                                                                        <div class="rvt-dropdown__menu" aria-hidden="false" style="position: relative; padding: 0px;">
+                                                                            <div>
+                                                                                <button type="button" id="@EnteredValue-modal-form-i" class="rvt-button" @onclick=@(() => UpdateInterests(EnteredValue)) >@EnteredValue </button>
+                                                                            </div>
+                                                                             @if (EnteredTerm != null)
+                                                                            {
                                                                                 @foreach (var enteredItem in EnteredTerm.Split(","))
                                                                                 {
                                                                                     <div>
                                                                                         <button type="button" id="@enteredItem-modal-form-i" class="rvt-button" @onclick=@(() => UpdateInterests(enteredItem)) >@enteredItem </button>
                                                                                     </div>
                                                                                 }
-                                                                             </div>
-                                                                        }                                                                       
+                                                                            }    
+                                                                        </div>
+                                                                    }
+                                                                                                                                      
+                                                                       
                                                             </EditForm>
                                                         </div>
 
@@ -234,6 +242,7 @@
     private bool isExpanded = false;
     private bool isInterestEntered = false;
     private string EnteredTerm;
+    private string EnteredValue;
     private string ProfileName;
     protected bool ShowLoader = false;
     protected IDisposable Loading()
@@ -326,22 +335,16 @@
     private async Task AddEnteredValue(string Value)
     {
         @* The API we are using to get the tech tags : https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname=vuejs *@
-
+        EnteredValue = Value;       
         var response = await Api().GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(Value)}");
-        if(response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode)
         {
             var responsemsg = await response.Content.ReadAsStringAsync();
             var jsonResponse = JObject.Parse(responsemsg);
             var jItems = (JArray)jsonResponse["items"];
             var interestsTags = jItems.Select(i => (string)i["name"]).ToList();
-            interestsTags.Insert(0, Value);
             EnteredTerm = string.Join(",", interestsTags);
-        }
-        else
-        {
-            EnteredTerm = Value;
-        }
-
+        }       
         isInterestEntered = true;
     }
     private async Task RemoveInterests(string interest)
@@ -362,8 +365,8 @@
     {
         if (e.Code == "Enter" || e.Code == "NumpadEnter")
         {            
-            if(EnteredTerm != null)
-            UpdateInterests(EnteredTerm.Split(",").First());
+            if(EnteredValue != null)
+            UpdateInterests(EnteredValue);
         }
     }  
     private async Task UpdateInterests(string selectedInterest)
