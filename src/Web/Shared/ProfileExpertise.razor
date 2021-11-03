@@ -1,6 +1,8 @@
 @using RivetBlazor.Components
 @using Models;
 @using Models.Enums;
+@using System.Threading;
+@using System.Web;
 @implements IDisposable;
 
 <div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
@@ -45,15 +47,7 @@
 		}
 	</ul>
 	
-	@* <div>
-		<div class="rvt-input rvt-m-bottom-sm">
-			<label for="modal-form-i" class="">Search</label>
-			<div class="rvt-input-group">
-				<input class=@(EnteredTerm==null ? "" : "rvt-validation-success") id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}" @onkeypress="@KeyPressHandler"/>
-			</div>
-		</div>
-	</div> *@
-	<RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." />
+	<RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." @oninput="e => SearchTermChanged(e.Value.ToString())" />
 	
 	
 	<ul class="rvt-plain-list rvt-border-all rvt-border-radius">
@@ -76,6 +70,7 @@
 	private string SearchTerm = "";
 	private ModalForm<string> Mf;
 	private List<string> Suggestions = new List<string>();
+	private StackExchangeRequest SuggestionsRequest;
 	private Exception Ex;
 
 	//Temp stuff we'll ditch
@@ -105,6 +100,86 @@
 	private async Task AddInterest(string interest)
 	{
 		Ex = new NotImplementedException();
+	}
+
+	private async Task SearchTermChanged(string newValue)
+	{
+		//Console.WriteLine($"SearchTerm({SearchTerm}) changing to: {newValue}");
+		await UpdateSuggestions(newValue);
+	}
+
+	private class StackExchangeRequest
+	{
+		public Task Task { get; set; }
+		public CancellationTokenSource TokenSource { get; set; }
+	}
+
+	private class SuggestionItem
+	{
+		public double Count { get; set; }
+		public string Name { get; set; }
+	}
+
+	private class SuggestionResponse
+	{
+		public List<SuggestionItem> Items { get; set; }
+	}
+
+	private async Task UpdateSuggestions(string searchTerm)
+	{
+		if(string.IsNullOrWhiteSpace(searchTerm))
+		{
+			return;
+		}
+
+		// Cancel any currently running requests to the Stack Exchange API that are currently running.
+		var acceptableTaskStatus = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
+		if(SuggestionsRequest != null && acceptableTaskStatus.Contains(SuggestionsRequest.Task.Status) == false)
+		{
+			SuggestionsRequest.TokenSource.Cancel();
+		}
+
+		// Make a cancelable request to the API and process the response.
+		var ts = new CancellationTokenSource();
+		SuggestionsRequest = new StackExchangeRequest
+		{
+			TokenSource = ts,
+			Task = Task.Run(async () => {
+				// Pause before sending the request in case the user isn't done typing.
+				// Additional keystrokes will cancel this request.
+				await Task.Delay(500);
+				
+				if(ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
+				{
+					// Using a new client instead of API so we don't send the users bearer token to Stack Exchange
+					using (var client = new HttpClient())
+					{
+						var response = await client.GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(searchTerm.ToLower())}");
+						// If this task was canceled before we got a response do not update Suggestions.
+						if(ts.Token.IsCancellationRequested == false)
+						{
+							if(response.IsSuccessStatusCode)
+							{
+								var result = await response.Content.ReadFromJsonAsync<SuggestionResponse>();
+								
+								//Make sure the user's input is the first item in the list, with no duplicates.
+								var rawSuggestions = result.Items.Select(i => i.Name).ToList();
+								rawSuggestions.Remove(searchTerm.ToLower());
+								rawSuggestions.Insert(0, searchTerm.ToLower());
+								
+								Suggestions = rawSuggestions.Take(10).ToList();
+							}
+							else
+							{
+								Suggestions = new List<string> { searchTerm.ToLower() };
+							}
+						}
+					}
+				}
+			}, ts.Token)
+		};
+
+		await SuggestionsRequest.Task;
 	}
 
 	public void Dispose() { }
