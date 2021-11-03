@@ -156,7 +156,7 @@
 																{
 																	@if (member.Id == MemberToUpdate?.Id)
 																	{
-																		@if (MemberToolsToUpdate != null)
+																		@if (IsEditingMemberTools)
 																		{
 																			<EditForm EditContext="@MemberToolEditContext">
 																				<RivetInputCheckbox @bind-Value="MemberToolsToUpdate" Legend="@("Edit tools permissions: " + member.Person.Name)" Options=UnitTools DisplayLambda=@(c => $"{c.Name}") />
@@ -339,13 +339,13 @@
 	private EditContext MemberToolEditContext;
 	private EditContext MemberEditContext;
 	private UnitRequest UnitToUpdate;
-	private List<ToolResponse> MemberToolsToUpdate;
+	private List<ToolResponse> MemberToolsToUpdate = new List<ToolResponse>();
 	private UnitMemberResponse MemberToUpdate;
 	private bool UnitFormInvalid = false;
 	private bool CanEditUnitDetails = false;
 	private bool CanEditMemberTools = false;
 	private bool CanEditUnitMembers = false;
-
+	private bool IsEditingMemberTools = false;
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
@@ -394,10 +394,10 @@
 
 	private void EditMember(UnitMemberResponse member)
 	{
-		MemberToolsToUpdate = null; //reset tools as we are working on just the member here
+		IsEditingMemberTools = false;
 		MemberToUpdate = member != null
-			? JsonConvert.DeserializeObject<UnitMemberResponse>(JsonConvert.SerializeObject(member), Json.JsonSerializerSettings)
-			: null;
+		? JsonConvert.DeserializeObject<UnitMemberResponse>(JsonConvert.SerializeObject(member), Json.JsonSerializerSettings)
+		: null;
 		if (member == null)
 		{
 			return;
@@ -416,21 +416,20 @@
 	private void EditMemberTools(UnitMemberResponse member)
 	{
 		MemberToUpdate = member;
-		EditMember(member); //set member so we have the id around when editing tools as ToolResponse
-		MemberToolsToUpdate = member?.MemberTools.Select(t => new ToolResponse { Id = t.ToolId }).ToList();
+		IsEditingMemberTools = true;
+		MemberToolsToUpdate = member != null
+			? member.MemberTools.Select(t => new ToolResponse { Id = t.ToolId }).ToList()
+			: new List<ToolResponse>();
 		if (member == null)
 		{
 			return;
 		}
 		if (MemberToolEditContext == null)
 		{
-			Console.WriteLine("MemberToolEditContext == null");
 			MemberToolEditContext = new EditContext(MemberToolsToUpdate);
-			MemberToolEditContext.OnFieldChanged += HandleFieldChanged;
 		}
 		else
 		{
-			Console.WriteLine("MemberToolEditContext != null");
 			MemberToolEditContext = new EditContext(MemberToolsToUpdate);
 		}
 	}
