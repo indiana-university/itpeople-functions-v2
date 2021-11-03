@@ -24,7 +24,7 @@
 
 	protected async Task<(T Value, EntityPermissions Permissions)> Delete<T>(string uri, string error = null)
 	{
-		return await MakeRequest<T>(HttpMethod.Get, Api().DeleteAsync(uri), error);
+		return await MakeRequest<T>(HttpMethod.Delete, Api().DeleteAsync(uri), error);
 	}
 
 	protected async Task<(T Value, EntityPermissions Permissions)> MakeRequest<T>(HttpMethod method, Task<HttpResponseMessage> request, string error = null)
@@ -35,7 +35,7 @@
 		try
 		{
 			response = await request;
-			if (response.StatusCode != HttpStatusCode.OK)
+			if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Created && response.StatusCode != HttpStatusCode.NoContent)
 			{
 				var message = string.IsNullOrWhiteSpace(error)
 					? $"Failed to {method} {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}"
@@ -49,6 +49,10 @@
 			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
 			// Pluck the user permissions from the response header. Eg. "GET, PUT"
 			var permsString = response.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+			if (string.IsNullOrWhiteSpace(permsString))
+			{
+				return (result, permissions);
+			}
 			// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
 			foreach (var p in permsString.Split(','))
 			{

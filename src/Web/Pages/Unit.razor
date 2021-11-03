@@ -547,11 +547,10 @@
 				}
 				else // delete it
 				{
-					if (memberToolMatch == null)
+					if (memberToolMatch != null)
 					{
-						GeneralException = new Exception($"Could not delete tool permission ({tool.Name}) for {MemberToUpdate.Person.Name}");
+						await Delete<MemberToolResponse>($"/memberTools/{memberToolMatch.Id}");
 					}
-					await Delete<MemberToolResponse>($"/memberTools/{memberToolMatch.Id}");
 				}
 
 			}
