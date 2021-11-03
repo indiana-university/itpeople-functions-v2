@@ -31,11 +31,10 @@
 		}
 	</ul>
 </div>
-<ModalForm Id="modal-form-expertise" Title="Edit Interests" SubmitButtonText="" Item=@SearchTerm OnSubmit=@KeyPressHandler @ref=Mf>
+<ModalForm Id="modal-form-expertise" Title="Edit Interests" SubmitButtonText="Save Changes" Item=@ExpertiseAsList OnSubmit=@SaveChanges @ref=Mf>
 	<DisplayException Ex=@Ex />
-			
 	<ul class="rvt-list rvt-plain-list rvt-inline-list">
-		@foreach (var Interest in (Person.Expertise ?? "").Split(","))
+		@foreach (var Interest in ExpertiseAsList)
 		{
 			<li>
 				<span class="rvt-badge">@Interest
@@ -67,26 +66,15 @@
 	[Parameter]
 	public Person Person { get; set; }
 
+	private List<string> ExpertiseAsList = new List<string>();
 	private string SearchTerm = "";
-	private ModalForm<string> Mf;
+	private ModalForm<List<string>> Mf;
 	private List<string> Suggestions = new List<string>();
 	private StackExchangeRequest SuggestionsRequest;
 	private Exception Ex;
 
 	//Temp stuff we'll ditch
 	private string EnteredTerm = "";
-	private void ResetForm()
-	{
-		Suggestions = new List<string>();
-		SearchTerm = "";
-	}
-	//End temp stuff
-
-	private async Task RemoveInterest(string interest)
-	{
-		Ex = new NotImplementedException("RemoveInterest()");
-	}
-
 	private async Task AddEnteredValue(string value)
 	{
 		Ex = new NotImplementedException();
@@ -96,10 +84,46 @@
 	{
 		Ex = new NotImplementedException();
 	}
+	//End temp stuff
+	private void ResetForm()
+	{
+		ExpertiseAsList = Person.Expertise
+			.Split(",")
+			.Select(e => e.Trim().ToLower())
+			.ToList();
+		Suggestions = new List<string>();
+		SearchTerm = "";
+		
+		Mf.ResetState();
+	}
+
+	private async Task RemoveInterest(string interest)
+	{	
+		ExpertiseAsList.Remove(interest);
+		
+		// We've made a change ensure that the submit button is available.
+		Mf.ForceValid();
+
+		Ex = new NotImplementedException("RemoveInterest()");
+	}
 
 	private async Task AddInterest(string interest)
 	{
+		if(ExpertiseAsList.Contains(interest.Trim().ToLower()) == false)
+		{
+			ExpertiseAsList.Add(interest.Trim().ToLower());
+		}
+
+		// We've made a change ensure that the submit button is available.
+		Mf.ForceValid();
+
 		Ex = new NotImplementedException();
+	}
+
+	private async Task SaveChanges()
+	{
+		// This is where we send the requested changes up to API.
+		Ex = new NotImplementedException(nameof(SaveChanges));
 	}
 
 	private async Task SearchTermChanged(string newValue)
@@ -129,6 +153,7 @@
 	{
 		if(string.IsNullOrWhiteSpace(searchTerm))
 		{
+			Suggestions = new List<string>();
 			return;
 		}
 
