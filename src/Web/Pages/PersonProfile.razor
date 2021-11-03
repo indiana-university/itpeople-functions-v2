@@ -335,16 +335,19 @@
     private async Task AddEnteredValue(string Value)
     {
         @* The API we are using to get the tech tags : https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname=vuejs *@
-        EnteredValue = Value;       
-        var response = await Api().GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(Value)}");
-        if (response.IsSuccessStatusCode)
+        EnteredValue = Value; 
+        using (var client = new HttpClient())
         {
-            var responsemsg = await response.Content.ReadAsStringAsync();
-            var jsonResponse = JObject.Parse(responsemsg);
-            var jItems = (JArray)jsonResponse["items"];
-            var interestsTags = jItems.Select(i => (string)i["name"]).ToList();
-            EnteredTerm = string.Join(",", interestsTags);
-        }       
+            var response = await client.GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(Value)}");
+            if (response.IsSuccessStatusCode)
+            {
+                var responsemsg = await response.Content.ReadAsStringAsync();
+                var jsonResponse = JObject.Parse(responsemsg);
+                var jItems = (JArray)jsonResponse["items"];
+                var interestsTags = jItems.Select(i => (string)i["name"]).ToList();
+                EnteredTerm = string.Join(",", interestsTags);
+            }
+        }        
         isInterestEntered = true;
     }
     private async Task RemoveInterests(string interest)
