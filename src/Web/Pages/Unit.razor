@@ -64,7 +64,7 @@
 								<RivetInputText @bind-Value="UnitToUpdate.Url" Label="URL" />
 								<RivetInputText @bind-Value="UnitToUpdate.Email" Label="Contact Email" />
 								<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(UnitFormInvalid || ShowLoader)" @onclick="UpdateUnit">
-									Save
+									Update
 								</button>
 								<a class="rvt-button rvt-button--danger" href="/Units/@CurrentUnit.Id">Cancel</a>
 							</EditForm>
@@ -105,12 +105,52 @@
 								<div class="rvt-grid__item">
 									@if (UnitMembers.Count() > 0)
 									{
-										@foreach (var role in new List<Role> { Role.Leader, Role.Sublead, Role.Member, Role.Related })
+										@foreach (var roleDescription in RoleDescriptions)
 										{
-											@if (UnitMembers.Any(m => m.Role == role))
+											var role = roleDescription.Role;
+											@if (EditMode == true || UnitMembers.Any(m => m.Role == role))
 											{
 												<section class="rvt-m-bottom-lg">
 													<h3 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h3>
+													@if (EditMode)
+													{
+														<p>@roleDescription.Description</p>
+														<button class="rvt-button rvt-button--plain" title="Add @role" @onclick="@(() => EditMember(role, null))">
+															<rvt-icon name="user-add"></rvt-icon>
+															<span>&nbsp; Add member</span>
+														</button>
+														@if (IsAddingNewMember)
+														{
+															<EditForm EditContext="@MemberEditContext">
+																@if (string.IsNullOrWhiteSpace(MemberToUpdate.Netid) == true)
+																{
+																	<RivetInputText @bind-Value="AddMemberSearchQuery" Label="Search" @oninput="@(async (e) => await UpdateMemberSearchResults(e.Value.ToString()))" />
+																	@if (MemberSearchResults.Count() > 0)
+																	{
+																		<div class="rvt-dropdown__menu">
+
+																			@foreach (var person in MemberSearchResults)
+																			{
+																				<button type="button" @onclick="(() => SelectUserToAdd(person))">@person.Name (@person.NetId)</button>
+																			}
+																		</div>
+																	}
+																}
+																else
+																{
+																	<h2 class="rvt-m-top-lg">@MemberToUpdate.Person.Name</h2>
+																	<RivetInputSelect @bind-Value="MemberToUpdate.Role" Label="Role" Options="@RoleDescriptions.Select(a => a.Role)" DisplayLambda=@(a => a.ToString()) />
+																	<div>rest of form</div>
+
+																	@*<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader)" @onclick="UpdateMember">
+																			Update
+																		</button>
+																		<a class="rvt-button rvt-button--danger" @onclick="@(() => EditMember(null))">Cancel</a>*@
+																}
+															</EditForm>
+
+														}
+													}
 													@foreach (var member in UnitMembers.Where(m => m.Role == role))
 													{
 														<div class="rvt-p-all-sm">
@@ -161,7 +201,7 @@
 																			<EditForm EditContext="@MemberToolEditContext">
 																				<RivetInputCheckbox @bind-Value="MemberToolsToUpdate" Legend="@("Edit tools permissions: " + member.Person.Name)" Options=UnitTools DisplayLambda=@(c => $"{c.Name}") />
 																				<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader)" @onclick="UpdateMemberTools">
-																					Save
+																					Update
 																				</button>
 																				<a class="rvt-button rvt-button--danger" @onclick="@(() => EditMemberTools(null))">Cancel</a>
 																			</EditForm>
@@ -340,12 +380,23 @@
 	private EditContext MemberEditContext;
 	private UnitRequest UnitToUpdate;
 	private List<ToolResponse> MemberToolsToUpdate = new List<ToolResponse>();
-	private UnitMemberResponse MemberToUpdate;
+	private UnitMemberResponse MemberToUpdate { get; set; }
 	private bool UnitFormInvalid = false;
 	private bool CanEditUnitDetails = false;
 	private bool CanEditMemberTools = false;
 	private bool CanEditUnitMembers = false;
 	private bool IsEditingMemberTools = false;
+	private bool IsAddingNewMember = false;
+	private List<(Role Role, string Description)> RoleDescriptions = new List<(Role, string)> {
+					(Role.Leader, "Unit Leaders are VPs, directors, managers."),
+					(Role.Sublead, "Unit Subleads are team leads and co-admins."),
+					(Role.Member, "Unit Members are individual contributers."),
+					(Role.Related, "Related people are executive assistants and self-supported faculty/staff that do not solely report to this unit.")
+			};
+	private string AddMemberSearchQuery = "";
+	private List<PeopleLookupItem> MemberSearchResults = new List<PeopleLookupItem>();
+	private RivetInputEnumCheckbox<Role> roleSelectReference;
+
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
@@ -354,13 +405,13 @@
 			using (Loading())
 			{
 				await Task.WhenAll(new[] {
-					GetUnit(),
-					GetUnitMembers(),
-					GetUnitChildren(),
-					GetSupportRelationships(),
-					GetBuildingRelationships(),
-					GetUnitTools()
-				});
+							GetUnit(),
+							GetUnitMembers(),
+							GetUnitChildren(),
+							GetSupportRelationships(),
+							GetBuildingRelationships(),
+							GetUnitTools()
+						});
 				SetEditMode();
 				UnitToUpdate = new UnitRequest
 				{
@@ -370,7 +421,7 @@
 					Email = CurrentUnit.Email
 				};
 				UnitEditContext = new EditContext(UnitToUpdate);
-				UnitEditContext.OnFieldChanged += HandleFieldChanged;
+				UnitEditContext.OnFieldChanged += HandleUnitFormFieldChanged;
 			}
 		}
 		Navigation.LocationChanged += HandleLocationChanged;
@@ -392,25 +443,20 @@
 		Navigation.NavigateTo("/units");
 	}
 
-	private void EditMember(UnitMemberResponse member)
+	private void EditMember(Role role, UnitMemberResponse member)
 	{
 		IsEditingMemberTools = false;
 		MemberToUpdate = member != null
-		? JsonConvert.DeserializeObject<UnitMemberResponse>(JsonConvert.SerializeObject(member), Json.JsonSerializerSettings)
-		: null;
-		if (member == null)
-		{
-			return;
-		}
+			? JsonConvert.DeserializeObject<UnitMemberResponse>(JsonConvert.SerializeObject(member), Json.JsonSerializerSettings)
+			: new UnitMemberResponse();
+		MemberToUpdate.Role = role;
 		if (MemberEditContext == null)
 		{
 			MemberEditContext = new EditContext(MemberToUpdate);
-			MemberEditContext.OnFieldChanged += HandleFieldChanged;
+			MemberEditContext.OnFieldChanged += HandleMemberFormFieldChanged;
 		}
-		else
-		{
-			MemberEditContext = new EditContext(MemberToUpdate);
-		}
+		//wait until EditContext is set before displaying add form
+		IsAddingNewMember = (member == null);
 	}
 
 	private void EditMemberTools(UnitMemberResponse member)
@@ -428,22 +474,6 @@
 		{
 			MemberToolEditContext = new EditContext(MemberToolsToUpdate);
 		}
-		else
-		{
-			MemberToolEditContext = new EditContext(MemberToolsToUpdate);
-		}
-	}
-
-	private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
-	{
-		UnitFormInvalid = !UnitEditContext.Validate();
-		StateHasChanged();
-	}
-
-	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
-	{
-		SetEditMode();
-		StateHasChanged();
 	}
 
 	private async Task GetBuildingRelationships()
@@ -485,6 +515,22 @@
 		CanEditMemberTools = response.Permissions.HasFlag(PermsGroups.All);
 	}
 
+	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+	{
+		SetEditMode();
+		StateHasChanged();
+	}
+
+	private void HandleMemberFormFieldChanged(object sender, FieldChangedEventArgs e)
+	{
+		StateHasChanged();
+	}
+	private void HandleUnitFormFieldChanged(object sender, FieldChangedEventArgs e)
+	{
+		UnitFormInvalid = !UnitEditContext.Validate();
+		StateHasChanged();
+	}
+
 	private async Task RemoveMember(UnitMemberResponse member)
 	{
 		var confirmMessage = $"Are you sure you want to remove {member.Person.Name} from this unit?";
@@ -509,6 +555,15 @@
 		}
 	}
 
+	private void SelectUserToAdd(PeopleLookupItem person)
+	{
+		MemberToUpdate.Person = new Person
+		{
+			Name = person.Name,
+			Netid = person.NetId
+		};
+	}
+
 	private void SetEditMode()
 	{
 		var path = Navigation.Uri.Substring(Navigation.BaseUri.Length - 1);
@@ -524,6 +579,16 @@
 			CurrentUnit = response.Value;
 		}
 	}
+
+	private async Task UpdateMemberSearchResults(string query)
+	{
+		if (query.Count() > 0)
+		{
+			MemberSearchResults = (await Get<List<PeopleLookupItem>>($"people-lookup?q={query}&_limit=15")).Value;
+		}
+		StateHasChanged();
+	}
+
 	public async Task UpdateMemberTools()
 	{
 		using (Loading())
