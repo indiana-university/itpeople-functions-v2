@@ -1,0 +1,116 @@
+@using RivetBlazor.Components
+@using Models;
+@using Models.Enums;
+@implements IDisposable;
+
+<div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
+	<div class="rvt-flex">
+		<div class="rvt-grow-1">
+			<h2 class="rvt-ts-23 rvt-text-bold">Professional interests</h2>
+		</div>
+		<div class="rvt-m-left-sm">
+			@if(CrudPerms.HasFlag(EntityPermissions.Post))
+			{
+				<button title="Edit Interests" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-expertise">
+					<rvt-icon name="pencil" />
+					<span class="rvt-m-left-xs rvt-sr-only">Edit Interests</span>
+				</button>
+			}
+		</div>
+	</div>
+	<p>What kinds of skills, technologies, or languages do you want to work with or learn about?</p>
+	<ul class="rvt-list rvt-plain-list rvt-inline-list">
+		@if (Person.Expertise != null)
+		{
+			@foreach (var Interest in Person.Expertise.Split(","))
+			{
+				<li><span class="rvt-badge">@Interest</span></li>
+			}
+		}
+	</ul>
+</div>
+<ModalForm Id="modal-form-expertise" Title="Edit Interests" SubmitButtonText="Update" Item=@SearchTerm OnSubmit=@KeyPressHandler @ref=Mf>
+	<DisplayException Ex=@Ex />
+	<EditForm EditContext="@FormContext">
+		<DataAnnotationsValidator />
+			
+		<ul class="rvt-list rvt-plain-list rvt-inline-list">
+			@foreach (var Interest in (Person.Expertise ?? "").Split(","))
+			{
+				<li>
+					<span class="rvt-badge">@Interest
+						<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))" @onkeypress:preventDefault>
+							<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
+						</button>
+					</span>
+				</li>
+			}
+		</ul>
+		
+		<div>
+			<div class="rvt-input rvt-m-bottom-sm">
+				<label for="modal-form-i" class="">Search</label>
+				<div class="rvt-input-group">
+					<input class=@(EnteredTerm==null ? "" : "rvt-validation-success") id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}" @onkeypress="@KeyPressHandler"/>
+				</div>
+			</div>
+		</div>
+		
+		@if(string.IsNullOrWhiteSpace(EnteredTerm) == false)
+		{
+			<ul class="rvt-plain-list rvt-border-all rvt-border-radius">
+				@foreach (var enteredItem in EnteredTerm.Split(","))
+				{
+					<li>
+						<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => AddInterest(enteredItem)) >@enteredItem </a>
+					</li>
+				}
+			</ul>
+		}
+	</EditForm>
+</ModalForm>
+
+
+@code{
+	[Parameter]
+	public EntityPermissions CrudPerms { get; set; }
+	[Parameter]
+	public Person Person { get; set; }
+
+	private string SearchTerm = "";
+	private ModalForm<string> Mf;
+	private EditContext FormContext;
+	private List<string> Suggestions = new List<string>();
+	private Exception Ex;
+
+	//Temp stuff we'll ditch
+	private string EnteredTerm = "";
+	//End temp stuff
+
+	protected override async Task OnInitializedAsync()
+	{
+		FormContext = new EditContext(SearchTerm);
+	}
+
+	private async Task RemoveInterest(string interest)
+	{
+		Ex = new NotImplementedException("RemoveInterest()");
+	}
+
+	private async Task AddEnteredValue(string value)
+	{
+		Ex = new NotImplementedException();
+	}
+
+	private async Task KeyPressHandler()
+	{
+		Ex = new NotImplementedException();
+	}
+
+	private async Task AddInterest(string interest)
+	{
+		Ex = new NotImplementedException();
+	}
+
+	public void Dispose() { }
+}
