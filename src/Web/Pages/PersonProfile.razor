@@ -113,7 +113,7 @@
                                                                                 {
                                                                                     <li>
                                                                                         <span class="rvt-badge">@Interest
-                                                                                            <button id="@Interest" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterests(Interest))">
+                                                                                            <button type="button" id="@Interest" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterests(Interest))" @onkeypress:preventDefault>
                                                                                                 <rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
                                                                                             </button>
                                                                                         </span>
