@@ -67,6 +67,9 @@
 	public EntityPermissions CrudPerms { get; set; }
 	[Parameter]
 	public Person Person { get; set; }
+	// Enable two-way binding.
+	[Parameter]
+    public EventCallback<Person> PersonChanged { get; set; }
 
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private List<string> ExpertiseAsList = new List<string>();
@@ -78,18 +81,11 @@
 	private StackExchangeRequest SuggestionsRequest;
 	private Exception Ex;
 
-	//Temp stuff we'll ditch
-	private string EnteredTerm = "";
-	private async Task AddEnteredValue(string value)
+	protected override async Task OnParametersSetAsync()
 	{
-		Ex = new NotImplementedException();
+		Console.WriteLine($"From Expertise OnParametersSetAsync\n\tExpertise: {Person.Expertise}\n\tResponsibilities: {Person.Responsibilities}");
 	}
 
-	private async Task KeyPressHandler()
-	{
-		Ex = new NotImplementedException();
-	}
-	//End temp stuff
 	private void ResetForm()
 	{
 		ExpertiseAsList = Person.Expertise
@@ -150,6 +146,8 @@
 	{
 		try
 		{
+			Person result;
+
 			// Make an in-memory copy of Person to PUT to the server.
 			var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(Person, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
 			// Update objToPut's Expertise
@@ -165,20 +163,24 @@
 
 				if(response.IsSuccessStatusCode == false)
 				{
-					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT to {url}");
+					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Expertise to {url}");
 				}
 
 				// The Response is a Person object, use it to update our Person variable
 				var stringResult = await response.Content.ReadAsStringAsync();
-				var result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
-				
-				Person = result;
+				result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
 			}
 			
 			// Everything updated, close the modal
 			if(AddedByEnter == false)
 			{
+				Console.WriteLine($"ConfirmModalClose: {ConfirmModalClose}");
 				Mf.Close();
+			}
+
+			if(result != null)
+			{
+				await PersonChanged.InvokeAsync(result);
 			}
 			
 			// We've saved our changes reset the bools that dicate the ModalForms behavior.

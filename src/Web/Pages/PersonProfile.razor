@@ -60,7 +60,7 @@
                                             <div><strong>Phone: </strong>@UpdatedPerson.CampusPhone</div>
                                             <div><strong>Department: </strong><a href="/departments/@UpdatedPerson.DepartmentId">@UpdatedPerson.Department.Name</a></div>
                                         </div>
-                                    </div>
+                                    </div>                                   
                                     <div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
                                         <div>
                                             <div style="float: right;">
@@ -87,7 +87,7 @@
                                                 }
                                         </div>
                                     </div>
-                                    <ProfileExpertise CrudPerms=CrudPerms Person=UpdatedPerson />
+                                    <ProfileExpertise CrudPerms=CrudPerms @bind-Person=UpdatedPerson />
                                 </ChildContent>                                                                                                             
                             </ProfileContactInformation>
                             <ProfileUnitsHelper Title="IT Units">
