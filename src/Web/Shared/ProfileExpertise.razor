@@ -3,6 +3,8 @@
 @using Models.Enums;
 @using System.Threading;
 @using System.Web;
+@using Newtonsoft.Json;
+@inject IHttpClientFactory ClientFactory;
 @implements IDisposable;
 
 <div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
@@ -66,6 +68,7 @@
 	[Parameter]
 	public Person Person { get; set; }
 
+	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private List<string> ExpertiseAsList = new List<string>();
 	private string SearchTerm = "";
 	private ModalForm<List<string>> Mf;
@@ -103,8 +106,6 @@
 		
 		// We've made a change ensure that the submit button is available.
 		Mf.ForceValid();
-
-		Ex = new NotImplementedException("RemoveInterest()");
 	}
 
 	private async Task AddInterest(string interest)
@@ -114,16 +115,51 @@
 			ExpertiseAsList.Add(interest.Trim().ToLower());
 		}
 
+		// Reset the search term and clear-out suggestions.
+		SearchTerm = "";
+		SearchTermChanged(SearchTerm);
+
 		// We've made a change ensure that the submit button is available.
 		Mf.ForceValid();
-
-		Ex = new NotImplementedException();
 	}
 
 	private async Task SaveChanges()
 	{
-		// This is where we send the requested changes up to API.
-		Ex = new NotImplementedException(nameof(SaveChanges));
+		try
+		{
+			// Make an in-memory copy of Person to PUT to the server.
+			var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(Person, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
+			// Update objToPut's Expertise
+			objToPut.Expertise = string.Join(",", ExpertiseAsList);
+
+			var url = $"/people/{Person.Id}";
+
+			using (var apiClient = Api())
+			{
+				var reqJson = JsonConvert.SerializeObject(objToPut, Json.JsonSerializerSettings);
+				var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
+				var response = await apiClient.PutAsync(url, reqContent);
+
+				if(response.IsSuccessStatusCode == false)
+				{
+					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT to {url}");
+				}
+
+				// The Response is a Person object, use it to update our Person variable
+				var stringResult = await response.Content.ReadAsStringAsync();
+				var result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
+				
+				Person = result;
+			}
+			
+			// Everything updated, close the modal
+			Mf.Close();
+		}
+		catch(Exception ex)
+		{
+			Ex = ex;
+		}
+		StateHasChanged();// Force it to redraw the component since the Expertise entries are drawn procedurally.
 	}
 
 	private async Task SearchTermChanged(string newValue)
