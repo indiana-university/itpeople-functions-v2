@@ -19,23 +19,20 @@
                     @* All the form inputs are rendered here. *@
                     @ChildContent
                 </div>
-                @if(string.IsNullOrWhiteSpace(SubmitButtonText) == false)
-                {
-                    <div class="rvt-modal__controls">
-                        <button type="submit" class="rvt-button" disabled="@(formInvalid || submitting)">
-                            @if(submitting)
-                            {
-                                <div class="rvt-loader rvt-display-inline-block" aria-label="Submitting"></div>
-                                <span class="rvt-m-left-xs">@SubmitButtonText</span>
-                            }
-                            else
-                            {
-                                @SubmitButtonText
-                            }
-                        </button>
-                        @* <button type="button" class="rvt-button rvt-button--secondary" data-modal-close=@Id>Cancel</button> *@
-                    </div>
-                }
+                <div class="rvt-modal__controls">
+                    <button type="submit" class="rvt-button" disabled="@(formInvalid || submitting)">
+                        @if(submitting)
+                        {
+                            <div class="rvt-loader rvt-display-inline-block" aria-label="Submitting"></div>
+                            <span class="rvt-m-left-xs">@SubmitButtonText</span>
+                        }
+                        else
+                        {
+                            @SubmitButtonText
+                        }
+                    </button>
+                    @* <button type="button" class="rvt-button rvt-button--secondary" data-modal-close=@Id>Cancel</button> *@
+                </div>
             </EditForm>
         </div>
         <button type="button" class="rvt-button rvt-modal__close" data-modal-close=@Id>
@@ -138,7 +135,7 @@
         submitting = false;
 
     }
-
+    
     public void ForceValid()
     {
         formInvalid = false;
