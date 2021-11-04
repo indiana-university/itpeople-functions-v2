@@ -81,9 +81,7 @@
 						</h1>
 						@if (string.IsNullOrWhiteSpace(CurrentUnit.Description) == false)
 						{
-							<div class="rvt-m-top-sm">
-								<span>@CurrentUnit.Description</span>
-							</div>
+							<div class="rvt-m-top-sm">@CurrentUnit.Description</div>
 						}
 						<div class="rvt-grid">
 							@if (string.IsNullOrWhiteSpace(CurrentUnit.Url) == false)
@@ -103,116 +101,124 @@
 						<section class="">
 							<div class="rvt-grid">
 								<div class="rvt-grid__item">
-									@if (UnitMembers.Count() > 0)
+									@foreach (var roleDescription in RoleDescriptions)
 									{
-										@foreach (var roleDescription in RoleDescriptions)
+										var role = roleDescription.Role;
+										@if (EditMode == true || UnitMembers.Any(m => m.Role == role))
 										{
-											var role = roleDescription.Role;
-											@if (EditMode == true || UnitMembers.Any(m => m.Role == role))
-											{
-												<section class="rvt-m-bottom-lg">
-													<h3 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h3>
-													@if (EditMode)
+											<section class="rvt-m-bottom-lg">
+												<h3 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h3>
+												@if (EditMode)
+												{
+													<p>@roleDescription.Description</p>
+													<button class="rvt-button rvt-button--plain" title="Add @role" @onclick="@(() => EditMember(role, null))">
+														<rvt-icon name="user-add"></rvt-icon>
+														<span>&nbsp; Add member</span>
+													</button>
+													@if (IsAddingNewMember && MemberToUpdate?.Role == role)
 													{
-														<p>@roleDescription.Description</p>
-														<button class="rvt-button rvt-button--plain" title="Add @role" @onclick="@(() => EditMember(role, null))">
-															<rvt-icon name="user-add"></rvt-icon>
-															<span>&nbsp; Add member</span>
-														</button>
-														@if (IsAddingNewMember)
-														{
-															<EditForm EditContext="@MemberEditContext">
-																@if (string.IsNullOrWhiteSpace(MemberToUpdate.Netid) == true)
-																{
+														<EditForm EditContext="@MemberEditContext" class="rvt-box rvt-m-top-lg">
+															<div class="rvt-box__header">Add Unit Member</div>
+															@if (string.IsNullOrWhiteSpace(MemberToUpdate.Netid) == true)
+															{
+																<div class="rvt-box__body">
 																	<RivetInputText @bind-Value="AddMemberSearchQuery" Label="Search" @oninput="@(async (e) => await UpdateMemberSearchResults(e.Value.ToString()))" />
 																	@if (MemberSearchResults.Count() > 0)
 																	{
 																		<div class="rvt-dropdown__menu">
-
 																			@foreach (var person in MemberSearchResults)
 																			{
 																				<button type="button" @onclick="(() => SelectUserToAdd(person))">@person.Name (@person.NetId)</button>
 																			}
 																		</div>
 																	}
-																}
-																else
-																{
-																	<h2 class="rvt-m-top-lg">@MemberToUpdate.Person.Name</h2>
+																</div>
+															}
+															else
+															{
+																<div class="rvt-box__body">
+																	<h2>@MemberToUpdate.Person.Name</h2>
 																	<RivetInputSelect @bind-Value="MemberToUpdate.Role" Label="Role" Options="@RoleDescriptions.Select(a => a.Role)" DisplayLambda=@(a => a.ToString()) />
-																	<div>rest of form</div>
-
-																	@*<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader)" @onclick="UpdateMember">
-																			Update
-																		</button>
-																		<a class="rvt-button rvt-button--danger" @onclick="@(() => EditMember(null))">Cancel</a>*@
-																}
-															</EditForm>
-
-														}
+																	<RivetInputSelect @bind-Value="MemberToUpdate.Permissions" Label="Permissions" Options="@UnitPermissionsList" DisplayLambda=@(a => a.ToString()) />
+																	<RivetInputText @bind-Value="MemberToUpdate.Title" Label="Title" />
+																	<RivetInputNumber @bind-Value="MemberToUpdate.Percentage" Label="Percentage" />
+																	<RivetInputTextArea @bind-Value="MemberToUpdate.Notes" Label="Notes" />
+																</div>
+																<div class="rvt-box__footer rvt-text-right">
+																	<button type="submit" class="rvt-button" disabled="@(ShowLoader)" @onclick="CreateOrUpdateMember">
+																		Update
+																	</button>
+																	<a class="rvt-button rvt-button--danger" @onclick="ResetEditMember">Cancel</a>
+																</div>
+															}
+														</EditForm>
 													}
-													@foreach (var member in UnitMembers.Where(m => m.Role == role))
-													{
-														<div class="rvt-p-all-sm">
-															<div class="rvt-border-bottom rvt-p-bottom-sm">
-																<div class="rvt-grid ">
-																	<div class="rvt-grid__item" style="align-self: center;">
-																		<a href="/people/@member.Person.Id" class="rvt-m-bottom-remove rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
-																			<span>@member.Person.Name</span>
-																		</a>
-																		<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-																			@member.Title
-																			@if (member.Percentage != 100)
-																			{
-																				<span style="padding-left:0.25rem">@member.Percentage% </span>
-																			}
-																		</p>
-																	</div>
-																	@if (EditMode)
-																	{
-																		<div class="rvt-text-right">
-																			@if (CanEditMemberTools)
-																			{
-																				<button class="rvt-button rvt-button--plain" title="Edit tool permissions for @member.Person.Name" @onclick="@(() => EditMemberTools(member))">
-																					<rvt-icon name="gear"></rvt-icon>
-																					<span class="rvt-sr-only">Edit tool permissions for @member.Person.Name</span>
-																				</button>
-																			}
-																			@if (CanEditUnitMembers)
-																			{
-																				<button class="rvt-button rvt-button--plain" title="Edit member: @member.Person.Name">
-																					<rvt-icon name="pencil"></rvt-icon>
-																					<span class="rvt-sr-only">Edit member: @member.Person.Name</span>
-																				</button>
-																				<button class="rvt-button rvt-button--plain" title="Remove @member.Person.Name" @onclick="@(async () => await RemoveMember(member))">
-																					<rvt-icon name="trash"></rvt-icon>
-																					<span class="rvt-sr-only">Remove @member.Person.Name</span>
-																				</button>
-																			}
-																		</div>
-																	}
+												}
+												@foreach (var member in UnitMembers.Where(m => m.Role == role))
+												{
+													<div class="rvt-p-all-sm">
+														<div class="rvt-border-bottom rvt-p-bottom-sm">
+															<div class="rvt-grid ">
+																<div class="rvt-grid__item" style="align-self: center;">
+																	<a href="/people/@member.Person.Id" class="rvt-m-bottom-remove rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
+																		<span>@member.Person.Name</span>
+																	</a>
+																	<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
+																		@member.Title
+																		@if (member.Percentage != 100)
+																		{
+																			<span style="padding-left:0.25rem">@member.Percentage% </span>
+																		}
+																	</p>
 																</div>
 																@if (EditMode)
 																{
-																	@if (member.Id == MemberToUpdate?.Id)
-																	{
-																		@if (IsEditingMemberTools)
+																	<div class="rvt-text-right">
+																		@if (CanEditMemberTools)
 																		{
-																			<EditForm EditContext="@MemberToolEditContext">
-																				<RivetInputCheckbox @bind-Value="MemberToolsToUpdate" Legend="@("Edit tools permissions: " + member.Person.Name)" Options=UnitTools DisplayLambda=@(c => $"{c.Name}") />
-																				<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader)" @onclick="UpdateMemberTools">
-																					Update
-																				</button>
-																				<a class="rvt-button rvt-button--danger" @onclick="@(() => EditMemberTools(null))">Cancel</a>
-																			</EditForm>
+																			<button class="rvt-button rvt-button--plain" title="Edit tool permissions for @member.Person.Name" @onclick="@(() => EditMemberTools(member))">
+																				<rvt-icon name="gear"></rvt-icon>
+																				<span class="rvt-sr-only">Edit tool permissions for @member.Person.Name</span>
+																			</button>
 																		}
-																	}
+																		@if (CanEditUnitMembers)
+																		{
+																			<button class="rvt-button rvt-button--plain" title="Edit member: @member.Person.Name">
+																				<rvt-icon name="pencil"></rvt-icon>
+																				<span class="rvt-sr-only">Edit member: @member.Person.Name</span>
+																			</button>
+																			<button class="rvt-button rvt-button--plain" title="Remove @member.Person.Name" @onclick="@(async () => await RemoveMember(member))">
+																				<rvt-icon name="trash"></rvt-icon>
+																				<span class="rvt-sr-only">Remove @member.Person.Name</span>
+																			</button>
+																		}
+																	</div>
 																}
 															</div>
+															@if (EditMode)
+															{
+																@if (member.Id == MemberToUpdate?.Id && IsEditingMemberTools)
+																{
+																	<EditForm EditContext="@MemberToolEditContext" class="rvt-box rvt-m-top-lg">
+																		<div class="rvt-box__header">
+																			Edit tools permissions: @member.Person.Name
+																		</div>
+																		<div class="rvt-box__body">
+																			<RivetInputCheckbox @bind-Value="MemberToolsToUpdate" Options=UnitTools DisplayLambda=@(c => $"{c.Name}") />
+																		</div>
+																		<div class="rvt-box__footer rvt-text-right">
+																			<button type="submit" class="rvt-button" disabled="@(ShowLoader)" @onclick="UpdateMemberTools">
+																				Update
+																			</button>
+																			<a class="rvt-button rvt-button--danger" @onclick="@ResetEditMemberTools">Cancel</a>
+																		</div>
+																	</EditForm>
+																}
+															}
 														</div>
-													}
-												</section>
-											}
+													</div>
+												}
+											</section>
 										}
 									}
 								</div>
@@ -256,9 +262,7 @@
 														}
 														@if (string.IsNullOrWhiteSpace(CurrentUnit.Parent.Description))
 														{
-															<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-																@CurrentUnit.Parent.Description
-															</p>
+															<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">@CurrentUnit.Parent.Description</p>
 														}
 													</div>
 												</div>
@@ -295,9 +299,7 @@
 														}
 														@if (string.IsNullOrWhiteSpace(child.Description))
 														{
-															<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-																@child.Description
-															</p>
+															<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">@child.Description</p>
 														}
 													</div>
 												</div>
@@ -319,15 +321,11 @@
 												<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
 												@if (supportRelationship.SupportType != null)
 												{
-													<div>
-														<span style="font-size:smaller;">@supportRelationship.SupportType.Name</span>
-													</div>
+													<div style="font-size:smaller;">@supportRelationship.SupportType.Name</div>
 												}
 												@if (supportRelationship.Department.Description != null)
 												{
-													<div>
-														<span style="font-size:smaller;">@supportRelationship.Department.Description</span>
-													</div>
+													<div style="font-size:smaller;">@supportRelationship.Department.Description</div>
 												}
 											</li>
 										}
@@ -393,6 +391,7 @@
 					(Role.Member, "Unit Members are individual contributers."),
 					(Role.Related, "Related people are executive assistants and self-supported faculty/staff that do not solely report to this unit.")
 			};
+	private List<UnitPermissions> UnitPermissionsList = new List<UnitPermissions> { UnitPermissions.Owner, UnitPermissions.ManageMembers, UnitPermissions.ManageTools, UnitPermissions.Viewer };
 	private string AddMemberSearchQuery = "";
 	private List<PeopleLookupItem> MemberSearchResults = new List<PeopleLookupItem>();
 	private RivetInputEnumCheckbox<Role> roleSelectReference;
@@ -427,6 +426,16 @@
 		Navigation.LocationChanged += HandleLocationChanged;
 	}
 
+	public async Task CreateOrUpdateMember()
+	{
+		using (Loading())
+		{
+			GeneralException = null;
+			var response = await MakeRequest<UnitResponse>(HttpMethod.Post, Api().PutAsJsonAsync($"/memberships/", MemberToUpdate));
+			CurrentUnit = response.Value;
+		}
+	}
+
 	public void Dispose()
 	{
 		Navigation.LocationChanged -= HandleLocationChanged;
@@ -450,6 +459,11 @@
 			? JsonConvert.DeserializeObject<UnitMemberResponse>(JsonConvert.SerializeObject(member), Json.JsonSerializerSettings)
 			: new UnitMemberResponse();
 		MemberToUpdate.Role = role;
+		if (MemberToUpdate.Permissions == 0)
+		{
+			MemberToUpdate.Permissions = UnitPermissions.Viewer;
+			MemberToUpdate.Percentage = 100;
+		}
 		if (MemberEditContext == null)
 		{
 			MemberEditContext = new EditContext(MemberToUpdate);
@@ -466,10 +480,6 @@
 		MemberToolsToUpdate = member != null
 			? member.MemberTools.Select(t => new ToolResponse { Id = t.ToolId }).ToList()
 			: new List<ToolResponse>();
-		if (member == null)
-		{
-			return;
-		}
 		if (MemberToolEditContext == null)
 		{
 			MemberToolEditContext = new EditContext(MemberToolsToUpdate);
@@ -492,7 +502,8 @@
 	{
 		var response = await Get<UnitResponse>($"/Units/{UnitId}");
 		CurrentUnit = response.Value;
-		CanEditUnitDetails = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
+		//This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
+		CanEditUnitDetails = response.Permissions.HasFlag(EntityPermissions.Post);
 	}
 
 	private async Task GetUnitChildren()
@@ -505,7 +516,8 @@
 	{
 		var response = await Get<List<UnitMemberResponse>>($"/Units/{UnitId}/members");
 		UnitMembers = response.Value;
-		CanEditUnitMembers = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
+		//This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
+		CanEditUnitMembers = response.Permissions.HasFlag(EntityPermissions.Post);
 	}
 
 	private async Task GetUnitTools()
@@ -525,6 +537,7 @@
 	{
 		StateHasChanged();
 	}
+
 	private void HandleUnitFormFieldChanged(object sender, FieldChangedEventArgs e)
 	{
 		UnitFormInvalid = !UnitEditContext.Validate();
@@ -542,17 +555,16 @@
 		StateHasChanged();
 	}
 
-	private async Task ToggleArchiveStatus()
+	private void ResetEditMember()
 	{
-		var confirmMessage = $"Are you sure you want to {(CurrentUnit.Active ? "archive" : "unarchive")} {CurrentUnit.Name}? ";
-		confirmMessage += (CurrentUnit.Active)
-			? "All members will lose their assigned tools, and the unit will be listed as Archived."
-			: "All members' assigned tools and relationships will be reactivated.";
-		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
-		{
-			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}/archive");
-			CurrentUnit = deleteResponse.Value;
-		}
+		MemberToUpdate = new UnitMemberResponse();
+		IsAddingNewMember = false;
+		AddMemberSearchQuery = "";
+		MemberSearchResults = new List<PeopleLookupItem>();
+	}
+	private void ResetEditMemberTools()
+	{
+		IsEditingMemberTools = false;
 	}
 
 	private void SelectUserToAdd(PeopleLookupItem person)
@@ -570,13 +582,16 @@
 		EditMode = path.ToLower().StartsWith($"/units/{CurrentUnit.Id}/edit");
 	}
 
-	public async Task UpdateUnit()
+	private async Task ToggleArchiveStatus()
 	{
-		using (Loading())
+		var confirmMessage = $"Are you sure you want to {(CurrentUnit.Active ? "archive" : "unarchive")} {CurrentUnit.Name}? ";
+		confirmMessage += (CurrentUnit.Active)
+			? "All members will lose their assigned tools, and the unit will be listed as Archived."
+			: "All members' assigned tools and relationships will be reactivated.";
+		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
 		{
-			GeneralException = null;
-			var response = await MakeRequest<UnitResponse>(HttpMethod.Put, Api().PutAsJsonAsync($"/Units/{UnitId}", UnitToUpdate));
-			CurrentUnit = response.Value;
+			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}/archive");
+			CurrentUnit = deleteResponse.Value;
 		}
 	}
 
@@ -619,6 +634,16 @@
 				}
 
 			}
+		}
+	}
+
+	public async Task UpdateUnit()
+	{
+		using (Loading())
+		{
+			GeneralException = null;
+			var response = await MakeRequest<UnitResponse>(HttpMethod.Put, Api().PutAsJsonAsync($"/Units/{UnitId}", UnitToUpdate));
+			CurrentUnit = response.Value;
 		}
 	}
 }
