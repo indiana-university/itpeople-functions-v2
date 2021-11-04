@@ -147,7 +147,7 @@
 																<button type="submit" class="rvt-button" disabled="@(MemberFormInvalid || ShowLoader)" @onclick="CreateOrUpdateMember">
 																	Update
 																</button>
-																<a class="rvt-button rvt-button--danger" @onclick="ResetEditMember">Cancel</a>
+																<a class="rvt-button rvt-button--danger" @onclick="@(() => ResetEditMember())">Cancel</a>
 															</div>
 														}
 													</EditForm>
@@ -368,7 +368,7 @@
 	private EditContext MemberEditContext;
 	private UnitRequest UnitToUpdate;
 	private List<ToolResponse> MemberToolsToUpdate = new List<ToolResponse>();
-	private UnitMemberResponse MemberToUpdate { get; set; }
+	private UnitMemberResponse MemberToUpdate = new UnitMemberResponse();
 	private bool UnitFormInvalid = false;
 	private bool MemberFormInvalid = false;
 	private bool CanEditUnitDetails = false;
@@ -412,6 +412,8 @@
 				};
 				UnitEditContext = new EditContext(UnitToUpdate);
 				UnitEditContext.OnFieldChanged += HandleUnitFormFieldChanged;
+				MemberEditContext = new EditContext(MemberToUpdate);
+				MemberEditContext.OnFieldChanged += HandleMemberFormFieldChanged;
 			}
 		}
 		Navigation.LocationChanged += HandleLocationChanged;
@@ -442,6 +444,8 @@
 	public void Dispose()
 	{
 		Navigation.LocationChanged -= HandleLocationChanged;
+		UnitEditContext.OnFieldChanged -= HandleUnitFormFieldChanged;
+		MemberEditContext.OnFieldChanged -= HandleMemberFormFieldChanged;
 	}
 
 	private async Task DeleteUnit()
@@ -458,23 +462,27 @@
 	private void EditMember(Role role, UnitMemberResponse member)
 	{
 		IsEditingMemberTools = false;
-		MemberToUpdate = member != null
-			? JsonConvert.DeserializeObject<UnitMemberResponse>(JsonConvert.SerializeObject(member), Json.JsonSerializerSettings)
-			: new UnitMemberResponse {
-				Role = role,
-				Permissions = UnitPermissions.Viewer,
-				Percentage = 100,
-				UnitId = CurrentUnit.Id
-			};
-		MemberEditContext = new EditContext(MemberToUpdate);
-		MemberEditContext.OnFieldChanged += HandleMemberFormFieldChanged;
-		//wait until EditContext is set before displaying add form
+		if(member != null)
+		{
+			MemberToUpdate.Id = member.Id;
+			MemberToUpdate.Notes = member.Notes;
+			MemberToUpdate.Percentage = member.Percentage;
+			MemberToUpdate.Permissions = member.Permissions;
+			MemberToUpdate.Person = member.Person;
+			MemberToUpdate.PersonId = member.PersonId;
+			MemberToUpdate.Role = member.Role;
+			MemberToUpdate.Title = member.Title;
+			MemberToUpdate.UnitId = member.UnitId;
+		}
+		else
+		{
+			ResetEditMember(role);
+		}
 		IsAddingNewMember = (member == null);
 	}
-
 	private void EditMemberTools(UnitMemberResponse member)
 	{
-		MemberToUpdate = member;
+		ResetEditMember();
 		IsEditingMemberTools = true;
 		MemberToolsToUpdate = member != null
 			? member.MemberTools.Select(t => new ToolResponse { Id = t.ToolId }).ToList()
@@ -552,13 +560,22 @@
 		StateHasChanged();
 	}
 
-	private void ResetEditMember()
+	private void ResetEditMember(Role role = Role.Related)
 	{
-		MemberToUpdate = new UnitMemberResponse();
 		IsAddingNewMember = false;
 		AddMemberSearchQuery = "";
 		MemberSearchResults = new List<PeopleLookupItem>();
+		MemberToUpdate.Id = 0;
+		MemberToUpdate.Notes = "";
+		MemberToUpdate.Percentage = 100;
+		MemberToUpdate.Permissions = UnitPermissions.Viewer;
+		MemberToUpdate.Person = new Person();
+		MemberToUpdate.PersonId = 0;
+		MemberToUpdate.Role = role;
+		MemberToUpdate.Title = "";
+		MemberToUpdate.UnitId = CurrentUnit.Id;
 	}
+
 	private void ResetEditMemberTools()
 	{
 		IsEditingMemberTools = false;
