@@ -40,7 +40,7 @@
 		{
 			<li>
 				<span class="rvt-badge">@Interest
-					<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))" @onkeypress:preventDefault>
+					<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
 						<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
 					</button>
 				</span>
@@ -48,7 +48,7 @@
 		}
 	</ul>
 	
-	<RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." @oninput="e => SearchTermChanged(e.Value.ToString())" />
+	<RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." @oninput="e => SearchTermChanged(e.Value.ToString())" @onkeydown=SearchTermListenForEnter/>
 	
 	
 	<ul class="rvt-plain-list rvt-border-all rvt-border-radius">
@@ -73,6 +73,7 @@
 	private string SearchTerm = "";
 	private ModalForm<List<string>> Mf;
 	private bool ConfirmModalClose = false;
+	private bool AddedByEnter = false;
 	private List<string> Suggestions = new List<string>();
 	private StackExchangeRequest SuggestionsRequest;
 	private Exception Ex;
@@ -98,7 +99,9 @@
 		Suggestions = new List<string>();
 		SearchTerm = "";
 		ConfirmModalClose = false;
+		AddedByEnter = false;
 
+		CancelSuggestionsRequestIfRunning();
 		Mf.ResetState();
 	}
 
@@ -114,6 +117,11 @@
 
 	private async Task AddInterest(string interest)
 	{
+		if(string.IsNullOrWhiteSpace(interest))
+		{
+			return;
+		}
+
 		if(ExpertiseAsList.Contains(interest.Trim().ToLower()) == false)
 		{
 			ExpertiseAsList.Add(interest.Trim().ToLower());
@@ -127,6 +135,15 @@
 		ConfirmModalClose = true;
 		// Ensure that the submit button is available.
 		Mf.ForceValid();
+	}
+
+	private void SearchTermListenForEnter(KeyboardEventArgs e)
+	{
+		if (e.Code == "Enter" || e.Code == "NumpadEnter")
+		{
+			AddedByEnter = true;
+			AddInterest(SearchTerm);
+		}
 	}
 
 	private async Task SaveChanges()
@@ -159,7 +176,13 @@
 			}
 			
 			// Everything updated, close the modal
-			Mf.Close();
+			if(AddedByEnter == false)
+			{
+				Mf.Close();
+			}
+			
+			// We've saved our changes reset the bools that dicate the ModalForms behavior.
+			ResetForm();
 		}
 		catch(Exception ex)
 		{
@@ -171,6 +194,7 @@
 	private async Task SearchTermChanged(string newValue)
 	{
 		//Console.WriteLine($"SearchTerm({SearchTerm}) changing to: {newValue}");
+		SearchTerm = newValue;
 		await UpdateSuggestions(newValue);
 	}
 
@@ -191,6 +215,15 @@
 		public List<SuggestionItem> Items { get; set; }
 	}
 
+	private void CancelSuggestionsRequestIfRunning()
+	{
+		var acceptableTaskStatus = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
+		if(SuggestionsRequest != null && acceptableTaskStatus.Contains(SuggestionsRequest.Task.Status) == false)
+		{
+			SuggestionsRequest.TokenSource.Cancel();
+		}
+	}
+
 	private async Task UpdateSuggestions(string searchTerm)
 	{
 		if(string.IsNullOrWhiteSpace(searchTerm))
@@ -200,11 +233,7 @@
 		}
 
 		// Cancel any currently running requests to the Stack Exchange API that are currently running.
-		var acceptableTaskStatus = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
-		if(SuggestionsRequest != null && acceptableTaskStatus.Contains(SuggestionsRequest.Task.Status) == false)
-		{
-			SuggestionsRequest.TokenSource.Cancel();
-		}
+		CancelSuggestionsRequestIfRunning();
 
 		// Make a cancelable request to the API and process the response.
 		var ts = new CancellationTokenSource();
