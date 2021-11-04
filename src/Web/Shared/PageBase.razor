@@ -19,15 +19,15 @@
 
 	protected async Task<(T Value, EntityPermissions Permissions)> Get<T>(string uri, string error = null)
 	{
-		return await MakeRequest<T>(HttpMethod.Get, Api().GetAsync(uri), error);
+		return await MakeRequest<T>(Api().GetAsync(uri), error);
 	}
 
 	protected async Task<(T Value, EntityPermissions Permissions)> Delete<T>(string uri, string error = null)
 	{
-		return await MakeRequest<T>(HttpMethod.Delete, Api().DeleteAsync(uri), error);
+		return await MakeRequest<T>(Api().DeleteAsync(uri), error);
 	}
 
-	protected async Task<(T Value, EntityPermissions Permissions)> MakeRequest<T>(HttpMethod method, Task<HttpResponseMessage> request, string error = null)
+	protected async Task<(T Value, EntityPermissions Permissions)> MakeRequest<T>(Task<HttpResponseMessage> request, string error = null)
 	{
 		var result = default(T);
 		HttpResponseMessage response = null;
@@ -38,7 +38,7 @@
 			if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Created && response.StatusCode != HttpStatusCode.NoContent)
 			{
 				var message = string.IsNullOrWhiteSpace(error)
-					? $"Failed to {method} {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}"
+					? $"Failed to {response.RequestMessage.Method} {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}"
 					: error;
 				GeneralException = new Exception(message);
 				return (result, permissions);
