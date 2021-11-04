@@ -81,11 +81,6 @@
 	private StackExchangeRequest SuggestionsRequest;
 	private Exception Ex;
 
-	protected override async Task OnParametersSetAsync()
-	{
-		Console.WriteLine($"From Expertise OnParametersSetAsync\n\tExpertise: {Person.Expertise}\n\tResponsibilities: {Person.Responsibilities}");
-	}
-
 	private void ResetForm()
 	{
 		ExpertiseAsList = Person.Expertise
@@ -174,14 +169,11 @@
 			// Everything updated, close the modal
 			if(AddedByEnter == false)
 			{
-				Console.WriteLine($"ConfirmModalClose: {ConfirmModalClose}");
 				Mf.Close();
 			}
 
-			if(result != null)
-			{
-				await PersonChanged.InvokeAsync(result);
-			}
+			// Invoking after close because the two-way binding can cause hiccups in the ModalForm.
+			await PersonChanged.InvokeAsync(result);
 			
 			// We've saved our changes reset the bools that dicate the ModalForms behavior.
 			ResetForm();
