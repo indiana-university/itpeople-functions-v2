@@ -69,7 +69,7 @@
 	public Person Person { get; set; }
 	// Enable two-way binding.
 	[Parameter]
-    public EventCallback<Person> PersonChanged { get; set; }
+	public EventCallback<Person> PersonChanged { get; set; }
 
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private List<string> ExpertiseAsList = new List<string>();
@@ -87,12 +87,13 @@
 			.Split(",")
 			.Select(e => e.Trim().ToLower())
 			.ToList();
-		Suggestions = new List<string>();
 		SearchTerm = "";
 		ConfirmModalClose = false;
 		AddedByEnter = false;
 
 		CancelSuggestionsRequestIfRunning();
+		Suggestions = new List<string>();
+		
 		Mf.ResetState();
 	}
 
@@ -100,7 +101,7 @@
 	{	
 		ExpertiseAsList.Remove(interest);
 		
-		// We've made a change, confirm closing the modal without saving changes.
+		// We've made a change, confirm before closing the modal without saving changes.
 		ConfirmModalClose = true;
 		// Ensure that the submit button is available.
 		Mf.ForceValid();
@@ -122,7 +123,7 @@
 		SearchTerm = "";
 		SearchTermChanged(SearchTerm);
 
-		// We've made a change, confirm closing the modal without saving changes.
+		// We've made a change, confirm before closing the modal without saving changes.
 		ConfirmModalClose = true;
 		// Ensure that the submit button is available.
 		Mf.ForceValid();
@@ -134,6 +135,8 @@
 		{
 			AddedByEnter = true;
 			AddInterest(SearchTerm);
+			// I wasn't able to prevent pressing enter from also submitting the ModalForm
+			// So after this runs SaveChanges() will run immediately after it.
 		}
 	}
 
@@ -182,7 +185,6 @@
 		{
 			Ex = ex;
 		}
-		StateHasChanged();// Force it to redraw the component since the Expertise entries are drawn procedurally.
 	}
 
 	private async Task SearchTermChanged(string newValue)
@@ -226,7 +228,7 @@
 			return;
 		}
 
-		// Cancel any currently running requests to the Stack Exchange API that are currently running.
+		// Cancel any currently running requests to the Stack Exchange API.
 		CancelSuggestionsRequestIfRunning();
 
 		// Make a cancelable request to the API and process the response.

@@ -44,7 +44,7 @@
 	public Person Person { get; set; }
 	// Enable two-way binding.
 	[Parameter]
-    public EventCallback<Person> PersonChanged { get; set; }
+	public EventCallback<Person> PersonChanged { get; set; }
 
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private ModalForm<Responsibilities> Mf;
@@ -64,8 +64,8 @@
 	
 	private void ResetForm()
 	{
-		ResponsibilitiesInput = (Responsibilities)((int)Person.Responsibilities);
-		ValueAtOpen = (Responsibilities)((int)Person.Responsibilities);
+		ResponsibilitiesInput = Person.Responsibilities;
+		ValueAtOpen = Person.Responsibilities;
 
 		Mf.ResetState();
 	}
@@ -112,7 +112,6 @@
 		{
 			Ex = ex;
 		}
-		StateHasChanged();// Force it to redraw the component since the Expertise entries are drawn procedurally.
 	}
 
 	public void Dispose() { }
