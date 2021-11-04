@@ -33,7 +33,7 @@
 		}
 	</ul>
 </div>
-<ModalForm Id="modal-form-expertise" Title="Edit Interests" SubmitButtonText="Save Changes" Item=@ExpertiseAsList OnSubmit=@SaveChanges @ref=Mf>
+<ModalForm Id="modal-form-expertise" Title="Edit Interests" SubmitButtonText="Save Changes" Item=@ExpertiseAsList OnSubmit=@SaveChanges ConfirmBeforeClose=@ConfirmModalClose @ref=Mf>
 	<DisplayException Ex=@Ex />
 	<ul class="rvt-list rvt-plain-list rvt-inline-list">
 		@foreach (var Interest in ExpertiseAsList)
@@ -72,6 +72,7 @@
 	private List<string> ExpertiseAsList = new List<string>();
 	private string SearchTerm = "";
 	private ModalForm<List<string>> Mf;
+	private bool ConfirmModalClose = false;
 	private List<string> Suggestions = new List<string>();
 	private StackExchangeRequest SuggestionsRequest;
 	private Exception Ex;
@@ -96,7 +97,8 @@
 			.ToList();
 		Suggestions = new List<string>();
 		SearchTerm = "";
-		
+		ConfirmModalClose = false;
+
 		Mf.ResetState();
 	}
 
@@ -104,7 +106,9 @@
 	{	
 		ExpertiseAsList.Remove(interest);
 		
-		// We've made a change ensure that the submit button is available.
+		// We've made a change, confirm closing the modal without saving changes.
+		ConfirmModalClose = true;
+		// Ensure that the submit button is available.
 		Mf.ForceValid();
 	}
 
@@ -119,7 +123,9 @@
 		SearchTerm = "";
 		SearchTermChanged(SearchTerm);
 
-		// We've made a change ensure that the submit button is available.
+		// We've made a change, confirm closing the modal without saving changes.
+		ConfirmModalClose = true;
+		// Ensure that the submit button is available.
 		Mf.ForceValid();
 	}
 
