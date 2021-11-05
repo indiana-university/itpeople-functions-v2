@@ -60,122 +60,11 @@
                                             <div><strong>Phone: </strong>@UpdatedPerson.CampusPhone</div>
                                             <div><strong>Department: </strong><a href="/departments/@UpdatedPerson.DepartmentId">@UpdatedPerson.Department.Name</a></div>
                                         </div>
-                                    </div>
-                                    <div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
-                                        <div>
-                                            <div style="float: right;">
-                                                @if(CrudPerms.HasFlag(EntityPermissions.Post))
-                                                {
-                                                    <button type="button" title="Edit Responsibilities" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-r" @onclick=@(() => ResponsibilitiesInput = UpdatedPerson.Responsibilities)>
-                                                        <rvt-icon name="pencil" />
-                                                        <span class="rvt-m-left-xs rvt-sr-only">Edit Responsibilities</span>
-                                                    </button>
-                                                }
-                                                
-                                                <ModalForm Id="modal-form-r" Title="Edit Responsibilities" SubmitButtonText="Update" Item=@UpdatedPerson.Responsibilities OnSubmit=@UpdateResponsibilities @ref=form>
-                                                    <RivetInputFlag @bind-Value="ResponsibilitiesInput" Description="Check all the relevant responsibilities performed"  Inline=@inline />
-                                                </ModalForm>
-                                            </div>
-                                            <h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
-                                            <p>What kinds of work do you do on a day-to-day basis?</p>
-
-                                                @foreach (var item in UpdatedPerson.Responsibilities.ToString().Split(',').Select(r => r.Trim()))
-                                                {
-                                                    <ul class="rvt-list rvt-plain-list">
-                                                        <li>@GetEnumDisplayName(item)</li>
-                                                    </ul>
-                                                }
-                                        </div>
-                                    </div>
-                                    <div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
-                                        <div>
-                                            <div style="float: right;">         
-                                                @if(CrudPerms.HasFlag(EntityPermissions.Post))
-                                                {
-                                                    <button title=Edit Interests class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-i">
-                                                        <rvt-icon name="pencil" />
-                                                        <span class="rvt-m-left-xs rvt-sr-only">Edit Interests</span>
-                                                    </button>
-                                                }
-                                                <div class="rvt-modal" id="modal-form-i" role="dialog" aria-labelledby="modal-form-i-title" aria-hidden="true" tabindex="-1" current="">
-                                                    <div class="rvt-modal__inner">
-                                                        <header class="rvt-modal__header">
-                                                            <h1 class="rvt-modal__title" id="modal-form-title">Edit Interests</h1>
-                                                        </header>
-                                                        <div class="rvt-modal__body">
-                                                            <EditForm EditContext="@FormContext">
-                                                                <DataAnnotationsValidator />
-                                                                    <div>
-                                                                        @if (isInterestEntered && !string.IsNullOrEmpty(UpdatedPerson.Expertise))
-                                                                        {
-                                                                            <ul class="rvt-list rvt-plain-list rvt-inline-list">
-                                                                                @foreach (var Interest in UpdatedPerson.Expertise.Split(","))
-                                                                                {
-                                                                                    <li>
-                                                                                        <span class="rvt-badge">@Interest
-                                                                                            <button type="button" id="@Interest" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterests(Interest))" @onkeypress:preventDefault>
-                                                                                                <rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
-                                                                                            </button>
-                                                                                        </span>
-                                                                                    </li>
-                                                                                }
-                                                                            </ul>
-                                                                        }
-                                                                    </div>
-                                                                    <div>
-                                                                        <div class="rvt-input rvt-m-bottom-sm">
-                                                                            <label for="modal-form-i" class="">Search</label>
-                                                                            <div class="rvt-input-group">
-                                                                                <input class=@(EnteredTerm==null ? "" : "rvt-validation-success") id="modal-form-i" type='text' onfocus="this.value=''" value=" " @oninput="(e) => {AddEnteredValue(e.Value.ToString());}" @onkeypress="@KeyPressHandler"/>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    @if (EnteredValue != null)
-                                                                    {
-                                                                        <div class="rvt-dropdown__menu" aria-hidden="false" style="position: relative; padding: 0px;">
-                                                                            <div>
-                                                                                <button type="button" id="@EnteredValue-modal-form-i" class="rvt-button" @onclick=@(() => UpdateInterests(EnteredValue)) >@EnteredValue </button>
-                                                                            </div>
-                                                                             @if (EnteredTerm != null)
-                                                                            {
-                                                                                @foreach (var enteredItem in EnteredTerm.Split(","))
-                                                                                {
-                                                                                    <div>
-                                                                                        <button type="button" id="@enteredItem-modal-form-i" class="rvt-button" @onclick=@(() => UpdateInterests(enteredItem)) >@enteredItem </button>
-                                                                                    </div>
-                                                                                }
-                                                                            }    
-                                                                        </div>
-                                                                    }
-                                                                                                                                      
-                                                                       
-                                                            </EditForm>
-                                                        </div>
-
-                                                        <button type="button" class="rvt-button rvt-modal__close" data-modal-close="modal-form-i">                                                        
-                                                            <rvt-icon name="close" /><span class="rvt-sr-only">close</span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <h2 class="rvt-ts-23 rvt-text-bold">Professional interests</h2>
-                                            <p>What kinds of skills, technologies, or languages do you want to work with or learn about?</p>
-                                                <ul class="rvt-list rvt-plain-list rvt-inline-list">
-                                                    @if (UpdatedPerson.Expertise != null)
-                                                    {
-                                                        @foreach (var Interest in UpdatedPerson.Expertise.Split(","))
-                                                        {
-                                                            <li><span class="rvt-badge">@Interest</span></li>
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        <li></li>
-                                                    }                                                    
-                                                </ul>
-
-                                        </div>
-                                    </div>
+                                    </div>                                   
+                                    
+                                    <ProfileResponsibilities CrudPerms=CrudPerms @bind-Person=UpdatedPerson />
+                                    
+                                    <ProfileExpertise CrudPerms=CrudPerms @bind-Person=UpdatedPerson />
                                 </ChildContent>                                                                                                             
                             </ProfileContactInformation>
                             <ProfileUnitsHelper Title="IT Units">
@@ -225,32 +114,18 @@
 @code {
     private EntityPermissions CrudPerms;
     private Exception GeneralException;
-    private Exception ModalException;
-    private AuthenticatedUser LoggedInUser;
     private Person UpdatedPerson = new Person();
     private IEnumerable<UnitResponse> ProfileUnits = new List<UnitResponse>();
     private IEnumerable<UnitMemberResponse> Memberships = new List<UnitMemberResponse>();
     private string _PrevNetId = null;
     [Parameter] public string NetId { get; set; }
-    private List<string> InterestList = new List<string>();
-    private EditContext FormContext;
-    private bool inline = false;
     private HttpClient Api() => ClientFactory.CreateClient("Api");
-    private Responsibilities ResponsibilitiesInput;
-    private ModalForm<Responsibilities> form;
-    private HttpResponseMessage formResponse = null;
     private bool isExpanded = false;
-    private bool isInterestEntered = false;
-    private string EnteredTerm;
-    private string EnteredValue;
     private string ProfileName;
     protected bool ShowLoader = false;
     protected IDisposable Loading()
         => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
-    protected override async Task OnInitializedAsync()
-    {
-        FormContext = new EditContext(InterestList);
-    }
+
     protected override async Task OnParametersSetAsync()
     {
         if(NetId != _PrevNetId)
@@ -271,12 +146,6 @@
             string responsemsg = await response.Content.ReadAsStringAsync();
             UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
             ProfileName = UpdatedPerson.Name;
-            InterestList.Clear();           
-            if(UpdatedPerson.Expertise != null && UpdatedPerson.Netid == NetId)
-            {
-                InterestList.AddRange(UpdatedPerson.Expertise.Split(","));
-                isInterestEntered = true;            
-            }
         }
         else
         {
@@ -314,118 +183,6 @@
             return;
         }
     }
-    private async Task UpdateResponsibilities()
-    {
-        try
-        {
-            await UpdatePerson(UpdatedPerson);
-        }
-        catch (Exception ex)
-        {
-            ModalException = ex;
-        }
-        StateHasChanged();
-    }
-    public string GetEnumDisplayName(string enumValue)
-    {
-        var fieldInfo = UpdatedPerson.Responsibilities.GetType().GetFields();
-        var field = fieldInfo.FirstOrDefault(f => f.Name == enumValue);
-        return field != null ? field.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? field.Name : enumValue;
-    }
-    private async Task AddEnteredValue(string Value)
-    {
-        @* The API we are using to get the tech tags : https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname=vuejs *@
-        EnteredValue = Value; 
-        using (var client = new HttpClient())
-        {
-            var response = await client.GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(Value)}");
-            if (response.IsSuccessStatusCode)
-            {
-                var responsemsg = await response.Content.ReadAsStringAsync();
-                var jsonResponse = JObject.Parse(responsemsg);
-                var jItems = (JArray)jsonResponse["items"];
-                var interestsTags = jItems.Select(i => (string)i["name"]).ToList();
-                EnteredTerm = string.Join(",", interestsTags);
-            }
-        }        
-        isInterestEntered = true;
-    }
-    private async Task RemoveInterests(string interest)
-    {
-        InterestList.Remove(interest);
-        if (InterestList.Count() != 0)
-        {
-            UpdatedPerson.Expertise = InterestList.Aggregate((a, b) => a + "," + b);        
-        }
-        else
-        {
-            UpdatedPerson.Expertise = null;
-            isInterestEntered = false;
-        }       
-        await InterestsModalFormClose();
-    }
-    private void KeyPressHandler(KeyboardEventArgs e)
-    {
-        if (e.Code == "Enter" || e.Code == "NumpadEnter")
-        {            
-            if(EnteredValue != null)
-            UpdateInterests(EnteredValue);
-        }
-    }  
-    private async Task UpdateInterests(string selectedInterest)
-    {
-        InterestList.Add(selectedInterest);
-        try
-        {
-            await UpdatePerson(UpdatedPerson);
-        }
-        catch (Exception ex)
-        {
-            ModalException = ex;
-        }
-
-        StateHasChanged();
-    }
-
-    private async Task UpdatePerson(Person member)
-    {
-        member.Responsibilities = ResponsibilitiesInput;
-        member.Expertise = InterestList.Aggregate((a,b) => a + "," + b);
-
-        if (member.Responsibilities.ToString().Split(',').Count() == 0 && member.Netid == NetId)
-        {
-            var postContent = new StringContent(JsonConvert.SerializeObject(member), System.Text.Encoding.UTF8, "application/json");
-            formResponse = await Api().PostAsync($"/people/", postContent);
-        }
-        else if (member.Expertise.Split(',').Count() == 0 && member.Netid == NetId)
-        {
-            var postContent = new StringContent(JsonConvert.SerializeObject(member), System.Text.Encoding.UTF8, "application/json");
-            formResponse = await Api().PostAsync($"/people/", postContent);
-        }
-        else if (member.Netid == NetId)
-        {
-            string memberOutput = JsonConvert.SerializeObject(member, Json.JsonSerializerSettings);
-            var deserializedMember = JsonConvert.DeserializeObject<Person>(memberOutput, Json.JsonSerializerSettings);
-            deserializedMember.Responsibilities = member.Responsibilities;
-            deserializedMember.Expertise = member.Expertise;            
-            var putContent = new StringContent(JsonConvert.SerializeObject(deserializedMember), System.Text.Encoding.UTF8, "application/json");
-            formResponse = await Api().PutAsync($"/people/{deserializedMember.Id}", putContent);
-        }
-       
-
-        if (formResponse.IsSuccessStatusCode == true)
-        {
-            string responsemsg = await formResponse.Content.ReadAsStringAsync();
-            UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
-            await form.Close();
-            await InterestsModalFormClose();
-        }
-    }
-
-    public async Task InterestsModalFormClose()
-    {
-        await JSRuntime.InvokeVoidAsync("Modal.close", "modal-form-i");
-    }
-
+    
     public void Dispose() { }
 }
