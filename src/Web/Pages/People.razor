@@ -107,6 +107,8 @@
 	private List<Campus> Campuses = new List<Campus>();
 	private List<Area> Areas = new List<Area>();
 	private List<Responsibilities> Responsibilities = new List<Responsibilities>();
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	private string RequestUri;
 
 	protected override async Task OnInitializedAsync()
@@ -115,6 +117,48 @@
 		editContext = new EditContext(Campuses);
 		editContext = new EditContext(Areas);
 		editContext = new EditContext(Responsibilities);
+
+
+		var query = new Uri(Navigation.Uri).Query;
+		var queryDict = HttpUtility.ParseQueryString(query);
+		Console.WriteLine($"queryDict : {queryDict}");
+		if (queryDict.Get("role") != null)
+		{
+			var role = (Role)Enum.Parse(typeof(Role), queryDict.Get("role"));
+			Roles.Add(role);
+			Console.WriteLine($"roles: {Roles}");
+		}
+
+		if (queryDict.Get("campus") != null)
+		{
+			var campus = (Campus)Enum.Parse(typeof(Campus), queryDict.Get("campus"));
+			Campuses.Add(campus);
+			Console.WriteLine($"campuses: {Campuses}");
+		}
+
+		if (queryDict.Get("area") != null)
+		{
+			var area = (Area)Enum.Parse(typeof(Area), queryDict.Get("area"));
+			Areas.Add(area);
+			Console.WriteLine($"areas: {Areas}");
+		}
+		if (queryDict.Get("class") != null)
+		{
+			var responsibilities = (Responsibilities)Enum.Parse(typeof(Responsibilities), queryDict.Get("class"));
+			Responsibilities.Add(responsibilities);
+			Console.WriteLine($"responsibilites: {string.Join(",", Responsibilities)}");
+		}
+
+		if (!string.IsNullOrWhiteSpace(queryDict.ToString()) && !string.IsNullOrWhiteSpace(queryParams.ToString()))
+		{
+			using (Loading())
+			{
+				queryParams = await GetQueryParams();
+				//RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
+				await GetFilteredPeople();
+			}
+		}
+		//RequestUri = null;
 	}
 
 	public async Task GetFilteredPeople()
@@ -125,6 +169,9 @@
 		{
 			IsMatchFound = true;
 		}
+		
+		Console.WriteLine($"RequestUri {RequestUri}");
+
 		if (!string.IsNullOrEmpty(RequestUri))
 		{
 			// Update the browser's URI to match the RequestUri
