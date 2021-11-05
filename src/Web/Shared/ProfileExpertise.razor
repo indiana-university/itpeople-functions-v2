@@ -27,7 +27,8 @@
 		@if (string.IsNullOrWhiteSpace(Person.Expertise))
 		{
 			<li><em>None</em></li>
-		} else
+		}
+		else
 		{
 			@foreach (var Interest in Person.Expertise.Split(","))
 			{
