@@ -41,18 +41,18 @@
 				<div class="rvt-grid__item-5-md-up">
 					<EditForm  EditContext="@editContext">
 						<DataAnnotationsValidator />
-							<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
-							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">								
-								<li><RivetInputEnumCheckbox @bind-Value="Roles" Inline=@inline /></li></ul> 
-							<h2 class="rvt-ts-23 rvt-text-bold">Campus</h2>
-							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">
-								<li><RivetInputEnumCheckbox @bind-Value="Campuses" Inline=@inline /></li></ul>
-							<h2 class="rvt-ts-23 rvt-text-bold">Area</h2>
-							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">
-								<li><RivetInputEnumCheckbox @bind-Value="Areas" Inline=@inline /></li></ul>
-							<h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
-							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">
-								<li><RivetInputEnumCheckbox @bind-Value="Responsibilities" Inline=@inline /></li></ul>
+
+						<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
+						<RivetInputEnumCheckbox @bind-Value="Roles" Inline=@inline />
+						
+						<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Campus</h2>
+						<RivetInputEnumCheckbox @bind-Value="Campuses" Inline=@inline />
+
+						<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Area</h2>
+						<RivetInputEnumCheckbox @bind-Value="Areas" Inline=@inline />
+
+						<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Responsibilities</h2>
+						<RivetInputEnumCheckbox @bind-Value="Responsibilities" Inline=@inline />
 					</EditForm> 
 				</div>
 				@if (LoggedInUser != null)		
