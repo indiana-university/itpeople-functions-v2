@@ -24,11 +24,17 @@
 	</div>
 	<p>What kinds of skills, technologies, or languages do you want to work with or learn about?</p>
 	<ul class="rvt-list rvt-plain-list rvt-inline-list">
-		@if (Person.Expertise != null)
+		@if (string.IsNullOrWhiteSpace(Person.Expertise))
+		{
+			<li><em>None</em></li>
+		} else
 		{
 			@foreach (var Interest in Person.Expertise.Split(","))
 			{
-				<li><span class="rvt-badge">@Interest</span></li>
+				@if(string.IsNullOrWhiteSpace(Interest) == false)
+				{
+					<li><span class="rvt-badge">@Interest</span></li>
+				}
 			}
 		}
 	</ul>
@@ -83,10 +89,16 @@
 
 	private void ResetForm()
 	{
-		ExpertiseAsList = Person.Expertise
-			.Split(",")
-			.Select(e => e.Trim().ToLower())
-			.ToList();
+		ExpertiseAsList = new List<string>();
+		if(string.IsNullOrWhiteSpace(Person.Expertise) == false)
+		{
+			ExpertiseAsList.AddRange(
+				Person.Expertise
+					.Split(",")
+					.Select(e => e.Trim().ToLower())
+					.Where(e => string.IsNullOrWhiteSpace(e) == false)
+			);
+		}
 		SearchTerm = "";
 		ConfirmModalClose = false;
 		AddedByEnter = false;
