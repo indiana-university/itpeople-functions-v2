@@ -125,10 +125,19 @@
 		{
 			return;
 		}
-
-		if(ExpertiseAsList.Contains(interest.Trim().ToLower()) == false)
+		
+		// If interest includes a comma it is actually multiple interests at once.
+		var newInterests = interest
+			.Split(",")
+			.Select(e => e.Trim().ToLower())
+			.Where(e => string.IsNullOrWhiteSpace(e) == false);
+		
+		foreach(var i in newInterests)
 		{
-			ExpertiseAsList.Add(interest.Trim().ToLower());
+			if(ExpertiseAsList.Contains(i.Trim().ToLower()) == false)
+			{
+				ExpertiseAsList.Add(i.Trim().ToLower());
+			}
 		}
 
 		// Reset the search term and clear-out suggestions.
