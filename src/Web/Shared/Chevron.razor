@@ -1,0 +1,49 @@
+@implements IDisposable
+
+
+<div>
+	<div class="rvt-grid">
+		<div class="rvt-grid__item">				
+			@ChildContent 
+		</div>
+		<div class="rvt-grid__item-1-sm-up">
+			@if (Open)
+			{
+				<button type="button" class="rvt-button--plain" aria-expanded="@(Open ? "true" : "false")" @onclick="ToggleOpenStatus">
+				 	<rvt-icon name="chevron-down" />
+				</button>
+			}
+			else
+			{
+				<button type="button" class="rvt-button--plain" aria-expanded="@(Open ? "true" : "false")" @onclick="ToggleOpenStatus">
+					<rvt-icon name="chevron-up" />
+				</button>
+			}				
+		</div>
+	</div>
+			
+	@if (Open)
+	{
+		<div class="rvt-grid">
+			<div class="rvt-grid__item">
+				<div class="rvt-m-top-sm">
+					@HidenContent
+				</div>
+			</div>
+		</div>
+	}
+</div>
+
+@code {
+	[Parameter]
+	public RenderFragment ChildContent { get; set; }
+
+	[Parameter]
+	public RenderFragment HidenContent { get; set; }
+
+	[Parameter]
+	public bool Open { get; set; } = true;
+	protected override async Task OnInitializedAsync() { }
+	private void ToggleOpenStatus() => Open = !Open;
+	public void Dispose() { }
+}
