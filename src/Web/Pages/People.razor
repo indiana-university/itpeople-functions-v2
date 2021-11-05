@@ -10,6 +10,7 @@
 @using System.Collections
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime;
 @implements IDisposable
 @page "/People"
@@ -91,8 +92,7 @@
 	</AuthenticatedView>
 </div>
 
-@code {	
-	private EntityPermissions CrudPerms;
+@code {
 	private EditContext editContext;
 	private Exception GeneralException;
 	private AuthenticatedUser LoggedInUser;
@@ -107,6 +107,7 @@
 	private List<Campus> Campuses = new List<Campus>();
 	private List<Area> Areas = new List<Area>();
 	private List<Responsibilities> Responsibilities = new List<Responsibilities>();
+	private string RequestUri;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -124,6 +125,18 @@
 		{
 			IsMatchFound = true;
 		}
+		if (!string.IsNullOrEmpty(RequestUri))
+		{
+			// Update the browser's URI to match the RequestUri
+			Navigation.NavigateTo(RequestUri);
+		}
+		else
+		{
+			// Update the browser's URI to match the AbsolutePath
+			var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+			Navigation.NavigateTo(uri.AbsolutePath);
+		}
+		RequestUri = null;
 	}
 
 	private async Task<Dictionary<string, string>> GetQueryParams()
@@ -193,7 +206,7 @@
 		else
 		{
 			queryParams = await GetQueryParams();
-			var RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
+			RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
 			peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
 		}
 	}
