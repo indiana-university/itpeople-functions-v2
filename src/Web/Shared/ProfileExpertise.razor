@@ -56,15 +56,17 @@
 	
 	<RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." @oninput="e => SearchTermChanged(e.Value.ToString())" @onkeydown=SearchTermListenForEnter/>
 	
-	
-	<ul class="rvt-plain-list rvt-border-all rvt-border-radius">
-		@foreach (var enteredItem in Suggestions)
-		{
-			<li>
-				<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => AddInterest(enteredItem)) >@enteredItem </a>
-			</li>
-		}
-	</ul>
+	@if(Suggestions.Count > 0)
+	{
+		<ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
+			@foreach (var enteredItem in Suggestions)
+			{
+				<li>
+					<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => AddInterest(enteredItem)) >@enteredItem </a>
+				</li>
+			}
+		</ul>
+	}
 </ModalForm>
 
 
