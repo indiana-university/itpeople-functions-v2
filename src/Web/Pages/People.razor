@@ -37,10 +37,10 @@
 
 			<DisplayException Ex=@GeneralException />
 
-            <div class="rvt-grid rvt-m-top-md">
+			<div class="rvt-grid rvt-m-top-md">
 				<div class="rvt-grid__item-5-md-up">
 					<EditForm  EditContext="@editContext">
-                		<DataAnnotationsValidator />
+						<DataAnnotationsValidator />
 							<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
 							<ul class="rvt-list rvt-plain-list rvt-p-right-md rvt-p-left-md">								
 								<li><RivetInputEnumCheckbox @bind-Value="Roles" Inline=@inline /></li></ul> 
@@ -62,9 +62,7 @@
 						{
 							<div class="rvt-grid rvt-p-bottom-lg">								
 								<button type="button" class="rvt-button" @onclick="ExportResultsToCSV" role="menuitemradio">
-									<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-										<use xlink:href="/_content/RivetBlazor/css/icons/rvt-icons.svg#rvt-icon-download"></use>
-									</svg>
+									<rvt-icon name="download" />
 									<span class="rvt-m-left-xs">Export results to CSV</span>
 								</button>
 							</div>
