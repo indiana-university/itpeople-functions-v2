@@ -8,6 +8,7 @@
 @using Newtonsoft.Json
 @using Microsoft.AspNetCore.WebUtilities
 @using System.Collections
+@using System.Collections.Specialized
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @inject NavigationManager Navigation
@@ -120,55 +121,13 @@
 
 		var query = new Uri(Navigation.Uri).Query;
 		var queryDict = HttpUtility.ParseQueryString(query);
-		Console.WriteLine($"queryDict : {queryDict.AllKeys} and {queryDict}");
-		if (queryDict.Get("role") != null)
-		{
-			foreach (var roleValue in queryDict.Get("role").Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v =>
-			v.Trim()))
-			{
-				var role = (Role)Enum.Parse(typeof(Role), roleValue);
-				Roles.Add(role);
-			}
-
-			Console.WriteLine($"roles: {string.Join(',', Roles)}");
-		}
-
-		if (queryDict.Get("campus") != null)
-		{
-			foreach (var campusValue in queryDict.Get("campus").Split(',').Where(v => string.IsNullOrWhiteSpace(v) ==
-			false).Select(v => v.Trim()))
-			{
-				var campus = (Campus)Enum.Parse(typeof(Campus), campusValue);
-				Campuses.Add(campus);
-			}
-			Console.WriteLine($"campuses: {Campuses}");
-		}
-
-		if (queryDict.Get("area") != null)
-		{
-			foreach (var areaValue in queryDict.Get("area").Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v =>
-			v.Trim()))
-			{
-				var area = (Area)Enum.Parse(typeof(Area), areaValue);
-				Areas.Add(area);
-			}
-			Console.WriteLine($"areas: {Areas}");
-		}
-
-		if (queryDict.Get("class") != null)
-		{
-			foreach (var responsibilitiesValue in queryDict.Get("class").Split(',').Where(v => string.IsNullOrWhiteSpace(v) ==
-			false).Select(v => v.Trim()))
-			{
-				var responsibilities = (Responsibilities)Enum.Parse(typeof(Responsibilities), responsibilitiesValue);
-				Responsibilities.Add(responsibilities);
-			}
-
-			Console.WriteLine($"Responsibilities: {string.Join(',', Responsibilities)}");
-		}
-
 		if (!string.IsNullOrWhiteSpace(queryDict.ToString()) && !string.IsNullOrWhiteSpace(queryParams.ToString()))
 		{
+			if (queryDict.Get("role") != null) await ConvertNameValueToEnum<Role>(queryDict, Roles, "role");
+			if (queryDict.Get("campus") != null) await ConvertNameValueToEnum<Campus>(queryDict, Campuses, "campus");
+			if (queryDict.Get("area") != null) await ConvertNameValueToEnum<Area>(queryDict, Areas, "area");
+			if (queryDict.Get("class") != null) await ConvertNameValueToEnum<Responsibilities>(queryDict, Responsibilities,	"class");
+
 			using (Loading())
 			{
 				queryParams = await GetQueryParams();
@@ -179,6 +138,15 @@
 		queryParams = new Dictionary<string, string>();
 	}
 
+	private async Task ConvertNameValueToEnum<T>(NameValueCollection queryDict, List<T> values, string key)
+	{
+		foreach (var TValue in queryDict.Get(key).Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v => v.Trim()))
+		{
+			var enums = (T)Enum.Parse(typeof(T), TValue);
+			values.Add(enums);
+		}
+	}
+
 	public async Task GetFilteredPeople()
 	{
 		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
@@ -186,9 +154,7 @@
 		if (peopleList.Count() != 0)
 		{
 			IsMatchFound = true;
-		}
-		
-		Console.WriteLine($"RequestUri: {RequestUri}");
+		}		
 
 		if (!string.IsNullOrEmpty(RequestUri))
 		{
@@ -248,15 +214,14 @@
 	{
 		if (!queryParams.ContainsKey(key))
 		{
-			finalCheckedValues = string.Join(',',values);
-			Console.WriteLine($"finalCheckedValues: {string.Join(",", finalCheckedValues.Split(',').Select(v => v.Trim()))}");
+			finalCheckedValues = string.Join(',', values);
 			queryParams.Add(key, finalCheckedValues);
 		}
 		else
 		{
 			List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains(key)).ToList();
 			keyPairsToRemove.ForEach(k => queryParams.Remove(k));
-			finalCheckedValues = string.Join(',',values);
+			finalCheckedValues = string.Join(',', values);
 			queryParams[key] = finalCheckedValues;
 		}
 
