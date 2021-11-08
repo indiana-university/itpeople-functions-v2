@@ -1,0 +1,168 @@
+@using Models
+@using Models.Enums
+@using web.Shared
+@using RivetBlazor.Components
+@using System.Web
+@implements IDisposable
+@inherits Shared.PageBase
+@inject NavigationManager Navigation
+@page "/Units/{unitId}/AddMember"
+@page "/Units/{unitId}/EditMember/{username}"
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	
+	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
+		<!-- our title -->
+		<div class="rvt-m-right-sm-md-up">
+			<h1>Edit Unit @(CurrentUnit?.Name ?? UnitId) Member @Username</h1>
+		</div>
+	</div>
+
+	<DisplayException Ex=@GeneralException />
+
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href=@GetLoginUri()>Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<Loader Loading="ShowLoader">
+				<p>
+					UnitId: @UnitId
+					<br/>
+					Unit: @CurrentUnit?.Name
+					<br/>
+					UnitCrudPerms: @UnitCrudPerms
+				</p>
+				<p>
+					username: @Username
+					<br/>
+					Person: @CurrentPerson?.Name @CurrentPerson?.Netid
+					<br/>
+					Is Member?: @CurrentUnitMembers.Any(m => m.Person.Netid == Username)
+					<br/>
+					MembersCrudPerms: @MembersCrudPerms
+				</p>
+			</Loader>
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+
+
+@code
+{
+	[Parameter]
+	public string UnitId { get; set; }
+
+	[Parameter]
+	public string Username { get; set; }
+
+	private UnitResponse CurrentUnit;
+	private List<UnitMember> CurrentUnitMembers = new List<UnitMember>();
+	private Person CurrentPerson;
+	private List<Tool> ToolOptions = new List<Tool>();
+
+	private EntityPermissions UnitCrudPerms;
+	private EntityPermissions MembersCrudPerms;
+
+	private MemberInput Input;
+	private EditContext FormContext;
+
+	private bool ShowLoader = false;
+	private bool FormInvalid = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		using (Loading())
+		{
+			await Task.WhenAll(new [] {SetCurrentUnit(), SetCurrentPerson(), SetToolOptions()});
+
+			// Armed with all the details about ther person, unit, and current members build up our input.
+			var existingMember = CurrentUnitMembers.FirstOrDefault(m => m.PersonId == CurrentPerson?.Id);
+			List<int> existingToolIds = existingMember?.MemberTools.Select(mt => mt.ToolId).ToList() ?? new List<int>();
+			Input = new MemberInput{
+				MemberRequest =new UnitMemberRequest {
+					UnitId = CurrentUnit.Id,
+					PersonId = CurrentPerson.Id,
+					NetId = CurrentPerson.Netid,
+					Role = existingMember?.Role ?? Role.Member,
+					Permissions = existingMember?.Permissions ?? UnitPermissions.Viewer,
+					Title = existingMember?.Title,
+					Percentage = existingMember?.Percentage ?? 100,
+					Notes = existingMember?.Notes
+				},
+				Tools = ToolOptions.Where(o => existingToolIds.Contains(o.Id)).ToList()
+			};
+
+			// Setup our editcontext
+			FormContext = new EditContext(Input);
+			FormContext.OnFieldChanged += HandleFieldChanged;
+		}
+	}
+
+	private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
+	{
+		FormInvalid = !FormContext.Validate();
+		StateHasChanged();
+	}
+
+	protected string GetLoginUri()
+	{
+		var signIn = "/SignIn";
+		var uri = new Uri(Navigation.Uri);
+		if(string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
+		{
+			signIn += $"?Destination={HttpUtility.UrlEncode(uri.PathAndQuery)}";
+		}
+
+		return signIn;
+	}
+
+	private async Task SetCurrentUnit()
+	{
+		var tasks = new List<Task>();
+		tasks.Add(Task.Run(async () => {
+			var response = await Get<UnitResponse>($"units/{UnitId}");
+			CurrentUnit = response.Value;
+			UnitCrudPerms = response.Permissions;
+		}));
+		
+		tasks.Add(Task.Run(async () => {
+			var response = await Get<List<UnitMember>>($"units/{UnitId}/members");
+			CurrentUnitMembers = response.Value;
+			MembersCrudPerms = response.Permissions;
+		}));
+
+		await Task.WhenAll(tasks);
+	}
+
+	private async Task SetCurrentPerson()
+	{
+		var response = await Get<Person>($"people/{Username}");
+		CurrentPerson = response.Value;
+	}
+
+	private async Task SetToolOptions()
+	{
+		var response = await Get<List<Tool>>($"tools");
+		ToolOptions = response.Value;
+	}
+
+	public void Dispose()
+	{
+		FormContext.OnFieldChanged -= HandleFieldChanged;
+	}
+
+	private class MemberInput
+	{
+		public UnitMemberRequest MemberRequest { get; set; }
+		public List<Tool> Tools { get; set; }
+	}
+}
