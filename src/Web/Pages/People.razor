@@ -118,35 +118,53 @@
 		editContext = new EditContext(Areas);
 		editContext = new EditContext(Responsibilities);
 
-
 		var query = new Uri(Navigation.Uri).Query;
 		var queryDict = HttpUtility.ParseQueryString(query);
-		Console.WriteLine($"queryDict : {queryDict}");
+		Console.WriteLine($"queryDict : {queryDict.AllKeys} and {queryDict}");
 		if (queryDict.Get("role") != null)
 		{
-			var role = (Role)Enum.Parse(typeof(Role), queryDict.Get("role"));
-			Roles.Add(role);
-			Console.WriteLine($"roles: {Roles}");
+			foreach (var roleValue in queryDict.Get("role").Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v =>
+			v.Trim()))
+			{
+				var role = (Role)Enum.Parse(typeof(Role), roleValue);
+				Roles.Add(role);
+			}
+
+			Console.WriteLine($"roles: {string.Join(',', Roles)}");
 		}
 
 		if (queryDict.Get("campus") != null)
 		{
-			var campus = (Campus)Enum.Parse(typeof(Campus), queryDict.Get("campus"));
-			Campuses.Add(campus);
+			foreach (var campusValue in queryDict.Get("campus").Split(',').Where(v => string.IsNullOrWhiteSpace(v) ==
+			false).Select(v => v.Trim()))
+			{
+				var campus = (Campus)Enum.Parse(typeof(Campus), campusValue);
+				Campuses.Add(campus);
+			}
 			Console.WriteLine($"campuses: {Campuses}");
 		}
 
 		if (queryDict.Get("area") != null)
 		{
-			var area = (Area)Enum.Parse(typeof(Area), queryDict.Get("area"));
-			Areas.Add(area);
+			foreach (var areaValue in queryDict.Get("area").Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v =>
+			v.Trim()))
+			{
+				var area = (Area)Enum.Parse(typeof(Area), areaValue);
+				Areas.Add(area);
+			}
 			Console.WriteLine($"areas: {Areas}");
 		}
+
 		if (queryDict.Get("class") != null)
 		{
-			var responsibilities = (Responsibilities)Enum.Parse(typeof(Responsibilities), queryDict.Get("class"));
-			Responsibilities.Add(responsibilities);
-			Console.WriteLine($"responsibilites: {string.Join(",", Responsibilities)}");
+			foreach (var responsibilitiesValue in queryDict.Get("class").Split(',').Where(v => string.IsNullOrWhiteSpace(v) ==
+			false).Select(v => v.Trim()))
+			{
+				var responsibilities = (Responsibilities)Enum.Parse(typeof(Responsibilities), responsibilitiesValue);
+				Responsibilities.Add(responsibilities);
+			}
+
+			Console.WriteLine($"Responsibilities: {string.Join(',', Responsibilities)}");
 		}
 
 		if (!string.IsNullOrWhiteSpace(queryDict.ToString()) && !string.IsNullOrWhiteSpace(queryParams.ToString()))
@@ -154,11 +172,11 @@
 			using (Loading())
 			{
 				queryParams = await GetQueryParams();
-				//RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
 				await GetFilteredPeople();
 			}
 		}
-		//RequestUri = null;
+		RequestUri = null;
+		queryParams = new Dictionary<string, string>();
 	}
 
 	public async Task GetFilteredPeople()
@@ -170,7 +188,7 @@
 			IsMatchFound = true;
 		}
 		
-		Console.WriteLine($"RequestUri {RequestUri}");
+		Console.WriteLine($"RequestUri: {RequestUri}");
 
 		if (!string.IsNullOrEmpty(RequestUri))
 		{
@@ -231,6 +249,7 @@
 		if (!queryParams.ContainsKey(key))
 		{
 			finalCheckedValues = string.Join(',',values);
+			Console.WriteLine($"finalCheckedValues: {string.Join(",", finalCheckedValues.Split(',').Select(v => v.Trim()))}");
 			queryParams.Add(key, finalCheckedValues);
 		}
 		else
