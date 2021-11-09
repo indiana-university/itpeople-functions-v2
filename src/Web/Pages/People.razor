@@ -168,6 +168,10 @@
 				{
 					values.Add((T)enums);
 				}
+				else
+				{
+					GeneralException = new Exception($"{TValue} is not a valid {key}");
+				}
 			}
 		}
 	}
