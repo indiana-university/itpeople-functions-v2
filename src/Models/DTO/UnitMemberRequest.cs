@@ -8,16 +8,18 @@ namespace Models
         [Required]
         public int UnitId { get; set; }
         /// The role of the person in this membership as part of the unit.
-        [Required]
+        [RequiredEnum]
         public Role Role { get; set; }
         /// The permissions of the person in this membership as part of the unit. Defaults to 'viewer'.
         [DefaultValue(UnitPermissions.Viewer)]
+        [RequiredEnum]
         public UnitPermissions Permissions { get; set; }
         /// The ID of the person class. This can be null if the position is vacant.
         public int? PersonId { get; set; }
         /// The NetID of the person, if they are not already in the IT people directory. This can be null if the position is vacant.
         public string NetId { get; set; }
         /// The title/position of this membership.
+        [MinLength(10)]
         public string Title { get; set; }
         /// The percentage of time allocated to this position by this person (in case of split appointments).
         [DefaultValue(100)]
