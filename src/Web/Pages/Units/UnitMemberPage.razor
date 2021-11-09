@@ -47,6 +47,21 @@
 					<br/>
 					MembersCrudPerms: @MembersCrudPerms
 				</p>
+
+				<EditForm EditContext="@FormContext" OnValidSubmit="SubmitForm">
+					<DataAnnotationsValidator />
+					<ValidationSummary />
+					<RivetInputSelect @bind-Value="Input.Role" Label="Role" Description="" Options=RoleOptions DisplayLambda=@(r => r.ToString()) />
+					<RivetInputSelect @bind-Value="Input.Permissions" Label="Unit Permissions" Description="" Options=UnitPermissionOptions DisplayLambda=@(p => p.ToString()) />
+					<RivetInputText @bind-Value="Input.Title" Label="Title" />
+					<RivetInputNumber @bind-Value="Input.Percentage" Label="Percentage" />
+					<RivetInputTextArea @bind-Value="Input.Notes" Label="Notes" />
+					<RivetInputCheckbox @bind-Value="Input.Tools" Legend="Tools" Options=ToolOptions DisplayLambda=@(t => GetToolDisplayString(t)) />
+					
+					<p>
+						<button type="submit" class="rvt-button" disabled=@(FormInvalid || ShowLoader)>Save</button
+					</p>
+				</EditForm>
 			</Loader>
 		</Authenticated>
 	</AuthenticatedView>
@@ -65,19 +80,28 @@
 	private UnitResponse CurrentUnit;
 	private List<UnitMember> CurrentUnitMembers = new List<UnitMember>();
 	private Person CurrentPerson;
-	private List<Tool> ToolOptions = new List<Tool>();
 
 	private EntityPermissions UnitCrudPerms;
 	private EntityPermissions MembersCrudPerms;
 
-	private MemberInput Input;
+	private MemberInput Input = new MemberInput();
 	private EditContext FormContext;
+	private List<Role> RoleOptions = Enum.GetValues(typeof(Role)).Cast<Role>().ToList();
+	private List<UnitPermissions> UnitPermissionOptions = Enum.GetValues(typeof(UnitPermissions)).Cast<UnitPermissions>().ToList();
+	private List<Tool> ToolOptions = new List<Tool>();
 
 	private bool ShowLoader = false;
 	private bool FormInvalid = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 
 
+	protected override void OnInitialized()
+	{
+		// Setup our editcontext
+		FormContext = new EditContext(Input);
+		FormContext.OnFieldChanged += HandleFieldChanged;
+	}
+	
 	protected override async Task OnParametersSetAsync()
 	{
 		using (Loading())
@@ -87,23 +111,19 @@
 			// Armed with all the details about ther person, unit, and current members build up our input.
 			var existingMember = CurrentUnitMembers.FirstOrDefault(m => m.PersonId == CurrentPerson?.Id);
 			List<int> existingToolIds = existingMember?.MemberTools.Select(mt => mt.ToolId).ToList() ?? new List<int>();
-			Input = new MemberInput{
-				MemberRequest =new UnitMemberRequest {
-					UnitId = CurrentUnit.Id,
-					PersonId = CurrentPerson.Id,
-					NetId = CurrentPerson.Netid,
-					Role = existingMember?.Role ?? Role.Member,
-					Permissions = existingMember?.Permissions ?? UnitPermissions.Viewer,
-					Title = existingMember?.Title,
-					Percentage = existingMember?.Percentage ?? 100,
-					Notes = existingMember?.Notes
-				},
-				Tools = ToolOptions.Where(o => existingToolIds.Contains(o.Id)).ToList()
-			};
+						
+			Input.UnitId = CurrentUnit.Id;
+			Input.PersonId = CurrentPerson.Id;
+			Input.NetId = CurrentPerson.Netid;
+			Input.Role = existingMember?.Role ?? Role.Member;
+			Input.Permissions = existingMember?.Permissions ?? UnitPermissions.Viewer;
+			Input.Title = existingMember?.Title;
+			Input.Percentage = existingMember?.Percentage ?? 100;
+			Input.Notes = existingMember?.Notes;
 
-			// Setup our editcontext
-			FormContext = new EditContext(Input);
-			FormContext.OnFieldChanged += HandleFieldChanged;
+			Input.Tools.Clear();
+			Input.Tools.AddRange(ToolOptions.Where(o => existingToolIds.Contains(o.Id)));
+			
 		}
 	}
 
@@ -155,14 +175,31 @@
 		ToolOptions = response.Value;
 	}
 
+	private string GetToolDisplayString(Tool tool)
+	{
+		var output = $"{tool.Name}";
+		output += string.IsNullOrWhiteSpace(tool.Description) ? "" : $" - {tool.Description}";
+		return output;
+	}
+
+	private async Task SubmitForm()
+	{
+		GeneralException = new NotImplementedException("SubmitForm()");
+		Console.WriteLine("Hello from SubmitForm()");
+	}
+
 	public void Dispose()
 	{
 		FormContext.OnFieldChanged -= HandleFieldChanged;
 	}
 
-	private class MemberInput
+	private class MemberInput : UnitMemberRequest
 	{
-		public UnitMemberRequest MemberRequest { get; set; }
 		public List<Tool> Tools { get; set; }
+
+		public MemberInput()
+		{
+			Tools = new List<Tool>();
+		}
 	}
 }
