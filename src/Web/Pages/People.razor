@@ -75,7 +75,7 @@
 							</div>
 						}
 					}
-					else if (IsMatchFound)
+					else if (ShowNoResultsMessage)
 					{
 						<div class="rvt-panel"><p>No people found matching those filters. You can make yourself easier to find by <a href="/people/@LoggedInUser.Username">keeping your profile up to date.</a></p></div>
 					}
@@ -95,7 +95,7 @@
 	private AuthenticatedUser LoggedInUser;
 	private Person Person = new Person();
 	private List<Person> peopleList = new List<Person>();
-	private bool IsMatchFound;
+	private bool ShowNoResultsMessage;
 	private bool inline = false;
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private string finalCheckedValues;
@@ -138,6 +138,7 @@
 				using (Loading())
 				{
 					peopleList.Clear();
+					ShowNoResultsMessage = false;
 
 					queryParams = await GetQueryParams();
 					
@@ -145,10 +146,7 @@
 					if(queryParams.Count > 0 || FetchRootLevel)
 					{
 						await GetPeople();
-						if (peopleList.Count() != 0)
-						{
-							IsMatchFound = true;
-						}
+						
 						FetchRootLevel = false;// Disallow fetching /people from the API
 					}
 				}
@@ -245,16 +243,10 @@
 
 	private async Task GetPeople()
 	{
-		if (Roles.Count() == 0 && Responsibilities.Count() == 0 && Campuses.Count() == 0 && Areas.Count() == 0)
-		{
-			peopleList = await GetWithErrorHandling<List<Person>>("/people");
-		}
-		else
-		{
-			queryParams = await GetQueryParams();
-			RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
-			peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
-		}
+		queryParams = await GetQueryParams();
+		RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
+		peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
+		ShowNoResultsMessage = peopleList.Count == 0;
 	}
 
 	private async Task ExportResultsToCSV()
