@@ -170,7 +170,7 @@
 				}
 				else
 				{
-					GeneralException = new Exception($"{TValue} is not a valid {key}");
+					GeneralException = new Exception($"'{TValue}' is not a valid '{key}'");
 				}
 			}
 		}
@@ -180,9 +180,9 @@
 	{
 		queryParams = await GetQueryParams();
 		FetchRootLevel = true;// Allow fetching /people from the API
+		GeneralException = null;
 
 		var destination = QueryHelpers.AddQueryString("/people", queryParams);
-		Console.WriteLine($"We're off to {destination}");
 		// Navigate to destination, which will make LocationChanged() fire.
 		Navigation.NavigateTo(destination);
 	}
