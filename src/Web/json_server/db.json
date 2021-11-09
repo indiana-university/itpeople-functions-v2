@@ -330,7 +330,8 @@
   "tools": [
     {
       "id": 1,
-      "name": "Hammer"
+      "name": "Hammer",
+      "description": "The ban hammer of song and legend."
     },
     {
       "id": 2,
