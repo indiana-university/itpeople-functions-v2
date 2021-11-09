@@ -94,7 +94,7 @@
 	private Exception GeneralException;
 	private AuthenticatedUser LoggedInUser;
 	private Person Person = new Person();
-	private IEnumerable<Person> peopleList = new List<Person>();
+	private List<Person> peopleList = new List<Person>();
 	private bool IsMatchFound;
 	private bool inline = false;
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
@@ -105,6 +105,7 @@
 	private List<Area> Areas = new List<Area>();
 	private List<Responsibilities> Responsibilities = new List<Responsibilities>();
 	private bool ShowLoader = false;
+	private bool FetchRootLevel = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	private string RequestUri;
 
@@ -136,12 +137,19 @@
 			{
 				using (Loading())
 				{
+					peopleList.Clear();
+
 					queryParams = await GetQueryParams();
 					
-					await GetPeople();
-					if (peopleList.Count() != 0)
+					// If we've just navigated to /people don't fetch records from the API
+					if(queryParams.Count > 0 || FetchRootLevel)
 					{
-						IsMatchFound = true;
+						await GetPeople();
+						if (peopleList.Count() != 0)
+						{
+							IsMatchFound = true;
+						}
+						FetchRootLevel = false;// Disallow fetching /people from the API
 					}
 				}
 			}
@@ -169,9 +177,10 @@
 	public async Task UpdateQueryString()
 	{
 		queryParams = await GetQueryParams();
+		FetchRootLevel = true;// Allow fetching /people from the API
+
 		var destination = QueryHelpers.AddQueryString("/people", queryParams);
 		Console.WriteLine($"We're off to {destination}");
-		
 		// Navigate to destination, which will make LocationChanged() fire.
 		Navigation.NavigateTo(destination);
 	}
