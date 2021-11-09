@@ -1,0 +1,303 @@
+@using Models
+@using Models.Enums
+@using RivetBlazor.Components
+@using web.Shared
+@using System.Net
+@using System.Web
+@using System.Linq
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Collections
+@using System.Collections.Specialized
+@inject IHttpClientFactory ClientFactory
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime;
+@implements IDisposable
+@page "/People"
+
+<HeaderNavBar Page="People" />
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<AuthenticatedView>
+		<NotAuthenticated>			
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=@(HttpUtility.UrlEncode(new Uri(Navigation.Uri).PathAndQuery))">Login</a>
+				
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<div class="rvt-grid">
+				<div class="rvt-grid__item">
+					<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">IT People</h1>
+						<p>Use the filters below to find IT People based on their role within a unit, their job classification, and/or campus.</p>
+				</div>
+			</div>
+
+			<DisplayException Ex=@GeneralException />
+
+			<div class="rvt-grid rvt-m-top-md">
+				<div class="rvt-grid__item-5-md-up">
+					<EditForm  EditContext="@editContext">
+						<DataAnnotationsValidator />
+
+						<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
+						<RivetInputEnumCheckbox @bind-Value="Roles" Inline=@inline />
+						
+						<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Campus</h2>
+						<RivetInputEnumCheckbox @bind-Value="Campuses" Inline=@inline />
+
+						<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Area</h2>
+						<RivetInputEnumCheckbox @bind-Value="Areas" Inline=@inline />
+
+						<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Responsibilities</h2>
+						<RivetInputEnumCheckbox @bind-Value="Responsibilities" Inline=@inline />
+					</EditForm> 
+				</div>
+				
+				<div class="rvt-grid__item-7-md-up">
+					@if (peopleList.Count() != 0)
+					{
+						<div class="rvt-grid rvt-p-bottom-lg">
+							<button type="button" class="rvt-button" @onclick="ExportResultsToCSV" role="menuitemradio">
+								<rvt-icon name="download" />
+								<span class="rvt-m-left-xs">Export results to CSV</span>
+							</button>
+						</div>
+						
+						@foreach(var person in peopleList)
+						{
+							<div class="rvt-grid rvt-p-bottom-md">
+								<div><a href="/people/@person.Id" class="rvt-link-bold">@person.Name</a> (<a href="mailto:@person.CampusEmail">@person.Netid</a>) <br>@person.Position<br></div>
+							</div>
+						}
+					}
+					else if (ShowNoResultsMessage)
+					{
+						<div class="rvt-panel"><p>No people found matching those filters. You can make yourself easier to find by <a href="/people/@LoggedInUser.Username">keeping your profile up to date.</a></p></div>
+					}
+				</div>
+			</div>
+				<p>
+					<button id="apply-filter" class="rvt-button" type="submit" @onclick=@UpdateQueryString>Apply Filters</button>
+				</p>
+
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+@code {
+	private EditContext editContext;
+	private Exception GeneralException;
+	private AuthenticatedUser LoggedInUser;
+	private Person Person = new Person();
+	private List<Person> peopleList = new List<Person>();
+	private bool ShowNoResultsMessage;
+	private bool inline = false;
+	private HttpClient Api() => ClientFactory.CreateClient("Api");
+	private string finalCheckedValues;
+	private Dictionary<string, string> queryParams = new Dictionary<string, string>();
+	private List<Role> Roles = new List<Role>();
+	private List<Campus> Campuses = new List<Campus>();
+	private List<Area> Areas = new List<Area>();
+	private List<Responsibilities> Responsibilities = new List<Responsibilities>();
+	private bool ShowLoader = false;
+	private bool FetchRootLevel = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+	private string RequestUri;
+
+	protected override async Task OnInitializedAsync()
+	{
+		editContext = new EditContext(Roles);
+		editContext = new EditContext(Campuses);
+		editContext = new EditContext(Areas);
+		editContext = new EditContext(Responsibilities);
+
+		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+		
+		Navigation.LocationChanged += LocationChanged;
+		LocationChanged(null, null);
+	}
+
+	private void LocationChanged(object sender, LocationChangedEventArgs e)
+	{
+		GeneralException = null;
+		base.InvokeAsync(async () => {
+			var query = new Uri(Navigation.Uri).Query;
+			var queryDict = HttpUtility.ParseQueryString(query);
+			
+			await ConvertNameValueToEnum<Role>(queryDict, Roles, "role");
+			await ConvertNameValueToEnum<Campus>(queryDict, Campuses, "campus");
+			await ConvertNameValueToEnum<Area>(queryDict, Areas, "area");
+			await ConvertNameValueToEnum<Responsibilities>(queryDict, Responsibilities,	"class");
+			
+			if(LoggedInUser != null)
+			{
+				using (Loading())
+				{
+					peopleList.Clear();
+					ShowNoResultsMessage = false;
+
+					queryParams = await GetQueryParams();
+					
+					// If we've just navigated to /people don't fetch records from the API
+					if(queryParams.Count > 0 || FetchRootLevel)
+					{
+						await GetPeople();
+						
+						FetchRootLevel = false;// Disallow fetching /people from the API
+					}
+				}
+			}
+			RequestUri = null;
+			queryParams = new Dictionary<string, string>();
+		});
+	}
+
+	private async Task ConvertNameValueToEnum<T>(NameValueCollection queryDict, List<T> values, string key)
+	{
+		values.Clear();
+		if (queryDict.Get(key) != null)
+		{
+			foreach (var TValue in queryDict.Get(key).Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v => v.Trim()))
+			{
+				var success = Enum.TryParse(typeof(T), TValue, out var enums);
+				if(success)
+				{
+					values.Add((T)enums);
+				}
+				else
+				{
+					GeneralException = new Exception($"'{TValue}' is not a valid '{key}'");
+				}
+			}
+		}
+	}
+
+	public async Task UpdateQueryString()
+	{
+		queryParams = await GetQueryParams();
+		FetchRootLevel = true;// Allow fetching /people from the API
+
+		var destination = QueryHelpers.AddQueryString("/people", queryParams);
+		// Navigate to destination, which will make LocationChanged() fire.
+		Navigation.NavigateTo(destination);
+	}
+
+	private async Task<Dictionary<string, string>> GetQueryParams()
+	{
+		if (Roles.Count() != 0)
+		{
+			queryParams = await GetIndividualQueryStrings<Role>(Roles, "role");
+		}
+		else
+		{
+			queryParams.Remove("role");
+		}
+
+		if (Responsibilities.Count() != 0)
+		{
+			queryParams = await GetIndividualQueryStrings<Responsibilities>(Responsibilities, "class");
+		}
+		else
+		{
+			queryParams.Remove("class");
+		}
+
+		if (Campuses.Count() != 0)
+		{
+			queryParams = await GetIndividualQueryStrings<Campus>(Campuses, "campus");
+		}
+		else
+		{
+			queryParams.Remove("campus");
+		}
+
+		if (Areas.Count() != 0)
+		{
+			queryParams = await GetIndividualQueryStrings<Area>(Areas, "area");
+		}
+		else
+		{
+			queryParams.Remove("area");
+		}
+
+		return queryParams;
+	}
+	private async Task<Dictionary<string, string>> GetIndividualQueryStrings<T>(List<T> values, string key)
+	{
+		if (!queryParams.ContainsKey(key))
+		{
+			finalCheckedValues = string.Join(',', values);
+			queryParams.Add(key, finalCheckedValues);
+		}
+		else
+		{
+			List<string> keyPairsToRemove = queryParams.Keys.Where(k => k.Contains(key)).ToList();
+			keyPairsToRemove.ForEach(k => queryParams.Remove(k));
+			finalCheckedValues = string.Join(',', values);
+			queryParams[key] = finalCheckedValues;
+		}
+
+		return queryParams;
+	}
+
+	private async Task GetPeople()
+	{
+		queryParams = await GetQueryParams();
+		RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
+		peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
+		ShowNoResultsMessage = peopleList.Count == 0;
+	}
+
+	private async Task ExportResultsToCSV()
+	{
+		var builder = new System.Text.StringBuilder();
+		builder.AppendLine(Person.CsvHeader);
+		foreach (var person in peopleList)
+		{
+			builder.AppendLine(person.AsCsvRow);
+		}
+		await JSRuntime.InvokeVoidAsync("saveAsFile", Person.CsvFileName, System.Text.Encoding.UTF8.GetBytes(builder.ToString()));
+	}
+
+	private async Task<T> GetWithErrorHandling<T>(string uri, string error = null)
+	{
+		var result = default(T);
+
+		try
+		{
+			var resp = await Api().GetAsync(uri);
+
+			if (resp.StatusCode != HttpStatusCode.OK)
+			{
+				var message = string.IsNullOrWhiteSpace(error)
+					? $"Failed to Get {resp.RequestMessage.RequestUri} Status {resp.StatusCode} {resp.ReasonPhrase}"
+					: error;
+				GeneralException = new Exception(message);
+				return result;
+			}
+
+			// The request succeeded, try to deserialize it.
+			var stringResult = await resp.Content.ReadAsStringAsync();
+			// We have to use Newtonsoft to make sure our StringEnumConverter work.
+			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
+		}
+		catch (Exception ex)
+		{
+			GeneralException = ex;
+			return result;
+		}
+
+		return result;
+	}
+
+	public void Dispose()
+	{
+		Navigation.LocationChanged -= LocationChanged;
+	}
+
+}

@@ -51,5 +51,10 @@ namespace Models
         /// <summary>The units of which this person is a member</summary>
         [JsonIgnore]
         public List<UnitMember> UnitMemberships { get; set; }
+
+        public static string CsvFileName => $"it-people.csv";
+        public static string CsvHeader => "Name,NetID,Email,Phone,Campus,Department,Position,Interests";
+        public string AsCsvRow => $"{this.Name},{this.Netid},{this.CampusEmail},{this.CampusPhone},{this.Campus},{this.Department?.Name},{this.Position}";
+
     }
 }
