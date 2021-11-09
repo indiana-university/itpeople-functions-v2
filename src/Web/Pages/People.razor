@@ -143,8 +143,11 @@
 	{
 		foreach (var TValue in queryDict.Get(key).Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v => v.Trim()))
 		{
-			var enums = (T)Enum.Parse(typeof(T), TValue);
-			values.Add(enums);
+			var success = Enum.TryParse(typeof(T), TValue, out var enums);
+			if(success)
+			{
+				values.Add((T)enums);
+			}
 		}
 	}
 
