@@ -75,14 +75,14 @@
 							</div>
 						}
 					}
-					else if (IsMatchFound)
+					else if (ShowNoResultsMessage)
 					{
 						<div class="rvt-panel"><p>No people found matching those filters. You can make yourself easier to find by <a href="/people/@LoggedInUser.Username">keeping your profile up to date.</a></p></div>
 					}
 				</div>
 			</div>
 				<p>
-					<button id="apply-filter" class="rvt-button" type="submit" @onclick=@GetFilteredPeople>Apply Filters</button>
+					<button id="apply-filter" class="rvt-button" type="submit" @onclick=@UpdateQueryString>Apply Filters</button>
 				</p>
 
 		</Authenticated>
@@ -94,8 +94,8 @@
 	private Exception GeneralException;
 	private AuthenticatedUser LoggedInUser;
 	private Person Person = new Person();
-	private IEnumerable<Person> peopleList = new List<Person>();
-	private bool IsMatchFound;
+	private List<Person> peopleList = new List<Person>();
+	private bool ShowNoResultsMessage;
 	private bool inline = false;
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private string finalCheckedValues;
@@ -105,6 +105,7 @@
 	private List<Area> Areas = new List<Area>();
 	private List<Responsibilities> Responsibilities = new List<Responsibilities>();
 	private bool ShowLoader = false;
+	private bool FetchRootLevel = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	private string RequestUri;
 
@@ -116,61 +117,74 @@
 		editContext = new EditContext(Responsibilities);
 
 		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+		
+		Navigation.LocationChanged += LocationChanged;
+		LocationChanged(null, null);
+	}
 
-		var query = new Uri(Navigation.Uri).Query;
-		var queryDict = HttpUtility.ParseQueryString(query);
-		if (!string.IsNullOrWhiteSpace(queryDict.ToString()) && !string.IsNullOrWhiteSpace(queryParams.ToString()))
-		{
-			if (queryDict.Get("role") != null) await ConvertNameValueToEnum<Role>(queryDict, Roles, "role");
-			if (queryDict.Get("campus") != null) await ConvertNameValueToEnum<Campus>(queryDict, Campuses, "campus");
-			if (queryDict.Get("area") != null) await ConvertNameValueToEnum<Area>(queryDict, Areas, "area");
-			if (queryDict.Get("class") != null) await ConvertNameValueToEnum<Responsibilities>(queryDict, Responsibilities,	"class");
-
+	private void LocationChanged(object sender, LocationChangedEventArgs e)
+	{
+		GeneralException = null;
+		base.InvokeAsync(async () => {
+			var query = new Uri(Navigation.Uri).Query;
+			var queryDict = HttpUtility.ParseQueryString(query);
+			
+			await ConvertNameValueToEnum<Role>(queryDict, Roles, "role");
+			await ConvertNameValueToEnum<Campus>(queryDict, Campuses, "campus");
+			await ConvertNameValueToEnum<Area>(queryDict, Areas, "area");
+			await ConvertNameValueToEnum<Responsibilities>(queryDict, Responsibilities,	"class");
+			
 			if(LoggedInUser != null)
 			{
 				using (Loading())
 				{
+					peopleList.Clear();
+					ShowNoResultsMessage = false;
+
 					queryParams = await GetQueryParams();
-					await GetFilteredPeople();
+					
+					// If we've just navigated to /people don't fetch records from the API
+					if(queryParams.Count > 0 || FetchRootLevel)
+					{
+						await GetPeople();
+						
+						FetchRootLevel = false;// Disallow fetching /people from the API
+					}
 				}
 			}
-		}
-		RequestUri = null;
-		queryParams = new Dictionary<string, string>();
+			RequestUri = null;
+			queryParams = new Dictionary<string, string>();
+		});
 	}
 
 	private async Task ConvertNameValueToEnum<T>(NameValueCollection queryDict, List<T> values, string key)
 	{
-		foreach (var TValue in queryDict.Get(key).Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v => v.Trim()))
+		values.Clear();
+		if (queryDict.Get(key) != null)
 		{
-			var success = Enum.TryParse(typeof(T), TValue, out var enums);
-			if(success)
+			foreach (var TValue in queryDict.Get(key).Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v => v.Trim()))
 			{
-				values.Add((T)enums);
+				var success = Enum.TryParse(typeof(T), TValue, out var enums);
+				if(success)
+				{
+					values.Add((T)enums);
+				}
+				else
+				{
+					GeneralException = new Exception($"'{TValue}' is not a valid '{key}'");
+				}
 			}
 		}
 	}
 
-	public async Task GetFilteredPeople()
+	public async Task UpdateQueryString()
 	{
-		await GetPeople();
-		if (peopleList.Count() != 0)
-		{
-			IsMatchFound = true;
-		}		
+		queryParams = await GetQueryParams();
+		FetchRootLevel = true;// Allow fetching /people from the API
 
-		if (!string.IsNullOrEmpty(RequestUri))
-		{
-			// Update the browser's URI to match the RequestUri
-			Navigation.NavigateTo(RequestUri);
-		}
-		else
-		{
-			// Update the browser's URI to match the AbsolutePath
-			var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-			Navigation.NavigateTo(uri.AbsolutePath);
-		}
-		RequestUri = null;
+		var destination = QueryHelpers.AddQueryString("/people", queryParams);
+		// Navigate to destination, which will make LocationChanged() fire.
+		Navigation.NavigateTo(destination);
 	}
 
 	private async Task<Dictionary<string, string>> GetQueryParams()
@@ -233,16 +247,10 @@
 
 	private async Task GetPeople()
 	{
-		if (Roles.Count() == 0 && Responsibilities.Count() == 0 && Campuses.Count() == 0 && Areas.Count() == 0)
-		{
-			peopleList = await GetWithErrorHandling<List<Person>>("/people");
-		}
-		else
-		{
-			queryParams = await GetQueryParams();
-			RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
-			peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
-		}
+		queryParams = await GetQueryParams();
+		RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
+		peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
+		ShowNoResultsMessage = peopleList.Count == 0;
 	}
 
 	private async Task ExportResultsToCSV()
@@ -287,6 +295,9 @@
 		return result;
 	}
 
-	public void Dispose() { }
+	public void Dispose()
+	{
+		Navigation.LocationChanged -= LocationChanged;
+	}
 
 }
