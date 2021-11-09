@@ -25,7 +25,7 @@
 				You must login to view this resource.
 			</p>
 			<p>
-				<a class="rvt-button" href="/SignIn?Destination=/People">Login</a>
+				<a class="rvt-button" href="/SignIn?Destination=@(HttpUtility.UrlEncode(new Uri(Navigation.Uri).PathAndQuery))">Login</a>
 				
 			</p>
 		</NotAuthenticated>
@@ -57,33 +57,29 @@
 						<RivetInputEnumCheckbox @bind-Value="Responsibilities" Inline=@inline />
 					</EditForm> 
 				</div>
-				@if (LoggedInUser != null)		
-				{
-					<div class="rvt-grid__item-7-md-up">
-						@if (IsMatchFound && peopleList.Count() != 0)
+				
+				<div class="rvt-grid__item-7-md-up">
+					@if (IsMatchFound && peopleList.Count() != 0)
+					{
+						<div class="rvt-grid rvt-p-bottom-lg">
+							<button type="button" class="rvt-button" @onclick="ExportResultsToCSV" role="menuitemradio">
+								<rvt-icon name="download" />
+								<span class="rvt-m-left-xs">Export results to CSV</span>
+							</button>
+						</div>
+						
+						@foreach(var person in peopleList)
 						{
-							<div class="rvt-grid rvt-p-bottom-lg">								
-								<button type="button" class="rvt-button" @onclick="ExportResultsToCSV" role="menuitemradio">
-									<rvt-icon name="download" />
-									<span class="rvt-m-left-xs">Export results to CSV</span>
-								</button>
+							<div class="rvt-grid rvt-p-bottom-md">
+								<div><a href="/people/@person.Id" class="rvt-link-bold">@person.Name</a> (<a href="mailto:@person.CampusEmail">@person.Netid</a>) <br>@person.Position<br></div>
 							</div>
-							
-							@foreach(var person in peopleList)
-							{
-								<div class="rvt-grid rvt-p-bottom-md">
-									<div><a href="/people/@person.Id" class="rvt-link-bold">@person.Name</a> (<a href="mailto:@person.CampusEmail">@person.Netid</a>) <br>@person.Position<br></div>
-								</div>
-							}						
 						}
-						else
-						{
-							<div class="rvt-panel"><p>No people found matching those filters. You can make yourself easier to find by <a href="/people/@LoggedInUser.Username">keeping your profile up to date.</a></p></div>
-						}		
-						
-					</div>						
-				}
-						
+					}
+					else
+					{
+						<div class="rvt-panel"><p>No people found matching those filters. You can make yourself easier to find by <a href="/people/@LoggedInUser.Username">keeping your profile up to date.</a></p></div>
+					}
+				</div>
 			</div>
 				<p>
 					<button id="apply-filter" class="rvt-button" type="submit" @onclick=@GetFilteredPeople>Apply Filters</button>
@@ -119,6 +115,8 @@
 		editContext = new EditContext(Areas);
 		editContext = new EditContext(Responsibilities);
 
+		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+
 		var query = new Uri(Navigation.Uri).Query;
 		var queryDict = HttpUtility.ParseQueryString(query);
 		if (!string.IsNullOrWhiteSpace(queryDict.ToString()) && !string.IsNullOrWhiteSpace(queryParams.ToString()))
@@ -128,10 +126,13 @@
 			if (queryDict.Get("area") != null) await ConvertNameValueToEnum<Area>(queryDict, Areas, "area");
 			if (queryDict.Get("class") != null) await ConvertNameValueToEnum<Responsibilities>(queryDict, Responsibilities,	"class");
 
-			using (Loading())
+			if(LoggedInUser != null)
 			{
-				queryParams = await GetQueryParams();
-				await GetFilteredPeople();
+				using (Loading())
+				{
+					queryParams = await GetQueryParams();
+					await GetFilteredPeople();
+				}
 			}
 		}
 		RequestUri = null;
@@ -149,7 +150,6 @@
 
 	public async Task GetFilteredPeople()
 	{
-		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
 		await GetPeople();
 		if (peopleList.Count() != 0)
 		{
