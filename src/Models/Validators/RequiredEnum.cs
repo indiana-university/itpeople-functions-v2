@@ -14,9 +14,9 @@ namespace Models
 	{
 		protected override ValidationResult IsValid(object value, ValidationContext validationContext)
 		{
-			var required = new ValidationResult("The " + validationContext.DisplayName + " field is required.");
-
 			var prop = validationContext.ObjectType.GetProperty(validationContext.MemberName);
+
+			var required = new ValidationResult("The " + validationContext.DisplayName + " field is required.", new string[] { prop.Name });
 			var curValue = (int)value;
 			
 			var options = Enum.GetValues(prop.PropertyType).Cast<int>().ToList();
