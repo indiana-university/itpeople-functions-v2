@@ -82,7 +82,7 @@
 				</div>
 			</div>
 				<p>
-					<button id="apply-filter" class="rvt-button" type="submit" @onclick=@GetFilteredPeople>Apply Filters</button>
+					<button id="apply-filter" class="rvt-button" type="submit" @onclick=@UpdateQueryString>Apply Filters</button>
 				</p>
 
 		</Authenticated>
@@ -116,61 +116,64 @@
 		editContext = new EditContext(Responsibilities);
 
 		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+		
+		Navigation.LocationChanged += LocationChanged;
+		LocationChanged(null, null);
+	}
 
-		var query = new Uri(Navigation.Uri).Query;
-		var queryDict = HttpUtility.ParseQueryString(query);
-		if (!string.IsNullOrWhiteSpace(queryDict.ToString()) && !string.IsNullOrWhiteSpace(queryParams.ToString()))
-		{
-			if (queryDict.Get("role") != null) await ConvertNameValueToEnum<Role>(queryDict, Roles, "role");
-			if (queryDict.Get("campus") != null) await ConvertNameValueToEnum<Campus>(queryDict, Campuses, "campus");
-			if (queryDict.Get("area") != null) await ConvertNameValueToEnum<Area>(queryDict, Areas, "area");
-			if (queryDict.Get("class") != null) await ConvertNameValueToEnum<Responsibilities>(queryDict, Responsibilities,	"class");
-
+	private void LocationChanged(object sender, LocationChangedEventArgs e)
+	{
+		base.InvokeAsync(async () => {
+			var query = new Uri(Navigation.Uri).Query;
+			var queryDict = HttpUtility.ParseQueryString(query);
+			
+			await ConvertNameValueToEnum<Role>(queryDict, Roles, "role");
+			await ConvertNameValueToEnum<Campus>(queryDict, Campuses, "campus");
+			await ConvertNameValueToEnum<Area>(queryDict, Areas, "area");
+			await ConvertNameValueToEnum<Responsibilities>(queryDict, Responsibilities,	"class");
+			
 			if(LoggedInUser != null)
 			{
 				using (Loading())
 				{
 					queryParams = await GetQueryParams();
-					await GetFilteredPeople();
+					
+					await GetPeople();
+					if (peopleList.Count() != 0)
+					{
+						IsMatchFound = true;
+					}
 				}
 			}
-		}
-		RequestUri = null;
-		queryParams = new Dictionary<string, string>();
+			RequestUri = null;
+			queryParams = new Dictionary<string, string>();
+		});
 	}
 
 	private async Task ConvertNameValueToEnum<T>(NameValueCollection queryDict, List<T> values, string key)
 	{
-		foreach (var TValue in queryDict.Get(key).Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v => v.Trim()))
+		values.Clear();
+		if (queryDict.Get(key) != null)
 		{
-			var success = Enum.TryParse(typeof(T), TValue, out var enums);
-			if(success)
+			foreach (var TValue in queryDict.Get(key).Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v => v.Trim()))
 			{
-				values.Add((T)enums);
+				var success = Enum.TryParse(typeof(T), TValue, out var enums);
+				if(success)
+				{
+					values.Add((T)enums);
+				}
 			}
 		}
 	}
 
-	public async Task GetFilteredPeople()
+	public async Task UpdateQueryString()
 	{
-		await GetPeople();
-		if (peopleList.Count() != 0)
-		{
-			IsMatchFound = true;
-		}		
-
-		if (!string.IsNullOrEmpty(RequestUri))
-		{
-			// Update the browser's URI to match the RequestUri
-			Navigation.NavigateTo(RequestUri);
-		}
-		else
-		{
-			// Update the browser's URI to match the AbsolutePath
-			var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-			Navigation.NavigateTo(uri.AbsolutePath);
-		}
-		RequestUri = null;
+		queryParams = await GetQueryParams();
+		var destination = QueryHelpers.AddQueryString("/people", queryParams);
+		Console.WriteLine($"We're off to {destination}");
+		
+		// Navigate to destination, which will make LocationChanged() fire.
+		Navigation.NavigateTo(destination);
 	}
 
 	private async Task<Dictionary<string, string>> GetQueryParams()
@@ -287,6 +290,9 @@
 		return result;
 	}
 
-	public void Dispose() { }
+	public void Dispose()
+	{
+		Navigation.LocationChanged -= LocationChanged;
+	}
 
 }
