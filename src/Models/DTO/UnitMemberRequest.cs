@@ -19,7 +19,6 @@ namespace Models
         /// The NetID of the person, if they are not already in the IT people directory. This can be null if the position is vacant.
         public string NetId { get; set; }
         /// The title/position of this membership.
-        [MinLength(10)]
         public string Title { get; set; }
         /// The percentage of time allocated to this position by this person (in case of split appointments).
         [DefaultValue(100)]
