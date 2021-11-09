@@ -124,6 +124,7 @@
 
 	private void LocationChanged(object sender, LocationChangedEventArgs e)
 	{
+		GeneralException = null;
 		base.InvokeAsync(async () => {
 			var query = new Uri(Navigation.Uri).Query;
 			var queryDict = HttpUtility.ParseQueryString(query);
@@ -180,7 +181,6 @@
 	{
 		queryParams = await GetQueryParams();
 		FetchRootLevel = true;// Allow fetching /people from the API
-		GeneralException = null;
 
 		var destination = QueryHelpers.AddQueryString("/people", queryParams);
 		// Navigate to destination, which will make LocationChanged() fire.
