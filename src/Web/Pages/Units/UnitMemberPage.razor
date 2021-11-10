@@ -37,6 +37,8 @@
 					Unit: @CurrentUnit?.Name
 					<br/>
 					UnitCrudPerms: @UnitCrudPerms
+					<br/>
+					Viewer CanEditMemberTools: @CanEditMemberTools
 				</p>
 				<p>
 					username: @Username
@@ -83,6 +85,11 @@
 
 	private EntityPermissions UnitCrudPerms;
 	private EntityPermissions MembersCrudPerms;
+	
+	private bool CanEditMemberTools => 
+		MembersCrudPerms.HasFlag(EntityPermissions.Post)
+		|| MembersCrudPerms.HasFlag(EntityPermissions.Put)
+		|| (LoggedInUser != null && CurrentUnitMembers.Any(um => um.Person.Netid == LoggedInUser.Username && (um.Permissions == UnitPermissions.ManageMembers || um.Permissions == UnitPermissions.ManageTools)));
 
 	private MemberInput Input = new MemberInput();
 	private EditContext FormContext;
@@ -100,6 +107,8 @@
 		// Setup our editcontext
 		FormContext = new EditContext(Input);
 		FormContext.OnFieldChanged += HandleFieldChanged;
+
+		SetLoggedInUser();
 	}
 	
 	protected override async Task OnParametersSetAsync()
