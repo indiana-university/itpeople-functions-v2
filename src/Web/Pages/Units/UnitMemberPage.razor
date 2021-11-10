@@ -14,7 +14,7 @@
 	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
 		<!-- our title -->
 		<div class="rvt-m-right-sm-md-up">
-			<h1>Edit Unit @(CurrentUnit?.Name ?? UnitId) Member @Username</h1>
+			<h1>@HumanVerb Unit @(CurrentUnit?.Name ?? UnitId) Member @Username</h1>
 		</div>
 	</div>
 
@@ -53,11 +53,23 @@
 				<EditForm EditContext="@FormContext" OnValidSubmit="SubmitForm">
 					<DataAnnotationsValidator />
 					<ValidationSummary />
-					<RivetInputSelect @bind-Value="Input.Role" Label="Role" Description="" Options=RoleOptions DisplayLambda=@(r => r.ToString()) />
-					<RivetInputSelect @bind-Value="Input.Permissions" Label="Unit Permissions" Description="" Options=UnitPermissionOptions DisplayLambda=@(p => p.ToString()) />
-					<RivetInputText @bind-Value="Input.Title" Label="Title" />
-					<RivetInputNumber @bind-Value="Input.Percentage" Label="Percentage" />
-					<RivetInputTextArea @bind-Value="Input.Notes" Label="Notes" />
+
+					@if(!CanManageMembers)
+					{
+						<div class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-top-md">
+							<span class="rvt-inline-alert__icon">
+								<rvt-icon name="info-circle" />
+							</span>
+							<span class="rvt-inline-alert__message" id="radio-list-message">
+								Only the owner of the @CurrentUnit?.Name unit, or members with the "Manage Members" permission, can @HumanVerb.ToLower() a member.
+							</span>
+						</div>
+					}
+					<RivetInputSelect @bind-Value="Input.Role" Label="Role" Description="" Options=RoleOptions DisplayLambda=@(r => r.ToString()) Disabled=@(!CanManageMembers) />
+					<RivetInputSelect @bind-Value="Input.Permissions" Label="Unit Permissions" Description="" Options=UnitPermissionOptions DisplayLambda=@(p => p.ToString()) Disabled=@(!CanManageMembers) />
+					<RivetInputText @bind-Value="Input.Title" Label="Title" Disabled=@(!CanManageMembers) />
+					<RivetInputNumber @bind-Value="Input.Percentage" Label="Percentage" Disabled=@(!CanManageMembers) />
+					<RivetInputTextArea @bind-Value="Input.Notes" Label="Notes" Disabled=@(!CanManageMembers) />
 					
 					@if(!CanManageMemberTools)
 					{
@@ -98,6 +110,14 @@
 
 	private EntityPermissions UnitCrudPerms;
 	private EntityPermissions MembersCrudPerms;
+	
+	private EntityPermissions HttpVerb => CurrentUnitMembers.Any(um => um.Person.Netid == CurrentPerson.Netid)
+		? EntityPermissions.Put
+		: EntityPermissions.Post;
+	private string HumanVerb => HttpVerb == EntityPermissions.Put
+		? "Update"
+		: "Add";
+	private bool CanManageMembers => MembersCrudPerms.HasFlag(HttpVerb);
 	
 	private bool CanManageMemberTools => 
 		MembersCrudPerms.HasFlag(EntityPermissions.Post)
