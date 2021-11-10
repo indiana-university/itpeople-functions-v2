@@ -30,16 +30,16 @@ stages:
         command: test
         projects: tests/API/Unit/Unit.csproj
           
-  - job: Integration
-    steps:
-    - task: UseDotNet@2
-      inputs:
-        version: 3.1.x
+  # - job: Integration
+  #   steps:
+  #   - task: UseDotNet@2
+  #     inputs:
+  #       version: 3.1.x
 
-    - task: DotNetCoreCLI@2
-      inputs:
-        command: test
-        projects: tests/API/Integration/Integration.csproj  
+  #   - task: DotNetCoreCLI@2
+  #     inputs:
+  #       command: test
+  #       projects: tests/API/Integration/Integration.csproj  
 
 - stage: Package
   displayName: Package  
@@ -155,7 +155,7 @@ stages:
         arguments: >-
           -StorageAccountName $(webAppStorageAccountName)
           -StorageContainer "`$web"
-          -AssetsPath $(Pipeline.Workspace)/WebAppDeploymentPackage/web/wwwroot
+          -AssetsPath $(Pipeline.Workspace)/WebAppDeploymentPackage/wwwroot
           -CdnResourceGroup $(webAppCdnResourceGroup)
           -CdnProfileName $(webAppCdnProfileName)
           -CdnEndpointName $(webAppCdnEndpointName) 
