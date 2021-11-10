@@ -54,12 +54,13 @@ stages:
       inputs:
         version: 5.0.x
 
-    - task: FileTransform@1
-      displayName: "Transform appsettings.json"
+    - task: PowerShell@2
+      displayName: 'Use Specific Environment Appsettings'
       inputs:
-        folderPath: src/Web/wwwroot
-        fileType: json
-        targetFiles: '**/appsettings.json'
+        targetType: inline
+        script: Copy-Item -Path "src/Web/wwwroot/appsettings.Staging.json" -Destination "src/Web/wwwroot/appsettings.json"
+      
+
 
     - task: DotNetCoreCLI@2
       name: PublishWebApp
