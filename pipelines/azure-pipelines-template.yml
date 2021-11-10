@@ -53,26 +53,38 @@ stages:
     - task: UseDotNet@2
       inputs:
         version: 5.0.x
-    
-    - task: DotNetCoreCLI@2
-      displayName: Build Web App
-      inputs:
-        command: 'build'
-        projects: src/Web/web.csproj
-        arguments: --output $(System.DefaultWorkingDirectory)/WebApp --configuration Release
-    
-    - task: ArchiveFiles@2
-      displayName: 'Archive Web App files'
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/WebApp'
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/WebApp.zip
-        replaceExistingArchive: true
 
-    - publish: $(Build.ArtifactStagingDirectory)/WebApp.zip
-      displayName: Publish Web App Artifacts
+    - task: DotNetCoreCLI@2
+      name: PublishWebApp
+      displayName: Publish Web App
+      inputs:
+        command: publish
+        projects: src/Web/web.csproj
+        arguments: --output $(Build.ArtifactStagingDirectory) --configuration Release
+        publishWebProjects: false
+        zipAfterPublish: false
+
+    - publish: $(Build.ArtifactStagingDirectory)
       artifact: WebAppDeploymentPackage
+    # - task: DotNetCoreCLI@2
+    #   displayName: Build Web App
+    #   inputs:
+    #     command: 'build'
+    #     projects: src/Web/web.csproj
+    #     arguments: --output $(System.DefaultWorkingDirectory)/WebApp --configuration Release
+    
+    # - task: ArchiveFiles@2
+    #   displayName: 'Archive Web App files'
+    #   inputs:
+    #     rootFolderOrFile: '$(System.DefaultWorkingDirectory)/WebApp'
+    #     includeRootFolder: false
+    #     archiveType: zip
+    #     archiveFile: $(Build.ArtifactStagingDirectory)/WebApp.zip
+    #     replaceExistingArchive: true
+
+    # - publish: $(Build.ArtifactStagingDirectory)/WebApp.zip
+    #   displayName: Publish Web App Artifacts
+    #   artifact: WebAppDeploymentPackage
     
   - job: PackageApiApp
     displayName: API Function App
@@ -142,30 +154,30 @@ stages:
     steps:
     - checkout: scripts
     
-    - task: DownloadPipelineArtifact@2
-      displayName: Download Deployment Package
-      inputs:
-        artifact: 'WebAppDeploymentPackage'
-        
-    - task: AzureCLI@2
-      displayName: Publish to Azure Storage
-      inputs:
-        azureSubscription: '$(azureSubscription)'
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
-          ##[command]az storage blob upload-batch -s $(Pipeline.Workspace)/WebAppDeploymentPackage -d '$web' --account-name $(webAppStorageAccountName) --auth-mode login
-          az storage blob upload-batch -s $(Pipeline.Workspace)/WebAppDeploymentPackage -d '$web' --account-name $(webAppStorageAccountName) --auth-mode login
+    # - task: DownloadPipelineArtifact@2
+    #   displayName: Download Deployment Package
+    #   inputs:
+    #     artifact: 'WebAppDeploymentPackage'
 
-    - task: AzureCLI@2
-      displayName: Purge Azure CDN
-      inputs:
-        azureSubscription: '$(azureSubscription)'
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
-          ##[command]az cdn endpoint purge --resource-group $(webAppCdnResourceGroup) --profile-name itpeople-ms-cdn --name $(webAppCdnEndpointName) --content-paths '/*' --no-wait
-          az cdn endpoint purge --resource-group $(webAppCdnResourceGroup) --profile-name itpeople-ms-cdn --name $(webAppCdnEndpointName) --content-paths '/*' --no-wait
+    # - task: AzureCLI@2
+    #   displayName: Publish to Azure Storage
+    #   inputs:
+    #     azureSubscription: '$(azureSubscription)'
+    #     scriptType: bash
+    #     scriptLocation: inlineScript
+    #     inlineScript: |
+    #       ##[command]az storage blob upload-batch -s $(Pipeline.Workspace)/WebAppDeploymentPackage -d '$web' --account-name $(webAppStorageAccountName) --auth-mode login
+    #       az storage blob upload-batch -s $(Pipeline.Workspace)/WebAppDeploymentPackage -d '$web' --account-name $(webAppStorageAccountName) --auth-mode login
+
+    # - task: AzureCLI@2
+    #   displayName: Purge Azure CDN
+    #   inputs:
+    #     azureSubscription: '$(azureSubscription)'
+    #     scriptType: bash
+    #     scriptLocation: inlineScript
+    #     inlineScript: |
+    #       ##[command]az cdn endpoint purge --resource-group $(webAppCdnResourceGroup) --profile-name itpeople-ms-cdn --name $(webAppCdnEndpointName) --content-paths '/*' --no-wait
+    #       az cdn endpoint purge --resource-group $(webAppCdnResourceGroup) --profile-name itpeople-ms-cdn --name $(webAppCdnEndpointName) --content-paths '/*' --no-wait
     # steps:
     # - checkout: scripts
     
@@ -174,19 +186,19 @@ stages:
     #   inputs:
     #     artifact: 'WebAppDeploymentPackage'
     
-    # - task: AzureCLI@2
-    #   displayName: Deploy Web App
-    #   inputs:
-    #     azureSubscription: '$(azureSubscription)'
-    #     scriptType: pscore
-    #     scriptPath: $(Build.SourcesDirectory)/deploy-static-assets.ps1
-    #     arguments: >-
-    #       -StorageAccountName $(webAppStorageAccountName)
-    #       -StorageContainer "`$web"
-    #       -AssetsPath $(Pipeline.Workspace)/WebAppDeploymentPackage/wwwroot
-    #       -CdnResourceGroup $(webAppCdnResourceGroup)
-    #       -CdnProfileName $(webAppCdnProfileName)
-    #       -CdnEndpointName $(webAppCdnEndpointName) 
+    - task: AzureCLI@2
+      displayName: Deploy Web App
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: pscore
+        scriptPath: $(Build.SourcesDirectory)/deploy-static-assets.ps1
+        arguments: >-
+          -StorageAccountName $(webAppStorageAccountName)
+          -StorageContainer "`$web"
+          -AssetsPath $(Pipeline.Workspace)/WebAppDeploymentPackage/wwwroot
+          -CdnResourceGroup $(webAppCdnResourceGroup)
+          -CdnProfileName $(webAppCdnProfileName)
+          -CdnEndpointName $(webAppCdnEndpointName) 
    
   - job: API
     steps:
