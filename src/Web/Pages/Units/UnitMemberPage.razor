@@ -38,7 +38,7 @@
 					<br/>
 					UnitCrudPerms: @UnitCrudPerms
 					<br/>
-					Viewer CanEditMemberTools: @CanEditMemberTools
+					Viewer CanManageMemberTools: @CanManageMemberTools
 				</p>
 				<p>
 					username: @Username
@@ -58,7 +58,20 @@
 					<RivetInputText @bind-Value="Input.Title" Label="Title" />
 					<RivetInputNumber @bind-Value="Input.Percentage" Label="Percentage" />
 					<RivetInputTextArea @bind-Value="Input.Notes" Label="Notes" />
-					<RivetInputCheckbox @bind-Value="Input.Tools" Legend="Tools" Options=ToolOptions DisplayLambda=@(t => GetToolDisplayString(t)) />
+					
+					@if(!CanManageMemberTools)
+					{
+						<div class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-top-md">
+							<span class="rvt-inline-alert__icon">
+								<rvt-icon name="info-circle" />
+							</span>
+							<span class="rvt-inline-alert__message" id="radio-list-message">
+								Only the owner of the @CurrentUnit?.Name unit, or members with the "Manage Members" or "Manage Tools" permission, can update a member's tools.
+							</span>
+						</div>
+					}
+
+					<RivetInputCheckbox @bind-Value="Input.Tools" Legend="Tools" Options=ToolOptions DisplayLambda=@(t => GetToolDisplayString(t)) Disabled=@(!CanManageMemberTools) />
 					
 					<p>
 						<button type="submit" class="rvt-button" disabled=@(FormInvalid || ShowLoader)>Save</button
@@ -86,7 +99,7 @@
 	private EntityPermissions UnitCrudPerms;
 	private EntityPermissions MembersCrudPerms;
 	
-	private bool CanEditMemberTools => 
+	private bool CanManageMemberTools => 
 		MembersCrudPerms.HasFlag(EntityPermissions.Post)
 		|| MembersCrudPerms.HasFlag(EntityPermissions.Put)
 		|| (LoggedInUser != null && CurrentUnitMembers.Any(um => um.Person.Netid == LoggedInUser.Username && (um.Permissions == UnitPermissions.ManageMembers || um.Permissions == UnitPermissions.ManageTools)));
