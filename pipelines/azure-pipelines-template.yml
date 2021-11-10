@@ -154,10 +154,10 @@ stages:
     steps:
     - checkout: scripts
     
-    # - task: DownloadPipelineArtifact@2
-    #   displayName: Download Deployment Package
-    #   inputs:
-    #     artifact: 'WebAppDeploymentPackage'
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Deployment Package
+      inputs:
+        artifact: 'WebAppDeploymentPackage'
 
     # - task: AzureCLI@2
     #   displayName: Publish to Azure Storage
