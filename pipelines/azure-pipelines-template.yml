@@ -195,7 +195,7 @@ stages:
         arguments: >-
           -StorageAccountName $(webAppStorageAccountName)
           -StorageContainer "`$web"
-          -AssetsPath $(Pipeline.Workspace)/WebAppDeploymentPackage
+          -AssetsPath $(Pipeline.Workspace)/WebAppDeploymentPackage/Web/wwwroot
           -CdnResourceGroup $(webAppCdnResourceGroup)
           -CdnProfileName $(webAppCdnProfileName)
           -CdnEndpointName $(webAppCdnEndpointName) 
