@@ -53,12 +53,14 @@ stages:
     - task: UseDotNet@2
       inputs:
         version: 5.0.x
+
     - task: FileTransform@1
       displayName: "Transform appsettings.json"
       inputs:
         folderPath: src/Web/wwwroot
-        target: appsettings.json
-        fileFormat: json
+        fileType: json
+        targetFiles: '**/appsettings.json'
+
     - task: DotNetCoreCLI@2
       name: PublishWebApp
       displayName: Publish Web App
