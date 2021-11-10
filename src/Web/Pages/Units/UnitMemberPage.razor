@@ -102,37 +102,39 @@
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 
 
-	protected override void OnInitialized()
+	protected override async Task OnInitializedAsync()
 	{
 		// Setup our editcontext
 		FormContext = new EditContext(Input);
 		FormContext.OnFieldChanged += HandleFieldChanged;
 
-		SetLoggedInUser();
+		await SetLoggedInUser();
 	}
 	
 	protected override async Task OnParametersSetAsync()
 	{
-		using (Loading())
+		if(LoggedInUser != null)
 		{
-			await Task.WhenAll(new [] {SetCurrentUnit(), SetCurrentPerson(), SetToolOptions()});
+			using (Loading())
+			{
+				await Task.WhenAll(new [] {SetCurrentUnit(), SetCurrentPerson(), SetToolOptions()});
 
-			// Armed with all the details about ther person, unit, and current members build up our input.
-			var existingMember = CurrentUnitMembers.FirstOrDefault(m => m.PersonId == CurrentPerson?.Id);
-			List<int> existingToolIds = existingMember?.MemberTools.Select(mt => mt.ToolId).ToList() ?? new List<int>();
-						
-			Input.UnitId = CurrentUnit.Id;
-			Input.PersonId = CurrentPerson.Id;
-			Input.NetId = CurrentPerson.Netid;
-			Input.Role = existingMember?.Role ?? Role.Member;
-			Input.Permissions = existingMember?.Permissions ?? UnitPermissions.Viewer;
-			Input.Title = existingMember?.Title;
-			Input.Percentage = existingMember?.Percentage ?? 100;
-			Input.Notes = existingMember?.Notes;
+				// Armed with all the details about the person, unit, and current members build up our input.
+				var existingMember = CurrentUnitMembers.FirstOrDefault(m => m.PersonId == CurrentPerson?.Id);
+				List<int> existingToolIds = existingMember?.MemberTools.Select(mt => mt.ToolId).ToList() ?? new List<int>();
+							
+				Input.UnitId = CurrentUnit.Id;
+				Input.PersonId = CurrentPerson.Id;
+				Input.NetId = CurrentPerson.Netid;
+				Input.Role = existingMember?.Role ?? Role.Member;
+				Input.Permissions = existingMember?.Permissions ?? UnitPermissions.Viewer;
+				Input.Title = existingMember?.Title;
+				Input.Percentage = existingMember?.Percentage ?? 100;
+				Input.Notes = existingMember?.Notes;
 
-			Input.Tools.Clear();
-			Input.Tools.AddRange(ToolOptions.Where(o => existingToolIds.Contains(o.Id)));
-			
+				Input.Tools.Clear();
+				Input.Tools.AddRange(ToolOptions.Where(o => existingToolIds.Contains(o.Id)));
+			}
 		}
 	}
 
