@@ -106,6 +106,7 @@
 
 	private UnitResponse CurrentUnit;
 	private List<UnitMember> CurrentUnitMembers = new List<UnitMember>();
+	private UnitMember CurrentMember => CurrentUnitMembers.FirstOrDefault(um => CurrentPerson != null && um.Person.Netid == CurrentPerson?.Netid);
 	private Person CurrentPerson;
 
 	private EntityPermissions UnitCrudPerms;
@@ -228,8 +229,37 @@
 
 	private async Task SubmitForm()
 	{
-		GeneralException = new NotImplementedException("SubmitForm()");
-		Console.WriteLine("Hello from SubmitForm()");
+		using(Loading())
+		{
+			Console.WriteLine("Hello from SubmitForm()");
+			
+			// Add/Update the unit member.
+			if(CanManageMembers)
+			{
+				if(HttpVerb == EntityPermissions.Post)
+				{
+					Console.WriteLine("\tCreate the member.");
+				}
+				else
+				{
+					Console.WriteLine("\tUpdate the member.");
+				}
+
+				// Re-fetch the updated UnitMember information.
+				await SetCurrentUnit();
+			}
+
+			// Update the member's tools.
+			if(CanManageMemberTools)
+			{
+				Console.WriteLine("\tUpdate the member's tools.");
+				if(CurrentMember == null)
+				{
+					GeneralException = new Exception($"{CurrentPerson?.Netid ?? "The selected person"} is not a member of this unit, and their tools cannot be updated.");
+					return;
+				}
+			}
+		}
 	}
 
 	public void Dispose()
