@@ -1,0 +1,31 @@
+<br />
+<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+    <div class="rvt-grid">
+        <div class="rvt-grid__item">
+            <nav class="">
+                <ol class="rvt-breadcrumbs">
+                    <li aria-current="page">
+                        <ul class="rvt-list rvt-plain-list rvt-inline-list">
+                            <li><a href="/">Home</a></li>
+                            <li>@Page</li>
+                            <li>@CurrentPage</li>
+                        </ul>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public string Page { get; set; }
+    [Parameter]
+    public string CurrentPage { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+    protected override async Task OnInitializedAsync() { }
+    public void Dispose() { }
+    }

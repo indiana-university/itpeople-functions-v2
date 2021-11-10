@@ -12,6 +12,8 @@
     <PackageReference Include="RivetBlazor" Version="0.2092.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.13.1" />
     <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Models\Models.csproj" />
