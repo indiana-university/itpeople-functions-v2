@@ -47,6 +47,32 @@ stages:
   pool: $(agentPool)
 
   jobs:
+  - job: PackageWebApp
+    displayName: Web App
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: 5.0.x
+    
+    - task: DotNetCoreCLI@2
+      displayName: Build Web App
+      inputs:
+        command: 'build'
+        projects: src/Web/web.csproj
+        arguments: --output $(System.DefaultWorkingDirectory)/WebApp --configuration Release
+    - task: ArchiveFiles@2
+      displayName: 'Archive Web App files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/WebApp'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/WebApp.zip
+        replaceExistingArchive: true
+
+    - publish: $(Build.ArtifactStagingDirectory)/WebApp.zip
+      displayName: Publish Web App Artifacts
+      artifact: WebAppDeploymentPackage
+    
   - job: PackageApiApp
     displayName: API Function App
     steps:
@@ -111,6 +137,29 @@ stages:
     - Package
 
   jobs:
+  - job: WebApp
+    steps:
+    - checkout: scripts
+    
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Deployment Package
+      inputs:
+        artifact: 'WebAppDeploymentPackage'
+    
+    - task: AzureCLI@2
+      displayName: Deploy Web App
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: pscore
+        scriptPath: $(Build.SourcesDirectory)/deploy-static-assets.ps1
+        arguments: >-
+          -StorageAccountName $(webAppStorageAccountName)
+          -StorageContainer "`$web"
+          -AssetsPath $(Pipeline.Workspace)/WebAppDeploymentPackage/web/wwwroot
+          -CdnResourceGroup $(webAppCdnResourceGroup)
+          -CdnProfileName $(webAppCdnProfileName)
+          -CdnEndpointName $(webAppCdnEndpointName) 
+   
   - job: API
     steps:
     - checkout: scripts
