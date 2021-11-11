@@ -32,25 +32,6 @@
 		</NotAuthenticated>
 		<Authenticated>
 			<Loader Loading="ShowLoader">
-				<p>
-					UnitId: @UnitId
-					<br/>
-					Unit: @CurrentUnit?.Name
-					<br/>
-					UnitCrudPerms: @UnitCrudPerms
-					<br/>
-					Viewer CanManageMemberTools: @CanManageMemberTools
-				</p>
-				<p>
-					username: @Username
-					<br/>
-					Person: @CurrentPerson?.Name @CurrentPerson?.Netid
-					<br/>
-					Is Member?: @CurrentUnitMembers.Any(m => m.Person.Netid == Username)
-					<br/>
-					MembersCrudPerms: @MembersCrudPerms
-				</p>
-
 				<EditForm EditContext="@FormContext" OnValidSubmit="SubmitForm">
 					<DataAnnotationsValidator />
 					<ValidationSummary />
