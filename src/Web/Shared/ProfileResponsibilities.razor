@@ -52,7 +52,7 @@
 	private Responsibilities ResponsibilitiesInput;
 	private Responsibilities ValueAtOpen;
 	private bool ConfirmClose => ResponsibilitiesInput != ValueAtOpen;
-	
+
 	private Exception Ex;
 
 	private string GetEnumDisplayName(string enumValue)
@@ -61,7 +61,7 @@
 		var field = fieldInfo.FirstOrDefault(f => f.Name == enumValue);
 		return field != null ? field.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? field.Name : enumValue;
 	}
-	
+
 	private void ResetForm()
 	{
 		ResponsibilitiesInput = Person.Responsibilities;
@@ -89,7 +89,7 @@
 				var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
 				var response = await apiClient.PutAsync(url, reqContent);
 
-				if(response.IsSuccessStatusCode == false)
+				if (response.IsSuccessStatusCode == false)
 				{
 					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Responsibilities to {url}");
 				}
@@ -98,17 +98,17 @@
 				var stringResult = await response.Content.ReadAsStringAsync();
 				result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
 			}
-			
+
 			// Everything updated, close the modal
-			Mf.Close();
+			await Mf.Close();
 
 			// Invoking after close because the two-way binding can cause hiccups in the ModalForm.
 			await PersonChanged.InvokeAsync(result);
-			
+
 			// We've saved our changes reset the bools that dicate the ModalForms behavior.
 			ResetForm();
 		}
-		catch(Exception ex)
+		catch (Exception ex)
 		{
 			Ex = ex;
 		}
