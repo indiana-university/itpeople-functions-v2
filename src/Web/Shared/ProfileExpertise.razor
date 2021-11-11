@@ -71,7 +71,7 @@
 </ModalForm>
 
 
-@code{
+@code {
 	[Parameter]
 	public EntityPermissions CrudPerms { get; set; }
 	[Parameter]
@@ -93,7 +93,7 @@
 	private void ResetForm()
 	{
 		ExpertiseAsList = new List<string>();
-		if(string.IsNullOrWhiteSpace(Person.Expertise) == false)
+		if (string.IsNullOrWhiteSpace(Person.Expertise) == false)
 		{
 			ExpertiseAsList.AddRange(
 				Person.Expertise
@@ -108,36 +108,36 @@
 
 		CancelSuggestionsRequestIfRunning();
 		Suggestions = new List<string>();
-		
+
 		Mf.ResetState();
 	}
 
-	private async Task RemoveInterest(string interest)
-	{	
+	private void RemoveInterest(string interest)
+	{
 		ExpertiseAsList.Remove(interest);
-		
+
 		// We've made a change, confirm before closing the modal without saving changes.
 		ConfirmModalClose = true;
 		// Ensure that the submit button is available.
 		Mf.ForceValid();
 	}
 
-	private async Task AddInterest(string interest)
+	private void AddInterest(string interest)
 	{
-		if(string.IsNullOrWhiteSpace(interest))
+		if (string.IsNullOrWhiteSpace(interest))
 		{
 			return;
 		}
-		
+
 		// If interest includes a comma it is actually multiple interests at once.
 		var newInterests = interest
 			.Split(",")
 			.Select(e => e.Trim().ToLower())
 			.Where(e => string.IsNullOrWhiteSpace(e) == false);
-		
-		foreach(var i in newInterests)
+
+		foreach (var i in newInterests)
 		{
-			if(ExpertiseAsList.Contains(i.Trim().ToLower()) == false)
+			if (ExpertiseAsList.Contains(i.Trim().ToLower()) == false)
 			{
 				ExpertiseAsList.Add(i.Trim().ToLower());
 			}
@@ -145,7 +145,7 @@
 
 		// Reset the search term and clear-out suggestions.
 		SearchTerm = "";
-		SearchTermChanged(SearchTerm);
+		Task.Run(() => SearchTermChanged(SearchTerm));
 
 		// We've made a change, confirm before closing the modal without saving changes.
 		ConfirmModalClose = true;
@@ -183,7 +183,7 @@
 				var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
 				var response = await apiClient.PutAsync(url, reqContent);
 
-				if(response.IsSuccessStatusCode == false)
+				if (response.IsSuccessStatusCode == false)
 				{
 					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Expertise to {url}");
 				}
@@ -192,23 +192,24 @@
 				var stringResult = await response.Content.ReadAsStringAsync();
 				result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
 			}
-			
+
 			// Everything updated, close the modal
-			if(AddedByEnter == false)
+			if (AddedByEnter == false)
 			{
-				Mf.Close();
-			} else
+				await Mf.Close();
+			}
+			else
 			{
 				ConfirmModalClose = false;
 			}
 
 			// Invoking after close because the two-way binding can cause hiccups in the ModalForm.
 			await PersonChanged.InvokeAsync(result);
-			
+
 			// We've saved our changes reset the bools that dicate the ModalForms behavior.
 			ResetForm();
 		}
-		catch(Exception ex)
+		catch (Exception ex)
 		{
 			Ex = ex;
 		}
@@ -216,7 +217,6 @@
 
 	private async Task SearchTermChanged(string newValue)
 	{
-		//Console.WriteLine($"SearchTerm({SearchTerm}) changing to: {newValue}");
 		SearchTerm = newValue;
 		await UpdateSuggestions(newValue);
 	}
@@ -241,7 +241,7 @@
 	private void CancelSuggestionsRequestIfRunning()
 	{
 		var acceptableTaskStatus = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
-		if(SuggestionsRequest != null && acceptableTaskStatus.Contains(SuggestionsRequest.Task.Status) == false)
+		if (SuggestionsRequest != null && acceptableTaskStatus.Contains(SuggestionsRequest.Task.Status) == false)
 		{
 			SuggestionsRequest.TokenSource.Cancel();
 		}
@@ -249,7 +249,7 @@
 
 	private async Task UpdateSuggestions(string searchTerm)
 	{
-		if(string.IsNullOrWhiteSpace(searchTerm))
+		if (string.IsNullOrWhiteSpace(searchTerm))
 		{
 			Suggestions = new List<string>();
 			return;
@@ -263,29 +263,28 @@
 		SuggestionsRequest = new StackExchangeRequest
 		{
 			TokenSource = ts,
-			Task = Task.Run(async () => {
+			Task = Task.Run(async () =>
+			{
 				// Pause before sending the request in case the user isn't done typing.
 				// Additional keystrokes will cancel this request.
 				await Task.Delay(500);
-				
-				if(ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
+
+				if (ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
 				{
 					// Using a new client instead of API so we don't send the users bearer token to Stack Exchange
 					using (var client = new HttpClient())
 					{
 						var response = await client.GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(searchTerm.ToLower())}");
 						// If this task was canceled before we got a response do not update Suggestions.
-						if(ts.Token.IsCancellationRequested == false)
+						if (ts.Token.IsCancellationRequested == false)
 						{
-							if(response.IsSuccessStatusCode)
+							if (response.IsSuccessStatusCode)
 							{
 								var result = await response.Content.ReadFromJsonAsync<SuggestionResponse>();
-								
 								//Make sure the user's input is the first item in the list, with no duplicates.
 								var rawSuggestions = result.Items.Select(i => i.Name).ToList();
 								rawSuggestions.Remove(searchTerm.ToLower());
 								rawSuggestions.Insert(0, searchTerm.ToLower());
-								
 								Suggestions = rawSuggestions.Take(10).ToList();
 							}
 							else
