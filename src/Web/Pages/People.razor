@@ -9,6 +9,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using System.Collections
 @using System.Collections.Specialized
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @inject NavigationManager Navigation
@@ -16,6 +17,7 @@
 @implements IDisposable
 @page "/People"
 
+<Title Value="People - IT People - Indiana University" />
 <HeaderNavBar Page="People" />
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">

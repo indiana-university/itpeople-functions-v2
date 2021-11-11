@@ -106,7 +106,7 @@
 		await sessionStorage.SetItemAsync("AuthDestination", Destination);
 
 		// Send them to UAA to get authenticated.
-		var localUrl = Utils.Env(Configuration, "APP_WEB_URL", true) + "/SignIn";
+		var localUrl = Utils.Env(Configuration, "APP_WEB_URL", true) + "/signin";
 		var oauthUrl = Utils.Env(Configuration, "UAA_OAUTH2_AUTH_URL", true);
 		var clientId = Utils.Env(Configuration, "UAA_OAUTH2_CLIENT_ID", true);
 		var signInUri = $"{oauthUrl}?response_type=code&client_id={Uri.EscapeDataString(clientId)}&redirect_uri={Uri.EscapeDataString(localUrl)}";

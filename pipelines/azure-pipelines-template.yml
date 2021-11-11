@@ -47,6 +47,32 @@ stages:
   pool: $(agentPool)
 
   jobs:
+  - job: PackageWebApp
+    displayName: Web App
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: 5.0.x
+
+    - task: PowerShell@2
+      displayName: 'Use Specific Environment Appsettings'
+      inputs:
+        targetType: inline
+        script: Copy-Item -Path "src/Web/wwwroot/appsettings.$(environment).json" -Destination "src/Web/wwwroot/appsettings.json"  
+        
+    - task: DotNetCoreCLI@2
+      name: PublishWebApp
+      displayName: Publish Web App
+      inputs:
+        command: publish
+        projects: src/Web/web.csproj
+        arguments: --output $(Build.ArtifactStagingDirectory) --configuration Release
+        publishWebProjects: false
+        zipAfterPublish: false
+
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: WebAppDeploymentPackage    
+    
   - job: PackageApiApp
     displayName: API Function App
     steps:
@@ -111,6 +137,29 @@ stages:
     - Package
 
   jobs:
+  - job: WebApp
+    steps:
+    - checkout: scripts
+    
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Deployment Package
+      inputs:
+        artifact: 'WebAppDeploymentPackage'
+
+    - task: AzureCLI@2
+      displayName: Deploy Web App
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: pscore
+        scriptPath: $(Build.SourcesDirectory)/deploy-static-assets.ps1
+        arguments: >-
+          -StorageAccountName $(webAppStorageAccountName)
+          -StorageContainer "`$web"
+          -AssetsPath $(Pipeline.Workspace)/Web/wwwroot
+          -CdnResourceGroup $(webAppCdnResourceGroup)
+          -CdnProfileName $(webAppCdnProfileName)
+          -CdnEndpointName $(webAppCdnEndpointName) 
+   
   - job: API
     steps:
     - checkout: scripts
