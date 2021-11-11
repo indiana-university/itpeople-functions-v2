@@ -131,10 +131,10 @@
 			var query = new Uri(Navigation.Uri).Query;
 			var queryDict = HttpUtility.ParseQueryString(query);
 			
-			await ConvertNameValueToEnum<Role>(queryDict, Roles, "role");
-			await ConvertNameValueToEnum<Campus>(queryDict, Campuses, "campus");
-			await ConvertNameValueToEnum<Area>(queryDict, Areas, "area");
-			await ConvertNameValueToEnum<Responsibilities>(queryDict, Responsibilities,	"class");
+			ConvertNameValueToEnum<Role>(queryDict, Roles, "role");
+			ConvertNameValueToEnum<Campus>(queryDict, Campuses, "campus");
+			ConvertNameValueToEnum<Area>(queryDict, Areas, "area");
+			ConvertNameValueToEnum<Responsibilities>(queryDict, Responsibilities,	"class");
 			
 			if(LoggedInUser != null)
 			{
@@ -143,7 +143,7 @@
 					peopleList.Clear();
 					ShowNoResultsMessage = false;
 
-					queryParams = await GetQueryParams();
+					queryParams = GetQueryParams();
 					
 					// If we've just navigated to /people don't fetch records from the API
 					if(queryParams.Count > 0 || FetchRootLevel)
@@ -159,7 +159,7 @@
 		});
 	}
 
-	private async Task ConvertNameValueToEnum<T>(NameValueCollection queryDict, List<T> values, string key)
+	private void ConvertNameValueToEnum<T>(NameValueCollection queryDict, List<T> values, string key)
 	{
 		values.Clear();
 		if (queryDict.Get(key) != null)
@@ -179,9 +179,9 @@
 		}
 	}
 
-	public async Task UpdateQueryString()
+	public void UpdateQueryString()
 	{
-		queryParams = await GetQueryParams();
+		queryParams = GetQueryParams();
 		FetchRootLevel = true;// Allow fetching /people from the API
 
 		var destination = QueryHelpers.AddQueryString("/people", queryParams);
@@ -189,11 +189,11 @@
 		Navigation.NavigateTo(destination);
 	}
 
-	private async Task<Dictionary<string, string>> GetQueryParams()
+	private Dictionary<string, string> GetQueryParams()
 	{
 		if (Roles.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings<Role>(Roles, "role");
+			queryParams = GetIndividualQueryStrings<Role>(Roles, "role");
 		}
 		else
 		{
@@ -202,7 +202,7 @@
 
 		if (Responsibilities.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings<Responsibilities>(Responsibilities, "class");
+			queryParams = GetIndividualQueryStrings<Responsibilities>(Responsibilities, "class");
 		}
 		else
 		{
@@ -211,7 +211,7 @@
 
 		if (Campuses.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings<Campus>(Campuses, "campus");
+			queryParams = GetIndividualQueryStrings<Campus>(Campuses, "campus");
 		}
 		else
 		{
@@ -220,7 +220,7 @@
 
 		if (Areas.Count() != 0)
 		{
-			queryParams = await GetIndividualQueryStrings<Area>(Areas, "area");
+			queryParams = GetIndividualQueryStrings<Area>(Areas, "area");
 		}
 		else
 		{
@@ -229,7 +229,7 @@
 
 		return queryParams;
 	}
-	private async Task<Dictionary<string, string>> GetIndividualQueryStrings<T>(List<T> values, string key)
+	private Dictionary<string, string> GetIndividualQueryStrings<T>(List<T> values, string key)
 	{
 		if (!queryParams.ContainsKey(key))
 		{
@@ -249,7 +249,7 @@
 
 	private async Task GetPeople()
 	{
-		queryParams = await GetQueryParams();
+		queryParams = GetQueryParams();
 		RequestUri = QueryHelpers.AddQueryString("/people", queryParams);
 		peopleList = await GetWithErrorHandling<List<Person>>(RequestUri);
 		ShowNoResultsMessage = peopleList.Count == 0;
