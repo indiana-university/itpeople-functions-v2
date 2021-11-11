@@ -30,16 +30,16 @@ stages:
         command: test
         projects: tests/API/Unit/Unit.csproj
           
-  # - job: Integration
-  #   steps:
-  #   - task: UseDotNet@2
-  #     inputs:
-  #       version: 3.1.x
+  - job: Integration
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: 3.1.x
 
-  #   - task: DotNetCoreCLI@2
-  #     inputs:
-  #       command: test
-  #       projects: tests/API/Integration/Integration.csproj  
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: test
+        projects: tests/API/Integration/Integration.csproj  
 
 - stage: Package
   displayName: Package  
@@ -58,10 +58,8 @@ stages:
       displayName: 'Use Specific Environment Appsettings'
       inputs:
         targetType: inline
-        script: Copy-Item -Path "src/Web/wwwroot/appsettings.$(environment).json" -Destination "src/Web/wwwroot/appsettings.json"
-      
-
-
+        script: Copy-Item -Path "src/Web/wwwroot/appsettings.$(environment).json" -Destination "src/Web/wwwroot/appsettings.json"  
+        
     - task: DotNetCoreCLI@2
       name: PublishWebApp
       displayName: Publish Web App
@@ -147,7 +145,7 @@ stages:
       displayName: Download Deployment Package
       inputs:
         artifact: 'WebAppDeploymentPackage'
-            
+
     - task: AzureCLI@2
       displayName: Deploy Web App
       inputs:
