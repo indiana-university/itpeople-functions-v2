@@ -1,0 +1,145 @@
+@using Models
+@using RivetBlazor.Components
+@using System.Threading;
+@implements IDisposable
+@inherits Shared.PageBase
+@inject NavigationManager Navigation
+@page "/Units/{unitId}/AddMember"
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<nav role="navigation" aria-label="Breadcrumbs">
+		<ol class="rvt-breadcrumbs rvt-m-bottom-lg">
+			<li><a href="/">Home</a></li>
+			<li><a href="/Units">Units</a></li>
+			<li><a href="/Units/@UnitId">@(CurrentUnit?.Name ?? UnitId)</a></li>
+			<li aria-current="page">Add Member</li>
+		</ol>
+	</nav>
+	
+	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
+		<!-- our title -->
+		<div class="rvt-m-right-sm-md-up">
+			<h1>Add Member to @(CurrentUnit?.Name ?? $"Unit {UnitId}")</h1>
+		</div>
+	</div>
+
+	<DisplayException Ex=@GeneralException />
+
+	<EditForm EditContext="@FormContext">
+		<RivetInputText @bind-Value="Query.Q" Label="Search" Description="Search by username or first and last name." @oninput="e => SearchTermChanged(e.Value.ToString())" />
+		@if(Suggestions.Count > 0)
+		{
+			<ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
+				@foreach (var suggestion in Suggestions)
+				{
+					<li>
+						<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => AddPerson(suggestion.NetId)) >@suggestion.Name (@suggestion.NetId) </a>
+					</li>
+				}
+			</ul>
+		}
+	</EditForm>
+</div>
+
+@code
+{
+	[Parameter]
+	public string UnitId { get; set; }
+
+	private UnitResponse CurrentUnit;
+	
+	private SearchQuery Query = new SearchQuery();
+	private EditContext FormContext;
+	private ProfileRequest SuggestionsRequest;
+	private List<PeopleLookupItem> Suggestions = new List<PeopleLookupItem>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		// Setup our editcontext
+		FormContext = new EditContext(Query);
+
+		await SetLoggedInUser();
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		await SetCurrentUnit();
+	}
+
+	private async Task SetCurrentUnit()
+	{
+		var response = await Get<UnitResponse>($"units/{UnitId}");
+		CurrentUnit = response.Value;
+	}
+	
+	private async Task SearchTermChanged(string newValue)
+	{
+		Console.WriteLine($"SearchTerm({Query.Q}) changing to: {newValue}");
+		Query.Q = newValue;
+		await UpdateSuggestions(newValue);
+	}
+
+	private void CancelSuggestionsRequestIfRunning()
+	{
+		var acceptableTaskStatus = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
+		if(SuggestionsRequest != null && acceptableTaskStatus.Contains(SuggestionsRequest.Task.Status) == false)
+		{
+			SuggestionsRequest.TokenSource.Cancel();
+		}
+	}
+
+	private async Task UpdateSuggestions(string searchTerm)
+	{
+		if(string.IsNullOrWhiteSpace(searchTerm))
+		{
+			Suggestions = new List<PeopleLookupItem>();
+			return;
+		}
+
+		// Cancel any currently running requests to the Stack Exchange API.
+		CancelSuggestionsRequestIfRunning();
+
+		// Make a cancelable request to the API and process the response.
+		var ts = new CancellationTokenSource();
+		SuggestionsRequest = new ProfileRequest
+		{
+			TokenSource = ts,
+			Task = Task.Run(async () => {
+				// Pause before sending the request in case the user isn't done typing.
+				// Additional keystrokes will cancel this request.
+				await Task.Delay(500);
+				
+				if(ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
+				{
+					// Using a new client instead of API so we don't send the users bearer token to Stack Exchange
+					var response = await Get<List<PeopleLookupItem>>($"people-lookup?q={Query.Q}");
+					// If this task was canceled before we got a response do not update Suggestions.
+					if(ts.Token.IsCancellationRequested == false)
+					{
+						Suggestions = response.Value;
+					}
+				}
+			}, ts.Token)
+		};
+
+		await SuggestionsRequest.Task;
+	}
+
+	private void AddPerson(string username)
+	{
+		Navigation.NavigateTo($"/Units/{UnitId}/EditMember/{username}");
+	}
+
+	public void Dispose() {}
+
+	private class SearchQuery
+	{
+		public string Q { get; set; }
+	}
+
+	private class ProfileRequest
+	{
+		public Task Task { get; set; }
+		public CancellationTokenSource TokenSource { get; set; }
+	}
+}
