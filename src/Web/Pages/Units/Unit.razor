@@ -110,10 +110,12 @@
 							<div class="rvt-grid__item">
 								@if(CanEditUnitMembers)
 								{
-									<a href=@($"/Units/{UnitId}/AddMember") class="rvt-button rvt-button--plain" title="Add Person">
-										<rvt-icon name="user-add"></rvt-icon>
-										<span>&nbsp; Add member</span>
-									</a>
+									<section class="rvt-m-bottom-lg">
+										<a href=@($"/Units/{UnitId}/AddMember") class="rvt-button rvt-button--plain" title="Add Person">
+											<rvt-icon name="user-add"></rvt-icon>
+											<span>&nbsp; Add member</span>
+										</a>
+									</section>
 								}
 								@foreach (var roleDescription in RoleDescriptions)
 								{
@@ -125,28 +127,6 @@
 											@if (EditMode)
 											{
 												<p>@roleDescription.Description</p>
-												
-												@if (IsAddingNewMember && MemberToUpdate?.Role == role)
-												{ //only show add member box for the particular role where they clicked Add Member
-													<EditForm EditContext="@MemberEditContext" class="rvt-box rvt-m-top-lg">
-														<div class="rvt-box__header">Add Unit Member</div>
-														@if (string.IsNullOrWhiteSpace(MemberToUpdate.Netid) == true)
-														{ //if they haven't searched and picked a user
-															<div class="rvt-box__body">
-																<RivetInputText @bind-Value="AddMemberSearchQuery" Label="Search" @oninput="@(async (e) => await UpdateMemberSearchResults(e.Value.ToString()))" />
-																@if (MemberSearchResults.Count() > 0)
-																{
-																	<div class="rvt-dropdown__menu">
-																		@foreach (var person in MemberSearchResults)
-																		{
-																			<button type="button" @onclick="(() => SelectUserToAdd(person))">@person.Name (@person.NetId)</button>
-																		}
-																	</div>
-																}
-															</div>
-														}
-													</EditForm>
-												}
 											}
 											@foreach (var member in UnitMembers.Where(m => m.Role == role))
 											{
@@ -336,26 +316,18 @@
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	private bool EditMode = false;
 	private EditContext UnitEditContext;
-	private EditContext MemberEditContext;
 	private UnitRequest UnitToUpdate;
-	private UnitMemberResponse MemberToUpdate = new UnitMemberResponse();
 	private bool UnitFormInvalid = false;
-	private bool MemberFormInvalid = false;
 	private bool CanEditUnitDetails = false;
 	private bool CanEditMemberTools = false;
 	private bool CanEditUnitMembers = false;
-	private bool IsAddingNewMember = false;
 	private List<(Role Role, string Description)> RoleDescriptions = new List<(Role, string)> {
 		(Role.Leader, "Unit Leaders are VPs, directors, managers."),
 		(Role.Sublead, "Unit Subleads are team leads and co-admins."),
 		(Role.Member, "Unit Members are individual contributers."),
 		(Role.Related, "Related people are executive assistants and self-supported faculty/staff that do not solely report to this unit.")
 	};
-	private List<UnitPermissions> UnitPermissionsList = new List<UnitPermissions> { UnitPermissions.Owner, UnitPermissions.ManageMembers, UnitPermissions.ManageTools, UnitPermissions.Viewer };
-	private string AddMemberSearchQuery = "";
-	private List<PeopleLookupItem> MemberSearchResults = new List<PeopleLookupItem>();
-	private RivetInputEnumCheckbox<Role> roleSelectReference;
-
+	
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
@@ -384,27 +356,6 @@
 			}
 		}
 		Navigation.LocationChanged += HandleLocationChanged;
-	}
-
-	public async Task CreateOrUpdateMember()
-	{
-		using (Loading())
-		{
-			GeneralException = null;
-			var reqJson = JsonConvert.SerializeObject(new UnitMemberRequest
-			{
-				UnitId = MemberToUpdate.UnitId,
-				Role = MemberToUpdate.Role,
-				Permissions = MemberToUpdate.Permissions,
-				NetId = MemberToUpdate.Netid,
-				Title = MemberToUpdate.Title,
-				Percentage = MemberToUpdate.Percentage,
-				Notes = MemberToUpdate.Notes,
-			}, Json.JsonSerializerSettings);
-			var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
-			var response = await MakeRequest<UnitMemberResponse>(Api().PostAsync($"/memberships", reqContent));
-			await GetUnitMembers();
-		}
 	}
 
 	public void Dispose()
@@ -488,15 +439,6 @@
 		StateHasChanged();
 	}
 
-	private void SelectUserToAdd(PeopleLookupItem person)
-	{
-		MemberToUpdate.Person = new Person
-		{
-			Name = person.Name,
-			Netid = person.NetId
-		};
-	}
-
 	private void SetEditMode()
 	{
 		var path = Navigation.Uri.Substring(Navigation.BaseUri.Length - 1);
@@ -514,15 +456,6 @@
 			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}/archive");
 			CurrentUnit = deleteResponse.Value;
 		}
-	}
-
-	private async Task UpdateMemberSearchResults(string query)
-	{
-		if (query.Count() > 2)
-		{
-			MemberSearchResults = (await Get<List<PeopleLookupItem>>($"people-lookup?q={query}&_limit=15")).Value;
-		}
-		StateHasChanged();
 	}
 
 	public async Task UpdateUnit()
