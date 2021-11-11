@@ -331,6 +331,21 @@
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
+		
+		await FeatchAllDetails();
+
+		UnitEditContext = new EditContext(UnitToUpdate);
+		UnitEditContext.OnFieldChanged += HandleUnitFormFieldChanged;
+		Navigation.LocationChanged += HandleLocationChanged;
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		await FeatchAllDetails();
+	}
+
+	private async Task FeatchAllDetails()
+	{
 		if (LoggedInUser != null)
 		{
 			using (Loading())
@@ -351,11 +366,9 @@
 					Url = CurrentUnit.Url,
 					Email = CurrentUnit.Email
 				};
-				UnitEditContext = new EditContext(UnitToUpdate);
-				UnitEditContext.OnFieldChanged += HandleUnitFormFieldChanged;
+				
 			}
 		}
-		Navigation.LocationChanged += HandleLocationChanged;
 	}
 
 	public void Dispose()
