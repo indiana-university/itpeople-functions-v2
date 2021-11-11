@@ -12,6 +12,13 @@
 @page "/Units/{unitId}/edit"
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<nav role="navigation" aria-label="Breadcrumbs">
+		<ol class="rvt-breadcrumbs rvt-m-bottom-lg">
+			<li><a href="/"> Home </a></li>
+			<li><a href="/Units"> Units </a></li>
+			<li aria-current="page">@(CurrentUnit?.Name ?? UnitId)</li>
+		</ol>
+	</nav>
 	<AuthenticatedView>
 		<NotAuthenticated>
 			<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">Unit @UnitId</h1>

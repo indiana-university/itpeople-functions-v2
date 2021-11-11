@@ -11,6 +11,15 @@
 @page "/Units/{unitId}/EditMember/{username}"
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<nav role="navigation" aria-label="Breadcrumbs">
+		<ol class="rvt-breadcrumbs rvt-m-bottom-lg">
+			<li><a href="/">Home</a></li>
+			<li><a href="/Units">Units</a></li>
+			<li><a href="/Units/@UnitId">@(CurrentUnit?.Name ?? UnitId)</a></li>
+			<li>Members</li>
+			<li aria-current="page">@(CurrentPerson?.Name ?? Username)</li>
+		</ol>
+	</nav>
 	
 	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
 		<!-- our title -->
