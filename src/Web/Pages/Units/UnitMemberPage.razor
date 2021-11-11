@@ -1,5 +1,6 @@
 @using Models
 @using Models.Enums
+@using Newtonsoft.Json
 @using web.Shared
 @using RivetBlazor.Components
 @using System.Web
@@ -229,6 +230,7 @@
 
 	private async Task SubmitForm()
 	{
+		GeneralException = null;// reset before making our requests.
 		using(Loading())
 		{
 			Console.WriteLine("Hello from SubmitForm()");
@@ -239,16 +241,23 @@
 				if(HttpVerb == EntityPermissions.Post)
 				{
 					Console.WriteLine("\tCreate the member.");
+					await Post<UnitMemberResponse>("memberships", Input);
 				}
 				else
 				{
 					Console.WriteLine("\tUpdate the member.");
+					if(CurrentMember == null)
+					{
+						GeneralException = new Exception($"Could not find existing membershp for {CurrentPerson?.Netid ?? "the selected person"}.  Unable to update.");
+						return;
+					}
+					await Put<UnitMemberResponse>($"memberships/{CurrentMember.Id}", Input);
 				}
 
 				// Re-fetch the updated UnitMember information.
 				await SetCurrentUnit();
 			}
-
+			
 			// Update the member's tools.
 			if(CanManageMemberTools)
 			{
@@ -258,6 +267,23 @@
 					GeneralException = new Exception($"{CurrentPerson?.Netid ?? "The selected person"} is not a member of this unit, and their tools cannot be updated.");
 					return;
 				}
+
+				var currentToolIds = CurrentMember.MemberTools.Select(mt => mt.ToolId);
+				var memberToolsToRemove = CurrentMember.MemberTools
+					.Where(mt => Input.Tools.Any(t => t.Id == mt.ToolId) == false)
+					.Select(mt => mt.Id)
+					.ToList();
+				
+				var toolsToAdd = Input.Tools
+					.Where(t => currentToolIds.Contains(t.Id) == false)
+					.Select(t => new MemberToolRequest { MembershipId = CurrentMember.Id, ToolId = t.Id })
+					.ToList();
+				
+				var requestTasks = new List<Task>();
+				requestTasks.AddRange(memberToolsToRemove.Select(m => Delete<MemberToolResponse>($"membertools/{m}")));
+				requestTasks.AddRange(toolsToAdd.Select(t => Post<MemberToolResponse>("membertools", t)));
+				
+				await Task.WhenAll(requestTasks);
 			}
 		}
 	}
@@ -269,6 +295,7 @@
 
 	private class MemberInput : UnitMemberRequest
 	{
+		[JsonIgnore]
 		public List<Tool> Tools { get; set; }
 
 		public MemberInput()
