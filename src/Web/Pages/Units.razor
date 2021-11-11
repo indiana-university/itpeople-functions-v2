@@ -6,12 +6,13 @@
 @using System.Linq
 @using System.Collections
 @using Newtonsoft.Json
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @implements IDisposable
 @page "/Units"
 
-<Title>Units - IT People - Indiana University</Title>
+<Title  Value="Units - IT People - Indiana University" />
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	

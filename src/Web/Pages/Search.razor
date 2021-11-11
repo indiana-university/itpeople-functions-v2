@@ -4,12 +4,13 @@
 @using System.Web
 @using System.Net
 @using Newtonsoft.Json
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @inject NavigationManager Navigation
 @inject IHttpClientFactory ClientFactory
 @implements IDisposable
 @page "/Search"
 
-<Title>Search - IT People - Indiana University</Title>
+<Title Value="Search - IT People - Indiana University" />
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<h1 class="rvt-ts-xxl">Search</h1>

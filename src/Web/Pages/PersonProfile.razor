@@ -11,13 +11,14 @@
 @using System;
 @using System.ComponentModel.DataAnnotations;
 @using System.Reflection;
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @inject IJSRuntime JSRuntime;
 @implements IDisposable
 @page "/People/{NetId}"
 
-<Title>@ProfileName - IT People - Indiana University</Title>
+<Title Value="@GetPageTitle()" />
 <HeaderNavBar Page="Profiles" CurrentPage=@ProfileName />
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
     @if (ShowLoader)
@@ -155,6 +156,7 @@
         }
         GetEntityPermissions(response);
     }
+    private string GetPageTitle() => $"{ProfileName} - IT People - Indiana University";
 
     private void GetEntityPermissions(HttpResponseMessage resp)
 	{

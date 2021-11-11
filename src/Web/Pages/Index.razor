@@ -1,10 +1,11 @@
 ﻿@using Microsoft.Extensions.Configuration;
 @using web.Shared;
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @inject Blazored.SessionStorage.ISyncSessionStorageService sessionStorage;
 @implements IDisposable
 @page "/"
 
-<Title>IT People - Indiana University</Title>
+<Title Value="IT People - Indiana University" />
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">IT People</h1>
