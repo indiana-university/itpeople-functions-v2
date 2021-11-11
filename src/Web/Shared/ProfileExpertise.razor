@@ -122,7 +122,7 @@
 		Mf.ForceValid();
 	}
 
-	private void AddInterest(string interest)
+	private async Task AddInterest(string interest)
 	{
 		if (string.IsNullOrWhiteSpace(interest))
 		{
@@ -145,7 +145,7 @@
 
 		// Reset the search term and clear-out suggestions.
 		SearchTerm = "";
-		Task.Run(() => SearchTermChanged(SearchTerm));
+		await SearchTermChanged(SearchTerm);
 
 		// We've made a change, confirm before closing the modal without saving changes.
 		ConfirmModalClose = true;
@@ -153,12 +153,12 @@
 		Mf.ForceValid();
 	}
 
-	private void SearchTermListenForEnter(KeyboardEventArgs e)
+	private async Task SearchTermListenForEnter(KeyboardEventArgs e)
 	{
 		if (e.Code == "Enter" || e.Code == "NumpadEnter")
 		{
 			AddedByEnter = true;
-			AddInterest(SearchTerm);
+			await AddInterest(SearchTerm);
 			// I wasn't able to prevent pressing enter from also submitting the ModalForm
 			// So after this runs SaveChanges() will run immediately after it.
 		}
