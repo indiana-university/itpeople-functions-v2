@@ -22,6 +22,20 @@
 		return await MakeRequest<T>(Api().GetAsync(uri), error);
 	}
 
+	protected async Task<(T Value, EntityPermissions Permissions)> Post<T>(string uri, object body, string error = null)
+	{
+		var bodyAsJson = JsonConvert.SerializeObject(body, Json.JsonSerializerSettings);
+		var reqContent = new StringContent(bodyAsJson, System.Text.Encoding.UTF8, "application/json");
+		return await MakeRequest<T>(Api().PostAsync(uri, reqContent), error);
+	}
+	
+	protected async Task<(T Value, EntityPermissions Permissions)> Put<T>(string uri, object body, string error = null)
+	{
+		var bodyAsJson = JsonConvert.SerializeObject(body, Json.JsonSerializerSettings);
+		var reqContent = new StringContent(bodyAsJson, System.Text.Encoding.UTF8, "application/json");
+		return await MakeRequest<T>(Api().PutAsync(uri, reqContent), error);
+	}
+
 	protected async Task<(T Value, EntityPermissions Permissions)> Delete<T>(string uri, string error = null)
 	{
 		return await MakeRequest<T>(Api().DeleteAsync(uri), error);
