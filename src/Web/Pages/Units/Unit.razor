@@ -284,7 +284,7 @@
 										@foreach (var buildingRelationship in BuildingRelationships)
 										{
 											<li>
-												<a href="/departments/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
+												<a href="/buildings/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
 												@if (string.IsNullOrWhiteSpace(buildingRelationship.Building.Address) == false || string.IsNullOrWhiteSpace(buildingRelationship.Building.City) == false)
 												{
 													<br />
