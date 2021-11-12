@@ -44,7 +44,6 @@
     [Parameter]
     public string BuildingId { get; set; }
     private EditContext BuildingEditContext;
-    private Exception GeneralException;
     private Building _Building = new Building();
 	private IEnumerable<UnitResponse> SupportingUnits = new List<UnitResponse>();
     private bool ShowLoader = false;
@@ -58,20 +57,14 @@
 		{
             using (Loading())
             {
-                await Task.WhenAll(new[] { GetBuildingInformation(), GetSupportingUnits() });
-                @* await GetSupportingUnits(); *@
+                await GetSupportingUnits();
             }
 		}
-    }
-    private async Task GetBuildingInformation()
-    {
-        var response = await Get<Building>($"/buildings/{BuildingId}");
-        _Building = response.Value;
-    }
+    }    
     private async Task GetSupportingUnits()
     {
         var response = await Get<List<BuildingRelationshipResponse>>($"/buildings/{BuildingId}/supportingUnits");
-        //_Building = response.Value.Where(br => br.BuildingId.ToString() == BuildingId).Select(br => br.Building).First();
+        _Building = response.Value.Where(br => br.BuildingId.ToString() == BuildingId).Select(br => br.Building).First();
         SupportingUnits = response.Value.Select(br => br.Unit);
     }
 
