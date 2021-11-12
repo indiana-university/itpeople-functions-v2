@@ -11,19 +11,21 @@
 <RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder=@Placeholder Description=@Description @oninput="e => SearchTermChanged(e.Value.ToString())" @onkeydown=SearchTermListenForEnter/>
 @if(string.IsNullOrWhiteSpace(SearchTerm) == false)
 {
-	<ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
-		@foreach (var suggestion in Suggestions)
-		{
-			<li>
-				<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => ButtonClickedAction(suggestion)) >@DisplayLambda(suggestion)</a>
-			</li>
-		}
-		
-		@if(Suggestions.Count == 0)
-		{
-			<li><em>No matches found</em></li>
-		}
-	</ul>
+	<Loader Loading="ShowLoader">
+		<ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
+			@foreach (var suggestion in Suggestions)
+			{
+				<li>
+					<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => ButtonClickedAction(suggestion)) >@DisplayLambda(suggestion)</a>
+				</li>
+			}
+			
+			@if(Suggestions.Count == 0)
+			{
+				<li><em>No matches found</em></li>
+			}
+		</ul>
+	</Loader>
 }
 
 @code
@@ -59,6 +61,9 @@
 	private string SearchTerm = "";
 	private List<T> Suggestions = new List<T>();
 	private CancelableSuggestionsRequest SuggestionsRequest;
+	
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 
 	
 	private async Task SearchTermListenForEnter(KeyboardEventArgs e)
@@ -102,19 +107,21 @@
 			TokenSource = ts,
 			Task = Task.Run(async () =>
 			{
-				// Pause before sending the request in case the user isn't done typing.
-				// Additional keystrokes will cancel this request.
-				await Task.Delay(500);
-
-				if (ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
+				using (Loading())
 				{
-					Console.WriteLine($"This is where we'll invoke the user-provided method to update our list of suggestions\n\tSearching for: {searchTerm}");
-					var response = await AsyncSuggestionGetter(searchTerm);
-					
-					// If this task was canceled before we got a response do not update Suggestions.
-					if(ts.Token.IsCancellationRequested == false)
+					// Pause before sending the request in case the user isn't done typing.
+					// Additional keystrokes will cancel this request.
+					await Task.Delay(500);
+
+					if (ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
 					{
-						Suggestions = response;
+						var response = await AsyncSuggestionGetter(searchTerm);
+						
+						// If this task was canceled before we got a response do not update Suggestions.
+						if(ts.Token.IsCancellationRequested == false)
+						{
+							Suggestions = response;
+						}
 					}
 				}
 			}, ts.Token)
