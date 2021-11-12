@@ -26,18 +26,6 @@
 
 	<EditForm EditContext="@FormContext">
 		<SuggestionButtons T=PeopleLookupItem Label="Search" Placeholder="Enter a search term" Description="Search by username or first and last name." ButtonClickedAction=AddPerson AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name} ({s.NetId})") />
-		@* <RivetInputText @bind-Value="Query.Q" Label="Search" Description="Search by username or first and last name." @oninput="e => SearchTermChanged(e.Value.ToString())" />
-		@if(Suggestions.Count > 0)
-		{
-			<ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
-				@foreach (var suggestion in Suggestions)
-				{
-					<li>
-						<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => AddPerson(suggestion.NetId)) >@suggestion.Name (@suggestion.NetId) </a>
-					</li>
-				}
-			</ul>
-		} *@
 	</EditForm>
 </div>
 
@@ -48,13 +36,13 @@
 
 	private UnitResponse CurrentUnit;
 	
-	private SearchQuery Query = new SearchQuery();
+	private object ObjForContext = new object();
 	private EditContext FormContext;
 
 	protected override async Task OnInitializedAsync()
 	{
 		// Setup our editcontext
-		FormContext = new EditContext(Query);
+		FormContext = new EditContext(ObjForContext);
 
 		await SetLoggedInUser();
 	}
@@ -82,9 +70,4 @@
 	}
 
 	public void Dispose() {}
-
-	private class SearchQuery
-	{
-		public string Q { get; set; }
-	}
 }
