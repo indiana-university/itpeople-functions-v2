@@ -9,8 +9,7 @@
 @implements IDisposable;
 
 <RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder=@Placeholder Description=@Description @oninput="e => SearchTermChanged(e.Value.ToString())" @onkeydown=SearchTermListenForEnter/>
-	
-@if(Suggestions.Count > 0)
+@if(string.IsNullOrWhiteSpace(SearchTerm) == false)
 {
 	<ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
 		@foreach (var suggestion in Suggestions)
@@ -18,6 +17,11 @@
 			<li>
 				<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => ButtonClickedAction(suggestion)) >@DisplayLambda(suggestion)</a>
 			</li>
+		}
+		
+		@if(Suggestions.Count == 0)
+		{
+			<li><em>No matches found</em></li>
 		}
 	</ul>
 }
