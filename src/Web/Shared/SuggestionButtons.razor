@@ -16,7 +16,7 @@
 			@foreach (var suggestion in Suggestions)
 			{
 				<li>
-					<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => ButtonClickedAction(suggestion)) >@DisplayLambda(suggestion)</a>
+					<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => ButtonClickedHelper(suggestion)) >@DisplayLambda(suggestion)</a>
 				</li>
 			}
 			
@@ -58,7 +58,7 @@
 	[Parameter]
 	public Func<T, string> DisplayLambda { get; set; }
 
-	public string SearchTerm = "";
+	private string SearchTerm = "";
 	private List<T> Suggestions = new List<T>();
 	private CancelableSuggestionsRequest SuggestionsRequest;
 	
@@ -69,27 +69,33 @@
 	{
 		if (EnterClicksFirstSuggestion && (e.Code == "Enter" || e.Code == "NumpadEnter"))
 		{
-			Console.WriteLine("SearchTermListenForEnter() action should be performed here.");
-			
 			// Wait for results if they're still in flight.
 			var attempts = 0;
 			while(ShowLoader && attempts < 5)
 			{
 				attempts++;
-				Console.WriteLine($"Attempt {attempts} waiting...");
+				// Console.WriteLine($"SearchTermListenForEnter attempt {attempts} waiting...");
 				await Task.Delay(500);
 			}
 			
 			if(Suggestions.Count > 0)
 			{
-				Console.WriteLine("\tAdding first item.");
-				ButtonClickedAction(Suggestions.First());
+				// Console.WriteLine("\tAdding first item.");
+				await ButtonClickedHelper(Suggestions.First());
 			}
 			else
 			{
-				Console.WriteLine("\tNothing to add!");
+				// Console.WriteLine("\tNothing to add!");
 			}
 		}
+	}
+
+	private async Task ButtonClickedHelper(T item)
+	{
+		ButtonClickedAction(item);
+		// Reset searchterm and suggestions
+		SearchTerm = "";
+		Suggestions.Clear();
 	}
 
 	private async Task SearchTermChanged(string newValue)
