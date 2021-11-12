@@ -12,59 +12,30 @@
 <div class="rvt-bg-white rvt-m-tb-xl rvt-p-tb-xl">
     <div class="rvt-container" style="max-width: 1440px; margin: auto;">
         <AuthenticatedView>
-		<NotAuthenticated>
-			<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@_Building.Name</h1>
-			<p>
-				You must login to view this resource.
-			</p>
-			<p>
-				<a class="rvt-button" href="/SignIn?Destination=/buildings/@BuildingId">Log In</a>
-			</p>
-		</NotAuthenticated>
-		<Authenticated>
-			<Loader Loading="ShowLoader">
-                <div class="rvt-grid">
-                    <div class="rvt-grid__item">
-                        <div class="rvt-m-bottom-xxl">
-                            <h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@_Building.Name</h1>
-                            <p>@_Building.Address</p>
-                        </div>
-                    </div>
-                </div>
-                @if (SupportingUnits.Count() != 0)
-                {
+            <NotAuthenticated>
+                <h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@_Building.Name</h1>
+                <p>
+                    You must login to view this resource.
+                </p>
+                <p>
+                    <a class="rvt-button" href="/SignIn?Destination=/buildings/@BuildingId">Log In</a>
+                </p>
+            </NotAuthenticated>
+            <Authenticated>
+                <Loader Loading="ShowLoader">
                     <div class="rvt-grid">
-                        <div class="rvt-grid__item-6-md-up rvt-p-lr-md">
-                            <div class="rvt-m-bottom-xl">
-                                <div class="rvt-grid">
-                                    <div class="rvt-grid__item rvt-border-all rvt-border-radius rvt-bg-white" style="overflow: auto;">
-                                        <div class="rvt-grid">
-                                            <div class="rvt-grid__item rvt-bg-cream rvt-border-bottom rvt-p-all-xs rvt-p-left-md rvt-p-right-md rvt-ts-18 rvt-text-bold"
-                                            style="color: rgb(51, 51, 51);">Supporting Units</div>
-                                        </div>
-                                        @foreach (var unit in SupportingUnits)
-                                        {
-                                            <div class="rvt-grid">
-                                                <div class="rvt-grid__item rvt-p-all-md">
-                                                    <ul class="rvt-list rvt-plain-list">
-                                                        <li><a href="/units/@unit.Id">@unit.Name</a></li>
-                                                        @if (unit.Description != null)
-                                                        {
-                                                            <div><span>@unit.Description</span></div>
-                                                        }
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
+                        <div class="rvt-grid__item">
+                            <div class="rvt-m-bottom-xxl">
+                                <h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@_Building.Name</h1>
+                                <p>@_Building.Address</p>
                             </div>
                         </div>
                     </div>
-                }
-            </Loader>
-		</Authenticated>
-	</AuthenticatedView>
+                    <SupportingUnits Units=@SupportingUnits />
+
+                </Loader>
+            </Authenticated>
+        </AuthenticatedView>
     </div>
 </div>
 
