@@ -43,7 +43,6 @@
     [Parameter]
     public string DepartmentId { get; set; }
     private EditContext DepartmentEditContext;
-    private Exception GeneralException;
     private Department _Department = new Department();
 	private IEnumerable<UnitResponse> SupportingUnits = new List<UnitResponse>();
     private bool ShowLoader = false;

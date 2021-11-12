@@ -20,12 +20,7 @@ else
 	[Parameter]
 	public bool Loading { get; set; } = false;
 
+	protected override void OnInitialized() { }
 
-	protected override async Task OnInitializedAsync()
-	{
-	}
-
-	public void Dispose()
-	{
-	}
+	public void Dispose() { }
 }
