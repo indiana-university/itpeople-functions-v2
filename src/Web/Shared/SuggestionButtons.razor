@@ -58,7 +58,7 @@
 	[Parameter]
 	public Func<T, string> DisplayLambda { get; set; }
 
-	private string SearchTerm = "";
+	public string SearchTerm = "";
 	private List<T> Suggestions = new List<T>();
 	private CancelableSuggestionsRequest SuggestionsRequest;
 	

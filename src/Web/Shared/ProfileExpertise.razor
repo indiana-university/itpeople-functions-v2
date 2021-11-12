@@ -55,6 +55,8 @@
 		}
 	</ul>
 	
+	<SuggestionButtons @ref=Sb Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." ButtonClickedAction=AddInterest AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name}") />
+
 	<RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." @oninput="e => SearchTermChanged(e.Value.ToString())" @onkeydown=SearchTermListenForEnter/>
 	
 	@if(Suggestions.Count > 0)
@@ -83,6 +85,7 @@
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private List<string> ExpertiseAsList = new List<string>();
 	private string SearchTerm = "";
+	private SuggestionButtons<SuggestionItem> Sb;
 	private ModalForm<List<string>> Mf;
 	private bool ConfirmModalClose = false;
 	private bool AddedByEnter = false;
@@ -227,6 +230,9 @@
 		public CancellationTokenSource TokenSource { get; set; }
 	}
 
+	/*
+		Still Need All This
+	*/
 	private class SuggestionItem
 	{
 		public double Count { get; set; }
@@ -238,66 +244,58 @@
 		public List<SuggestionItem> Items { get; set; }
 	}
 
-	private void CancelSuggestionsRequestIfRunning()
-	{
-		var acceptableTaskStatus = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
-		if (SuggestionsRequest != null && acceptableTaskStatus.Contains(SuggestionsRequest.Task.Status) == false)
-		{
-			SuggestionsRequest.TokenSource.Cancel();
-		}
-	}
+	
 
-	private async Task UpdateSuggestions(string searchTerm)
+	private void AddInterest(SuggestionItem item)
 	{
-		if (string.IsNullOrWhiteSpace(searchTerm))
+		if (item == null || string.IsNullOrWhiteSpace(item.Name))
 		{
-			Suggestions = new List<string>();
 			return;
 		}
 
-		// Cancel any currently running requests to the Stack Exchange API.
-		CancelSuggestionsRequestIfRunning();
+		// If item.Name includes a comma it is actually multiple interests at once.
+		var newInterests = item.Name
+			.Split(",")
+			.Select(e => e.Trim().ToLower())
+			.Where(e => string.IsNullOrWhiteSpace(e) == false);
 
-		// Make a cancelable request to the API and process the response.
-		var ts = new CancellationTokenSource();
-		SuggestionsRequest = new StackExchangeRequest
+		foreach (var i in newInterests)
 		{
-			TokenSource = ts,
-			Task = Task.Run(async () =>
+			if (ExpertiseAsList.Contains(i.Trim().ToLower()) == false)
 			{
-				// Pause before sending the request in case the user isn't done typing.
-				// Additional keystrokes will cancel this request.
-				await Task.Delay(500);
+				Console.WriteLine($"Adding Interest {i}...");
+				ExpertiseAsList.Add(i.Trim().ToLower());
+			}
+		}
+		StateHasChanged();
 
-				if (ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
-				{
-					// Using a new client instead of API so we don't send the users bearer token to Stack Exchange
-					using (var client = new HttpClient())
-					{
-						var response = await client.GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(searchTerm.ToLower())}");
-						// If this task was canceled before we got a response do not update Suggestions.
-						if (ts.Token.IsCancellationRequested == false)
-						{
-							if (response.IsSuccessStatusCode)
-							{
-								var result = await response.Content.ReadFromJsonAsync<SuggestionResponse>();
-								//Make sure the user's input is the first item in the list, with no duplicates.
-								var rawSuggestions = result.Items.Select(i => i.Name).ToList();
-								rawSuggestions.Remove(searchTerm.ToLower());
-								rawSuggestions.Insert(0, searchTerm.ToLower());
-								Suggestions = rawSuggestions.Take(10).ToList();
-							}
-							else
-							{
-								Suggestions = new List<string> { searchTerm.ToLower() };
-							}
-						}
-					}
-				}
-			}, ts.Token)
-		};
+		// Reset the search term and clear-out suggestions.
+		Sb.SearchTerm = "";
 
-		await SuggestionsRequest.Task;
+
+		// We've made a change, confirm before closing the modal without saving changes.
+		ConfirmModalClose = true;
+		// Ensure that the submit button is available.
+		Mf.ForceValid();
+	}
+
+	private async Task<List<SuggestionItem>> GetSuggestions(string searchTerm)
+	{
+		var output = new List<SuggestionItem> { new SuggestionItem { Count =0, Name =  searchTerm.ToLower() } };
+		// Using a new client instead of API so we don't send the users bearer token to Stack Exchange
+		using (var client = new HttpClient())
+		{
+			var response = await client.GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(searchTerm.ToLower())}");
+			if (response.IsSuccessStatusCode)
+			{
+				var result = await response.Content.ReadFromJsonAsync<SuggestionResponse>();
+				
+				//Make sure the user's input is the first item in the list, with no duplicates.
+				output.AddRange(result.Items.Where(i => i.Name.ToLower() != searchTerm.ToLower())) ;
+			}
+		}
+
+		return output.Take(10).ToList();
 	}
 
 	public void Dispose() { }
