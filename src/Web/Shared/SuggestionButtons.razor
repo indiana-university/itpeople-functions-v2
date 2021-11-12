@@ -70,6 +70,25 @@
 		if (EnterClicksFirstSuggestion && (e.Code == "Enter" || e.Code == "NumpadEnter"))
 		{
 			Console.WriteLine("SearchTermListenForEnter() action should be performed here.");
+			
+			// Wait for results if they're still in flight.
+			var attempts = 0;
+			while(ShowLoader && attempts < 5)
+			{
+				attempts++;
+				Console.WriteLine($"Attempt {attempts} waiting...");
+				await Task.Delay(500);
+			}
+			
+			if(Suggestions.Count > 0)
+			{
+				Console.WriteLine("\tAdding first item.");
+				ButtonClickedAction(Suggestions.First());
+			}
+			else
+			{
+				Console.WriteLine("\tNothing to add!");
+			}
 		}
 	}
 
