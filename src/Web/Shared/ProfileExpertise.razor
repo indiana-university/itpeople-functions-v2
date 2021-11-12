@@ -55,21 +55,8 @@
 		}
 	</ul>
 	
-	<SuggestionButtons @ref=Sb Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." ButtonClickedAction=AddInterest AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name}") />
-
-	<RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." @oninput="e => SearchTermChanged(e.Value.ToString())" @onkeydown=SearchTermListenForEnter/>
+	<SuggestionButtons @ref=Sb Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." ButtonClickedAction=AddInterest EnterClicksFirstSuggestion=true AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name}") />
 	
-	@if(Suggestions.Count > 0)
-	{
-		<ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
-			@foreach (var enteredItem in Suggestions)
-			{
-				<li>
-					<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => AddInterest(enteredItem)) >@enteredItem </a>
-				</li>
-			}
-		</ul>
-	}
 </ModalForm>
 
 
@@ -109,7 +96,7 @@
 		ConfirmModalClose = false;
 		AddedByEnter = false;
 
-		CancelSuggestionsRequestIfRunning();
+		//CancelSuggestionsRequestIfRunning();
 		Suggestions = new List<string>();
 
 		Mf.ResetState();
@@ -125,47 +112,7 @@
 		Mf.ForceValid();
 	}
 
-	private async Task AddInterest(string interest)
-	{
-		if (string.IsNullOrWhiteSpace(interest))
-		{
-			return;
-		}
-
-		// If interest includes a comma it is actually multiple interests at once.
-		var newInterests = interest
-			.Split(",")
-			.Select(e => e.Trim().ToLower())
-			.Where(e => string.IsNullOrWhiteSpace(e) == false);
-
-		foreach (var i in newInterests)
-		{
-			if (ExpertiseAsList.Contains(i.Trim().ToLower()) == false)
-			{
-				ExpertiseAsList.Add(i.Trim().ToLower());
-			}
-		}
-
-		// Reset the search term and clear-out suggestions.
-		SearchTerm = "";
-		await SearchTermChanged(SearchTerm);
-
-		// We've made a change, confirm before closing the modal without saving changes.
-		ConfirmModalClose = true;
-		// Ensure that the submit button is available.
-		Mf.ForceValid();
-	}
-
-	private async Task SearchTermListenForEnter(KeyboardEventArgs e)
-	{
-		if (e.Code == "Enter" || e.Code == "NumpadEnter")
-		{
-			AddedByEnter = true;
-			await AddInterest(SearchTerm);
-			// I wasn't able to prevent pressing enter from also submitting the ModalForm
-			// So after this runs SaveChanges() will run immediately after it.
-		}
-	}
+	
 
 	private async Task SaveChanges()
 	{
@@ -218,11 +165,11 @@
 		}
 	}
 
-	private async Task SearchTermChanged(string newValue)
-	{
-		SearchTerm = newValue;
-		await UpdateSuggestions(newValue);
-	}
+	
+
+	/*
+		Still Need All This
+	*/
 
 	private class StackExchangeRequest
 	{
@@ -230,9 +177,6 @@
 		public CancellationTokenSource TokenSource { get; set; }
 	}
 
-	/*
-		Still Need All This
-	*/
 	private class SuggestionItem
 	{
 		public double Count { get; set; }
