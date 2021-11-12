@@ -55,7 +55,7 @@
 		}
 	</ul>
 	
-	<SuggestionButtons @ref=Sb Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." ButtonClickedAction=AddInterest EnterClicksFirstSuggestion=true AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name}") />
+	<SuggestionButtons Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." ButtonClickedAction=AddInterest EnterClicksFirstSuggestion=true AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name}") />
 	
 </ModalForm>
 
@@ -71,13 +71,8 @@
 
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private List<string> ExpertiseAsList = new List<string>();
-	private string SearchTerm = "";
-	private SuggestionButtons<SuggestionItem> Sb;
 	private ModalForm<List<string>> Mf;
 	private bool ConfirmModalClose = false;
-	private bool AddedByEnter = false;
-	private List<string> Suggestions = new List<string>();
-	private StackExchangeRequest SuggestionsRequest;
 	private Exception Ex;
 
 	private void ResetForm()
@@ -92,12 +87,7 @@
 					.Where(e => string.IsNullOrWhiteSpace(e) == false)
 			);
 		}
-		SearchTerm = "";
 		ConfirmModalClose = false;
-		AddedByEnter = false;
-
-		//CancelSuggestionsRequestIfRunning();
-		Suggestions = new List<string>();
 
 		Mf.ResetState();
 	}
@@ -144,14 +134,8 @@
 			}
 
 			// Everything updated, close the modal
-			if (AddedByEnter == false)
-			{
-				await Mf.Close();
-			}
-			else
-			{
-				ConfirmModalClose = false;
-			}
+			ConfirmModalClose = false;
+			await Mf.Close();
 
 			// Invoking after close because the two-way binding can cause hiccups in the ModalForm.
 			await PersonChanged.InvokeAsync(result);
@@ -170,13 +154,6 @@
 	/*
 		Still Need All This
 	*/
-
-	private class StackExchangeRequest
-	{
-		public Task Task { get; set; }
-		public CancellationTokenSource TokenSource { get; set; }
-	}
-
 	private class SuggestionItem
 	{
 		public double Count { get; set; }
@@ -207,15 +184,10 @@
 		{
 			if (ExpertiseAsList.Contains(i.Trim().ToLower()) == false)
 			{
-				Console.WriteLine($"Adding Interest {i}...");
 				ExpertiseAsList.Add(i.Trim().ToLower());
 			}
 		}
 		StateHasChanged();
-
-		// Reset the search term and clear-out suggestions.
-		Sb.SearchTerm = "";
-
 
 		// We've made a change, confirm before closing the modal without saving changes.
 		ConfirmModalClose = true;
