@@ -1,6 +1,5 @@
 @using Models
-@using RivetBlazor.Components
-@using System.Threading;
+@using web.Shared
 @implements IDisposable
 @inherits Shared.PageBase
 @inject NavigationManager Navigation
@@ -26,7 +25,8 @@
 	<DisplayException Ex=@GeneralException />
 
 	<EditForm EditContext="@FormContext">
-		<RivetInputText @bind-Value="Query.Q" Label="Search" Description="Search by username or first and last name." @oninput="e => SearchTermChanged(e.Value.ToString())" />
+		<SuggestionButtons T=PeopleLookupItem Label="Search" Placeholder="Enter a search term" Description="Search by username or first and last name." ButtonClickedAction=AddPerson AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name} ({s.NetId})") />
+		@* <RivetInputText @bind-Value="Query.Q" Label="Search" Description="Search by username or first and last name." @oninput="e => SearchTermChanged(e.Value.ToString())" />
 		@if(Suggestions.Count > 0)
 		{
 			<ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
@@ -37,7 +37,7 @@
 					</li>
 				}
 			</ul>
-		}
+		} *@
 	</EditForm>
 </div>
 
@@ -50,8 +50,6 @@
 	
 	private SearchQuery Query = new SearchQuery();
 	private EditContext FormContext;
-	private ProfileRequest SuggestionsRequest;
-	private List<PeopleLookupItem> Suggestions = new List<PeopleLookupItem>();
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -71,63 +69,16 @@
 		var response = await Get<UnitResponse>($"units/{UnitId}");
 		CurrentUnit = response.Value;
 	}
-	
-	private async Task SearchTermChanged(string newValue)
+
+	private void AddPerson(PeopleLookupItem pli)
 	{
-		Console.WriteLine($"SearchTerm({Query.Q}) changing to: {newValue}");
-		Query.Q = newValue;
-		await UpdateSuggestions(newValue);
+		Navigation.NavigateTo($"/Units/{UnitId}/EditMember/{pli.NetId}");
 	}
 
-	private void CancelSuggestionsRequestIfRunning()
+	private async Task<List<PeopleLookupItem>> GetSuggestions(string searchTerm)
 	{
-		var acceptableTaskStatus = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
-		if(SuggestionsRequest != null && acceptableTaskStatus.Contains(SuggestionsRequest.Task.Status) == false)
-		{
-			SuggestionsRequest.TokenSource.Cancel();
-		}
-	}
-
-	private async Task UpdateSuggestions(string searchTerm)
-	{
-		if(string.IsNullOrWhiteSpace(searchTerm))
-		{
-			Suggestions = new List<PeopleLookupItem>();
-			return;
-		}
-
-		// Cancel any currently running requests to the Stack Exchange API.
-		CancelSuggestionsRequestIfRunning();
-
-		// Make a cancelable request to the API and process the response.
-		var ts = new CancellationTokenSource();
-		SuggestionsRequest = new ProfileRequest
-		{
-			TokenSource = ts,
-			Task = Task.Run(async () => {
-				// Pause before sending the request in case the user isn't done typing.
-				// Additional keystrokes will cancel this request.
-				await Task.Delay(500);
-				
-				if(ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
-				{
-					// Using a new client instead of API so we don't send the users bearer token to Stack Exchange
-					var response = await Get<List<PeopleLookupItem>>($"people-lookup?q={Query.Q}");
-					// If this task was canceled before we got a response do not update Suggestions.
-					if(ts.Token.IsCancellationRequested == false)
-					{
-						Suggestions = response.Value;
-					}
-				}
-			}, ts.Token)
-		};
-
-		await SuggestionsRequest.Task;
-	}
-
-	private void AddPerson(string username)
-	{
-		Navigation.NavigateTo($"/Units/{UnitId}/EditMember/{username}");
+		var response = await Get<List<PeopleLookupItem>>($"people-lookup?q={searchTerm}");
+		return response.Value;
 	}
 
 	public void Dispose() {}
@@ -135,11 +86,5 @@
 	private class SearchQuery
 	{
 		public string Q { get; set; }
-	}
-
-	private class ProfileRequest
-	{
-		public Task Task { get; set; }
-		public CancellationTokenSource TokenSource { get; set; }
 	}
 }
