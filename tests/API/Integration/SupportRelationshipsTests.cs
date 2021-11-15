@@ -21,6 +21,29 @@ namespace Integration
 				var actual = await resp.Content.ReadAsAsync<List<SupportRelationshipResponse>>();
 				Assert.AreEqual(2, actual.Count);
 			}
+
+			[Test]
+			public async Task SupportRelationshipsGetSsspFormat()
+			{
+				/* Department has single support relationship */
+				// Supporting unit has an email
+				// Supporting unit has no email but ONE leader who does
+				// Supporting unit has no email, but SEVERAL leaders who do
+				// Supporting unit has no email, and no leader with an email
+				// Supporting unit has an email but is no longer active.
+
+				/* Department has multiple support relationships*/
+				// Both units have an email
+				// One unit has an email, the other does not, but has a leader that does
+				// One unit has no email but a leader that does, and the other has no email and no leaders
+				// One unit has an email, the other unit is not active
+
+				var resp = await GetAuthenticated("SsspSupportRelationships");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				var actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
+				Assert.AreEqual(2, actual.Count);
+				Assert.False(true, "Still writing test.");
+			}
 		}
 		public class GetOne : ApiTest
 		{

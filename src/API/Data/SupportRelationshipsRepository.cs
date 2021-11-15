@@ -29,6 +29,43 @@ namespace API.Data
 			=> ExecuteDbPipeline("get a support relationship by ID", db =>
 				TryFindSupportRelationship(db, id));
 
+		public static Task<Result<List<SsspSupportRelationshipResponse>, Error>> GetSssp()
+			=> ExecuteDbPipeline("Get all support relationships in SSSP format", async db =>
+			{
+				var result = await db.SupportRelationships
+					.Include(r => r.Department)
+					.Include(r => r.Unit)
+					.Include(r => r.Unit.UnitMembers).ThenInclude(r => r.Person)
+					.Where(r => r.Unit.Active)
+					.Where(r =>
+						string.IsNullOrWhiteSpace(r.Unit.Email) == false
+						|| r.Unit.UnitMembers.Any(um => um.Role == Role.Leader && string.IsNullOrWhiteSpace(um.Person.CampusEmail) == false))
+					.AsNoTracking()
+					.Select(sr => new SsspSupportRelationshipResponse { 
+						Key = 0, // We'll be providing unique keys later.
+						Dept = sr.Department.Name,
+						DeptDescription = sr.Department.Description,
+
+						ContactEmail = 
+							string.IsNullOrWhiteSpace(sr.Unit.Email) == false
+								? sr.Unit.Email
+								: sr.Unit.UnitMembers.First(um => um.Role == Role.Leader && string.IsNullOrWhiteSpace(um.Person.CampusEmail) == false).Person.CampusEmail
+					})
+					.Distinct() // Weed out duplicates
+					.OrderBy(r => r.Dept)
+					.ThenBy(r => r.ContactEmail)
+					.ToListAsync();
+
+				var k = 1;
+				foreach(var item in result)
+				{
+					item.Key = k;
+					k++;
+				}
+				
+				return Pipeline.Success(result);
+			});
+
 		internal static async Task<Result<SupportRelationship, Error>> CreateSupportRelationship(SupportRelationshipRequest body)
 			=> await ExecuteDbPipeline("create a support relationship", db =>
 				ValidateRequest(db, body)
