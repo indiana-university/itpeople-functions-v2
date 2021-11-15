@@ -64,11 +64,17 @@
 		</EditForm>
 	</Content>
 	<Controls>
-		@if(Submitting)
-		{
-			<div class="rvt-loader rvt-display-inline-block" aria-label="Submitting"></div>
-		}
-		<button type="button" class="rvt-button" disabled=@(FormInvalid || Submitting) @onclick=@(() => SaveChanges())>Save Changes</button>
+		<button type="button" class="rvt-button" disabled=@(FormInvalid || Submitting) @onclick=@(() => SaveChanges())>
+			@if(Submitting)
+			{
+				<div class="rvt-loader rvt-display-inline-block rvt-m-right-xs" aria-label="Submitting"></div>
+				<span>Saving Changes</span>
+			}
+			else
+			{
+				<span>Save Changes</span>
+			}
+		</button>
 		<button type="button" class="rvt-button rvt-button--secondary" disabled=@Submitting @onclick=@(() => ExpertiseModal.Close())>Cancel</button>
 	</Controls>
 </Modal>
