@@ -13,7 +13,7 @@
 			<h2 class="rvt-ts-23 rvt-text-bold">Professional interests</h2>
 		</div>
 		<div class="rvt-m-left-sm">
-			@if(CrudPerms.HasFlag(EntityPermissions.Post))
+			@if(CrudPerms.HasFlag(EntityPermissions.Put))
 			{
 				<button title="Edit Interests" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-expertise" @onclick=ResetForm>
 					<rvt-icon name="pencil" />
