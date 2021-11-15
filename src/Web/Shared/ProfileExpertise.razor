@@ -41,7 +41,7 @@
 	</ul>
 </div>
 
-<Modal @ref=ExpertiseModal Id=@ModalId Title="Test Modal">
+<Modal @ref=ExpertiseModal Id=@ModalId Title="Edit Interests">
 	<Content>
 		<EditForm EditContext="@ExpertiseContext">
 			<DataAnnotationsValidator />
@@ -123,6 +123,35 @@
 		ExpertiseModal.DoNotConfirmBeforeClose();
 	}
 
+	private void AddInterest(SuggestionItem item)
+	{
+		if (item == null || string.IsNullOrWhiteSpace(item.Name))
+		{
+			return;
+		}
+
+		// If item.Name includes a comma it is actually multiple interests at once.
+		var newInterests = item.Name
+			.Split(",")
+			.Select(e => e.Trim().ToLower())
+			.Where(e => string.IsNullOrWhiteSpace(e) == false);
+
+		foreach (var i in newInterests)
+		{
+			if (ExpertiseAsList.Contains(i.Trim().ToLower()) == false)
+			{
+				ExpertiseAsList.Add(i.Trim().ToLower());
+			}
+		}
+
+		// We've made a change, confirm before closing the modal without saving changes.
+		ExpertiseModal.ConfirmBeforeClose();
+		// Ensure that the submit button is available.
+		FormInvalid = false;
+
+		StateHasChanged();// Needed since this method is invoked in another component.
+	}
+
 	private void RemoveInterest(string interest)
 	{
 		ExpertiseAsList.Remove(interest);
@@ -181,10 +210,10 @@
 		}
 	}
 
-	
+	public void Dispose() { }
 
 	/*
-		Still Need All This
+		Classes and method for getting suggestions from stackexchange.
 	*/
 	private class SuggestionItem
 	{
@@ -195,37 +224,6 @@
 	private class SuggestionResponse
 	{
 		public List<SuggestionItem> Items { get; set; }
-	}
-
-	
-
-	private void AddInterest(SuggestionItem item)
-	{
-		if (item == null || string.IsNullOrWhiteSpace(item.Name))
-		{
-			return;
-		}
-
-		// If item.Name includes a comma it is actually multiple interests at once.
-		var newInterests = item.Name
-			.Split(",")
-			.Select(e => e.Trim().ToLower())
-			.Where(e => string.IsNullOrWhiteSpace(e) == false);
-
-		foreach (var i in newInterests)
-		{
-			if (ExpertiseAsList.Contains(i.Trim().ToLower()) == false)
-			{
-				ExpertiseAsList.Add(i.Trim().ToLower());
-			}
-		}
-
-		// We've made a change, confirm before closing the modal without saving changes.
-		ExpertiseModal.ConfirmBeforeClose();
-		// Ensure that the submit button is available.
-		FormInvalid = false;
-
-		StateHasChanged();// Needed since this method is invoked in another component.
 	}
 
 	private async Task<List<SuggestionItem>> GetSuggestions(string searchTerm)
@@ -246,6 +244,4 @@
 
 		return output.Take(10).ToList();
 	}
-
-	public void Dispose() { }
 }
