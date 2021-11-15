@@ -15,7 +15,7 @@
 		<div class="rvt-m-left-sm">
 			@if(CrudPerms.HasFlag(EntityPermissions.Post))
 			{
-				<button title="Edit Interests" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-expertise" @onclick=ResetForm>
+				<button title="Edit Interests" class="rvt-button rvt-button--plain" data-modal-trigger="@ModalId" @onclick=ResetForm>
 					<rvt-icon name="pencil" />
 					<span class="rvt-m-left-xs rvt-sr-only">Edit Interests</span>
 				</button>
@@ -40,25 +40,38 @@
 		}
 	</ul>
 </div>
-<ModalForm Id="modal-form-expertise" Title="Edit Interests" SubmitButtonText="Save Changes" Item=@ExpertiseAsList OnSubmit=@SaveChanges ConfirmBeforeClose=@ConfirmModalClose @ref=Mf>
-	<DisplayException Ex=@Ex />
-	<ul class="rvt-list rvt-plain-list rvt-inline-list">
-		@foreach (var Interest in ExpertiseAsList)
-		{
-			<li>
-				<span class="rvt-badge">@Interest
-					<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
-						<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
-					</button>
-				</span>
-			</li>
-		}
-	</ul>
-	
-	<SuggestionButtons Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." ButtonClickedAction=AddInterest EnterClicksFirstSuggestion=true AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name}") />
-	
-</ModalForm>
 
+<Modal @ref=ExpertiseModal Id=@ModalId Title="Test Modal">
+	<Content>
+		<EditForm EditContext="@ExpertiseContext">
+			<DataAnnotationsValidator />
+			<DisplayException Ex=@Ex />
+
+			<ul class="rvt-list rvt-plain-list rvt-inline-list">
+				@foreach (var Interest in ExpertiseAsList)
+				{
+					<li>
+						<span class="rvt-badge">@Interest
+							<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
+								<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
+							</button>
+						</span>
+					</li>
+				}
+			</ul>
+
+			<SuggestionButtons Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." ButtonClickedAction=AddInterest EnterClicksFirstSuggestion=true AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name}") />
+		</EditForm>
+	</Content>
+	<Controls>
+		@if(Submitting)
+		{
+			<div class="rvt-loader rvt-display-inline-block" aria-label="Submitting"></div>
+		}
+		<button type="button" class="rvt-button" disabled=@(FormInvalid || Submitting) @onclick=@(() => SaveChanges())>Save Changes</button>
+		<button type="button" class="rvt-button rvt-button--secondary" disabled=@Submitting @onclick=@(() => ExpertiseModal.Close())>Cancel</button>
+	</Controls>
+</Modal>
 
 @code {
 	[Parameter]
@@ -71,9 +84,19 @@
 
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private List<string> ExpertiseAsList = new List<string>();
-	private ModalForm<List<string>> Mf;
-	private bool ConfirmModalClose = false;
+
+	private string ModalId = System.Guid.NewGuid().ToString();
+	private Modal ExpertiseModal;
+	private EditContext ExpertiseContext;
+	private bool FormInvalid = false;
+	private bool Submitting = false;
+	private IDisposable Saving() => new DisposableLoader(s => Submitting = s, StateHasChanged);
 	private Exception Ex;
+
+	protected override void OnInitialized()
+    {
+        ExpertiseContext = new EditContext(ExpertiseAsList);
+    }
 
 	private void ResetForm()
 	{
@@ -87,9 +110,11 @@
 					.Where(e => string.IsNullOrWhiteSpace(e) == false)
 			);
 		}
-		ConfirmModalClose = false;
-
-		Mf.ResetState();
+		
+		ExpertiseContext.MarkAsUnmodified();
+		ExpertiseContext.NotifyValidationStateChanged();
+		FormInvalid = true;// Prevent people from submitting a form when the value hasn't changed.
+		ExpertiseModal.DoNotConfirmBeforeClose();
 	}
 
 	private void RemoveInterest(string interest)
@@ -97,55 +122,56 @@
 		ExpertiseAsList.Remove(interest);
 
 		// We've made a change, confirm before closing the modal without saving changes.
-		ConfirmModalClose = true;
+		ExpertiseModal.ConfirmBeforeClose();
 		// Ensure that the submit button is available.
-		Mf.ForceValid();
+		FormInvalid = false;
 	}
-
-	
 
 	private async Task SaveChanges()
 	{
-		try
+		using(Saving())
 		{
-			Person result;
-
-			// Make an in-memory copy of Person to PUT to the server.
-			var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(Person, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
-			// Update objToPut's Expertise
-			objToPut.Expertise = string.Join(",", ExpertiseAsList);
-
-			var url = $"/people/{Person.Id}";
-
-			using (var apiClient = Api())
+			try
 			{
-				var reqJson = JsonConvert.SerializeObject(objToPut, Json.JsonSerializerSettings);
-				var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
-				var response = await apiClient.PutAsync(url, reqContent);
+				Person result;
 
-				if (response.IsSuccessStatusCode == false)
+				// Make an in-memory copy of Person to PUT to the server.
+				var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(Person, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
+				// Update objToPut's Expertise
+				objToPut.Expertise = string.Join(",", ExpertiseAsList);
+
+				var url = $"/people/{Person.Id}";
+
+				using (var apiClient = Api())
 				{
-					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Expertise to {url}");
+					var reqJson = JsonConvert.SerializeObject(objToPut, Json.JsonSerializerSettings);
+					var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
+					var response = await apiClient.PutAsync(url, reqContent);
+
+					if (response.IsSuccessStatusCode == false)
+					{
+						throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Expertise to {url}");
+					}
+
+					// The Response is a Person object, use it to update our Person variable
+					var stringResult = await response.Content.ReadAsStringAsync();
+					result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
 				}
 
-				// The Response is a Person object, use it to update our Person variable
-				var stringResult = await response.Content.ReadAsStringAsync();
-				result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
+				// Everything updated, close the modal
+				ExpertiseModal.DoNotConfirmBeforeClose();
+				await ExpertiseModal.Close();
+
+				// Invoking after close because the two-way binding can cause hiccups in the ModalForm.
+				await PersonChanged.InvokeAsync(result);
+
+				// We've saved our changes reset the bools that dicate the ModalForms behavior.
+				ResetForm();
 			}
-
-			// Everything updated, close the modal
-			ConfirmModalClose = false;
-			await Mf.Close();
-
-			// Invoking after close because the two-way binding can cause hiccups in the ModalForm.
-			await PersonChanged.InvokeAsync(result);
-
-			// We've saved our changes reset the bools that dicate the ModalForms behavior.
-			ResetForm();
-		}
-		catch (Exception ex)
-		{
-			Ex = ex;
+			catch (Exception ex)
+			{
+				Ex = ex;
+			}
 		}
 	}
 
@@ -187,12 +213,13 @@
 				ExpertiseAsList.Add(i.Trim().ToLower());
 			}
 		}
-		StateHasChanged();
 
 		// We've made a change, confirm before closing the modal without saving changes.
-		ConfirmModalClose = true;
+		ExpertiseModal.ConfirmBeforeClose();
 		// Ensure that the submit button is available.
-		Mf.ForceValid();
+		FormInvalid = false;
+
+		StateHasChanged();// Needed since this method is invoked in another component.
 	}
 
 	private async Task<List<SuggestionItem>> GetSuggestions(string searchTerm)
