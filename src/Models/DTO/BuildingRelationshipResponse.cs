@@ -18,7 +18,7 @@ namespace Models
 
         /// The ID of the unit in this relationship
         public int UnitId { get; set; }
-        /// The ID of the department in this relationship
+        /// The ID of the building in this relationship
         public int BuildingId { get; set; }
         /// The unit in this relationship.
         public UnitResponse Unit { get; set; }

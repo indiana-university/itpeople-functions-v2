@@ -30,16 +30,12 @@
 	public bool Open { get; set; } = true;
 
 
-	protected override async Task OnInitializedAsync()
-	{
-	}
+	protected override void OnInitialized() { }
 
 	private void ToggleOpenStatus()
 	{
 		Open = !Open;
 	}
 
-	public void Dispose()
-	{
-	}
+	public void Dispose() { }
 }
