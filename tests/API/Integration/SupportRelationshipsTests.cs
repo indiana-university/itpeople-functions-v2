@@ -324,37 +324,29 @@ namespace Integration
 				await db.SaveChangesAsync();
 			}
 
-			private static readonly object[] _sourceLists = 
+			private static IEnumerable<TestCaseData> _Cases
 			{
-				/* Department has single support relationship */
-				// Supporting unit has an email
-				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null) }, 1},
-				// Supporting unit has no email but ONE leader who does
-				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, ParksDeptId, null) }, 1},
-				// Supporting unit has no email, but SEVERAL leaders who do
-				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailButLeadersWhoDoId, ParksDeptId, null) }, 2},
-				// Supporting unit has no email, and no leader with an email
-				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailAndNoLeaderWhoDoesId, ParksDeptId, null) }, 0},
-				// Supporting unit has an email but is no longer active.
-				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithEmailInactiveId, ParksDeptId, null) }, 0},
+				get
+				{
+					/* Department has single support relationship */
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null) }, 1, "Supporting unit has an email");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, ParksDeptId, null) }, 1, "Supporting unit has no email but ONE leader who does");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailButLeadersWhoDoId, ParksDeptId, null) }, 2, "Supporting unit has no email, but SEVERAL leaders who do");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailAndNoLeaderWhoDoesId, ParksDeptId, null) }, 0, "Supporting unit has no email, and no leader with an email");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithEmailInactiveId, ParksDeptId, null) }, 0, "Supporting unit has an email but is no longer active.");
 
-				/* Department has multiple support relationships*/
-				// Both units have an email
-				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null), new SupportRelationship(SecondUnitWithEmailId, ParksDeptId, null) }, 2},
-				// One unit has an email, the other does not, but has a leader that does
-				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null), new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, ParksDeptId, null) }, 2},
-				// One unit has no email but a leader that does, and the other has no email and no leaders
-				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, ParksDeptId, null), new SupportRelationship(UnitWithNoEmailAndNoLeaderWhoDoesId, ParksDeptId, null) }, 1},
-				// One unit has an email, the other unit is not active
-				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null), new SupportRelationship(UnitWithEmailInactiveId, ParksDeptId, null) }, 1},
-				// Supported by two units each having the same email address, one getting its email from its unit the other from its unit's leader.
-				new object[] { new List<SupportRelationship> { new SupportRelationship(DuplicateAId, ParksDeptId, null), new SupportRelationship(DuplicateBId, ParksDeptId, null) }, 1},
-			};
-			
+					/* Department has multiple support relationships*/
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null), new SupportRelationship(SecondUnitWithEmailId, ParksDeptId, null) }, 2, "Both units have an email");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null), new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, ParksDeptId, null) }, 2, "One unit has an email, the other does not, but has a leader that does");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, ParksDeptId, null), new SupportRelationship(UnitWithNoEmailAndNoLeaderWhoDoesId, ParksDeptId, null) }, 1, "One unit has no email but a leader that does, and the other has no email and no leaders");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null), new SupportRelationship(UnitWithEmailInactiveId, ParksDeptId, null) }, 1, "One unit has an email, the other unit is not active");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(DuplicateAId, ParksDeptId, null), new SupportRelationship(DuplicateBId, ParksDeptId, null) }, 1, "Supported by two units each having the same email address, one getting its email from its unit the other from its unit's leader.");
+				}
+			}
 
 			[Test]
-			[TestCaseSource("_sourceLists")]
-			public async Task SupportRelationshipsGetSsspFormat(IEnumerable<SupportRelationship> relationships, int expectedMatches)
+			[TestCaseSource(nameof(_Cases))]
+			public async Task SupportRelationshipsGetSsspFormat(IEnumerable<SupportRelationship> relationships, int expectedMatches, string description)
 			{
 				await Setup();
 				var db = GetDb();
