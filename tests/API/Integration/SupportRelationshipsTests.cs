@@ -310,6 +310,7 @@ namespace Integration
 				
 				var unitWithNoEmailAndNoLeaderWhoDoes = new Unit { Id = UnitWithNoEmailAndNoLeaderWhoDoesId, Name = "Unit Without Email, And The Leader doesn't either", Description = "", Url = "", Email = null, UnitMembers = new List<UnitMember>(), Active = true };
 				unitWithNoEmailAndNoLeaderWhoDoes.UnitMembers.Add(new UnitMember { Person = personWithoutEmail, Role = Role.Leader, Permissions = UnitPermissions.ManageMembers, Notes = "" });
+				unitWithNoEmailAndNoLeaderWhoDoes.UnitMembers.Add(new UnitMember { Person = personWithEmail, Role = Role.Member, Permissions = UnitPermissions.ManageMembers, Notes = "" });
 
 				var unitWithEmailInactive = new Unit { Id = UnitWithEmailInactiveId, Name = "Inactive Unit With Email", Description = "", Url = "", Email = "inactive@fake.com", UnitMembers = new List<UnitMember>(), Active = false };
 

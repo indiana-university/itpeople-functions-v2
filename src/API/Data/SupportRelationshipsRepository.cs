@@ -32,7 +32,11 @@ namespace API.Data
 		public static Task<Result<List<SsspSupportRelationshipResponse>, Error>> GetSssp()
 			=> ExecuteDbPipeline("Get all support relationships in SSSP format", async db =>
 			{
-				var result = await db.SupportRelationships
+				var result = new List<SsspSupportRelationshipResponse>();
+				// Get all the SupportRelationships that have a usable email
+				// That means both units that have an email
+				// or units that do not have an email, but have a Leader that has an email.
+				var supportRelationships = db.SupportRelationships
 					.Include(r => r.Department)
 					.Include(r => r.Unit)
 					.Include(r => r.Unit.UnitMembers).ThenInclude(r => r.Person)
@@ -40,22 +44,54 @@ namespace API.Data
 					.Where(r =>
 						string.IsNullOrWhiteSpace(r.Unit.Email) == false
 						|| r.Unit.UnitMembers.Any(um => um.Role == Role.Leader && string.IsNullOrWhiteSpace(um.Person.CampusEmail) == false))
-					.AsNoTracking()
+					.AsNoTracking();
+
+				// SupportRelationships with units that have an email can easily be transformed into a SsspSupportRelationshipResponse.
+				var unitsThatHaveEmail = supportRelationships
+					.Where(r => string.IsNullOrWhiteSpace(r.Unit.Email) == false)
 					.Select(sr => new SsspSupportRelationshipResponse { 
 						Key = 0, // We'll be providing unique keys later.
 						Dept = sr.Department.Name,
 						DeptDescription = sr.Department.Description,
+						ContactEmail = sr.Unit.Email
+					});
+				
+				/*
+					Units that don't have an email are harder to figure out because they can have more than one leader.
+					Get all those SupportRelationships and select the details we need to make
+					a SsspSupportRelationshipResponse: The department and the unit's leaders.
+					Then loop over the results, and make an entry for each of their leaders.
+				*/
+				var unitsMissingEmail = new List<SsspSupportRelationshipResponse>();
+				var SupportRelationshipsWithLeaders = supportRelationships
+					.Where(r => string.IsNullOrWhiteSpace(r.Unit.Email))
+					.Select(r => new { Department = r.Department, Leaders = r.Unit.UnitMembers.Where(um => um.Role == Role.Leader)});
+					
+				foreach(var relationship in SupportRelationshipsWithLeaders)
+				{
+					foreach(var leader in relationship.Leaders)
+					{
+						unitsMissingEmail.Add(new SsspSupportRelationshipResponse{
+							Key = 0, // We'll be providing unique keys later.
+							Dept = relationship.Department.Name,
+							DeptDescription = relationship.Department.Description,
+							ContactEmail = leader.Person.CampusEmail
+						});
+					}
+				}
+				
+				// Combine our results.
+				result.AddRange(unitsThatHaveEmail);
+				result.AddRange(unitsMissingEmail);
 
-						ContactEmail = 
-							string.IsNullOrWhiteSpace(sr.Unit.Email) == false
-								? sr.Unit.Email
-								: sr.Unit.UnitMembers.First(um => um.Role == Role.Leader && string.IsNullOrWhiteSpace(um.Person.CampusEmail) == false).Person.CampusEmail
-					})
+				// De-duplicate, sort and return result.
+				result = result
 					.Distinct() // Weed out duplicates
 					.OrderBy(r => r.Dept)
 					.ThenBy(r => r.ContactEmail)
-					.ToListAsync();
+					.ToList();
 
+				// SSSP doesn't need a proper unique Id for all the relationshps, they just need a row identifier.
 				var k = 1;
 				foreach(var item in result)
 				{
