@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -44,6 +45,29 @@ namespace Models
 			}
 
 			return output;
+		}
+
+		public class Comparer : IEqualityComparer<SsspSupportRelationshipResponse>
+		{
+			public bool Equals(SsspSupportRelationshipResponse x, SsspSupportRelationshipResponse y) =>
+				x.Dept == y.Dept && x.DeptDescription == y.DeptDescription && x.ContactEmail == y.ContactEmail
+					? true
+					: false;
+			
+
+			public int GetHashCode(SsspSupportRelationshipResponse obj)
+			{
+				//Check whether the object is null
+				if (Object.ReferenceEquals(obj, null)) return 0;
+
+				//Get hash code for all the properties we compare
+				int deptHash = obj.Dept.GetHashCode();
+				int descHash = obj.DeptDescription.GetHashCode();
+				int emailHash = obj.ContactEmail.GetHashCode();
+
+				//Calculate the hash code for the product.
+				return deptHash ^ descHash ^ emailHash;
+			}
 		}
 	}
 }

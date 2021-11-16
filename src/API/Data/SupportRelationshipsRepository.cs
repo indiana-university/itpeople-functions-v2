@@ -51,7 +51,7 @@ namespace API.Data
 				// Massage them into SsspSupportRelationshipResponse
 				var result = supportRelationships
 					.SelectMany(sr => SsspSupportRelationshipResponse.FromSupportRelationship(sr))
-					.Distinct() // Weed out duplicates
+					.Distinct(new SsspSupportRelationshipResponse.Comparer()) // Weed out duplicates
 					.OrderBy(r => r.Dept)
 					.ThenBy(r => r.ContactEmail)
 					.ToList();

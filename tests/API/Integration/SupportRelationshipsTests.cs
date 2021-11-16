@@ -273,6 +273,8 @@ namespace Integration
 			private static int UnitWithNoEmailButLeadersWhoDoId = 4;
 			private static int UnitWithNoEmailAndNoLeaderWhoDoesId  = 5;
 			private static int UnitWithEmailInactiveId = 6;
+			private static int DuplicateAId = 7;
+			private static int DuplicateBId = 8;
 			private static int ParksDeptId = TestEntities.Departments.ParksId;
 			
 			private async Task Setup()
@@ -314,7 +316,11 @@ namespace Integration
 
 				var unitWithEmailInactive = new Unit { Id = UnitWithEmailInactiveId, Name = "Inactive Unit With Email", Description = "", Url = "", Email = "inactive@fake.com", UnitMembers = new List<UnitMember>(), Active = false };
 
-				db.Units.AddRange(new List<Unit> { unitWithEmail, secondUnitWithEmail, unitWithNoEmailButLeaderWhoDoes, unitWithNoEmailButLeadersWhoDo, unitWithNoEmailAndNoLeaderWhoDoes, unitWithEmailInactive });
+				var duplicateEmailUnitA = new Unit { Id = DuplicateAId, Name = "Duplicate A", Description = "", Url = "", Email = personWithEmail.CampusEmail, UnitMembers = new List<UnitMember>(), Active = true };
+				var duplicateEmailUnitB = new Unit { Id = DuplicateBId, Name = "Duplicate B", Description = "", Url = "", Email = null, UnitMembers = new List<UnitMember>(), Active = true };
+				duplicateEmailUnitB.UnitMembers.Add(new UnitMember { Person = personWithEmail, Role = Role.Leader, Permissions = UnitPermissions.ManageMembers, Notes = "" });
+
+				db.Units.AddRange(new List<Unit> { unitWithEmail, secondUnitWithEmail, unitWithNoEmailButLeaderWhoDoes, unitWithNoEmailButLeadersWhoDo, unitWithNoEmailAndNoLeaderWhoDoes, unitWithEmailInactive, duplicateEmailUnitA, duplicateEmailUnitB });
 				await db.SaveChangesAsync();
 			}
 
@@ -341,7 +347,8 @@ namespace Integration
 				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, ParksDeptId, null), new SupportRelationship(UnitWithNoEmailAndNoLeaderWhoDoesId, ParksDeptId, null) }, 1},
 				// One unit has an email, the other unit is not active
 				new object[] { new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null), new SupportRelationship(UnitWithEmailInactiveId, ParksDeptId, null) }, 1},
-
+				// Supported by two units each having the same email address, one getting its email from its unit the other from its unit's leader.
+				new object[] { new List<SupportRelationship> { new SupportRelationship(DuplicateAId, ParksDeptId, null), new SupportRelationship(DuplicateBId, ParksDeptId, null) }, 1},
 			};
 			
 
