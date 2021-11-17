@@ -246,7 +246,7 @@
 													}
 												</div>
 											</div>
-											@if (CanEditUnitMembers && EditMode)
+											@if (CanEditUnitChildren && EditMode)
 											{
 												<div class="rvt-grid__item rvt-text-right">
 													<button class="rvt-button rvt-button--plain" title="Remove @child.Name" @onclick="@(async () => await RemoveChildUnit(child))">
@@ -273,7 +273,7 @@
 													<div class="rvt-grid__item">
 														<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
 													</div>
-													@if (EditMode)
+													@if (CanEditSupportRelationships && EditMode)
 													{
 														<div class="rvt-grid__item rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
 															<button class="rvt-button rvt-button--plain" title="Remove @supportRelationship.Department.Name" @onclick="@(async () => await RemoveSupportRelationship(supportRelationship))">
@@ -310,11 +310,27 @@
 										@foreach (var buildingRelationship in BuildingRelationships)
 										{
 											<li>
-												<a href="/buildings/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
+												<div class="rvt-grid">
+													<div class="rvt-grid__item">
+														<a href="/buildings/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
+													</div>
+													@if (CanEditBuildingRelationships && EditMode)
+													{
+														<div class="rvt-grid__item rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
+															<button class="rvt-button rvt-button--plain" title="Remove @buildingRelationship.Building.Name (@buildingRelationship.Building.Code" @onclick="@(async () => await RemoveBuildingRelationship(buildingRelationship))">
+																<rvt-icon name="trash"></rvt-icon>
+																<span class="rvt-sr-only">Remove @buildingRelationship.Building.Name (@buildingRelationship.Building.Code</span>
+															</button>
+														</div>
+													}
+												</div>
 												@if (string.IsNullOrWhiteSpace(buildingRelationship.Building.Address) == false || string.IsNullOrWhiteSpace(buildingRelationship.Building.City) == false)
 												{
-													<br />
-													<span style="font-size:smaller;">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
+													<div class="rvt-grid">
+														<div class="rvt-grid__item">
+															<span style="font-size:smaller;">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
+														</div>
+													</div>
 												}
 											</li>
 										}
@@ -347,6 +363,9 @@
 	private bool CanEditUnitDetails = false;
 	private bool CanEditMemberTools = false;
 	private bool CanEditUnitMembers = false;
+	private bool CanEditSupportRelationships = false;
+	private bool CanEditBuildingRelationships = false;
+	private bool CanEditUnitChildren = false;
 	private List<(Role Role, string Description)> RoleDescriptions = new List<(Role, string)> {
 		(Role.Leader, "Unit Leaders are VPs, directors, managers."),
 		(Role.Sublead, "Unit Subleads are team leads and co-admins."),
@@ -418,26 +437,28 @@
 	{
 		var response = await Get<List<BuildingRelationship>>($"/Units/{UnitId}/supportedBuildings");
 		BuildingRelationships = response.Value;
+		CanEditBuildingRelationships = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
 	}
 
 	private async Task GetSupportRelationships()
 	{
 		var response = await Get<List<SupportRelationshipResponse>>($"/Units/{UnitId}/supportedDepartments");
 		SupportRelationships = response.Value;
+		CanEditSupportRelationships = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
 	}
 
 	private async Task GetUnit()
 	{
 		var response = await Get<UnitResponse>($"/Units/{UnitId}");
 		CurrentUnit = response.Value;
-		//This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
-		CanEditUnitDetails = response.Permissions.HasFlag(EntityPermissions.Post);
+		CanEditUnitDetails = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
 	}
 
 	private async Task GetUnitChildren()
 	{
 		var response = await Get<List<UnitResponse>>($"/Units/{UnitId}/children");
 		UnitChildren = response.Value;
+		CanEditUnitChildren = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
 	}
 
 	private async Task GetUnitMembers()
@@ -467,6 +488,17 @@
 		StateHasChanged();
 	}
 
+	private async Task RemoveBuildingRelationship(BuildingRelationship relationship)
+	{
+		var confirmMessage = $"Are you sure you want to remove {relationship.Building.Name} as a supported building?";
+		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
+		{
+			var deleteResponse = await Delete<UnitResponse>($"/buildingRelationships/{relationship.Id}");
+			await GetBuildingRelationships();
+		}
+		StateHasChanged();
+	}
+
 	private async Task RemoveChildUnit(UnitResponse child)
 	{
 		var confirmMessage = $"Are you sure you want to remove {child.Name} as child of this unit?";
@@ -490,13 +522,14 @@
 		}
 		StateHasChanged();
 	}
+
 	private async Task RemoveSupportRelationship(SupportRelationshipResponse relationship)
 	{
 		var confirmMessage = $"Are you sure you want to remove {relationship.Department.Name} as a supported department?";
 		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
 		{
 			var deleteResponse = await Delete<UnitResponse>($"/supportRelationships/{relationship.Id}");
-			await GetUnitMembers();
+			await GetSupportRelationships();
 		}
 		StateHasChanged();
 	}
