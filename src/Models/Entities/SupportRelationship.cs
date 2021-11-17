@@ -20,6 +20,14 @@ namespace Models
 
         /// The support type in this relationship
         public SupportType SupportType { get; set; }
+
+        public SupportRelationship() {}
+        public SupportRelationship(int unitId, int departmentId, int? supportTypeId)
+        {
+            UnitId = unitId;
+            DepartmentId = departmentId;
+            SupportTypeId = supportTypeId;
+        }
     }
 
 }

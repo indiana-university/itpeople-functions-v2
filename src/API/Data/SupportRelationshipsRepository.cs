@@ -29,6 +29,44 @@ namespace API.Data
 			=> ExecuteDbPipeline("get a support relationship by ID", db =>
 				TryFindSupportRelationship(db, id));
 
+		public static Task<Result<List<SsspSupportRelationshipResponse>, Error>> GetSssp()
+			=> ExecuteDbPipeline("Get all support relationships in SSSP format", async db =>
+			{
+				// Get all the SupportRelationships that have a usable email
+				// That means both units that have an email
+				// or units that do not have an email, but have a Leader that has an email.
+				
+				// Materialize the SupportRelationships
+				var supportRelationships = await db.SupportRelationships
+					.Include(r => r.Department)
+					.Include(r => r.Unit)
+					.Include(r => r.Unit.UnitMembers).ThenInclude(r => r.Person)
+					.Where(r => r.Unit.Active)
+					.Where(r =>
+						string.IsNullOrWhiteSpace(r.Unit.Email) == false
+						|| r.Unit.UnitMembers.Any(um => um.Role == Role.Leader && string.IsNullOrWhiteSpace(um.Person.CampusEmail) == false))
+					.AsNoTracking()
+					.ToListAsync();
+
+				// Massage them into SsspSupportRelationshipResponse
+				var result = supportRelationships
+					.SelectMany(sr => SsspSupportRelationshipResponse.FromSupportRelationship(sr))
+					.Distinct(new SsspSupportRelationshipResponse.Comparer()) // Weed out duplicates
+					.OrderBy(r => r.Dept)
+					.ThenBy(r => r.ContactEmail)
+					.ToList();
+				
+				// SSSP doesn't need a proper unique Id for all the relationshps, they just need a row identifier.
+				var k = 1;
+				foreach(var item in result)
+				{
+					item.Key = k;
+					k++;
+				}
+				
+				return Pipeline.Success(result);
+			});
+
 		internal static async Task<Result<SupportRelationship, Error>> CreateSupportRelationship(SupportRelationshipRequest body)
 			=> await ExecuteDbPipeline("create a support relationship", db =>
 				ValidateRequest(db, body)

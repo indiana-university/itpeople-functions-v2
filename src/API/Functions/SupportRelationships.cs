@@ -114,5 +114,14 @@ namespace API.Functions
 				.Bind(_ => SupportRelationshipsRepository.DeleteSupportRelationship(req, relationshipId))
 				.Finally(result => Response.NoContent(req, result));
 		}
+
+		[FunctionName(nameof(SupportRelationships.SsspSupportRelationships))]
+		[OpenApiOperation(nameof(SupportRelationships.SsspSupportRelationships), SupportRelationshipsTitle, Summary = "Lists Support Relationships using a query specifically for SSSP's use.")]
+		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<SsspSupportRelationshipResponse>), Description = "A collection of department support relationship records")]
+		public static Task<IActionResult> SsspSupportRelationships(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "SsspSupportRelationships")] HttpRequest req)
+			=> Security.Authenticate(req)
+				.Bind(query => SupportRelationshipsRepository.GetSssp())
+				.Finally(results => Response.Ok(req, results));
 	}
 }
