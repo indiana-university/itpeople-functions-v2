@@ -49,11 +49,11 @@
 	///<summary> The action performed to get selections based on a search term</summary>
 	[Parameter]
 	public Func<string, Task<List<T>>> AsyncSuggestionGetter { get; set; }
-	
+
 	///<summary> The action performed when a suggestion button is clicked.</summary>
 	[Parameter]
 	public Action<T> ButtonClickedAction { get; set; }
-	
+
 	///<summary> Takes a suggestion and generates the text to be displayed in a button.</summary>
 	[Parameter]
 	public Func<T, string> DisplayLambda { get; set; }
@@ -61,36 +61,30 @@
 	private string SearchTerm = "";
 	private List<T> Suggestions = new List<T>();
 	private CancelableSuggestionsRequest SuggestionsRequest;
-	
+
 	private bool ShowLoader => SuggestionsRequest?.Task == null ? false : !SuggestionsRequest.Task.IsCompleted;
 
-	
+
 	private async Task SearchTermListenForEnter(KeyboardEventArgs e)
 	{
 		if (EnterClicksFirstSuggestion && (e.Code == "Enter" || e.Code == "NumpadEnter"))
 		{
 			// Wait for results if they're still in flight.
 			var attempts = 0;
-			while(ShowLoader && attempts < 5)
+			while (ShowLoader && attempts < 5)
 			{
 				attempts++;
-				// Console.WriteLine($"SearchTermListenForEnter attempt {attempts} waiting...");
 				await Task.Delay(500);
 			}
-			
-			if(Suggestions.Count > 0)
+
+			if (Suggestions.Count > 0)
 			{
-				// Console.WriteLine("\tAdding first item.");
-				await ButtonClickedHelper(Suggestions.First());
-			}
-			else
-			{
-				// Console.WriteLine("\tNothing to add!");
+				ButtonClickedHelper(Suggestions.First());
 			}
 		}
 	}
 
-	private async Task ButtonClickedHelper(T item)
+	private void ButtonClickedHelper(T item)
 	{
 		ButtonClickedAction(item);
 		// Reset searchterm and suggestions
@@ -138,9 +132,9 @@
 				if (ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
 				{
 					var response = await AsyncSuggestionGetter(searchTerm);
-					
+
 					// If this task was canceled before we got a response do not update Suggestions.
-					if(ts.Token.IsCancellationRequested == false)
+					if (ts.Token.IsCancellationRequested == false)
 					{
 						Suggestions = response;
 					}
