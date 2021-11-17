@@ -146,7 +146,7 @@
 																</p>
 															</div>
 
-															<div class="rvt-text-right">
+															<div class="rvt-grid__item rvt-text-right">
 																@if (CanEditMemberTools && EditMode)
 																{
 																	<a href=@($"/Units/{UnitId}/EditMember/{member.Person.Netid}") class="rvt-button rvt-button--plain" title="Edit tool permissions for @member.Person.Name">
@@ -206,7 +206,7 @@
 													{
 														<span class="rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-left-xs rvt-ts-xs">Archived</span>
 													}
-													@if (string.IsNullOrWhiteSpace(CurrentUnit.Parent.Description))
+													@if (string.IsNullOrWhiteSpace(CurrentUnit.Parent.Description) == false)
 													{
 														<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">@CurrentUnit.Parent.Description</p>
 													}
@@ -240,19 +240,21 @@
 													{
 														<span class="rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-left-xs rvt-ts-xs">Archived</span>
 													}
-													@if (string.IsNullOrWhiteSpace(child.Description))
+													@if (string.IsNullOrWhiteSpace(child.Description) == false)
 													{
 														<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">@child.Description</p>
 													}
-													@if (CanEditUnitMembers && EditMode)
-													{
-														<button class="rvt-button rvt-button--plain" title="Remove @child.Name" @onclick="@(async () => await RemoveChildUnit(child))">
-															<rvt-icon name="trash"></rvt-icon>
-															<span class="rvt-sr-only">Remove @child.Name</span>
-														</button>
-													}
 												</div>
 											</div>
+											@if (CanEditUnitMembers && EditMode)
+											{
+												<div class="rvt-grid__item rvt-text-right">
+													<button class="rvt-button rvt-button--plain" title="Remove @child.Name" @onclick="@(async () => await RemoveChildUnit(child))">
+														<rvt-icon name="trash"></rvt-icon>
+														<span class="rvt-sr-only">Remove @child.Name</span>
+													</button>
+												</div>
+											}
 										</div>
 									}
 								</Content>
@@ -267,15 +269,32 @@
 										@foreach (var supportRelationship in SupportRelationships)
 										{
 											<li>
-												<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
-												@if (supportRelationship.SupportType != null)
-												{
-													<div style="font-size:smaller;">@supportRelationship.SupportType.Name</div>
-												}
-												@if (supportRelationship.Department.Description != null)
-												{
-													<div style="font-size:smaller;">@supportRelationship.Department.Description</div>
-												}
+												<div class="rvt-grid">
+													<div class="rvt-grid__item">
+														<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
+													</div>
+													@if (EditMode)
+													{
+														<div class="rvt-grid__item rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
+															<button class="rvt-button rvt-button--plain" title="Remove @supportRelationship.Department.Name" @onclick="@(async () => await RemoveSupportRelationship(supportRelationship))">
+																<rvt-icon name="trash"></rvt-icon>
+																<span class="rvt-sr-only">Remove @supportRelationship.Department.Name</span>
+															</button>
+														</div>
+													}
+												</div>
+												<div class="rvt-grid">
+													<div class="rvt-grid__item">
+														@if (supportRelationship.SupportType != null)
+														{
+															<div style="font-size:smaller;">@supportRelationship.SupportType.Name</div>
+														}
+														@if (supportRelationship.Department.Description != null)
+														{
+															<div style="font-size:smaller;">@supportRelationship.Department.Description</div>
+														}
+													</div>
+												</div>
 											</li>
 										}
 									</ul>
@@ -471,6 +490,17 @@
 		}
 		StateHasChanged();
 	}
+	private async Task RemoveSupportRelationship(SupportRelationshipResponse relationship)
+	{
+		var confirmMessage = $"Are you sure you want to remove {relationship.Department.Name} as a supported department?";
+		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
+		{
+			var deleteResponse = await Delete<UnitResponse>($"/supportRelationships/{relationship.Id}");
+			await GetUnitMembers();
+		}
+		StateHasChanged();
+	}
+
 
 	private void SetEditMode()
 	{
