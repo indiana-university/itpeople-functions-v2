@@ -108,7 +108,7 @@
 					<div class="rvt-grid__item-6-lg-up">
 						<div class="rvt-grid">
 							<div class="rvt-grid__item">
-								@if(CanEditUnitMembers)
+								@if (CanEditUnitMembers && EditMode)
 								{
 									<section class="rvt-m-bottom-lg">
 										<a href=@($"/Units/{UnitId}/AddMember") class="rvt-button rvt-button--plain" title="Add Person">
@@ -120,7 +120,7 @@
 								@foreach (var roleDescription in RoleDescriptions)
 								{
 									var role = roleDescription.Role;
-									@if (EditMode == true || UnitMembers.Count(m => m.Role == role) > 0)
+									@if (EditMode || UnitMembers.Count(m => m.Role == role) > 0)
 									{
 										<section class="rvt-m-bottom-lg">
 											<h3 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h3>
@@ -145,16 +145,16 @@
 																	}
 																</p>
 															</div>
-																
+
 															<div class="rvt-text-right">
-																@if (CanEditMemberTools)
+																@if (CanEditMemberTools && EditMode)
 																{
 																	<a href=@($"/Units/{UnitId}/EditMember/{member.Person.Netid}") class="rvt-button rvt-button--plain" title="Edit tool permissions for @member.Person.Name">
 																		<rvt-icon name="pencil"></rvt-icon>
 																		<span class="rvt-sr-only">Edit tool permissions for @member.Person.Name</span>
 																	</a>
 																}
-																@if (CanEditUnitMembers)
+																@if (CanEditUnitMembers && EditMode)
 																{
 																	<button class="rvt-button rvt-button--plain" title="Remove @member.Person.Name" @onclick="@(async () => await RemoveMember(member))">
 																		<rvt-icon name="trash"></rvt-icon>
@@ -244,6 +244,13 @@
 													{
 														<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">@child.Description</p>
 													}
+													@if (CanEditUnitMembers && EditMode)
+													{
+														<button class="rvt-button rvt-button--plain" title="Remove @child.Name" @onclick="@(async () => await RemoveChildUnit(child))">
+															<rvt-icon name="trash"></rvt-icon>
+															<span class="rvt-sr-only">Remove @child.Name</span>
+														</button>
+													}
 												</div>
 											</div>
 										</div>
@@ -327,11 +334,11 @@
 		(Role.Member, "Unit Members are individual contributers."),
 		(Role.Related, "Related people are executive assistants and self-supported faculty/staff that do not solely report to this unit.")
 	};
-	
+
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
-		
+
 		await FeatchAllDetails();
 
 		UnitEditContext = new EditContext(UnitToUpdate);
@@ -366,7 +373,7 @@
 					Url = CurrentUnit.Url,
 					Email = CurrentUnit.Email
 				};
-				
+
 			}
 		}
 	}
@@ -438,6 +445,19 @@
 	private void HandleUnitFormFieldChanged(object sender, FieldChangedEventArgs e)
 	{
 		UnitFormInvalid = !UnitEditContext.Validate();
+		StateHasChanged();
+	}
+
+	private async Task RemoveChildUnit(UnitResponse child)
+	{
+		var confirmMessage = $"Are you sure you want to remove {child.Name} as child of this unit?";
+		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
+		{
+			child.ParentId = null;
+
+			var deleteResponse = await Put<UnitResponse>($"/Units/{child.Id}", child);
+			await GetUnitChildren();
+		}
 		StateHasChanged();
 	}
 
