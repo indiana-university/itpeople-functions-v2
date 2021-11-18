@@ -335,7 +335,18 @@
 											</li>
 										}
 									</ul>
-								</Content>
+									@if (CanEditBuildingRelationships && EditMode)
+									{
+										<div class="rvt-grid rvt-p-top-sm">
+											<div class="rvt-grid__item ">
+												<h5 class="rvt-border-top rvt-p-top-sm">Add New Supported Building</h5>
+												<EditForm EditContext="@BuildingRelationshipAddContext">
+													<SuggestionButtons T="@Building" Label="Search" Placeholder="Enter a search term" Description="Search by building name, code, or address." ButtonClickedAction="@AddBuildingRelationship" AsyncSuggestionGetter="@GetBuildingRelationshipSuggestions" DisplayLambda=@BuildingRelationshipDisplayLamba />
+												</EditForm>
+											</div>
+										</div>
+									}
+									</Content>
 							</Collapse>
 						}
 					</div>
@@ -358,7 +369,9 @@
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	private bool EditMode = false;
 	private EditContext UnitEditContext;
+	private EditContext BuildingRelationshipAddContext;
 	private UnitRequest UnitToUpdate;
+	private Building BuildingRelationshipToAdd = new Building();
 	private bool UnitFormInvalid = false;
 	private bool CanEditUnitDetails = false;
 	private bool CanEditMemberTools = false;
@@ -380,6 +393,7 @@
 		await FeatchAllDetails();
 
 		UnitEditContext = new EditContext(UnitToUpdate);
+		BuildingRelationshipAddContext = new EditContext(UnitToUpdate);
 		UnitEditContext.OnFieldChanged += HandleUnitFormFieldChanged;
 		Navigation.LocationChanged += HandleLocationChanged;
 	}
@@ -411,7 +425,6 @@
 					Url = CurrentUnit.Url,
 					Email = CurrentUnit.Email
 				};
-
 			}
 		}
 	}
@@ -420,6 +433,22 @@
 	{
 		Navigation.LocationChanged -= HandleLocationChanged;
 		UnitEditContext.OnFieldChanged -= HandleUnitFormFieldChanged;
+	}
+
+	private async void AddBuildingRelationship(Building request)
+	{
+		GeneralException = null;
+		await Post<BuildingRelationshipResponse>("buildingRelationships", new BuildingRelationshipRequest
+		{
+			UnitId = CurrentUnit.Id,
+			BuildingId = request.Id
+		});
+		await GetBuildingRelationships();
+		StateHasChanged();
+	}
+
+	public string BuildingRelationshipDisplayLamba(Building building) {
+		return $"{building.Name} ({building.Code}) {string.Join(", ", building.Address, building.City)}";
 	}
 
 	private async Task DeleteUnit()
@@ -438,6 +467,12 @@
 		var response = await Get<List<BuildingRelationship>>($"/Units/{UnitId}/supportedBuildings");
 		BuildingRelationships = response.Value;
 		CanEditBuildingRelationships = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
+	}
+
+	private async Task<List<Building>> GetBuildingRelationshipSuggestions(string searchTerm)
+	{
+		var response = await Get<List<Building>>($"/buildings?q={searchTerm}&_limit=15");
+		return response.Value;
 	}
 
 	private async Task GetSupportRelationships()
