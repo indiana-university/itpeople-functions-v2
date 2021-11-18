@@ -298,6 +298,21 @@
 											</li>
 										}
 									</ul>
+									@if (CanEditSupportRelationships && EditMode)
+									{
+										<div class="rvt-grid rvt-p-top-sm">
+											<div class="rvt-grid__item ">
+												<h5 class="rvt-border-top rvt-p-top-sm">Add New Supported Department</h5>
+												<EditForm EditContext="@SupportRelationshipAddContext">
+													<RivetInputSelect @bind-Value="SupportRelationshipToAdd.SupportType" Label="Support Type" Description="" Options=SupportTypes DisplayLambda=@(r => r.Name) />
+													@if (SupportRelationshipToAdd.SupportTypeId != null)
+													{
+														<SuggestionButtons T="@SupportRelationshipResponse" Label="Department" Placeholder="Enter a search term" Description="Search by department name." ButtonClickedAction="@AddSupportRelationship" AsyncSuggestionGetter="@GetSupportRelationshipSuggestions" DisplayLambda=@(s => s.Department.Name) />
+													}
+												</EditForm>
+											</div>
+										</div>
+									}
 								</Content>
 							</Collapse>
 						}
@@ -346,7 +361,7 @@
 											</div>
 										</div>
 									}
-									</Content>
+								</Content>
 							</Collapse>
 						}
 					</div>
@@ -365,13 +380,16 @@
 	private List<SupportRelationshipResponse> SupportRelationships = new List<SupportRelationshipResponse>();
 	private List<BuildingRelationship> BuildingRelationships = new List<BuildingRelationship>();
 	private List<ToolResponse> UnitTools = new List<ToolResponse>();
+	private List<SupportType> SupportTypes = new List<SupportType>();
 	private bool ShowLoader = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	private bool EditMode = false;
 	private EditContext UnitEditContext;
 	private EditContext BuildingRelationshipAddContext;
+	private EditContext SupportRelationshipAddContext;
 	private UnitRequest UnitToUpdate;
 	private Building BuildingRelationshipToAdd = new Building();
+	private SupportRelationshipResponse SupportRelationshipToAdd = new SupportRelationshipResponse();
 	private bool UnitFormInvalid = false;
 	private bool CanEditUnitDetails = false;
 	private bool CanEditMemberTools = false;
@@ -393,8 +411,10 @@
 		await FeatchAllDetails();
 
 		UnitEditContext = new EditContext(UnitToUpdate);
-		BuildingRelationshipAddContext = new EditContext(UnitToUpdate);
+		BuildingRelationshipAddContext = new EditContext(BuildingRelationshipToAdd);
+		SupportRelationshipAddContext = new EditContext(SupportRelationshipToAdd);
 		UnitEditContext.OnFieldChanged += HandleUnitFormFieldChanged;
+		SupportRelationshipAddContext.OnFieldChanged += HandleSupportRelationshipFormFieldChanged;
 		Navigation.LocationChanged += HandleLocationChanged;
 	}
 
@@ -415,7 +435,8 @@
 							GetUnitChildren(),
 							GetSupportRelationships(),
 							GetBuildingRelationships(),
-							GetUnitTools()
+							GetUnitTools(),
+							GetSupportTypes()
 						});
 				SetEditMode();
 				UnitToUpdate = new UnitRequest
@@ -433,6 +454,7 @@
 	{
 		Navigation.LocationChanged -= HandleLocationChanged;
 		UnitEditContext.OnFieldChanged -= HandleUnitFormFieldChanged;
+		SupportRelationshipAddContext.OnFieldChanged -= HandleSupportRelationshipFormFieldChanged;
 	}
 
 	private async void AddBuildingRelationship(Building request)
@@ -446,8 +468,23 @@
 		await GetBuildingRelationships();
 		StateHasChanged();
 	}
+	private async void AddSupportRelationship(SupportRelationshipResponse request)
+	{
+		GeneralException = null;
+		await Post<SupportRelationshipResponse>("supportRelationships", new SupportRelationshipResponse
+		{
+			UnitId = CurrentUnit.Id,
+			DepartmentId = request.DepartmentId,
+			SupportTypeId = SupportRelationshipToAdd.SupportTypeId,
+		});
+		SupportRelationshipToAdd.SupportType = null;
+		SupportRelationshipToAdd.SupportTypeId = null;
+		await GetSupportRelationships();
+		StateHasChanged();
+	}
 
-	public string BuildingRelationshipDisplayLamba(Building building) {
+	public string BuildingRelationshipDisplayLamba(Building building)
+	{
 		return $"{building.Name} ({building.Code}) {string.Join(", ", building.Address, building.City)}";
 	}
 
@@ -475,11 +512,29 @@
 		return response.Value;
 	}
 
+	private async Task<List<SupportRelationshipResponse>> GetSupportRelationshipSuggestions(string searchTerm)
+	{
+		var response = await Get<List<Department>>($"/departments?q={searchTerm}&_limit=15");
+		return response.Value.Select(department => new SupportRelationshipResponse
+		{
+			UnitId = CurrentUnit.Id,
+			Department = department,
+			DepartmentId = department.Id,
+			SupportTypeId = SupportRelationshipToAdd.SupportTypeId,
+			SupportType = SupportRelationshipToAdd.SupportType
+		}).ToList();
+	}
+
 	private async Task GetSupportRelationships()
 	{
 		var response = await Get<List<SupportRelationshipResponse>>($"/Units/{UnitId}/supportedDepartments");
 		SupportRelationships = response.Value;
 		CanEditSupportRelationships = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
+	}
+	private async Task GetSupportTypes()
+	{
+		var response = await Get<List<SupportType>>($"/SupportTypes");
+		SupportTypes = response.Value;
 	}
 
 	private async Task GetUnit()
@@ -516,7 +571,11 @@
 		SetEditMode();
 		StateHasChanged();
 	}
-
+	private void HandleSupportRelationshipFormFieldChanged(object sender, FieldChangedEventArgs e)
+	{
+		SupportRelationshipToAdd.SupportTypeId = SupportRelationshipToAdd.SupportType?.Id;
+		StateHasChanged();
+	}
 	private void HandleUnitFormFieldChanged(object sender, FieldChangedEventArgs e)
 	{
 		UnitFormInvalid = !UnitEditContext.Validate();
