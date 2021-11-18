@@ -257,6 +257,17 @@
 											}
 										</div>
 									}
+									@if (CanEditUnitChildren && EditMode)
+									{
+										<div class="rvt-grid rvt-p-top-sm">
+											<div class="rvt-grid__item ">
+												<h5 class="rvt-border-top rvt-p-top-sm">Add New Child Unit</h5>
+												<EditForm EditContext="@ChildUnitAddContext">
+													<SuggestionButtons T="@UnitResponse" Label="Child Unit" Placeholder="Enter a search term" Description="Search by unit name." ButtonClickedAction="@AddChildUnit" AsyncSuggestionGetter="@GetChildUnitSuggestions" DisplayLambda=@(s => s.Name) />
+												</EditForm>
+											</div>
+										</div>
+									}
 								</Content>
 							</Collapse>
 						}
@@ -387,9 +398,11 @@
 	private EditContext UnitEditContext;
 	private EditContext BuildingRelationshipAddContext;
 	private EditContext SupportRelationshipAddContext;
+	private EditContext ChildUnitAddContext;
 	private UnitRequest UnitToUpdate;
 	private Building BuildingRelationshipToAdd = new Building();
 	private SupportRelationshipResponse SupportRelationshipToAdd = new SupportRelationshipResponse();
+	private UnitResponse ChildUnitToAdd = new UnitResponse();
 	private bool UnitFormInvalid = false;
 	private bool CanEditUnitDetails = false;
 	private bool CanEditMemberTools = false;
@@ -413,6 +426,7 @@
 		UnitEditContext = new EditContext(UnitToUpdate);
 		BuildingRelationshipAddContext = new EditContext(BuildingRelationshipToAdd);
 		SupportRelationshipAddContext = new EditContext(SupportRelationshipToAdd);
+		ChildUnitAddContext = new EditContext(ChildUnitToAdd);
 		UnitEditContext.OnFieldChanged += HandleUnitFormFieldChanged;
 		SupportRelationshipAddContext.OnFieldChanged += HandleSupportRelationshipFormFieldChanged;
 		Navigation.LocationChanged += HandleLocationChanged;
@@ -468,6 +482,14 @@
 		await GetBuildingRelationships();
 		StateHasChanged();
 	}
+	private async void AddChildUnit(UnitResponse request)
+	{
+		GeneralException = null;
+		request.ParentId = CurrentUnit.Id;
+		await Put<UnitResponse>($"units/{request.Id}", request);
+		await GetUnitChildren();
+		StateHasChanged();
+	}
 	private async void AddSupportRelationship(SupportRelationshipResponse request)
 	{
 		GeneralException = null;
@@ -509,6 +531,11 @@
 	private async Task<List<Building>> GetBuildingRelationshipSuggestions(string searchTerm)
 	{
 		var response = await Get<List<Building>>($"/buildings?q={searchTerm}&_limit=15");
+		return response.Value;
+	}
+	private async Task<List<UnitResponse>> GetChildUnitSuggestions(string searchTerm)
+	{
+		var response = await Get<List<UnitResponse>>($"/units?q={searchTerm}&_limit=15");
 		return response.Value;
 	}
 
