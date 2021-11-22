@@ -420,9 +420,7 @@
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
-
 		await FeatchAllDetails();
-
 		UnitEditContext = new EditContext(UnitToUpdate);
 		BuildingRelationshipAddContext = new EditContext(BuildingRelationshipToAdd);
 		SupportRelationshipAddContext = new EditContext(SupportRelationshipToAdd);
@@ -430,6 +428,7 @@
 		UnitEditContext.OnFieldChanged += HandleUnitFormFieldChanged;
 		SupportRelationshipAddContext.OnFieldChanged += HandleSupportRelationshipFormFieldChanged;
 		Navigation.LocationChanged += HandleLocationChanged;
+		SetEditMode();
 	}
 
 	protected override async Task OnParametersSetAsync()
@@ -444,15 +443,14 @@
 			using (Loading())
 			{
 				await Task.WhenAll(new[] {
-							GetUnit(),
-							GetUnitMembers(),
-							GetUnitChildren(),
-							GetSupportRelationships(),
-							GetBuildingRelationships(),
-							GetUnitTools(),
-							GetSupportTypes()
-						});
-				SetEditMode();
+					GetUnit(),
+					GetUnitMembers(),
+					GetUnitChildren(),
+					GetSupportRelationships(),
+					GetBuildingRelationships(),
+					GetUnitTools(),
+					GetSupportTypes()
+				});
 				UnitToUpdate = new UnitRequest
 				{
 					Name = CurrentUnit.Name,
