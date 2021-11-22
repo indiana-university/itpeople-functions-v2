@@ -393,8 +393,8 @@
 	private List<ToolResponse> UnitTools = new List<ToolResponse>();
 	private List<SupportType> SupportTypes = new List<SupportType>();
 	private bool ShowLoader = false;
-	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
-	private bool EditMode = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged); 
+	private bool EditMode => Navigation.Uri.Substring(Navigation.BaseUri.Length - 1).ToLower().StartsWith($"/units/{CurrentUnit.Id}/edit");
 	private EditContext UnitEditContext;
 	private EditContext BuildingRelationshipAddContext;
 	private EditContext SupportRelationshipAddContext;
@@ -421,14 +421,16 @@
 	{
 		await SetLoggedInUser();
 		await FeatchAllDetails();
-		UnitEditContext = new EditContext(UnitToUpdate);
-		BuildingRelationshipAddContext = new EditContext(BuildingRelationshipToAdd);
-		SupportRelationshipAddContext = new EditContext(SupportRelationshipToAdd);
-		ChildUnitAddContext = new EditContext(ChildUnitToAdd);
-		UnitEditContext.OnFieldChanged += HandleUnitFormFieldChanged;
-		SupportRelationshipAddContext.OnFieldChanged += HandleSupportRelationshipFormFieldChanged;
-		Navigation.LocationChanged += HandleLocationChanged;
-		SetEditMode();
+		using (Loading())
+		{
+			UnitEditContext = new EditContext(UnitToUpdate);
+			BuildingRelationshipAddContext = new EditContext(BuildingRelationshipToAdd);
+			SupportRelationshipAddContext = new EditContext(SupportRelationshipToAdd);
+			ChildUnitAddContext = new EditContext(ChildUnitToAdd);
+			UnitEditContext.OnFieldChanged += HandleUnitFormFieldChanged;
+			SupportRelationshipAddContext.OnFieldChanged += HandleSupportRelationshipFormFieldChanged;
+			Navigation.LocationChanged += HandleLocationChanged;
+		}
 	}
 
 	protected override async Task OnParametersSetAsync()
@@ -594,7 +596,6 @@
 
 	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
 	{
-		SetEditMode();
 		StateHasChanged();
 	}
 	private void HandleSupportRelationshipFormFieldChanged(object sender, FieldChangedEventArgs e)
@@ -652,13 +653,6 @@
 			await GetSupportRelationships();
 		}
 		StateHasChanged();
-	}
-
-
-	private void SetEditMode()
-	{
-		var path = Navigation.Uri.Substring(Navigation.BaseUri.Length - 1);
-		EditMode = path.ToLower().StartsWith($"/units/{CurrentUnit.Id}/edit");
 	}
 
 	private async Task ToggleArchiveStatus()
