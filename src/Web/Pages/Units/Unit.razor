@@ -393,7 +393,7 @@
 	private List<ToolResponse> UnitTools = new List<ToolResponse>();
 	private List<SupportType> SupportTypes = new List<SupportType>();
 	private bool ShowLoader = false;
-	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged); 
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	private bool EditMode => Navigation.Uri.Substring(Navigation.BaseUri.Length - 1).ToLower().StartsWith($"/units/{CurrentUnit.Id}/edit");
 	private EditContext UnitEditContext;
 	private EditContext BuildingRelationshipAddContext;
@@ -420,6 +420,10 @@
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
 		await FeatchAllDetails();
 		using (Loading())
 		{
@@ -431,11 +435,6 @@
 			SupportRelationshipAddContext.OnFieldChanged += HandleSupportRelationshipFormFieldChanged;
 			Navigation.LocationChanged += HandleLocationChanged;
 		}
-	}
-
-	protected override async Task OnParametersSetAsync()
-	{
-		await FeatchAllDetails();
 	}
 
 	private async Task FeatchAllDetails()
