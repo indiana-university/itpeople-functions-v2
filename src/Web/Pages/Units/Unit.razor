@@ -621,7 +621,7 @@
 
 	private async Task RemoveChildUnit(UnitResponse child)
 	{
-		var confirmMessage = $"Are you sure you want to remove {child.Name} as child of this unit?";
+		var confirmMessage = $"Are you sure you want to remove {child.Name} as a child of this unit?";
 		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
 		{
 			child.ParentId = null;
