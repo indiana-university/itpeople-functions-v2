@@ -173,7 +173,7 @@
 						</div>
 					</div>
 					<div class="rvt-grid__item--last rvt-grid__item-5-lg-up">
-						@if (CurrentUnit.Parent != null || UnitChildren.Count > 0)
+						@if (CurrentUnit.Parent != null || UnitChildren.Count > 0 || EditMode)
 						{
 							<Collapse>
 								<Title>Parent and Children</Title>
@@ -271,7 +271,7 @@
 								</Content>
 							</Collapse>
 						}
-						@if (SupportRelationships.Count > 0)
+						@if (SupportRelationships.Count > 0 || EditMode)
 						{
 							<Collapse>
 								<Title>Supported Departments</Title>
@@ -327,7 +327,7 @@
 								</Content>
 							</Collapse>
 						}
-						@if (BuildingRelationships.Count > 0)
+						@if (BuildingRelationships.Count > 0 || EditMode)
 						{
 							<Collapse>
 								<Title>Supported Buildings</Title>
