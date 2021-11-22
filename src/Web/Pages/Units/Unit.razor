@@ -399,7 +399,7 @@
 	private EditContext BuildingRelationshipAddContext;
 	private EditContext SupportRelationshipAddContext;
 	private EditContext ChildUnitAddContext;
-	private UnitRequest UnitToUpdate;
+	private UnitRequest UnitToUpdate = new UnitRequest();
 	private Building BuildingRelationshipToAdd = new Building();
 	private SupportRelationshipResponse SupportRelationshipToAdd = new SupportRelationshipResponse();
 	private UnitResponse ChildUnitToAdd = new UnitResponse();
@@ -420,11 +420,6 @@
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
-	}
-
-	protected override async Task OnParametersSetAsync()
-	{
-		await FeatchAllDetails();
 		using (Loading())
 		{
 			UnitEditContext = new EditContext(UnitToUpdate);
@@ -437,7 +432,12 @@
 		}
 	}
 
-	private async Task FeatchAllDetails()
+	protected override async Task OnParametersSetAsync()
+	{
+		await FetchAllDetails();
+	}
+
+	private async Task FetchAllDetails()
 	{
 		if (LoggedInUser != null)
 		{
@@ -452,14 +452,11 @@
 					GetUnitTools(),
 					GetSupportTypes()
 				});
-				UnitToUpdate = new UnitRequest
-				{
-					Name = CurrentUnit.Name,
-					Description = CurrentUnit.Description,
-					Url = CurrentUnit.Url,
-					Email = CurrentUnit.Email,
-					ParentId = CurrentUnit.ParentId
-				};
+				UnitToUpdate.Name = CurrentUnit.Name;
+				UnitToUpdate.Description = CurrentUnit.Description;
+				UnitToUpdate.Url = CurrentUnit.Url;
+				UnitToUpdate.Email = CurrentUnit.Email;
+				UnitToUpdate.ParentId = CurrentUnit.ParentId;
 			}
 		}
 	}
