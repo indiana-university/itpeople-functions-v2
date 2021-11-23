@@ -81,6 +81,11 @@
 
 	private async Task<List<PeopleLookupItem>> GetSuggestions(string searchTerm)
 	{
+		if(searchTerm.Length < 3)
+		{
+			return new List<PeopleLookupItem>();
+		}
+
 		var response = await Get<List<PeopleLookupItem>>($"people-lookup?q={searchTerm}");
 		return response.Value;
 	}
