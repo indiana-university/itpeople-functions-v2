@@ -89,7 +89,6 @@ namespace Integration
 			[TestCase(ValidLknopeJwt, TestEntities.UnitMembers.RSwansonLeaderId, EntityPermissions.Get, TestName="Les1", Description="As Leslie (viewer) I can't manage Ron's membership")]
 			[TestCase(ValidLknopeJwt, TestEntities.UnitMembers.LkNopeSubleadId, EntityPermissions.Get, TestName="Les2", Description="As Leslie (viewer) I can't manage Leslies's membership")]
             [TestCase(ValidLknopeJwt, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName="Les3", Description="As Leslie (viewer) I can't manage Ben's membership")]
-			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.BWyattMemberId, PermsGroups.All, TestName="Ben1", Description="As Ben (ManageMebers) I can manage Ben's membership")]
 			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.RSwansonLeaderId, EntityPermissions.Get, TestName="Ben2", Description="As Ben (ManageMebers) I can't manage Ron's membership (different unit)")]
 			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.LkNopeSubleadId,  EntityPermissions.Get, TestName="Ben3", Description="As Ben (ManageMebers) I can't manage Leslie's membership (different unit)")]
             [TestCase(ValidAdminJwt, TestEntities.UnitMembers.RSwansonLeaderId, PermsGroups.All, TestName="Adm1", Description="As a service admin I can do anything to any unit")]

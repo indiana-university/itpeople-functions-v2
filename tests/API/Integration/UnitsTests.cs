@@ -675,7 +675,17 @@ namespace Integration
         [TestFixture]
         public class UnitGetTools : ApiTest
         {
-            [Test]
+			[TestCase(ValidLknopeJwt, EntityPermissions.Get, Description = "As non-admin I can't create/delete member tools")]
+			[TestCase(ValidAdminJwt, PermsGroups.All, Description = "As a service admin I can create/modify/delete member tools")]
+			[TestCase(ValidBwyattJwt, PermsGroups.All, Description = "With manage tools permission, I can create/modify/delete member tools")]
+
+			public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, EntityPermissions expectedPermissions)
+			{
+				var resp = await GetAuthenticated($"units/3/tools", jwt);
+				AssertPermissions(resp, expectedPermissions);
+			}
+
+			[Test]
             public async Task AuthRequired()
             {
                 var resp = await GetAuthenticated($"units/{TestEntities.Units.CityOfPawneeUnitId}/tools", "bad token");

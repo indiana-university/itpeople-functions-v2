@@ -168,7 +168,7 @@ namespace API.Functions
         public static Task<IActionResult> GetUnitTools(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/tools")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetTools(req, unitId))
                 .Bind(t => Pipeline.Success(ToolResponse.ConvertList(t)))
                 .Finally(result => Response.Ok(req, result));
