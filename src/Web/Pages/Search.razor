@@ -41,52 +41,48 @@
 			</EditForm>
 			<div class="rvt-p-bottom-lg"/>
 			<DisplayException Ex=@GeneralException />
-			@if (ShowLoader)
-			{
-				<div class="rvt-flex rvt-items-center rvt-justify-center rvt-m-bottom-sm">
-					<div class="rvt-loader" aria-label="Content loading"></div>
-				</div>
-			}
-			else if(HasSearched)
-			{
-				<h2 class="rvt-ts-xl">Results for "@Q"</h2>
-				<div class="rvt-tabs">
-					<div class="rvt-tabs__tablist" role="tablist" aria-label="Rivet tabs">
-						<button class="rvt-tabs__tab" role="tab" aria-selected="true" data-tab="tab-people" id="t-people">
-							People (@People.Count())
-						</button>
-						<button class="rvt-tabs__tab" role="tab" aria-selected="false" data-tab="tab-units" id="t-units" tabindex="-1">
-							Units (@Units.Count())
-						</button>
-						<button class="rvt-tabs__tab" role="tab" aria-selected="false" data-tab="tab-departments" id="t-departments" tabindex="-1">
-							Departments (@Departments.Count())
-						</button>
-						<button class="rvt-tabs__tab" role="tab" aria-selected="false" data-tab="tab-buildings" id="t-buildings" tabindex="-1">
-							Buildings (@Buildings.Count())
-						</button>
+			<Loader Loading=ShowLoader>
+				@if(HasSearched)
+				{
+					<h2 class="rvt-ts-xl">Results for "@Q"</h2>
+					<div class="rvt-tabs">
+						<div class="rvt-tabs__tablist" role="tablist" aria-label="Rivet tabs">
+							<button class="rvt-tabs__tab" role="tab" aria-selected="true" data-tab="tab-people" id="t-people">
+								People (@People.Count())
+							</button>
+							<button class="rvt-tabs__tab" role="tab" aria-selected="false" data-tab="tab-units" id="t-units" tabindex="-1">
+								Units (@Units.Count())
+							</button>
+							<button class="rvt-tabs__tab" role="tab" aria-selected="false" data-tab="tab-departments" id="t-departments" tabindex="-1">
+								Departments (@Departments.Count())
+							</button>
+							<button class="rvt-tabs__tab" role="tab" aria-selected="false" data-tab="tab-buildings" id="t-buildings" tabindex="-1">
+								Buildings (@Buildings.Count())
+							</button>
+						</div>
+						<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-people" aria-labelledby="t-people">
+							<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">People</div>
+							<GridListItems Collection=@People LinkText=@(p => p.Name) LinkUri=@(p => $"/People/{HttpUtility.UrlEncode(p.Netid)}") Details=@(p => p.Position) />
+						</div>
+						<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-units" aria-labelledby="t-units" hidden="">
+							<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">Units</div>
+							<GridListItems Collection=@Units LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) Archived=@(u => !u.Active) />
+						</div>
+						<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-departments" aria-labelledby="t-departments" hidden="">
+							<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">Departments</div>
+							<GridListItems Collection=@Departments LinkText=@(d => d.Name) LinkUri=@(d => $"/Departments/{d.Id}") Details=@(d => d.Description) />
+						</div>
+						<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-buildings" aria-labelledby="t-buildings" hidden="">
+							<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">Buildings</div>
+							<GridListItems Collection=@Buildings LinkText=@(b => b.Name) LinkUri=@(b => $"/Buildings/{b.Id}") Details=@(b => b.Address) />
+						</div>
 					</div>
-					<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-people" aria-labelledby="t-people">
-						<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">People</div>
-						<GridListItems Collection=@People LinkText=@(p => p.Name) LinkUri=@(p => $"/People/{HttpUtility.UrlEncode(p.Netid)}") Details=@(p => p.Position) />
-					</div>
-					<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-units" aria-labelledby="t-units" hidden="">
-						<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">Units</div>
-						<GridListItems Collection=@Units LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) Archived=@(u => !u.Active) />
-					</div>
-					<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-departments" aria-labelledby="t-departments" hidden="">
-						<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">Departments</div>
-						<GridListItems Collection=@Departments LinkText=@(d => d.Name) LinkUri=@(d => $"/Departments/{d.Id}") Details=@(d => d.Description) />
-					</div>
-					<div class="rvt-tabs__panel" tabindex="0" role="tabpanel" id="tab-buildings" aria-labelledby="t-buildings" hidden="">
-						<div class="rvt-ts-23 rvt-text-bold rvt-p-bottom-md">Buildings</div>
-						<GridListItems Collection=@Buildings LinkText=@(b => b.Name) LinkUri=@(b => $"/Buildings/{b.Id}") Details=@(b => b.Address) />
-					</div>
-				</div>
-			}
-			else
-			{
-				<p>Please enter a search term and click the Search button.</p>
-			}
+				}
+				else
+				{
+					<p>Please enter a search term and click the Search button.</p>
+				}
+			</Loader>
 		</Authenticated>
 	</AuthenticatedView>
 </div>
