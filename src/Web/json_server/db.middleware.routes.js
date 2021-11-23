@@ -65,6 +65,17 @@ module.exports = (req, res, next) => {
     return next();
   }
 
+  if (req.path.startsWith("/people") && req.query.q && req.query.q.length < 3) {
+    let error = {
+      "statusCode": 400,
+      "errors": [ "The query parameter 'q' must be at least 3 characters long." ],
+      "details": req.query
+    };
+    res.status(400);
+    res.send(error);
+    return next();
+  }
+
   if (req.path.startsWith("/people/")) {
     const pathParts = req.path.split("/");
     const username = pathParts[2];
