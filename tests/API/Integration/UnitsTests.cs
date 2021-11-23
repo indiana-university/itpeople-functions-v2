@@ -699,6 +699,28 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<List<Tool>>();
                 AssertIdsMatchContent(expectedToolIds, actual);
             }
+
+            [TestCase(UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(UnitPermissions.ManageTools, PermsGroups.All, Description = "ManageTools")]
+            [TestCase(UnitPermissions.ManageMembers, PermsGroups.All, Description = "ManageMember")]
+            [TestCase(UnitPermissions.Owner, PermsGroups.All, Description = "Owner")]
+            public async Task ReturnsCorrectPermissionsForUnitPermissions(UnitPermissions providedPermission, EntityPermissions expectedPermission)
+            {
+                // Update Ben's membership to be providedPermission
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                var membership = await db.UnitMembers
+                    .Include(um => um.Person)
+                    .Include(um => um.Unit)
+                    .SingleAsync(um => um.Id == TestEntities.UnitMembers.BWyattMemberId);
+                membership.Permissions = providedPermission;
+                await db.SaveChangesAsync();
+
+                // List the tools for that unit as lknope
+                var resp = await GetAuthenticated($"units/{membership.UnitId}/tools", ValidBwyattJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                // They should be able to Get, Post, and Put.
+                AssertPermissions(resp, expectedPermission);
+            }
         }
     }
 }
