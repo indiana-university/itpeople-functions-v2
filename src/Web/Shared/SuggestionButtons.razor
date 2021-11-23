@@ -12,6 +12,13 @@
 @if(string.IsNullOrWhiteSpace(SearchTerm) == false)
 {
 	<Loader Loading="ShowLoader">
+		@if(RequestException != null)
+		{
+			<div class="rvt-alert rvt-alert--warning rvt-m-tb-md" role="alertdialog" aria-labelledby="@ExceptionGuid">
+				<h1 class="rvt-alert__title" id="@ExceptionGuid">Error While Fetching Suggestions</h1>
+				<p class="rvt-alert__message">@RequestException.Message</p>
+			</div>
+		}
 		<ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
 			@foreach (var suggestion in Suggestions)
 			{
@@ -63,6 +70,8 @@
 	private CancelableSuggestionsRequest SuggestionsRequest;
 
 	private bool ShowLoader => SuggestionsRequest?.Task == null ? false : !SuggestionsRequest.Task.IsCompleted;
+	private Exception RequestException;
+	private string ExceptionGuid = new System.Guid().ToString();
 
 
 	private async Task SearchTermListenForEnter(KeyboardEventArgs e)
@@ -109,9 +118,11 @@
 
 	private async Task UpdateSuggestions(string searchTerm)
 	{
+		RequestException = null;
+		Suggestions = new List<T>();
+		
 		if (string.IsNullOrWhiteSpace(searchTerm))
 		{
-			Suggestions = new List<T>();
 			return;
 		}
 
@@ -131,12 +142,22 @@
 
 				if (ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
 				{
-					var response = await AsyncSuggestionGetter(searchTerm);
-
-					// If this task was canceled before we got a response do not update Suggestions.
-					if (ts.Token.IsCancellationRequested == false)
+					try
 					{
-						Suggestions = response;
+						List<T> response = await AsyncSuggestionGetter(searchTerm);
+						// If this task was canceled before we got a response do not update Suggestions.
+						if (ts.Token.IsCancellationRequested == false)
+						{
+							if(response == null)
+							{
+								throw new Exception($"Unable to interpret response as a List of type {typeof(T).Name}");
+							}
+							Suggestions = response;
+						}
+					}
+					catch(Exception ex)
+					{
+						RequestException = ex;
 					}
 				}
 			}, ts.Token)
