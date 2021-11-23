@@ -167,10 +167,16 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No unit was found with the provided ID.")]
         public static Task<IActionResult> GetUnitTools(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/tools")] HttpRequest req, int unitId) 
-            => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+        {
+            string rni = null;
+            return Security.Authenticate(req)
+                .Tap(requestor => rni = requestor)
+                .Bind(_ => UnitsRepository.GetMembers(req, unitId))
+                .Bind(members => Pipeline.Success<int>(members.FirstOrDefault(m => m.Netid == rni)?.Id ?? -1))
+                .Bind(unitMemberId => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, rni, unitMemberId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetTools(req, unitId))
                 .Bind(t => Pipeline.Success(ToolResponse.ConvertList(t)))
                 .Finally(result => Response.Ok(req, result));
+        }
     }
 }
