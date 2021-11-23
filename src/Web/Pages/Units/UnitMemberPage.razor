@@ -206,7 +206,7 @@
 
 	private async Task SetToolOptions()
 	{
-		var response = await Get<List<Tool>>($"tools");
+		var response = await Get<List<Tool>>($"units/{UnitId}/tools");
 		ToolOptions = response.Value;
 	}
 
