@@ -33,7 +33,24 @@
 		<Authenticated>
 			<Loader Loading="ShowLoader">
 				<DisplayException Ex=@GeneralException />
-				@if (CurrentUnit != null)
+				@if (CreateMode)
+				{
+					<section class="rvt-p-bottom-xxl">
+						<div class="rvt-border-bottom rvt-p-bottom-sm">
+							<h1>Create</h1>
+							<EditForm EditContext="@UnitEditContext">
+								<RivetInputText @bind-Value="UnitToUpdate.Name" Label="Name" />
+								<RivetInputTextArea @bind-Value="UnitToUpdate.Description" Label="Description" />
+								<RivetInputText @bind-Value="UnitToUpdate.Url" Label="URL" />
+								<RivetInputText @bind-Value="UnitToUpdate.Email" Label="Contact Email" />
+								<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(UnitFormInvalid || ShowLoader)" @onclick="CreateUnit">
+									Create
+								</button>
+							</EditForm>
+						</div>
+					</section>
+				}
+				else
 				{
 					<section class="rvt-p-bottom-xxl">
 						@if (EditMode == false)
@@ -513,6 +530,19 @@
 	public string BuildingRelationshipDisplayLamba(Building building)
 	{
 		return $"{building.Name} ({building.Code}) {string.Join(", ", building.Address, building.City)}";
+	}
+	public async Task CreateUnit()
+	{
+		using (Loading())
+		{
+			GeneralException = null;
+			var response = await Post<UnitResponse>("/units",UnitToUpdate);
+			CurrentUnit = response.Value;
+			if(CurrentUnit != null & CurrentUnit.Id != 0)
+			{
+				Navigation.NavigateTo($"/Units/{CurrentUnit.Id}");
+			}
+		}
 	}
 
 	private async Task DeleteUnit()
