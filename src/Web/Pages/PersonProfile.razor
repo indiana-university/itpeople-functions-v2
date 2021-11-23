@@ -105,8 +105,10 @@
                         </div>
                     </div>
                 </div>
-                <DisplayException Ex=@GeneralException />
             }
+                
+            <DisplayException Ex=@GeneralException />
+
             </Authenticated>
         </AuthenticatedView>
     }
@@ -148,10 +150,17 @@
             string responsemsg = await response.Content.ReadAsStringAsync();
             UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
             ProfileName = UpdatedPerson.Name;
+        }      
+        else if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
+            UpdatedPerson = null;
+            ProfileName = "Not Found";
+            return;
         }
         else
         {
-            GeneralException = new Exception($"Failed to fetch the person's details..");
+            GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
             return;
         }
         GetEntityPermissions(response);

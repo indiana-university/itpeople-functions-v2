@@ -40,53 +40,53 @@
 			</div>
 
 			<DisplayException Ex=@GeneralException />
+			<Loader Loading=ShowLoader>
+				<div class="rvt-grid rvt-m-top-md">
+					<div class="rvt-grid__item-5-md-up">
+						<EditForm  EditContext="@editContext">
+							<DataAnnotationsValidator />
 
-			<div class="rvt-grid rvt-m-top-md">
-				<div class="rvt-grid__item-5-md-up">
-					<EditForm  EditContext="@editContext">
-						<DataAnnotationsValidator />
+							<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
+							<RivetInputEnumCheckbox @bind-Value="Roles" Inline=@inline />
+							
+							<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Campus</h2>
+							<RivetInputEnumCheckbox @bind-Value="Campuses" Inline=@inline />
 
-						<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
-						<RivetInputEnumCheckbox @bind-Value="Roles" Inline=@inline />
-						
-						<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Campus</h2>
-						<RivetInputEnumCheckbox @bind-Value="Campuses" Inline=@inline />
+							<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Area</h2>
+							<RivetInputEnumCheckbox @bind-Value="Areas" Inline=@inline />
 
-						<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Area</h2>
-						<RivetInputEnumCheckbox @bind-Value="Areas" Inline=@inline />
-
-						<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Responsibilities</h2>
-						<RivetInputEnumCheckbox @bind-Value="Responsibilities" Inline=@inline />
-					</EditForm> 
-				</div>
-				
-				<div class="rvt-grid__item-7-md-up">
-					@if (peopleList.Count() != 0)
-					{
-						<div class="rvt-grid rvt-p-bottom-lg">
-							<button type="button" class="rvt-button" @onclick="ExportResultsToCSV" role="menuitemradio">
-								<rvt-icon name="download" />
-								<span class="rvt-m-left-xs">Export results to CSV</span>
-							</button>
-						</div>
-						
-						@foreach(var person in peopleList)
+							<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Responsibilities</h2>
+							<RivetInputEnumCheckbox @bind-Value="Responsibilities" Inline=@inline />
+						</EditForm> 
+					</div>
+					
+					<div class="rvt-grid__item-7-md-up">
+						@if (peopleList.Count() != 0)
 						{
-							<div class="rvt-grid rvt-p-bottom-md">
-								<div><a href="/people/@person.Id" class="rvt-link-bold">@person.Name</a> (<a href="mailto:@person.CampusEmail">@person.Netid</a>) <br>@person.Position<br></div>
+							<div class="rvt-grid rvt-p-bottom-lg">
+								<button type="button" class="rvt-button" @onclick="ExportResultsToCSV" role="menuitemradio">
+									<rvt-icon name="download" />
+									<span class="rvt-m-left-xs">Export results to CSV</span>
+								</button>
 							</div>
+							
+							@foreach(var person in peopleList)
+							{
+								<div class="rvt-grid rvt-p-bottom-md">
+									<div><a href="/people/@person.Id" class="rvt-link-bold">@person.Name</a> (<a href="mailto:@person.CampusEmail">@person.Netid</a>) <br>@person.Position<br></div>
+								</div>
+							}
 						}
-					}
-					else if (ShowNoResultsMessage)
-					{
-						<div class="rvt-panel"><p>No people found matching those filters. You can make yourself easier to find by <a href="/people/@LoggedInUser.Username">keeping your profile up to date.</a></p></div>
-					}
+						else if (ShowNoResultsMessage)
+						{
+							<div class="rvt-panel"><p>No people found matching those filters. You can make yourself easier to find by <a href="/people/@LoggedInUser.Username">keeping your profile up to date.</a></p></div>
+						}
+					</div>
 				</div>
-			</div>
 				<p>
 					<button id="apply-filter" class="rvt-button" type="submit" @onclick=@UpdateQueryString>Apply Filters</button>
 				</p>
-
+			</Loader>
 		</Authenticated>
 	</AuthenticatedView>
 </div>

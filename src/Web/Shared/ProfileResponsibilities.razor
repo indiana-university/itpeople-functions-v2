@@ -12,7 +12,7 @@
 <div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
 	<div>
 		<div style="float: right;">
-			@if(CrudPerms.HasFlag(EntityPermissions.Post))
+			@if(CrudPerms.HasFlag(EntityPermissions.Put))
 			{
 				<button type="button" title="Edit Responsibilities" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-r" @onclick=@(() => ResetForm())>
 					<rvt-icon name="pencil" />

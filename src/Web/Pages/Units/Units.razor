@@ -49,24 +49,25 @@
 			</p>
 
 			<DisplayException Ex=@GeneralException />
+			<Loader Loading=ShowLoader>
+				@if(MyUnits.Count() > 0)
+				{
+					<h2 class="rvt-ts-md">My Units</h2>
+					<GridListItems Collection=@MyUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) />
+				}
 
-			@if(MyUnits.Count() > 0)
-			{
-				<h2 class="rvt-ts-md">My Units</h2>
-				<GridListItems Collection=@MyUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) />
-			}
+				@if(ActiveUnits.Count() > 0)
+				{
+					<h2 class="rvt-ts-md">Active Units</h2>
+					<GridListItems Collection=@ActiveUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) />
+				}
 
-			@if(ActiveUnits.Count() > 0)
-			{
-				<h2 class="rvt-ts-md">Active Units</h2>
-				<GridListItems Collection=@ActiveUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) />
-			}
-
-			@if(ArchivedUnits.Count() > 0)
-			{
-				<h2 class="rvt-ts-md">Archived Units</h2>
-				<GridListItems Collection=@ArchivedUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) Archived=@(u => !u.Active) />
-			}
+				@if(ArchivedUnits.Count() > 0)
+				{
+					<h2 class="rvt-ts-md">Archived Units</h2>
+					<GridListItems Collection=@ArchivedUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) Archived=@(u => !u.Active) />
+				}
+			</Loader>
 		</Authenticated>
 	</AuthenticatedView>
 </div>
@@ -78,6 +79,8 @@
 	private IEnumerable<UnitResponse> ArchivedUnits = new List<UnitResponse>();
 	private AuthenticatedUser LoggedInUser;
 	private EntityPermissions CrudPerms;
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	private Exception GeneralException;
 	
 	protected override async Task OnInitializedAsync()
@@ -85,8 +88,11 @@
 		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
 		if(LoggedInUser != null)
 		{
-			// Fetch my units and the whole list of units simultaneously.
-			await Task.WhenAll(new[] { FetchMyUnits(), FetchUnits() });
+			using(Loading())
+			{
+				// Fetch my units and the whole list of units simultaneously.
+				await Task.WhenAll(new[] { FetchMyUnits(), FetchUnits() });
+			}
 		}
 	}
 
