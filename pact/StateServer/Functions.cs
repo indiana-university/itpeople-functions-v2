@@ -102,7 +102,7 @@ namespace StateServer
                 TestEntities.UnitMembers.BWyattAditor,
                 TestEntities.UnitMembers.AdminLeader,
                 TestEntities.UnitMembers.ArchivedRon,
-                TestEntities.UnitMembers.ArchivedApril,
+                TestEntities.UnitMembers.ArchivedApril
             });
             
             peopleContext.Tools.AddRange(new List<Tool> { 

@@ -153,10 +153,10 @@ namespace Integration
 
             [TestCase("Owner", new int[]{ TestEntities.People.RSwansonId })]
             [TestCase("Viewer", new int[]{ TestEntities.People.LKnopeId })]
-            [TestCase("ManageMembers", new int[]{ TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId })]
-            [TestCase("managemembers", new int[]{ TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "Case insensitive match for Permissions.")]
-            [TestCase("ManageTools", new int[0])]
-            [TestCase("Viewer, ManageMembers", new int[]{ TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "Multiple Permissions provided.")]
+            [TestCase("ManageMembers", new int[]{ TestEntities.People.ServiceAdminId })]
+            [TestCase("managemembers", new int[]{ TestEntities.People.ServiceAdminId }, Description = "Case insensitive match for Permissions.")]
+            [TestCase("ManageTools", new int[] { TestEntities.People.BWyattId })]
+            [TestCase("Viewer, ManageMembers", new int[]{ TestEntities.People.LKnopeId, TestEntities.People.ServiceAdminId }, Description = "Multiple Permissions provided.")]
             public async Task CanSearchByPermission(string permissions, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?permission={permissions}");

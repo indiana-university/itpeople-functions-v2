@@ -409,7 +409,7 @@ namespace Models
 			{
 				Id = BWyattMemberId,
 				Role = Role.Member,
-				Permissions = UnitPermissions.ManageMembers,
+				Permissions = UnitPermissions.ManageTools,
 				PersonId = People.BWyattId,
 				Title = "Auditor",
 				Percentage = 100,
