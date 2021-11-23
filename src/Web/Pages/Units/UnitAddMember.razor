@@ -24,10 +24,22 @@
 	</div>
 
 	<DisplayException Ex=@GeneralException />
-
-	<EditForm EditContext="@FormContext">
-		<SuggestionButtons T=PeopleLookupItem Label="Search" Placeholder="Enter a search term" Description="Search by username or first and last name." ButtonClickedAction=AddPerson AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name} ({s.NetId})") />
-	</EditForm>
+	
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=/Units/@UnitId/AddMember">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<EditForm EditContext="@FormContext">
+				<SuggestionButtons T=PeopleLookupItem Label="Search" Placeholder="Enter a search term" Description="Search by username or first and last name." ButtonClickedAction=AddPerson AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name} ({s.NetId})") />
+			</EditForm>
+		</Authenticated>
+	</AuthenticatedView>
 </div>
 
 @code
@@ -55,8 +67,11 @@
 
 	private async Task SetCurrentUnit()
 	{
-		var response = await Get<UnitResponse>($"units/{UnitId}");
-		CurrentUnit = response.Value;
+		if(LoggedInUser != null)
+		{
+			var response = await Get<UnitResponse>($"units/{UnitId}");
+			CurrentUnit = response.Value;
+		}
 	}
 
 	private void AddPerson(PeopleLookupItem pli)
