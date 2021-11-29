@@ -221,6 +221,18 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
 
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.Forbidden, PermsGroups.All, Description = "Owner")]
+			public async Task TargetUnitCannotSeizeBuildingRelationship(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				// Trying to change the unit from "City of Pawnee"(the parent unit) to "Parks & Rec."
+				var req = new BuildingRelationshipRequest
+				{
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
+					BuildingId = TestEntities.Buildings.RonsCabinId
+				};
+				await PutReturnsCorrectEntityPermissions($"buildingRelationships/{TestEntities.BuildingRelationships.RonsCabinCityOfPawneeId}", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+			}
+			
 			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
 			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
 			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
@@ -231,12 +243,14 @@ namespace Integration
 			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.OK, PermsGroups.All, Description = "Owner Inheritted From Parent")]
 			public async Task BuildingRelationshipPutEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
 			{
+				// Add a building relationshp for Parks & Rec so we can test inheritted permissions
+				var relationship = await GenerateParksAndRecCabinRelationship();
 				var req = new BuildingRelationshipRequest
 				{
-					UnitId = TestEntities.Units.ParksAndRecUnitId,
-					BuildingId = TestEntities.Buildings.RonsCabinId
+					UnitId = relationship.UnitId,
+					BuildingId = TestEntities.Buildings.CityHallId
 				};
-				await PutReturnsCorrectEntityPermissions($"buildingRelationships/{TestEntities.BuildingRelationships.RonsCabinCityOfPawneeId}", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+				await PutReturnsCorrectEntityPermissions($"buildingRelationships/{relationship.Id}", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
 			}
 		}
 
@@ -262,17 +276,24 @@ namespace Integration
 			public async Task BuildingRelationshipDeleteEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
 			{
 				// Add a building relationshp for Parks & Rec so we can test inheritted permissions
-				var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
-				var relationship = new BuildingRelationship
-				{
-					BuildingId = TestEntities.Buildings.RonsCabinId,
-					UnitId = TestEntities.Units.ParksAndRecUnitId
-				};
-				await db.BuildingRelationships.AddAsync(relationship);
-				await db.SaveChangesAsync();
+				var relationship = await GenerateParksAndRecCabinRelationship();
 
 				await DeleteReturnsCorrectEntityPermissions($"buildingRelationships/{relationship.Id}", unitWithPermissions, providedPermission, expectedCode, expectedPermission);
 			}
+		}
+
+		public static async Task<BuildingRelationship> GenerateParksAndRecCabinRelationship()
+		{
+			var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+			var relationship = new BuildingRelationship
+			{
+				BuildingId = TestEntities.Buildings.RonsCabinId,
+				UnitId = TestEntities.Units.ParksAndRecUnitId
+			};
+			await db.BuildingRelationships.AddAsync(relationship);
+			await db.SaveChangesAsync();
+
+			return relationship;
 		}
 	}
 }
