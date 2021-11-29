@@ -715,22 +715,7 @@ namespace Integration
             [TestCase(UnitPermissions.ManageMembers, PermsGroups.All, Description = "ManageMember")]
             [TestCase(UnitPermissions.Owner, PermsGroups.All, Description = "Owner")]
             public async Task ReturnsCorrectPermissionsForUnitPermissions(UnitPermissions providedPermission, EntityPermissions expectedPermission)
-            {
-                // Update Ben's membership to be providedPermission
-                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
-                var membership = await db.UnitMembers
-                    .Include(um => um.Person)
-                    .Include(um => um.Unit)
-                    .SingleAsync(um => um.Id == TestEntities.UnitMembers.BWyattMemberId);
-                membership.Permissions = providedPermission;
-                await db.SaveChangesAsync();
-
-                // List the tools for that unit as lknope
-                var resp = await GetAuthenticated($"units/{membership.UnitId}/tools", ValidBwyattJwt);
-                AssertStatusCode(resp, HttpStatusCode.OK);
-                // They should be able to Get, Post, and Put.
-                AssertPermissions(resp, expectedPermission);
-            }
+                => await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.AuditorId}/tools", TestEntities.Units.AuditorId, providedPermission, expectedPermission);
         }
     }
 }
