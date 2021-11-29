@@ -1,4 +1,5 @@
 @using Models
+@using Models.Enums
 @using web.Shared
 @using RivetBlazor.Components
 @implements IDisposable
@@ -15,7 +16,7 @@
 			<li aria-current="page">Add Member</li>
 		</ol>
 	</nav>
-	
+
 	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
 		<!-- our title -->
 		<div class="rvt-m-right-sm-md-up">
@@ -24,7 +25,7 @@
 	</div>
 
 	<DisplayException Ex=@GeneralException />
-	
+
 	<AuthenticatedView>
 		<NotAuthenticated>
 			<p>
@@ -48,9 +49,10 @@
 	public string UnitId { get; set; }
 
 	private UnitResponse CurrentUnit;
-	
+
 	private object ObjForContext = new object();
 	private EditContext FormContext;
+	private bool CanEditUnitMembers = false;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -67,10 +69,15 @@
 
 	private async Task SetCurrentUnit()
 	{
-		if(LoggedInUser != null)
+		if (LoggedInUser != null)
 		{
 			var response = await Get<UnitResponse>($"units/{UnitId}");
 			CurrentUnit = response.Value;
+			CanEditUnitMembers = response.Permissions.HasFlag(EntityPermissions.Post);
+			if(CanEditUnitMembers == false)
+			{
+				GeneralException = new Exception($"You do not have the permissions to add users to this unit.");
+			}
 		}
 	}
 
@@ -81,7 +88,7 @@
 
 	private async Task<List<PeopleLookupItem>> GetSuggestions(string searchTerm)
 	{
-		if(searchTerm.Length < 3)
+		if (searchTerm.Length < 3)
 		{
 			return new List<PeopleLookupItem>();
 		}
@@ -90,5 +97,5 @@
 		return response.Value;
 	}
 
-	public void Dispose() {}
+	public void Dispose() { }
 }
