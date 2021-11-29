@@ -88,6 +88,17 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, expectedPermissions);
             }
+
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+            public async Task ReturnsCorrectPermissionsSingleUnit(int unitToCheck, int unitWithPermissions, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+                => await GetReturnsCorrectEntityPermissions($"units/{unitToCheck}", unitWithPermissions, providedPermission, expectedPermission);
         }
 
         public class UnitCreate : ApiTest
