@@ -67,20 +67,26 @@
 
 	protected override async Task OnParametersSetAsync()
 	{
-		await SetCurrentUnit();
+		if (LoggedInUser != null)
+		{
+			await SetCurrentUnit();
+			await SetCurrentUnitMembers();
+		}
 	}
 
 	private async Task SetCurrentUnit()
 	{
-		if (LoggedInUser != null)
+		var response = await Get<UnitResponse>($"units/{UnitId}");
+		CurrentUnit = response.Value;
+	}
+
+	private async Task SetCurrentUnitMembers()
+	{
+		var response = await Get<List<UnitMemberResponse>>($"units/{UnitId}/members");
+		CanEditUnitMembers = response.Permissions.HasFlag(EntityPermissions.Post);
+		if (CanEditUnitMembers == false)
 		{
-			var response = await Get<UnitResponse>($"units/{UnitId}");
-			CurrentUnit = response.Value;
-			CanEditUnitMembers = response.Permissions.HasFlag(EntityPermissions.Post);
-			if(CanEditUnitMembers == false)
-			{
-				GeneralException = new Exception($"You do not have the permissions to add users to this unit.");
-			}
+			GeneralException = new Exception($"You do not have the permissions to add users to this unit.");
 		}
 	}
 
