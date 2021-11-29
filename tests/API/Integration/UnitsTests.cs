@@ -59,6 +59,13 @@ namespace Integration
                 var resp = await GetAuthenticated($"units", jwt);
                 AssertPermissions(resp, expectedPermissions);
             }
+
+            [TestCase(UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(UnitPermissions.Owner, EntityPermissions.Get, Description = "Owner")]
+            public async Task ReturnsCorrectPermissionsUnitListing(UnitPermissions providedPermission, EntityPermissions expectedPermission)
+                => await GetReturnsCorrectEntityPermissions($"units", TestEntities.Units.AuditorId, providedPermission, expectedPermission);
         }
 
         public class GetOne : ApiTest
