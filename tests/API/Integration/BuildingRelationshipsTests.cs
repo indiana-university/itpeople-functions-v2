@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Models;
+using Models.Enums;
 using NUnit.Framework;
 
 namespace Integration
@@ -120,6 +121,24 @@ namespace Integration
 				Assert.AreEqual(1, actual.Errors.Count);
 				Assert.Contains("The provided unit already has a support relationship with the provided building.", actual.Errors);
 			}
+
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.Created, PermsGroups.All, Description = "Owner")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.Created, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+			public async Task BuildingRelationshipPostEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				var req = new BuildingRelationshipRequest
+				{
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
+					BuildingId = TestEntities.Buildings.RonsCabinId
+				};
+				await PostReturnsCorrectEntityPermissions("buildingRelationships", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+			}
 		}
 
 		public class BuildingRelationshipEdit : ApiTest
@@ -201,6 +220,24 @@ namespace Integration
 				var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.RonsCabinCityOfPawneeId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
+
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.OK, PermsGroups.All, Description = "Owner")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.OK, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+			public async Task BuildingRelationshipPutEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				var req = new BuildingRelationshipRequest
+				{
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
+					BuildingId = TestEntities.Buildings.RonsCabinId
+				};
+				await PutReturnsCorrectEntityPermissions($"buildingRelationships/{TestEntities.BuildingRelationships.RonsCabinCityOfPawneeId}", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+			}
 		}
 
 		public class BuildingRelationshipDelete : ApiTest
@@ -212,6 +249,29 @@ namespace Integration
 			{
 				var resp = await DeleteAuthenticated($"buildingRelationships/{relationshipId}", jwt);
 				AssertStatusCode(resp, expectedCode);
+			}
+
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.NoContent, PermsGroups.All, Description = "Owner")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.NoContent, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+			public async Task BuildingRelationshipDeleteEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				// Add a building relationshp for Parks & Rec so we can test inheritted permissions
+				var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+				var relationship = new BuildingRelationship
+				{
+					BuildingId = TestEntities.Buildings.RonsCabinId,
+					UnitId = TestEntities.Units.ParksAndRecUnitId
+				};
+				await db.BuildingRelationships.AddAsync(relationship);
+				await db.SaveChangesAsync();
+
+				await DeleteReturnsCorrectEntityPermissions($"buildingRelationships/{relationship.Id}", unitWithPermissions, providedPermission, expectedCode, expectedPermission);
 			}
 		}
 	}
