@@ -578,6 +578,32 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, expectedPermissions);
             }
+
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+            public async Task ReturnsCorrectPermissionsUnitChildren(int unitWithPermissions, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+            {
+                // Add a child unit to Parks & Rec and test it.  This is less painfull than adding another test entity.
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                var childUnit = new Unit
+                {
+                    Name = "Parks and Rec Maintenance",
+                    Description = "The folks who do actual work",
+                    Url = "http://pawneeindiana.com/parks-and-recreation-maintenance/",
+                    Email = "maintenance@example.com",
+                    ParentId = TestEntities.Units.ParksAndRecUnitId
+                };
+                await db.Units.AddAsync(childUnit);
+                await db.SaveChangesAsync();
+                
+                await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ParksAndRecUnitId}/children", unitWithPermissions, providedPermission, expectedPermission);
+            }
         }
 
         [TestFixture]
