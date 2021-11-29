@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Models;
+using Models.Enums;
 using NUnit.Framework;
 
 namespace Integration
@@ -146,6 +147,24 @@ namespace Integration
 				Assert.Contains(ArchivedUnitError, actual.Errors);
 				Assert.AreEqual("(none)", actual.Details);
 			}
+
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.Created, PermsGroups.All, Description = "Owner")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.Created, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+			public async Task SupportRelationshipPostEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
+					DepartmentId = TestEntities.Departments.AuditorId
+				};
+				await PostReturnsCorrectEntityPermissions("supportRelationships", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+			}
 		}
 	
 		public class SupportRelationshipEdit : ApiTest
@@ -248,6 +267,42 @@ namespace Integration
 				Assert.Contains(ArchivedUnitError, actual.Errors);
 				Assert.AreEqual("(none)", actual.Details);
 			}
+
+			
+			
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.Forbidden, PermsGroups.All, Description = "Owner")]
+			public async Task TargetUnitCannotSeizeSupportRelationship(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				// Trying to change the Unit to "Parks & Rec" when it currently belongs to "City of Pawnee."
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
+					DepartmentId = TestEntities.Departments.ParksId,
+					SupportTypeId = TestEntities.SupportTypes.DesktopEndpointId
+				};
+				await PutReturnsCorrectEntityPermissions($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecRelationshipId}", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+			}
+			
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.OK, PermsGroups.All, Description = "Owner")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.OK, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+			public async Task SupportRelationshipPutEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				// Add a support relationshp for Parks & Rec so we can test inheritted permissions
+				var relationship = await GenerateParksAndRecSupportingAuditDept();
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = relationship.UnitId,
+					DepartmentId = relationship.DepartmentId,
+					SupportTypeId = TestEntities.SupportTypes.DesktopEndpointId
+				};
+				await PutReturnsCorrectEntityPermissions($"supportRelationships/{relationship.Id}", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+			}
 		}
 		public class SupportRelationshipDelete : ApiTest
 		{
@@ -259,6 +314,36 @@ namespace Integration
 				var resp = await DeleteAuthenticated($"supportRelationships/{relationshipId}", jwt);
 				AssertStatusCode(resp, expectedCode);
 			}
+
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.NoContent, PermsGroups.All, Description = "Owner")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.NoContent, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+			public async Task SupportRelationshipDeleteEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				// Add a support relationshp for Parks & Rec so we can test inheritted permissions
+				var relationship = await GenerateParksAndRecSupportingAuditDept();
+
+				await DeleteReturnsCorrectEntityPermissions($"supportRelationships/{relationship.Id}", unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+			}
+		}
+
+		public static async Task<SupportRelationship> GenerateParksAndRecSupportingAuditDept()
+		{
+			var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+			var relationship = new SupportRelationship
+			{
+				UnitId = TestEntities.Units.ParksAndRecUnitId,
+				DepartmentId = TestEntities.Departments.AuditorId,
+				SupportTypeId = TestEntities.SupportTypes.FullServiceId
+			};
+			await db.SupportRelationships.AddAsync(relationship);
+			await db.SaveChangesAsync();
+			return relationship;
 		}
 	}
 }
