@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Models;
 using NUnit.Framework;
@@ -18,7 +17,7 @@ namespace Integration
 				var resp = await GetAuthenticated("buildingRelationships");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<BuildingRelationshipResponse>>();
-				Assert.AreEqual(2, actual.Count);
+				Assert.AreEqual(3, actual.Count);
 			}
 		}
 

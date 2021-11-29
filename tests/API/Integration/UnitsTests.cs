@@ -641,8 +641,8 @@ namespace Integration
 
             [TestCase(TestEntities.Units.CityOfPawneeUnitId, new[]{TestEntities.BuildingRelationships.CityHallCityOfPawneeId, TestEntities.BuildingRelationships.RonsCabinCityOfPawneeId})]
             [TestCase(TestEntities.Units.AuditorId, new int[0])]
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, new int[0])]
-            public async Task CanGetExpectedRelationships(int unitId, int[] expectedRelationIds)
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new int[]{TestEntities.BuildingRelationships.SmallParkParksandRecId})]
+            public async Task CanGetExpectedBuildingRelationships(int unitId, int[] expectedRelationIds)
             {
                 var resp = await GetAuthenticated($"units/{unitId}/supportedBuildings");
                 AssertStatusCode(resp, HttpStatusCode.OK);
@@ -653,6 +653,17 @@ namespace Integration
                 Assert.True(actual.All(a => a.Unit.Id == unitId));
                 Assert.True(actual.All(a => a.Building != null));
             }
+
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+            public async Task ReturnsCorrectPermissionsUnitBuildingRelationship(int unitWithPermissions, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+                => await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ParksAndRecUnitId}/supportedBuildings", unitWithPermissions, providedPermission, expectedPermission);
         }
 
 

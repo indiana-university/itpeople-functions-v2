@@ -95,6 +95,7 @@ namespace Integration
         {
             var actualHeader = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions");
             Assert.NotNull(actualHeader, "Permissions header is not present");
+            Assert.NotNull(actualHeader.Value, "Permissions header was present but is null");
             Assert.AreEqual(1, actualHeader.Value.Count(), "Permissions header should have one value");
             Assert.AreEqual(expectedPermissions.ToString(), actualHeader.Value.Single());
         }

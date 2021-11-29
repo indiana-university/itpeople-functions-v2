@@ -60,6 +60,7 @@ namespace StateServer
             peopleContext.BuildingRelationships.AddRange(new List<BuildingRelationship> {
                 TestEntities.BuildingRelationships.CityHallCityOfPawnee,
                 TestEntities.BuildingRelationships.RonsCabinCityOfPawnee,
+                TestEntities.BuildingRelationships.SmallParkParksandRec
             });
 
             peopleContext.Departments.AddRange(new List<Department> {
