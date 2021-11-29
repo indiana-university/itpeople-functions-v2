@@ -12,7 +12,7 @@ using NUnit.Framework;
 
 namespace Integration
 {
-	public abstract class ApiTest
+    public abstract class ApiTest
     {
         // valid from 1/1/2000 - 1/19/2038 💥
         public const string ValidRswansonJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoicnN3YW5zbyIsImV4cCI6MjE0NzQ4MzY0OH0.lrXQNXZ3eBSZ2CT3AHwxcEKCVqCpe2bO3kJJvnbgoHzbmDsKn_Lt1XqB98ujRY6f7Kfv0e04qokCfNVZRaMqbeJ-1D08XsmYzEXzw6gY2C8eHHMM-969xkxEWSV_tMH_4cMOC1cpFqOjbI1SpRyC2qD3ZKcwpRwGw2-k3omrQOWxdJL6oW63lk6QtTKgy-Ehblwu_t7kr6vbI6BIRliTBcRsrKlNypgri39-an0ehbKRK6EHeOlWV1Z5D0JmjaAMrpD--tWEFUuqE__mnwnNTm6uiVIppZX7P1AGDiWVykRL3ffHFSItzn_LjlffpmPIAZktgrSfLU81673NVpWnSw";
@@ -133,28 +133,27 @@ namespace Integration
             }
         }
 
-        ///<summary>Verifies that requests the URL by a user with certain UnitPermissions returns the expected EntityPermissions.</summary>
-        protected async Task GetReturnsCorrectEntityPermissions(string url, int unitId, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+        private static async Task SetJerryUnitPermissions(int unitId, UnitPermissions providedPermission)
         {
             // Add user Jerry Gergich, who is not in Test Entities, and only used for this test.
             var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
             var jerry = new Person
             {
-				Netid = "garryg",
-				Name = "Gergich, Jerry",
-				NameFirst = "Jerry",
-				NameLast = "Gergich",
-				Position = "Waiting for Retirement",
-				Location = "BL",
-				Campus = "Pawnee",
-				CampusPhone = "812.856.5557",
-				CampusEmail = "garryg@pawnee.in.us",
-				Expertise = "Going unnoticed",
-				Notes = "",
-				PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg",
-				Responsibilities = Responsibilities.None,
-				DepartmentId = TestEntities.Departments.Parks.Id,
-				IsServiceAdmin = false
+                Netid = "garryg",
+                Name = "Gergich, Jerry",
+                NameFirst = "Jerry",
+                NameLast = "Gergich",
+                Position = "Waiting for Retirement",
+                Location = "BL",
+                Campus = "Pawnee",
+                CampusPhone = "812.856.5557",
+                CampusEmail = "garryg@pawnee.in.us",
+                Expertise = "Going unnoticed",
+                Notes = "",
+                PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg",
+                Responsibilities = Responsibilities.None,
+                DepartmentId = TestEntities.Departments.Parks.Id,
+                IsServiceAdmin = false
             };
             await db.People.AddAsync(jerry);
 
@@ -163,20 +162,71 @@ namespace Integration
                 Person = jerry,
                 UnitId = unitId,
                 Permissions = providedPermission,
-				Title = "Forgotten Man",
-				Percentage = 100,
-				Notes = "",
-				MemberTools = new List<MemberTool>()
+                Title = "Forgotten Man",
+                Percentage = 100,
+                Notes = "",
+                MemberTools = new List<MemberTool>()
             };
             await db.UnitMembers.AddAsync(membership);
             await db.SaveChangesAsync();
+        }
+
+        ///<summary>Verifies that GET requests the URL by a user with certain UnitPermissions returns the expected EntityPermissions.</summary>
+        protected async Task GetReturnsCorrectEntityPermissions(string url, int unitId, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+        {
+            await SetJerryUnitPermissions(unitId, providedPermission);
 
             // GET request the provided url with Jerry's JWT
             var resp = await GetAuthenticated(url, ValidJgergichJwt);
             AssertStatusCode(resp, HttpStatusCode.OK);
+
+            // Verify they get the expectedPermission.
+            AssertPermissions(resp, expectedPermission);
+        }
+
+        ///<summary>Verifies that POST requests the URL by a user with certain UnitPermissions returns the expected status code and EntityPermissions.</summary>
+        protected async Task<HttpResponseMessage> PostReturnsCorrectEntityPermissions(string url, object body, int unitId, UnitPermissions providedPermission, HttpStatusCode expectedStatusCode, EntityPermissions expectedPermission)
+        {
+            await SetJerryUnitPermissions(unitId, providedPermission);
+
+            // POST request the provided url with Jerry's JWT
+            var resp = await PostAuthenticated(url, body, ValidJgergichJwt);
+            AssertStatusCode(resp, expectedStatusCode);
             
             // Verify they get the expectedPermission.
             AssertPermissions(resp, expectedPermission);
+
+            return resp;
+        }
+
+        ///<summary>Verifies that PUT requests the URL by a user with certain UnitPermissions returns the expected status code and EntityPermissions.</summary>
+        protected async Task<HttpResponseMessage> PutReturnsCorrectEntityPermissions(string url, object body, int unitId, UnitPermissions providedPermission, HttpStatusCode expectedStatusCode, EntityPermissions expectedPermission)
+        {
+            await SetJerryUnitPermissions(unitId, providedPermission);
+
+            // PUT request the provided url with Jerry's JWT
+            var resp = await PutAuthenticated(url, body, ValidJgergichJwt);
+            AssertStatusCode(resp, expectedStatusCode);
+            
+            // Verify they get the expectedPermission.
+            AssertPermissions(resp, expectedPermission);
+
+            return resp;
+        }
+
+        ///<summary>Verifies that DELETE requests the URL by a user with certain UnitPermissions returns the expected status code and EntityPermissions.</summary>
+        protected async Task<HttpResponseMessage> DeleteReturnsCorrectEntityPermissions(string url, int unitId, UnitPermissions providedPermission, HttpStatusCode expectedStatusCode, EntityPermissions expectedPermission)
+        {
+            await SetJerryUnitPermissions(unitId, providedPermission);
+
+            // DELETE request the provided url with Jerry's JWT
+            var resp = await DeleteAuthenticated(url, ValidJgergichJwt);
+            AssertStatusCode(resp, expectedStatusCode);
+            
+            // Verify they get the expectedPermission.
+            AssertPermissions(resp, expectedPermission);
+
+            return resp;
         }
     }
 
