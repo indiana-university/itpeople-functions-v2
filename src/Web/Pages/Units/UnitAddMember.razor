@@ -36,9 +36,12 @@
 			</p>
 		</NotAuthenticated>
 		<Authenticated>
-			<EditForm EditContext="@FormContext">
-				<SuggestionButtons T=PeopleLookupItem Label="Search" Placeholder="Enter a search term" Description="Search by username or first and last name." ButtonClickedAction=AddPerson AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name} ({s.NetId})") />
-			</EditForm>
+			@if (CanEditUnitMembers)
+			{
+				<EditForm EditContext="@FormContext">
+					<SuggestionButtons T=PeopleLookupItem Label="Search" Placeholder="Enter a search term" Description="Search by username or first and last name." ButtonClickedAction=AddPerson AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name} ({s.NetId})") />
+				</EditForm>
+			}
 		</Authenticated>
 	</AuthenticatedView>
 </div>
