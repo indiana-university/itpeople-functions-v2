@@ -71,31 +71,6 @@ namespace API.Functions
 			.Finally(result => Response.Created(req, result));
 		}
 
-		[FunctionName(nameof(SupportRelationships.UpdateSupportRelationship))]
-		[OpenApiOperation(nameof(SupportRelationships.UpdateSupportRelationship), SupportRelationshipsTitle, Summary = "Update a unit-department support relationship", Description = "Authorization: Support relationships can be modified by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
-		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(SupportRelationshipRequest), Required = true)]
-		[OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department support relationship record.")]
-		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(SupportRelationshipResponse), Description = "The updated department support relationship record")]
-		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = CombinedCreateUpdateError)]
-		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
-		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified unit, department, and/or support type does not exist.")]
-		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit already has a support relationship with the provided department.")]
-		public static Task<IActionResult> UpdateSupportRelationship(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "supportRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
-		{
-			string requestorNetId = null;
-			SupportRelationshipRequest supportRelationshipRequest = null;
-			return Security.Authenticate(req)
-				.Tap(requestor => requestorNetId = requestor)
-				.Bind(requestor => Request.DeserializeBody<SupportRelationshipRequest>(req))
-				.Tap(srr => supportRelationshipRequest = srr)
-				.Bind(srr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, srr.UnitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
-				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
-				.Bind(authorized => SupportRelationshipsRepository.UpdateSupportRelationship(req, supportRelationshipRequest, relationshipId))
-				.Bind(sr => Pipeline.Success(new SupportRelationshipResponse(sr)))
-				.Finally(result => Response.Ok(req, result));
-		}
-
 		[FunctionName(nameof(SupportRelationships.DeleteSupportRelationship))]
 		[OpenApiOperation(nameof(SupportRelationships.DeleteSupportRelationship), SupportRelationshipsTitle, Summary = "Delete a unit-department support relationship", Description = "Authorization: Support relationships can be deleted by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
 		[OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department support relationship record.")]
