@@ -215,7 +215,7 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.Forbidden);
 			}
 			
-			[TestCase(99999, TestEntities.Tools.HammerId, "The specified member does not exist.")]
+			[TestCase(99999, TestEntities.Tools.HammerId, "No unit membership was found with the ID provided.")]
 			[TestCase(TestEntities.UnitMembers.BWyattMemberId, 99999, "The specified tool does not exist.")]
 			public async Task NotFoundCannotCreateUnitMemberTool(int membershipId, int toolId, string expectedError)
 			{

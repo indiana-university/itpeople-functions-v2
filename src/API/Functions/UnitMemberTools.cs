@@ -12,12 +12,14 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.OpenApi.Models;
 using Models;
+using Models.Enums;
 
 namespace API.Functions
 {
 	public static class UnitMemberTools
 	{
 		public const string Title = "Unit Member Tools";
+		public static AuthorizationRule MembertoolsRule = new AuthorizationRule { OwnerPermissions = PermsGroups.All, ManageMemberPermissions = PermsGroups.All, ManageToolsPermissions = PermsGroups.All };
 		public const string CombinedError = UnitMemberToolsRepository.MalformedBody + "\\\n**or**\\\n" + UnitMemberToolsRepository.ArchivedUnit;
 
 		[FunctionName(nameof(UnitMemberTools.UnitMemberToolsGetAll))]
@@ -44,7 +46,7 @@ namespace API.Functions
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(_ => UnitMemberToolsRepository.GetOne(memberToolId))
 				.Tap(mt => memberTool = mt)			
-				.Bind(mt => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, requestorNetId, mt.MembershipId))
+				.Bind(mt => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, mt.UnitMember.UnitId, MembertoolsRule))// Set headers saying what the requestor can do based on the MemberTool's UnitMember.Unit
 				.Bind(_ => Pipeline.Success(memberTool.ToMemberToolResponse()))
 				.Finally(result => Response.Ok(req, result));
 		}
@@ -65,7 +67,8 @@ namespace API.Functions
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(requestor => Request.DeserializeBody<MemberToolRequest>(req))
 			.Tap(mtr => memberToolRequest = mtr)
-			.Bind(mtr => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, requestorNetId, mtr.MembershipId))// Set headers saying what the requestor can do based on the MemberTool's UnitMember.Unit
+			.Bind(mtr => UnitMembersRepository.GetOne(mtr.MembershipId))
+			.Bind(membership => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, membership.UnitId, MembertoolsRule))// Set headers saying what the requestor can do based on the MemberTool's UnitMember.Unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => UnitMemberToolsRepository.CreateUnitMemberTool(memberToolRequest))
 			.Bind(mt => Pipeline.Success(mt.ToMemberToolResponse()))
@@ -90,7 +93,11 @@ namespace API.Functions
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => Request.DeserializeBody<MemberToolRequest>(req))
 				.Tap(mtr => memberToolRequest = mtr)
+				.Bind(_ => UnitMemberToolsRepository.GetOne(memberToolId))
+				.Bind(mt => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, mt.UnitMember.UnitId, MembertoolsRule))// Set headers saying what the requestor can do based on the MemberTool's UnitMember.Unit
+				/*
 				.Bind(mtr => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, requestorNetId, mtr.MembershipId))// Set headers saying what the requestor can do based on the MemberTool's UnitMember.Unit
+				*/
 				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
 				.Bind(authorized => UnitMemberToolsRepository.UpdateUnitMemberTool(req, memberToolRequest, memberToolId))
 				.Bind(mr => Pipeline.Success(mr.ToMemberToolResponse()))
@@ -110,7 +117,7 @@ namespace API.Functions
 			return Security.Authenticate(req)
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => UnitMemberToolsRepository.GetOne(memberToolId))
-				.Bind(mt => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, requestorNetId, mt.MembershipId))// Set headers saying what the requestor can do based on the MemberTool's UnitMember.Unit
+				.Bind(mt => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, mt.UnitMember.UnitId, MembertoolsRule))// Set headers saying what the requestor can do based on the MemberTool's UnitMember.Unit
 				.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
 				.Bind(_ => UnitMemberToolsRepository.DeleteUnitMemberTool(req, memberToolId))
 				.Finally(result => Response.NoContent(req, result));
