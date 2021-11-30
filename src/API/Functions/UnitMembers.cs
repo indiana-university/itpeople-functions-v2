@@ -21,6 +21,7 @@ namespace API.Functions
 	public static class UnitMembers
 	{
 		public const string UnitMembersTitle = "Unit Memberships";
+		public static AuthorizationRule MembersRule = new AuthorizationRule { OwnerPermissions = PermsGroups.All, ManageMemberPermissions = PermsGroups.All };
 		public const string PostPutBadResponseDescription = "The request body was malformed or the unitId field was missing.\\\n**or**\\\nThe field Percentage must be between 0 and 100.\\\n**or**\\\nThe provided unit has been archived and is not available for new Unit Members.";
 
 
@@ -48,7 +49,7 @@ namespace API.Functions
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(_ => UnitMembersRepository.GetOne(membershipId))
 			.Tap(um => unitMember = um)
-			.Bind(um => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, um.UnitId))
+			.Bind(um => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, um.UnitId, MembersRule))
 			.Bind(perms => Pipeline.Success(unitMember.ToUnitMemberResponse(perms)))
 			.Finally(result => Response.Ok(req, result));
 		}
@@ -70,7 +71,7 @@ namespace API.Functions
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(requestor => Request.DeserializeBody<UnitMemberRequest>(req))
 			.Tap(umr => unitMemberRequest = umr)
-			.Bind(umr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
+			.Bind(umr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, umr.UnitId, MembersRule))// Set headers saying what the requestor can do to this unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => UnitMembersRepository.CreateMembership(unitMemberRequest))
 			.Bind(res => Pipeline.Success(res.ToUnitMemberResponse(EntityPermissions.Post)))
@@ -95,7 +96,8 @@ namespace API.Functions
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => Request.DeserializeBody<UnitMemberRequest>(req))
 				.Tap(umr => unitMemberRequest = umr)
-				.Bind(umr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, umr.UnitId))// Set headers saying what the requestor can do to this unit
+				.Bind(_ => UnitMembersRepository.GetOne(membershipId))
+				.Bind(um => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, um.UnitId, MembersRule))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
 				.Bind(authorized => UnitMembersRepository.UpdateMembership(req, unitMemberRequest, membershipId))
 				.Bind(um => Pipeline.Success(um.ToUnitMemberResponse(EntityPermissions.Put)))
@@ -115,7 +117,7 @@ namespace API.Functions
 			return Security.Authenticate(req)
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => UnitMembersRepository.GetOne(membershipId))
-				.Bind(um => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, um.UnitId))// Set headers saying what the requestor can do to this unit
+				.Bind(um => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, um.UnitId, MembersRule))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
 				.Bind(_ => UnitMembersRepository.DeleteMembership(req, membershipId))
 				.Finally(result => Response.NoContent(req, result));
