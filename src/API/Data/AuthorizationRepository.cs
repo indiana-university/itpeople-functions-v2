@@ -91,7 +91,7 @@ namespace API.Data
 
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitPermissions(HttpRequest req, string netid, int unitId, AuthorizationRule rule)
             => ExecuteDbPipeline("Resolve unit permissions by rule", db =>
-                FetchPersonAndMembership(db, netid)
+                FetchPersonAndMembership(db, netid, unitId)
                 .Bind(person => ResolveUnitPermissions(person, unitId, rule, db))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
