@@ -42,13 +42,13 @@ namespace API.Data
                 .Bind(created => TryFindUnit(db, created.Id))
             );
 
-        internal static async Task<Result<Unit, Error>> UpdateUnit(HttpRequest req, UnitRequest body, int unitId)
+        internal static async Task<Result<Unit, Error>> UpdateUnit(HttpRequest req, UnitRequest body, int unitId, string requestorNetId)
         {
             return await ExecuteDbPipeline($"update unit {unitId}", db =>
                 TryValidateParentExists(db, body)
                 .Bind(_ => TryFindUnit(db, unitId))
                 .Tap(existing => LogPrevious(req, existing))
-                .Bind(existing => TryUpdateUnit(db, existing, body))
+                .Bind(existing => TryUpdateUnit(db, existing, body, requestorNetId))
                 .Bind(_ => TryFindUnit(db, unitId))
             );
         }
@@ -101,13 +101,22 @@ namespace API.Data
             return Pipeline.Success(unit);
         }
 
-        private static async Task<Result<Unit, Error>> TryUpdateUnit(PeopleContext db, Unit existing, UnitRequest body)
+        private static async Task<Result<Unit, Error>> TryUpdateUnit(PeopleContext db, Unit existing, UnitRequest body, string requestorNetid)
         {
             existing.Name = body.Name;
             existing.Description = body.Description;
             existing.Url = body.Url;
             existing.Email = body.Email;
-            existing.ParentId = body.ParentId;
+            
+            // Only admins are allowed to change a unit's parent id
+            if(existing.ParentId != body.ParentId)
+            {
+                var requestor = await AuthorizationRepository.FindRequestorOrDefault(db, requestorNetid);
+                if(requestor?.IsServiceAdmin == true)
+                {
+                    existing.ParentId = body.ParentId;
+                }
+            }
 
             // TODO: Do we need to manually validate the model?  EF doesn't do that for free any more.
             await db.SaveChangesAsync();

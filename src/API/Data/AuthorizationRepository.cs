@@ -127,7 +127,7 @@ namespace API.Data
                 ? Pipeline.Success(PermsGroups.All)
                 : Pipeline.Success(EntityPermissions.Get);
                 
-        public static async Task<Result<EntityPermissions,Error>> ResolveUnitManagmentPermissions(Person requestor, int unitId, List<UnitPermissions> anyGetsAllPermissions, PeopleContext db)
+        public static async Task<Result<EntityPermissions,Error>> ResolveUnitManagmentPermissions(Person requestor, int unitId, List<UnitPermissions> anyGetsPermissionsGetPut, PeopleContext db)
         {
             if (requestor == null)
                 return Pipeline.Success(EntityPermissions.Get);
@@ -138,7 +138,7 @@ namespace API.Data
 
             // Find all units in which  the requestor has the required unit permissions.
             var privilegedUnits = requestor.UnitMemberships
-                .Where(um => um.Permissions == UnitPermissions.Owner || anyGetsAllPermissions.Contains(um.Permissions))
+                .Where(um => um.Permissions == UnitPermissions.Owner || anyGetsPermissionsGetPut.Contains(um.Permissions))
                 .Select(um => um.UnitId);
 
             // Grant minimal user permissions if *none* of the requestor's unit 
@@ -151,12 +151,12 @@ namespace API.Data
             //  Otherwise, grant minimal user permissions.
             var unitsInHierarchy = (await BuildUnitTree(unitId, db)).Select(u => u.Id);
             return (privilegedUnits.Intersect(unitsInHierarchy).Any())
-                ? Pipeline.Success(PermsGroups.All)
+                ? Pipeline.Success(PermsGroups.GetPut)
                 : Pipeline.Success(EntityPermissions.Get);
         }
 
-        public static async Task<Result<EntityPermissions,Error>> ResolveUnitManagmentPermissions(Person requestor, int unitId, UnitPermissions getsAllPermissions, PeopleContext db)
-            => await ResolveUnitManagmentPermissions(requestor, unitId, new List<UnitPermissions> { getsAllPermissions }, db);
+        public static async Task<Result<EntityPermissions,Error>> ResolveUnitManagmentPermissions(Person requestor, int unitId, UnitPermissions getsPermissionsGetPut, PeopleContext db)
+            => await ResolveUnitManagmentPermissions(requestor, unitId, new List<UnitPermissions> { getsPermissionsGetPut }, db);
 
         private static Task<List<Unit>> BuildUnitTree(int unitId, PeopleContext db) 
             => db.Units.FromSqlInterpolated($@"
@@ -192,7 +192,7 @@ namespace API.Data
             return await ResolveUnitManagmentPermissions(requestor, membership.Unit.Id, new List<UnitPermissions> { UnitPermissions.ManageTools, UnitPermissions.ManageMembers }, db);
         }
 
-        private static Task<Person> FindRequestorOrDefault(PeopleContext db, string requestorNetid) 
+        public static Task<Person> FindRequestorOrDefault(PeopleContext db, string requestorNetid) 
             => 
                 string.IsNullOrWhiteSpace(requestorNetid)
                 ? Task.FromResult<Person>(null)
