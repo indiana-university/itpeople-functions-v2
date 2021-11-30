@@ -14,12 +14,14 @@ using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
 using System.Linq;
+using Models.Enums;
 
 namespace API.Functions
 {
 	public static class BuildingRelationships
 	{
 		public const string BuildingRelationshipsTitle = "Building Relationships";
+		public static AuthorizationRule BuildingRelationshipRule = new AuthorizationRule { OwnerPermissions = PermsGroups.GetPostDelete };
 
 		[FunctionName(nameof(BuildingRelationships.BuildingRelationshipsGetAll))]
 		[OpenApiOperation(nameof(BuildingRelationships.BuildingRelationshipsGetAll), BuildingRelationshipsTitle, Summary = "List all unit-building support relationships")]
@@ -51,7 +53,6 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified unit and/or building does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit already has a support relationship with the provided building.")]
-
 		public static Task<IActionResult> CreateBuildingRelationship(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "buildingRelationships")] HttpRequest req)
 		{
@@ -61,7 +62,8 @@ namespace API.Functions
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(requestor => Request.DeserializeBody<BuildingRelationshipRequest>(req))
 			.Tap(brr => buildingRelationshipRequest = brr)
-			.Bind(brr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, brr.UnitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
+			.Bind(brr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, brr.UnitId, BuildingRelationshipRule))// Set headers saying what the requestor can do to this unit
+			//.Bind(brr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, brr.UnitId, UnitPermissions.Owner))
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => BuildingRelationshipsRepository.CreateBuildingRelationship(buildingRelationshipRequest))
 			.Bind(br => Pipeline.Success(new BuildingRelationshipResponse(br)))
@@ -81,7 +83,8 @@ namespace API.Functions
 				return Security.Authenticate(req)
 					.Tap(requestor => requestorNetId = requestor)
 					.Bind(requestor => BuildingRelationshipsRepository.GetOne(relationshipId))
-					.Bind(br => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, br.UnitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
+					.Bind(brr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, brr.UnitId, BuildingRelationshipRule))// Set headers saying what the requestor can do to this unit
+					//.Bind(br => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, br.UnitId, UnitPermissions.Owner))
 					.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
 					.Bind(_ => BuildingRelationshipsRepository.DeleteBuildingRelationship(req, relationshipId))
 					.Finally(result => Response.NoContent(req, result));
