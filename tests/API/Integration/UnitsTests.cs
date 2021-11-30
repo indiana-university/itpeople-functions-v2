@@ -605,6 +605,26 @@ namespace Integration
 
                 await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ParksAndRecUnitId}/children", unitWithPermissions, providedPermission, expectedPermission);
             }
+
+            [Test]
+            public async Task NonAdminOwnerCannotChangeUnitParent()
+            {
+                var req = new UnitRequest
+                {
+                    //Changed values
+                    ParentId = TestEntities.Units.AuditorId,
+                    Email = "alsoChanged@fake.com",
+                    //Did not change values
+                    Name = TestEntities.Units.ParksAndRecUnit.Name,
+                    Description = TestEntities.Units.ParksAndRecUnit.Description,
+                    Url = TestEntities.Units.ParksAndRecUnit.Url
+                };
+
+                var resp = await PutReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ParksAndRecUnitId}", req, TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.OK, PermsGroups.GetPut);
+                var actual = await resp.Content.ReadAsAsync<UnitResponse>();
+                Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.ParentId);
+                Assert.AreEqual(req.Email, actual.Email);
+            }
         }
 
         [TestFixture]
