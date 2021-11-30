@@ -15,5 +15,6 @@ namespace Models.Enums
 	{
 		public const EntityPermissions All = EntityPermissions.Get | EntityPermissions.Post | EntityPermissions.Put | EntityPermissions.Delete;
 		public const EntityPermissions GetPut = EntityPermissions.Get | EntityPermissions.Put;
+		public const EntityPermissions GetPutDelete = EntityPermissions.Get | EntityPermissions.Post | EntityPermissions.Delete;
 	}
 }

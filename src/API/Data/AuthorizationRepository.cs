@@ -89,7 +89,43 @@ namespace API.Data
             return Pipeline.Success(result);
         }
 
-        internal static Task<Result<EntityPermissions, Error>> DetermineUnitPermissions(HttpRequest req, string requestorNetId) 
+        internal static Task<Result<EntityPermissions, Error>> DetermineUnitPermissions(HttpRequest req, string netid, int unitId, AuthorizationRule rule)
+            => ExecuteDbPipeline("Resolve unit permissions by rule", db =>
+                FetchPersonAndMembership(db, netid)
+                .Bind(person => ResolveUnitPermissions(person, unitId, rule, db))
+                .Tap(perms => req.SetEntityPermissions(perms)));
+
+		private static async Task<Result<EntityPermissions, Error>> ResolveUnitPermissions(Person person, int unitId, AuthorizationRule rule, PeopleContext db)
+		{
+			if(person == null)
+            {
+                return rule.DefaultPermissions;
+            }
+
+            if(person.IsServiceAdmin)
+            {
+                return rule.AdminPermissions;
+            }
+
+            // If the rule's unit permissions are heritable we need the unit and all its parents, otherwise just the unit.
+            var unitsToCheck = rule.UnitPermissionsHeritable
+                ? await BuildUnitTree(unitId, db)
+                : new List<Unit> { db.Units.Single(u => u.Id == unitId) };
+
+            var orderedPermissions = new List<UnitPermissions> { UnitPermissions.Owner, UnitPermissions.ManageMembers, UnitPermissions.ManageTools, UnitPermissions.Viewer };
+
+            // The first match we find will be the highest permission level they have for a unit, so return that.
+            foreach(var up in orderedPermissions)
+            {
+                if(person.UnitMemberships.Any(um => um.Permissions == up && unitsToCheck.Any(c => c.Id == um.UnitId)))
+                {
+                    return rule.GetEntityPermissions(up);
+                }
+            }
+            return rule.DefaultPermissions;
+		}
+
+		internal static Task<Result<EntityPermissions, Error>> DetermineUnitPermissions(HttpRequest req, string requestorNetId) 
             => ExecuteDbPipeline("resolve unit permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId)
                 .Bind(person => ResolveUnitPermissions(person))

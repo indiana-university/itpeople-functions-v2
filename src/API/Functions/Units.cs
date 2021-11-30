@@ -64,6 +64,7 @@ namespace API.Functions
                 .Bind(body => UnitsRepository.CreateUnit(body))
                 .Finally(result => Response.Created(req, result));
         
+        private static AuthorizationRule PutUnitRule = new AuthorizationRule { OwnerPermissions = PermsGroups.GetPut };
         [FunctionName(nameof(Units.UpdateUnit))]
         [OpenApiOperation(nameof(Units.UpdateUnit), nameof(Units), Summary = "Update a unit", Description = "_Authorization_: Units can be modified by any unit member that has either the `Owner` or `ManageMembers` permission on their membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
         [OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(UnitRequest), Required=true)]
@@ -77,7 +78,7 @@ namespace API.Functions
             string requestorNetid = "";
             return Security.Authenticate(req)
                 .Tap(jwtNetid => requestorNetid = jwtNetid)
-                .Bind(_ => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetid, unitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
+                .Bind(_ => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetid, unitId, PutUnitRule))// Set headers saying what the requestor can do to this unit
                 .Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
                 .Bind(_ => Request.DeserializeBody<UnitRequest>(req))
                 .Bind(body => UnitsRepository.UpdateUnit(req, body, unitId, requestorNetid))
@@ -113,6 +114,7 @@ namespace API.Functions
                 .Bind(_ => UnitsRepository.ChangeActive(req, unitId))
                 .Finally(result => Response.Ok(req, result));
 
+        private static AuthorizationRule UnitChildren = new AuthorizationRule { };
         [FunctionName(nameof(Units.GetUnitChildren))]
         [OpenApiOperation(nameof(Units.GetUnitChildren), nameof(Units), Summary = "List all unit children ", Description = "List all units that fall below this unit in an organizational hierarchy.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
@@ -121,7 +123,7 @@ namespace API.Functions
         public static Task<IActionResult> GetUnitChildren(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/children")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId, UnitChildren))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetChildren(req, unitId))
                 .Finally(result => Response.Ok(req, result));
 
@@ -138,6 +140,7 @@ namespace API.Functions
 				.Bind(ms => Pipeline.Success(ms.Select(e => e.ToUnitMemberResponse(req.GetEntityPermissions()))))
                 .Finally(result => Response.Ok(req, result));
 
+        private static AuthorizationRule UnitSupportedBuildings = new AuthorizationRule { OwnerPermissions = PermsGroups.GetPutDelete };
         [FunctionName(nameof(Units.GetUnitSupportedBuildings))]
         [OpenApiOperation(nameof(Units.GetUnitSupportedBuildings), nameof(Units), Summary = "List all supported buildings", Description = "List all buildings that receive IT support from this unit.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
@@ -146,11 +149,12 @@ namespace API.Functions
         public static Task<IActionResult> GetUnitSupportedBuildings(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/supportedBuildings")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId, UnitSupportedBuildings))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetSupportedBuildings(req, unitId))
                 .Bind(sr => Pipeline.Success(sr.Select(srx => new BuildingRelationshipResponse(srx)).ToList()))
                 .Finally(result => Response.Ok(req, result));
 
+        private static AuthorizationRule UnitSupportedDepartments = new AuthorizationRule { OwnerPermissions = PermsGroups.GetPutDelete };
         [FunctionName(nameof(Units.GetUnitSupportedDepartments))]
         [OpenApiOperation(nameof(Units.GetUnitSupportedDepartments), nameof(Units), Summary = "List all supported departments", Description = "List all departments that receive IT support from this unit.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
@@ -159,11 +163,13 @@ namespace API.Functions
         public static Task<IActionResult> GetUnitSupportedDepartments(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}/supportedDepartments")] HttpRequest req, int unitId) 
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId, UnitSupportedDepartments))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetSupportedDepartments(req, unitId))
                 .Bind(sr => Pipeline.Success(sr.Select(srx => new SupportRelationshipResponse(srx)).ToList()))
                 .Finally(result => Response.Ok(req, result));
 
+        
+        private static AuthorizationRule UnitToolsRule = new AuthorizationRule { OwnerPermissions = PermsGroups.All, ManageMemberPermissions = PermsGroups.All, ManageToolsPermissions = PermsGroups.All };
         [FunctionName(nameof(Units.GetUnitTools))]
         [OpenApiOperation(nameof(Units.GetUnitTools), nameof(Units), Summary = "List all unit tools", Description = "List all tools that are available to this unit.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
@@ -174,10 +180,7 @@ namespace API.Functions
         {
             string rni = null;
             return Security.Authenticate(req)
-                .Tap(requestor => rni = requestor)
-                .Bind(_ => UnitsRepository.GetMembers(req, unitId))
-                .Bind(members => Pipeline.Success<int>(members.FirstOrDefault(m => m.Netid == rni)?.Id ?? -1))
-                .Bind(unitMemberId => AuthorizationRepository.DetermineUnitMemberToolPermissions(req, rni, unitMemberId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId, UnitToolsRule))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetTools(req, unitId))
                 .Bind(t => Pipeline.Success(ToolResponse.ConvertList(t)))
                 .Finally(result => Response.Ok(req, result));
