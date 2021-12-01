@@ -551,7 +551,6 @@
 		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
 		{
 			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}");
-			CurrentUnit = deleteResponse.Value;
 		}
 		Navigation.NavigateTo("/units");
 	}
@@ -698,7 +697,7 @@
 		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
 		{
 			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}/archive");
-			CurrentUnit = deleteResponse.Value;
+			GetUnit();
 		}
 	}
 
