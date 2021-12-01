@@ -137,12 +137,6 @@ namespace API.Data
                 .Bind(person => ResolveUnitManagmentPermissions(person, unitId, permissions, db))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
-        internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId) 
-            => ExecuteDbPipeline($"resolve unit {membershipId} member management permissions", db =>
-                FetchPersonAndMembership(db, requestorNetId)
-                .Bind(person => ResolveMembershipToolPermissions(person, membershipId, db))
-                .Tap(perms => req.SetEntityPermissions(perms)));
-
         private static async Task<Result<Person,Error>> FetchPersonAndMembership(PeopleContext db, string requestorNetid)
         {
             var requestor = await FindRequestorOrDefault(db, requestorNetid);
@@ -211,22 +205,6 @@ namespace API.Data
                 FROM parentage
             ")
             .ToListAsync();
-
-        public static async Task<Result<EntityPermissions,Error>> ResolveMembershipToolPermissions(Person requestor, int membershipId, PeopleContext db)
-        {
-            // service admins: get post put delete
-            if (requestor != null && requestor.IsServiceAdmin)
-                return Pipeline.Success(PermsGroups.All);     
-
-            var membership = await db.UnitMembers
-                .Include(um => um.Unit)
-                .SingleOrDefaultAsync(um => um.Id == membershipId);
-            
-            if(membership == null)
-                return Pipeline.Success(EntityPermissions.Get);
-            
-            return await ResolveUnitManagmentPermissions(requestor, membership.Unit.Id, new List<UnitPermissions> { UnitPermissions.ManageTools, UnitPermissions.ManageMembers }, db);
-        }
 
         public static Task<Person> FindRequestorOrDefault(PeopleContext db, string requestorNetid) 
             => 
