@@ -13,13 +13,14 @@ using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
+using Models.Enums;
 
 namespace API.Functions
 {
 	public static class SupportRelationships
 	{
 		public const string SupportRelationshipsTitle = "Support Relationships";
-
+		public static AuthorizationRule SupportRelationshipsRule = new AuthorizationRule { OwnerPermissions = PermsGroups.GetPostDelete };
 		public const string CombinedCreateUpdateError = "The request body was malformed, the unitId, departmentId, and/or supportTypeId field was missing or invalid.\\\n**or**\\\nThe request body was malformed, the provided unit has been archived and is not available for new Support Relationships.";
 		
 		
@@ -64,7 +65,7 @@ namespace API.Functions
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(requestor => Request.DeserializeBody<SupportRelationshipRequest>(req))
 			.Tap(srr => supportRelationshipRequest = srr)
-			.Bind(srr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, srr.UnitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
+			.Bind(srr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, srr.UnitId, SupportRelationshipsRule))// Set headers saying what the requestor can do to this unit
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
 			.Bind(authorized => SupportRelationshipsRepository.CreateSupportRelationship(supportRelationshipRequest))
 			.Bind(sr => Pipeline.Success(new SupportRelationshipResponse(sr)))
@@ -84,7 +85,7 @@ namespace API.Functions
 			return Security.Authenticate(req)
 				.Tap(requestor => requestorNetId = requestor)
 				.Bind(requestor => SupportRelationshipsRepository.GetOne(relationshipId))
-				.Bind(sr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, sr.UnitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
+				.Bind(sr => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, sr.UnitId, SupportRelationshipsRule))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
 				.Bind(_ => SupportRelationshipsRepository.DeleteSupportRelationship(req, relationshipId))
 				.Finally(result => Response.NoContent(req, result));
