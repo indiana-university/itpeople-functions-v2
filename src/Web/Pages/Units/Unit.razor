@@ -703,7 +703,7 @@
 		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
 		{
 			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}/archive");
-			GetUnit();
+			await GetUnit();
 		}
 	}
 
