@@ -97,7 +97,9 @@ namespace API.Functions
 				.Bind(requestor => Request.DeserializeBody<UnitMemberRequest>(req))
 				.Tap(umr => unitMemberRequest = umr)
 				.Bind(_ => UnitMembersRepository.GetOne(membershipId))
-				.Bind(um => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, um.UnitId, MembersRule))// Set headers saying what the requestor can do to this unit
+				.Bind(um => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, um.UnitId, MembersRule))// Can they edit based on the existing unit?
+				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
+				.Bind(_ => AuthorizationRepository.DetermineUnitPermissions(req, requestorNetId, unitMemberRequest.UnitId, MembersRule))// Can they edit based on the target unit?
 				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
 				.Bind(authorized => UnitMembersRepository.UpdateMembership(req, unitMemberRequest, membershipId))
 				.Bind(um => Pipeline.Success(um.ToUnitMemberResponse(EntityPermissions.Put)))
