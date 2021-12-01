@@ -76,7 +76,7 @@
 					<RivetInputCheckbox @bind-Value="Input.Tools" Legend="Tools" Options=ToolOptions DisplayLambda=@(t => GetToolDisplayString(t)) Disabled=@(!CanManageMemberTools) />
 					
 					<p>
-						<button type="submit" class="rvt-button" disabled=@(FormInvalid || ShowLoader)>Save</button
+						<button type="submit" class="rvt-button" disabled=@(FormInvalid || ShowLoader)>Save</button>
 					</p>
 				</EditForm>
 			</Loader>
