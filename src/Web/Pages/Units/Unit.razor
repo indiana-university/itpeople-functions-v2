@@ -550,10 +550,15 @@
 		var confirmMessage = $"Are you sure you want to delete {CurrentUnit.Name}? This can't be undone.";
 		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
 		{
-			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}");
-			CurrentUnit = deleteResponse.Value;
+			var deleteResponse = await Api().DeleteAsync($"/units/{UnitId}");
+			if (deleteResponse.IsSuccessStatusCode)
+			{
+				Navigation.NavigateTo("/units");
+			} else
+			{
+				GeneralException = new Exception($"Failed to {deleteResponse.RequestMessage.Method} {deleteResponse.RequestMessage.RequestUri} Status {deleteResponse.StatusCode} {deleteResponse.ReasonPhrase}");
+			}
 		}
-		Navigation.NavigateTo("/units");
 	}
 
 	private async Task GetBuildingRelationships()
@@ -698,7 +703,7 @@
 		if (await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
 		{
 			var deleteResponse = await Delete<UnitResponse>($"/units/{UnitId}/archive");
-			CurrentUnit = deleteResponse.Value;
+			GetUnit();
 		}
 	}
 

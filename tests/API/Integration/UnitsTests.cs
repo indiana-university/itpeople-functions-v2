@@ -59,6 +59,13 @@ namespace Integration
                 var resp = await GetAuthenticated($"units", jwt);
                 AssertPermissions(resp, expectedPermissions);
             }
+
+            [TestCase(UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(UnitPermissions.Owner, EntityPermissions.Get, Description = "Owner")]
+            public async Task ReturnsCorrectPermissionsUnitListing(UnitPermissions providedPermission, EntityPermissions expectedPermission)
+                => await GetReturnsCorrectEntityPermissions($"units", TestEntities.Units.AuditorId, providedPermission, expectedPermission);
         }
 
         public class GetOne : ApiTest
@@ -88,6 +95,17 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, expectedPermissions);
             }
+
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+            public async Task ReturnsCorrectPermissionsSingleUnit(int unitToCheck, int unitWithPermissions, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+                => await GetReturnsCorrectEntityPermissions($"units/{unitToCheck}", unitWithPermissions, providedPermission, expectedPermission);
         }
 
         public class UnitCreate : ApiTest
@@ -560,6 +578,33 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, expectedPermissions);
             }
+
+            /* More cases of non-admins not being able to PUT POST DELETE child units. */
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, EntityPermissions.Get, Description = "Owner")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, EntityPermissions.Get, Description = "Owner Inheritted From Parent")]
+            public async Task ReturnsCorrectPermissionsUnitChildren(int unitWithPermissions, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+            {
+                // Add a child unit to Parks & Rec and test it.  This is less painfull than adding another test entity.
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                var childUnit = new Unit
+                {
+                    Name = "Parks and Rec Maintenance",
+                    Description = "The folks who do actual work",
+                    Url = "http://pawneeindiana.com/parks-and-recreation-maintenance/",
+                    Email = "maintenance@example.com",
+                    ParentId = TestEntities.Units.ParksAndRecUnitId
+                };
+                await db.Units.AddAsync(childUnit);
+                await db.SaveChangesAsync();
+
+                await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ParksAndRecUnitId}/children", unitWithPermissions, providedPermission, expectedPermission);
+            }
         }
 
         [TestFixture]
@@ -623,8 +668,8 @@ namespace Integration
 
             [TestCase(TestEntities.Units.CityOfPawneeUnitId, new[]{TestEntities.BuildingRelationships.CityHallCityOfPawneeId, TestEntities.BuildingRelationships.RonsCabinCityOfPawneeId})]
             [TestCase(TestEntities.Units.AuditorId, new int[0])]
-            [TestCase(TestEntities.Units.ParksAndRecUnitId, new int[0])]
-            public async Task CanGetExpectedRelationships(int unitId, int[] expectedRelationIds)
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, new int[]{TestEntities.BuildingRelationships.SmallParkParksandRecId})]
+            public async Task CanGetExpectedBuildingRelationships(int unitId, int[] expectedRelationIds)
             {
                 var resp = await GetAuthenticated($"units/{unitId}/supportedBuildings");
                 AssertStatusCode(resp, HttpStatusCode.OK);
@@ -635,6 +680,17 @@ namespace Integration
                 Assert.True(actual.All(a => a.Unit.Id == unitId));
                 Assert.True(actual.All(a => a.Building != null));
             }
+
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+            public async Task ReturnsCorrectPermissionsUnitBuildingRelationship(int unitWithPermissions, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+                => await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ParksAndRecUnitId}/supportedBuildings", unitWithPermissions, providedPermission, expectedPermission);
         }
 
 
@@ -669,6 +725,36 @@ namespace Integration
                 Assert.True(actual.All(a => a.Unit.Id == unitId));
                 Assert.True(actual.All(a => a.Department != null));
                 Assert.True(actual.All(a => a.SupportType != null));
+            }
+
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+            [TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+            public async Task ReturnsCorrectPermissionsUnitSupportRelationships(int unitWithPermissions, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+            {
+                // Add a supported department to Parks & Rec and test it.  This is less painfull than adding another test entity.
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                var supportedDepartment = new Department
+                {
+                    Name = "Department of Redundancy Department",
+                    Description = "If something is worth doing..."
+                };
+                await db.Departments.AddAsync(supportedDepartment);
+                var relationship = new SupportRelationship
+                {
+                    UnitId = TestEntities.Units.ParksAndRecUnitId,
+                    Department = supportedDepartment,
+                    SupportTypeId = TestEntities.SupportTypes.FullServiceId
+                };
+                await db.SupportRelationships.AddAsync(relationship);
+                await db.SaveChangesAsync();
+                
+                await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ParksAndRecUnitId}/supportedDepartments", unitWithPermissions, providedPermission, expectedPermission);
             }
         }
 
@@ -715,22 +801,7 @@ namespace Integration
             [TestCase(UnitPermissions.ManageMembers, PermsGroups.All, Description = "ManageMember")]
             [TestCase(UnitPermissions.Owner, PermsGroups.All, Description = "Owner")]
             public async Task ReturnsCorrectPermissionsForUnitPermissions(UnitPermissions providedPermission, EntityPermissions expectedPermission)
-            {
-                // Update Ben's membership to be providedPermission
-                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
-                var membership = await db.UnitMembers
-                    .Include(um => um.Person)
-                    .Include(um => um.Unit)
-                    .SingleAsync(um => um.Id == TestEntities.UnitMembers.BWyattMemberId);
-                membership.Permissions = providedPermission;
-                await db.SaveChangesAsync();
-
-                // List the tools for that unit as lknope
-                var resp = await GetAuthenticated($"units/{membership.UnitId}/tools", ValidBwyattJwt);
-                AssertStatusCode(resp, HttpStatusCode.OK);
-                // They should be able to Get, Post, and Put.
-                AssertPermissions(resp, expectedPermission);
-            }
+                => await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.AuditorId}/tools", TestEntities.Units.AuditorId, providedPermission, expectedPermission);
         }
     }
 }

@@ -72,6 +72,16 @@ namespace Models
 				Unit = TestEntities.Units.CityOfPawnee,
 				Building = TestEntities.Buildings.RonsCabin
 			};
+
+			public const int SmallParkParksandRecId = 3;
+			public static readonly BuildingRelationship SmallParkParksandRec = new BuildingRelationship
+			{
+				Id = SmallParkParksandRecId,
+				UnitId = TestEntities.Units.ParksAndRecUnitId,
+				Unit = TestEntities.Units.ParksAndRecUnit,
+				Building = TestEntities.Buildings.SmallPark,
+				BuildingId = TestEntities.Buildings.SmallParkId
+			};
 		}
 
 		public static class Departments
