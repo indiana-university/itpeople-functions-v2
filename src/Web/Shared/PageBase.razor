@@ -89,7 +89,7 @@
 		}
 		var stringResult = await response.Content.ReadAsStringAsync();
 		var result = JsonConvert.DeserializeObject<ApiError>(stringResult, Json.JsonSerializerSettings);
-		if(result != null)
+		if(result != null && result.Errors != null)
 		{
 			return string.Join(". ", result.Errors.ToList());
 		}
