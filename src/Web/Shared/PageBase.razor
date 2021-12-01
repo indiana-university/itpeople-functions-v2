@@ -28,7 +28,7 @@
 		var reqContent = new StringContent(bodyAsJson, System.Text.Encoding.UTF8, "application/json");
 		return await MakeRequest<T>(Api().PostAsync(uri, reqContent), error);
 	}
-	
+
 	protected async Task<(T Value, EntityPermissions Permissions)> Put<T>(string uri, object body, string error = null)
 	{
 		var bodyAsJson = JsonConvert.SerializeObject(body, Json.JsonSerializerSettings);
@@ -51,9 +51,7 @@
 			response = await request;
 			if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Created && response.StatusCode != HttpStatusCode.NoContent)
 			{
-				var message = string.IsNullOrWhiteSpace(error)
-					? $"Failed to {response.RequestMessage.Method} {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}"
-					: error;
+				var message = await GetErrorMessage(response, error);
 				GeneralException = new Exception(message);
 				return (result, permissions);
 			}
@@ -81,5 +79,20 @@
 		}
 
 		return (result, permissions);
+	}
+
+	protected async Task<string> GetErrorMessage(HttpResponseMessage response, string error = null)
+	{
+		if (string.IsNullOrWhiteSpace(error) == false)
+		{
+			return error;
+		}
+		var stringResult = await response.Content.ReadAsStringAsync();
+		var result = JsonConvert.DeserializeObject<ApiError>(stringResult, Json.JsonSerializerSettings);
+		if(result != null)
+		{
+			return string.Join(". ", result.Errors.ToList());
+		}
+		return $"Failed to {response.RequestMessage.Method} {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}";
 	}
 }

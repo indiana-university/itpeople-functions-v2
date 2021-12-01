@@ -556,7 +556,7 @@
 				Navigation.NavigateTo("/units");
 			} else
 			{
-				GeneralException = new Exception($"Failed to {deleteResponse.RequestMessage.Method} {deleteResponse.RequestMessage.RequestUri} Status {deleteResponse.StatusCode} {deleteResponse.ReasonPhrase}");
+				GeneralException = new Exception(await GetErrorMessage(deleteResponse));
 			}
 		}
 	}
