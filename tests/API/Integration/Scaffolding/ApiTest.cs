@@ -172,7 +172,7 @@ namespace Integration
         }
 
         ///<summary>Verifies that GET requests the URL by a user with certain UnitPermissions returns the expected EntityPermissions.</summary>
-        protected async Task GetReturnsCorrectEntityPermissions(string url, int unitId, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+        protected async Task<HttpResponseMessage> GetReturnsCorrectEntityPermissions(string url, int unitId, UnitPermissions providedPermission, EntityPermissions expectedPermission)
         {
             await SetJerryUnitPermissions(unitId, providedPermission);
 
@@ -182,6 +182,8 @@ namespace Integration
 
             // Verify they get the expectedPermission.
             AssertPermissions(resp, expectedPermission);
+
+            return resp;
         }
 
         ///<summary>Verifies that POST requests the URL by a user with certain UnitPermissions returns the expected status code and EntityPermissions.</summary>
