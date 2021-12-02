@@ -12,106 +12,41 @@
 <div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
 	<div>
 		<div style="float: right;">
-			@if(CrudPerms.HasFlag(EntityPermissions.Put))
+			@if (CrudPerms.HasFlag(EntityPermissions.Put))
 			{
-				<button type="button" title="Edit Responsibilities" class="rvt-button rvt-button--plain" data-modal-trigger="modal-form-r" @onclick=@(() => ResetForm())>
-					<rvt-icon name="pencil" />
-					<span class="rvt-m-left-xs rvt-sr-only">Edit Responsibilities</span>
-				</button>
+				<a href=@($"/people/{NetId}/EditResponsibilities") class="rvt-button rvt-button--plain"
+				title="Edit Responsibilities">
+					<rvt-icon name="pencil" /><span class="rvt-sr-only">Edit Responsibilities</span>
+				</a>
 			}
-			
-			<ModalForm Id="modal-form-r" Title="Edit Responsibilities" SubmitButtonText="Save Changes" Item=@Person.Responsibilities OnSubmit=@SaveChanges ConfirmBeforeClose=@ConfirmClose @ref=Mf>
-				<DisplayException Ex=@Ex />
-				<RivetInputFlag @bind-Value="ResponsibilitiesInput" Description="Check all the relevant responsibilities performed"  Inline=false />
-			</ModalForm>
 		</div>
 		<h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
 		<p>What kinds of work do you do on a day-to-day basis?</p>
-
-			@foreach (var item in Person.Responsibilities.ToString().Split(',').Select(r => r.Trim()))
-			{
-				<ul class="rvt-list rvt-plain-list">
-					<li>@GetEnumDisplayName(item)</li>
-				</ul>
-			}
+		@foreach (var item in Person.Responsibilities.ToString().Split(',').Select(r => r.Trim()))
+		{
+			<ul class="rvt-list rvt-plain-list">
+				<li>@GetEnumDisplayName(item)</li>
+			</ul>
+		}
 	</div>
 </div>
 
 @code {
 	[Parameter]
 	public EntityPermissions CrudPerms { get; set; }
+	
+	[Parameter]
+	public string NetId { get; set; }
 	[Parameter]
 	public Person Person { get; set; }
 	// Enable two-way binding.
 	[Parameter]
 	public EventCallback<Person> PersonChanged { get; set; }
-
-	private HttpClient Api() => ClientFactory.CreateClient("Api");
-	private ModalForm<Responsibilities> Mf;
-
-	private Responsibilities ResponsibilitiesInput;
-	private Responsibilities ValueAtOpen;
-	private bool ConfirmClose => ResponsibilitiesInput != ValueAtOpen;
-
-	private Exception Ex;
-
 	private string GetEnumDisplayName(string enumValue)
 	{
 		var fieldInfo = Person.Responsibilities.GetType().GetFields();
 		var field = fieldInfo.FirstOrDefault(f => f.Name == enumValue);
 		return field != null ? field.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? field.Name : enumValue;
-	}
-
-	private void ResetForm()
-	{
-		ResponsibilitiesInput = Person.Responsibilities;
-		ValueAtOpen = Person.Responsibilities;
-
-		Mf.ResetState();
-	}
-
-	private async Task SaveChanges()
-	{
-		try
-		{
-			Person result;
-
-			// Make an in-memory copy of Person to PUT to the server.
-			var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(Person, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
-			// Update objToPut's Expertise
-			objToPut.Responsibilities = ResponsibilitiesInput;
-
-			var url = $"/people/{Person.Id}";
-
-			using (var apiClient = Api())
-			{
-				var reqJson = JsonConvert.SerializeObject(objToPut, Json.JsonSerializerSettings);
-				var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
-				var response = await apiClient.PutAsync(url, reqContent);
-
-				if (response.IsSuccessStatusCode == false)
-				{
-					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Responsibilities to {url}");
-				}
-
-				// The Response is a Person object, use it to update our Person variable
-				var stringResult = await response.Content.ReadAsStringAsync();
-				result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
-			}
-
-			// Everything updated, close the modal
-			await Mf.Close();
-
-			// Invoking after close because the two-way binding can cause hiccups in the ModalForm.
-			await PersonChanged.InvokeAsync(result);
-
-			// We've saved our changes reset the bools that dicate the ModalForms behavior.
-			ResetForm();
-		}
-		catch (Exception ex)
-		{
-			Ex = ex;
-		}
 	}
 
 	public void Dispose() { }

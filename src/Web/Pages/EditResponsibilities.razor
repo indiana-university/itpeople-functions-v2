@@ -1,0 +1,139 @@
+@using Models
+@using Models.Enums
+@using Newtonsoft.Json
+@using web.Shared
+@using System.Web
+@using RivetBlazor.Components
+@using System.ComponentModel.DataAnnotations
+@using System.Net
+@using System.Reflection
+@implements IDisposable
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Navigation
+@page "/people/{NetId}/EditResponsibilities"
+
+<Title Value="Edit Responsibilities" />
+<HeaderNavBar Page="Profiles" CurrentPage=@ProfileName />
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+
+    <DisplayException Ex=@GeneralException />
+
+    <AuthenticatedView>
+        <NotAuthenticated>
+            <p>
+                You must login to view this resource.
+            </p>
+            <p>
+                <a class="rvt-button" href=@GetLoginUri()>Log In</a>
+            </p>
+        </NotAuthenticated>
+        <Authenticated>
+            <h1 class="rvt-modal__title">Edit Responsibilities</h1>
+            <Loader Loading="ShowLoader">
+                <EditForm EditContext="@FormContext" OnValidSubmit="SaveChanges">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <RivetInputFlag @bind-Value="ResponsibilitiesInput" Description="Check all the relevant responsibilities performed" Inline=false />
+                    <p>
+						<button type="submit" class="rvt-button">Save</button>
+					</p>
+                </EditForm>
+            </Loader>
+        </Authenticated>
+    </AuthenticatedView>
+</div>
+
+@code {
+
+    [Parameter]
+    public string NetId { get; set; }
+    [Parameter]
+	public EntityPermissions CrudPerms { get; set; }
+    private string ProfileName;
+    private EditContext FormContext;
+    private Exception GeneralException;
+    protected bool ShowLoader = false;
+    protected IDisposable Loading()
+        => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+	public Person UpdatedPerson = new Person();
+    private Responsibilities ResponsibilitiesInput;
+	private HttpClient Api() => ClientFactory.CreateClient("Api");
+    protected override async Task OnInitializedAsync()
+	{
+		FormContext = new EditContext(ResponsibilitiesInput);
+        await GetPersonProfile();
+	}
+    private async Task GetPersonProfile()
+    {
+        var response = await Api().GetAsync($"/people/{NetId}");
+        if (response.IsSuccessStatusCode)
+        {
+            string responsemsg = await response.Content.ReadAsStringAsync();
+            UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
+            ResponsibilitiesInput = UpdatedPerson.Responsibilities;
+            ProfileName = UpdatedPerson.Name;
+        }      
+        else if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
+            UpdatedPerson = null;
+            ProfileName = "Not Found";
+            return;
+        }
+        else
+        {
+            GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
+            return;
+        }
+    }
+    private async Task SaveChanges()
+	{
+		try
+		{
+			Person result;
+
+			// Make an in-memory copy of Person to PUT to the server.
+			var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(UpdatedPerson, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
+			// Update objToPut's Responsibilities
+			objToPut.Responsibilities = ResponsibilitiesInput;
+
+			var url = $"/people/{UpdatedPerson.Id}";
+			using (var apiClient = Api())
+			{
+				var reqJson = JsonConvert.SerializeObject(objToPut, Json.JsonSerializerSettings);
+				var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
+				var response = await apiClient.PutAsync(url, reqContent);
+
+				if (response.IsSuccessStatusCode == false)
+				{
+					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Responsibilities to {url}");
+				}
+
+				// The Response is a Person object, use it to update our Person variable
+				var stringResult = await response.Content.ReadAsStringAsync();
+				result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
+			}
+			Navigation.NavigateTo($"/People/{NetId}"); 
+		}
+		catch (Exception ex)
+		{
+			GeneralException = ex;
+		}
+	}
+    
+    protected string GetLoginUri()
+	{
+		var signIn = "/SignIn";
+		var uri = new Uri(Navigation.Uri);
+		if(string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
+		{
+			signIn += $"?Destination={HttpUtility.UrlEncode(uri.PathAndQuery)}";
+		}
+
+		return signIn;
+	}
+    
+    public void Dispose() { }
+
+
+}
