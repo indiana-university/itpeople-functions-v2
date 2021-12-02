@@ -169,7 +169,7 @@ namespace API.Data
             var person = await db.People.SingleOrDefaultAsync(p => p.Netid == netId);
             if(person != null)
 			{
-                return new PeopleLookupItem { Id = person.Id, NetId = person.Netid, Name = person.Name };
+                return Pipeline.Success(new PeopleLookupItem { Id = person.Id, NetId = person.Netid, Name = person.Name });
 			}
             var hrPerson = await db.HrPeople.SingleOrDefaultAsync(p => p.Netid == netId);
             return hrPerson == null
