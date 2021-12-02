@@ -385,5 +385,32 @@ namespace Integration
                 await db.SaveChangesAsync();
             }
         }
+        public class WithHrGeOne : ApiTest
+        {
+
+            [Test]
+            public async Task ThrowsNotFoundWhenNoMatches()
+            {
+                var resp = await GetAuthenticated("people/withHR/notrealperson");
+                AssertStatusCode(resp, HttpStatusCode.NotFound);
+            }
+
+            [Test]
+            public async Task GetHrPerson()
+            {
+                var resp = await GetAuthenticated($"people/withHR/{TestEntities.HrPeople.Tammy1.Netid}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<PeopleLookupItem>();
+                Assert.AreEqual(actual.NetId, TestEntities.HrPeople.Tammy1.Netid);
+            }
+            [Test]
+            public async Task GetPerson()
+            {
+                var resp = await GetAuthenticated($"people/withHR/{TestEntities.People.BWyatt.Netid}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<PeopleLookupItem>();
+                Assert.AreEqual(actual.NetId, TestEntities.People.BWyatt.Netid);
+            }
+        }
     }
 }
