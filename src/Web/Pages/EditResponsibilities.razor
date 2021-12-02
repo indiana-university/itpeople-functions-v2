@@ -8,6 +8,7 @@
 @using System.Net
 @using System.Reflection
 @implements IDisposable
+@inherits PageBase
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager Navigation
 @page "/people/{NetId}/EditResponsibilities"
@@ -60,7 +61,9 @@
 	private HttpClient Api() => ClientFactory.CreateClient("Api");
     protected override async Task OnInitializedAsync()
 	{
+        await SetLoggedInUser();
 		FormContext = new EditContext(ResponsibilitiesInput);
+		if (LoggedInUser != null)		
         await GetPersonProfile();
 	}
     private async Task GetPersonProfile()
