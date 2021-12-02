@@ -132,7 +132,10 @@ namespace API.Data
         public static Task<Result<Person, Error>> GetOne(string id)
             => ExecuteDbPipeline("get a person by Netid", db =>
                 TryFindPerson(db, id));
-
+        public static Task<Result<PeopleLookupItem, Error>> WithHrGetOne(string netId)
+            => ExecuteDbPipeline("get a person or hr people by Netid", db =>
+                TryFindPersonWithHr(db, netId));
+        
         private static Result<List<UnitMember>, Error> GetActiveMemberships(Person person)
             => Pipeline.Success(person.UnitMemberships.Where(um => um.Unit.Active).ToList());
 
@@ -160,7 +163,21 @@ namespace API.Data
                 ? Pipeline.NotFound("No person found with that Id.")
                 : Pipeline.Success(person);
         }
-        private static async Task<Result<Person,Error>> TryFindPerson (PeopleContext db, string username)
+
+        private static async Task<Result<PeopleLookupItem, Error>> TryFindPersonWithHr(PeopleContext db, string netId)
+        {
+            var person = await db.People.SingleOrDefaultAsync(p => p.Netid == netId);
+            if(person != null)
+			{
+                return new PeopleLookupItem { Id = person.Id, NetId = person.Netid, Name = person.Name };
+			}
+            var hrPerson = await db.HrPeople.SingleOrDefaultAsync(p => p.Netid == netId);
+            return hrPerson == null
+                ? Pipeline.NotFound("No person or HR person found with that netid.")
+                : Pipeline.Success(new PeopleLookupItem { Id = 0, NetId = hrPerson.Netid, Name = hrPerson.Name });
+        }
+
+        private static async Task<Result<Person, Error>> TryFindPerson(PeopleContext db, string username)
         {
             var person = await db.People
                 .Include(p => p.Department)
