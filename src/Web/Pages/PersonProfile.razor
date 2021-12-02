@@ -62,9 +62,11 @@
                                             <div><strong>Phone: </strong>@UpdatedPerson.CampusPhone</div>
                                             <div><strong>Department: </strong><a href="/departments/@UpdatedPerson.DepartmentId">@UpdatedPerson.Department.Name</a></div>
                                         </div>
-                                    </div>  
-                                    <ProfileResponsibilities CrudPerms=CrudPerms @bind-Person=UpdatedPerson NetId=@NetId />                                    
-                                    <ProfileExpertise CrudPerms=CrudPerms @bind-Person=UpdatedPerson NetId=@NetId/>
+                                    </div>                                   
+                                    
+                                    <ProfileResponsibilities CrudPerms=CrudPerms @bind-Person=UpdatedPerson />
+                                    
+                                    <ProfileExpertise CrudPerms=CrudPerms @bind-Person=UpdatedPerson />
                                 </ChildContent>                                                                                                             
                             </ProfileContactInformation>
                             <ProfileUnitsHelper Title="IT Units">
@@ -193,11 +195,6 @@
             return;
         }
     }
-    private string GetEnumDisplayName(string enumValue)
-	{
-		var fieldInfo = UpdatedPerson.Responsibilities.GetType().GetFields();
-		var field = fieldInfo.FirstOrDefault(f => f.Name == enumValue);
-		return field != null ? field.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? field.Name : enumValue;
-	}
+    
     public void Dispose() { }
 }
