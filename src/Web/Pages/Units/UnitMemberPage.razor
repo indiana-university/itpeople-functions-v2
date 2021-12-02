@@ -187,18 +187,8 @@
 
 	private async Task SetCurrentPerson()
 	{
-		var response = await Get<List<PeopleLookupItem>>($"people-lookup?q={Username}");
-		if(response.Value.Count() == 0)
-		{
-			GeneralException = new Exception($"Could not find a user record for {Username}");
-			return;
-		}
-		if (response.Value.Count() > 1)
-		{
-			GeneralException = new Exception($"Found multiple user records for {Username}");
-			return;
-		}
-		CurrentPerson = response.Value.First();
+		var response = await Get<PeopleLookupItem>($"people/withHR/{Username}");
+		CurrentPerson = response.Value;
 	}
 
 	private async Task SetToolOptions()
