@@ -5,15 +5,9 @@
 @using System.Net
 @using System.Linq
 @using Newtonsoft.Json
-@using Newtonsoft.Json.Linq
-@using System.Web
-@using System.Collections
 @using System;
-@using System.ComponentModel.DataAnnotations;
-@using System.Reflection;
 @using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @inherits PageBase
-@inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @inject IJSRuntime JSRuntime;
 @implements IDisposable
@@ -116,13 +110,11 @@
 
 @code {
     private EntityPermissions CrudPerms;
-    private Exception GeneralException;
     private Person UpdatedPerson = new Person();
     private IEnumerable<UnitResponse> ProfileUnits = new List<UnitResponse>();
     private IEnumerable<UnitMemberResponse> Memberships = new List<UnitMemberResponse>();
     private string _PrevNetId = null;
     [Parameter] public string NetId { get; set; }
-    private HttpClient Api() => ClientFactory.CreateClient("Api");
     private bool isExpanded = false;
     private string ProfileName;
     protected bool ShowLoader = false;
@@ -132,7 +124,7 @@
     protected override async Task OnParametersSetAsync()
     {
         await SetLoggedInUser();
-        if(LoggedInUser != null && NetId != _PrevNetId)
+        if (LoggedInUser != null && NetId != _PrevNetId)
         {
             using (Loading())
             {
@@ -150,7 +142,7 @@
             string responsemsg = await response.Content.ReadAsStringAsync();
             UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
             ProfileName = UpdatedPerson.Name;
-        }      
+        }
         else if (response.StatusCode == HttpStatusCode.NotFound)
         {
             GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
@@ -168,18 +160,18 @@
     private string GetPageTitle() => $"{ProfileName} - IT People - Indiana University";
 
     private void GetEntityPermissions(HttpResponseMessage resp)
-	{
-		// Pluck the user permissions from the response header. Eg. "GET, PUT"
-		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
-		
-		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-		CrudPerms = 0;// Reset permissions to 0.
-		foreach(var p in permsString.Split(','))
-		{
-			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-			CrudPerms |= ep;
-		}
-	}
+    {
+        // Pluck the user permissions from the response header. Eg. "GET, PUT"
+        var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+
+        // Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+        CrudPerms = 0;// Reset permissions to 0.
+        foreach (var p in permsString.Split(','))
+        {
+            var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+            CrudPerms |= ep;
+        }
+    }
     private async Task GetPersonUnitMemberships()
     {
         var response = await Api().GetAsync($"/people/{NetId}/memberships");
@@ -195,11 +187,6 @@
             return;
         }
     }
-    private string GetEnumDisplayName(string enumValue)
-	{
-		var fieldInfo = UpdatedPerson.Responsibilities.GetType().GetFields();
-		var field = fieldInfo.FirstOrDefault(f => f.Name == enumValue);
-		return field != null ? field.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? field.Name : enumValue;
-	}
+
     public void Dispose() { }
 }

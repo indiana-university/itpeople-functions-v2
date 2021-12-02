@@ -4,13 +4,11 @@
 @using web.Shared
 @using System.Web
 @using RivetBlazor.Components
-@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @using System.Net
 @using System.Threading
-@using System.Reflection
 @implements IDisposable
 @inherits PageBase
-@inject IHttpClientFactory ClientFactory
 @inject NavigationManager Navigation
 @page "/people/{NetId}/EditInterests"
 
@@ -61,8 +59,7 @@
                                 }
                             </ul>
                         }
-
-                    <p>
+					<p>
 						<button type="submit" class="rvt-button">Save</button>
 					</p>
                 </EditForm>
@@ -80,7 +77,6 @@
     private string ProfileName;
 	private string SearchTerm = "";
     private EditContext FormContext;
-    private Exception GeneralException;
     protected bool ShowLoader = false;
     protected IDisposable Loading()
         => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
@@ -88,13 +84,12 @@
 	private List<string> ExpertiseAsList = new List<string>();
 	private List<string> Suggestions = new List<string>();
 	private StackExchangeRequest SuggestionsRequest;
-	private HttpClient Api() => ClientFactory.CreateClient("Api");
-    protected override async Task OnInitializedAsync()
+	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
 		FormContext = new EditContext(SearchTerm);
-		if (LoggedInUser != null)		
-        await GetPersonProfile();
+		if (LoggedInUser != null)
+			await GetPersonProfile();
 	}
     private async Task GetPersonProfile()
     {
@@ -119,9 +114,9 @@
             return;
         }
     }
-    private void RemoveInterest(string interest)
+	private void RemoveInterest(string interest)
 	{
-		ExpertiseAsList.Remove(interest);		
+		ExpertiseAsList.Remove(interest);
 	}
 
 	private async Task AddInterest(string interest)
@@ -154,7 +149,7 @@
 	{
 		if (e.Code == "Enter" || e.Code == "NumpadEnter")
 		{
-			await AddInterest(SearchTerm);			
+			await AddInterest(SearchTerm);
 		}
 	}
 
@@ -186,7 +181,7 @@
 				var stringResult = await response.Content.ReadAsStringAsync();
 				result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
 			}
-			Navigation.NavigateTo($"/People/{NetId}"); 
+			Navigation.NavigateTo($"/People/{NetId}");
 		}
 		catch (Exception ex)
 		{
@@ -277,15 +272,12 @@
 		};
 
 		await SuggestionsRequest.Task;
-	}
-
-
-    
-    protected string GetLoginUri()
+	}    
+	protected string GetLoginUri()
 	{
 		var signIn = "/SignIn";
 		var uri = new Uri(Navigation.Uri);
-		if(string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
+		if (string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
 		{
 			signIn += $"?Destination={HttpUtility.UrlEncode(uri.PathAndQuery)}";
 		}
@@ -294,6 +286,4 @@
 	}
     
     public void Dispose() { }
-
-
 }
