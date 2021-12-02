@@ -1,0 +1,176 @@
+@using RivetBlazor.Components
+@using Models;
+@using Models.Enums;
+@using System.Threading;
+@using System.Web;
+@using Newtonsoft.Json;
+@typeparam T
+@inject IHttpClientFactory ClientFactory;
+@implements IDisposable;
+
+<RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder=@Placeholder Description=@Description @oninput="e => SearchTermChanged(e.Value.ToString())" @onkeydown=SearchTermListenForEnter/>
+@if(string.IsNullOrWhiteSpace(SearchTerm) == false)
+{
+	<Loader Loading="ShowLoader">
+		@if(RequestException != null)
+		{
+			<div class="rvt-alert rvt-alert--warning rvt-m-tb-md" role="alertdialog" aria-labelledby="@ExceptionGuid">
+				<h1 class="rvt-alert__title" id="@ExceptionGuid">Error While Fetching Suggestions</h1>
+				<p class="rvt-alert__message">@RequestException.Message</p>
+			</div>
+		}
+		<ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
+			@foreach (var suggestion in Suggestions)
+			{
+				<li>
+					<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => ButtonClickedHelper(suggestion)) >@DisplayLambda(suggestion)</a>
+				</li>
+			}
+			
+			@if(Suggestions.Count == 0)
+			{
+				<li><em>No matches found</em></li>
+			}
+		</ul>
+	</Loader>
+}
+
+@code
+{
+	///<summary> The text used in the HTML Label tag.</summary>
+	[Parameter]
+	public string Label { get; set; }
+
+	///<summary> The text used in the RivetInputText Description.</summary>
+	[Parameter]
+	public string Description { get; set; }
+
+	///<summary> The text used in the RivetInputText Placeholder.</summary>
+	[Parameter]
+	public string Placeholder { get; set; }
+
+	///<summary> When true hitting the enter key while searching performs the same action as clicking the first suggestion.</summary>
+	[Parameter]
+	public bool EnterClicksFirstSuggestion { get; set; } = false;
+
+	///<summary> The action performed to get selections based on a search term</summary>
+	[Parameter]
+	public Func<string, Task<List<T>>> AsyncSuggestionGetter { get; set; }
+
+	///<summary> The action performed when a suggestion button is clicked.</summary>
+	[Parameter]
+	public Action<T> ButtonClickedAction { get; set; }
+
+	///<summary> Takes a suggestion and generates the text to be displayed in a button.</summary>
+	[Parameter]
+	public Func<T, string> DisplayLambda { get; set; }
+
+	private string SearchTerm = "";
+	private List<T> Suggestions = new List<T>();
+	private CancelableSuggestionsRequest SuggestionsRequest;
+
+	private bool ShowLoader => SuggestionsRequest?.Task == null ? false : !SuggestionsRequest.Task.IsCompleted;
+	private Exception RequestException;
+	private string ExceptionGuid = System.Guid.NewGuid().ToString();
+
+
+	private async Task SearchTermListenForEnter(KeyboardEventArgs e)
+	{
+		if (EnterClicksFirstSuggestion && (e.Code == "Enter" || e.Code == "NumpadEnter"))
+		{
+			// Wait for results if they're still in flight.
+			var attempts = 0;
+			while (ShowLoader && attempts < 5)
+			{
+				attempts++;
+				await Task.Delay(500);
+			}
+
+			if (Suggestions.Count > 0)
+			{
+				ButtonClickedHelper(Suggestions.First());
+			}
+		}
+	}
+
+	private void ButtonClickedHelper(T item)
+	{
+		ButtonClickedAction(item);
+		// Reset searchterm and suggestions
+		SearchTerm = "";
+		Suggestions.Clear();
+	}
+
+	private async Task SearchTermChanged(string newValue)
+	{
+		SearchTerm = newValue;
+		await UpdateSuggestions(newValue);
+	}
+
+	private void CancelSuggestionsRequestIfRunning()
+	{
+		var acceptableTaskStatus = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
+		if (SuggestionsRequest != null && acceptableTaskStatus.Contains(SuggestionsRequest.Task.Status) == false)
+		{
+			SuggestionsRequest.TokenSource.Cancel();
+		}
+	}
+
+	private async Task UpdateSuggestions(string searchTerm)
+	{
+		RequestException = null;
+		Suggestions = new List<T>();
+		
+		if (string.IsNullOrWhiteSpace(searchTerm))
+		{
+			return;
+		}
+
+		// Cancel any currently running requests to the Stack Exchange API.
+		CancelSuggestionsRequestIfRunning();
+
+		// Make a cancelable request to the API and process the response.
+		var ts = new CancellationTokenSource();
+		SuggestionsRequest = new CancelableSuggestionsRequest
+		{
+			TokenSource = ts,
+			Task = Task.Run(async () =>
+			{
+				// Pause before sending the request in case the user isn't done typing.
+				// Additional keystrokes will cancel this request.
+				await Task.Delay(500);
+
+				if (ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
+				{
+					try
+					{
+						List<T> response = await AsyncSuggestionGetter(searchTerm);
+						// If this task was canceled before we got a response do not update Suggestions.
+						if (ts.Token.IsCancellationRequested == false)
+						{
+							if(response == null)
+							{
+								throw new Exception($"Unable to interpret response as a List of type {typeof(T).Name}");
+							}
+							Suggestions = response;
+						}
+					}
+					catch(Exception ex)
+					{
+						RequestException = ex;
+					}
+				}
+			}, ts.Token)
+		};
+
+		await SuggestionsRequest.Task;
+	}
+
+	private class CancelableSuggestionsRequest
+	{
+		public Task Task { get; set; }
+		public CancellationTokenSource TokenSource { get; set; }
+	}
+
+	public void Dispose() { }
+}

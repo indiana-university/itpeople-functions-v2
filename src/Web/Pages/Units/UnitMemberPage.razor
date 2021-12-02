@@ -1,0 +1,285 @@
+@using Models
+@using Models.Enums
+@using Newtonsoft.Json
+@using web.Shared
+@using RivetBlazor.Components
+@using System.Web
+@implements IDisposable
+@inherits Shared.PageBase
+@inject NavigationManager Navigation
+@page "/Units/{unitId}/EditMember/{username}"
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<nav role="navigation" aria-label="Breadcrumbs">
+		<ol class="rvt-breadcrumbs rvt-m-bottom-lg">
+			<li><a href="/">Home</a></li>
+			<li><a href="/Units">Units</a></li>
+			<li><a href="/Units/@UnitId">@(CurrentUnit?.Name ?? UnitId)</a></li>
+			<li>Members</li>
+			<li aria-current="page">@(CurrentPerson?.Name ?? Username)</li>
+		</ol>
+	</nav>
+
+	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
+		<!-- our title -->
+		<div class="rvt-m-right-sm-md-up">
+			<h1>@HumanVerb Unit @(CurrentUnit?.Name ?? UnitId) Member @Username</h1>
+		</div>
+	</div>
+
+	<DisplayException Ex=@GeneralException />
+
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href=@GetLoginUri()>Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<Loader Loading="ShowLoader">
+				<EditForm EditContext="@FormContext" OnValidSubmit="SubmitForm">
+					<DataAnnotationsValidator />
+					<ValidationSummary />
+					@if (CurrentUnit?.Id != null && (CanManageMemberTools || CanManageMembers))
+					{
+						@if (CanManageMembers)
+						{
+							<RivetInputSelect @bind-Value="Input.Role" Label="Role" Description="" Options=RoleOptions DisplayLambda=@(r => r.ToString()) Disabled=@(!CanManageMembers) />
+							<RivetInputSelect @bind-Value="Input.Permissions" Label="Unit Permissions" Description="" Options=UnitPermissionOptions DisplayLambda=@(p => p.ToString()) Disabled=@(!CanManageMembers) />
+							<RivetInputText @bind-Value="Input.Title" Label="Title" Disabled=@(!CanManageMembers) />
+							<RivetInputNumber @bind-Value="Input.Percentage" Label="Percentage" Disabled=@(!CanManageMembers) />
+							<RivetInputTextArea @bind-Value="Input.Notes" Label="Notes" Disabled=@(!CanManageMembers) />
+						}
+						@if (CanManageMemberTools)
+						{
+							<RivetInputCheckbox @bind-Value="Input.Tools" Legend="Tools" Options=ToolOptions DisplayLambda=@(t => GetToolDisplayString(t)) Disabled=@(!CanManageMemberTools) />
+						}
+						<p>
+							<button type="submit" class="rvt-button" disabled=@(FormInvalid || ShowLoader)>Save</button>
+						</p>
+					}
+				</EditForm>
+			</Loader>
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+
+
+@code
+{
+	[Parameter]
+	public string UnitId { get; set; }
+
+	[Parameter]
+	public string Username { get; set; }
+
+	private UnitResponse CurrentUnit;
+	private List<UnitMember> CurrentUnitMembers = new List<UnitMember>();
+	private UnitMember CurrentMember => CurrentUnitMembers.FirstOrDefault(um => CurrentPerson != null && um.Person.Netid == CurrentPerson?.NetId);
+	private PeopleLookupItem CurrentPerson;
+
+	private EntityPermissions UnitCrudPerms;
+	private EntityPermissions MembersCrudPerms;
+
+	private EntityPermissions HttpVerb => CurrentUnitMembers.Any(um => um.Person.Netid == CurrentPerson.NetId)
+		? EntityPermissions.Put
+		: EntityPermissions.Post;
+	private string HumanVerb => HttpVerb == EntityPermissions.Put
+		? "Update"
+		: "Add";
+	private bool CanManageMembers => MembersCrudPerms.HasFlag(HttpVerb);
+
+	private bool CanManageMemberTools =>
+		MembersCrudPerms.HasFlag(EntityPermissions.Post)
+		|| MembersCrudPerms.HasFlag(EntityPermissions.Put)
+		|| (LoggedInUser != null && CurrentUnitMembers.Any(um => um.Person.Netid == LoggedInUser.Username && (um.Permissions == UnitPermissions.ManageMembers || um.Permissions == UnitPermissions.ManageTools)));
+
+	private MemberInput Input = new MemberInput();
+	private EditContext FormContext;
+	private List<Role> RoleOptions = Enum.GetValues(typeof(Role)).Cast<Role>().ToList();
+	private List<UnitPermissions> UnitPermissionOptions = Enum.GetValues(typeof(UnitPermissions)).Cast<UnitPermissions>().ToList();
+	private List<Tool> ToolOptions = new List<Tool>();
+
+	private bool ShowLoader = false;
+	private bool FormInvalid = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		// Setup our editcontext
+		FormContext = new EditContext(Input);
+		FormContext.OnFieldChanged += HandleFieldChanged;
+
+		await SetLoggedInUser();
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		if (LoggedInUser != null)
+		{
+			using (Loading())
+			{
+				await Task.WhenAll(new[] { SetCurrentUnit(), SetCurrentPerson(), SetToolOptions() });
+				if (CurrentUnit?.Id == null)
+				{
+					return;
+				}
+				// Armed with all the details about the person, unit, and current members build up our input.
+				var existingMember = CurrentUnitMembers.FirstOrDefault(m => m.PersonId == CurrentPerson?.Id);
+				List<int> existingToolIds = existingMember?.MemberTools.Select(mt => mt.ToolId).ToList() ?? new List<int>();
+
+				Input.UnitId = CurrentUnit.Id;
+				Input.PersonId = CurrentPerson.Id;
+				Input.NetId = CurrentPerson.NetId;
+				Input.Role = existingMember?.Role ?? Role.Member;
+				Input.Permissions = existingMember?.Permissions ?? UnitPermissions.Viewer;
+				Input.Title = existingMember?.Title;
+				Input.Percentage = existingMember?.Percentage ?? 100;
+				Input.Notes = existingMember?.Notes;
+
+				Input.Tools.Clear();
+				Input.Tools.AddRange(ToolOptions.Where(o => existingToolIds.Contains(o.Id)));
+			}
+		}
+	}
+
+	private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
+	{
+		FormInvalid = !FormContext.Validate();
+		StateHasChanged();
+	}
+
+	protected string GetLoginUri()
+	{
+		var signIn = "/SignIn";
+		var uri = new Uri(Navigation.Uri);
+		if (string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
+		{
+			signIn += $"?Destination={HttpUtility.UrlEncode(uri.PathAndQuery)}";
+		}
+		return signIn;
+	}
+
+	private async Task SetCurrentUnit()
+	{
+		var tasks = new List<Task>();
+		tasks.Add(Task.Run(async () =>
+		{
+			var response = await Get<UnitResponse>($"units/{UnitId}");
+			CurrentUnit = response.Value;
+			UnitCrudPerms = response.Permissions;
+		}));
+
+		tasks.Add(Task.Run(async () =>
+		{
+			var response = await Get<List<UnitMember>>($"units/{UnitId}/members");
+			CurrentUnitMembers = response.Value;
+			MembersCrudPerms = response.Permissions;
+		}));
+
+		await Task.WhenAll(tasks);
+	}
+
+	private async Task SetCurrentPerson()
+	{
+		var response = await Get<List<PeopleLookupItem>>($"people-lookup?q={Username}");
+		if(response.Value.Count() == 0)
+		{
+			GeneralException = new Exception($"Could not find a user record for {Username}");
+			return;
+		}
+		if (response.Value.Count() > 1)
+		{
+			GeneralException = new Exception($"Found multiple user records for {Username}");
+			return;
+		}
+		CurrentPerson = response.Value.First();
+	}
+
+	private async Task SetToolOptions()
+	{
+		var response = await Get<List<Tool>>($"units/{UnitId}/tools");
+		ToolOptions = response.Value;
+	}
+
+	private string GetToolDisplayString(Tool tool)
+	{
+		var output = $"{tool.Name}";
+		output += string.IsNullOrWhiteSpace(tool.Description) ? "" : $" - {tool.Description}";
+		return output;
+	}
+
+	private async Task SubmitForm()
+	{
+		GeneralException = null;// reset before making our requests.
+		using (Loading())
+		{
+			// Add/Update the unit member.
+			if (CanManageMembers)
+			{
+				if (HttpVerb == EntityPermissions.Post)
+				{
+					await Post<UnitMemberResponse>("memberships", Input);
+				}
+				else
+				{
+					if (CurrentMember == null)
+					{
+						GeneralException = new Exception($"Could not find existing membershp for {CurrentPerson?.NetId ?? "the selected person"}.  Unable to update.");
+						return;
+					}
+					await Put<UnitMemberResponse>($"memberships/{CurrentMember.Id}", Input);
+				}
+				// Re-fetch the updated UnitMember information.
+				await SetCurrentUnit();
+			}
+
+			// Update the member's tools.
+			if (CanManageMemberTools)
+			{
+				if (CurrentMember == null)
+				{
+					GeneralException = new Exception($"{CurrentPerson?.NetId ?? "The selected person"} is not a member of this unit, and their tools cannot be updated.");
+					return;
+				}
+				var currentToolIds = CurrentMember.MemberTools.Select(mt => mt.ToolId);
+				var memberToolsToRemove = CurrentMember.MemberTools
+					.Where(mt => Input.Tools.Any(t => t.Id == mt.ToolId) == false)
+					.Select(mt => mt.Id)
+					.ToList();
+
+				var toolsToAdd = Input.Tools
+					.Where(t => currentToolIds.Contains(t.Id) == false)
+					.Select(t => new MemberToolRequest { MembershipId = CurrentMember.Id, ToolId = t.Id })
+					.ToList();
+
+				var requestTasks = new List<Task>();
+				requestTasks.AddRange(memberToolsToRemove.Select(m => Delete<MemberToolResponse>($"membertools/{m}")));
+				requestTasks.AddRange(toolsToAdd.Select(t => Post<MemberToolResponse>("membertools", t)));
+
+				await Task.WhenAll(requestTasks);
+			}
+		}
+	}
+
+	public void Dispose()
+	{
+		FormContext.OnFieldChanged -= HandleFieldChanged;
+	}
+
+	private class MemberInput : UnitMemberRequest
+	{
+		[JsonIgnore]
+		public List<Tool> Tools { get; set; }
+
+		public MemberInput()
+		{
+			Tools = new List<Tool>();
+		}
+	}
+}

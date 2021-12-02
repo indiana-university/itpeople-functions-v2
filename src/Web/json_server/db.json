@@ -94,7 +94,7 @@
         "name": "Parks and Recreation Department",
         "description": "The management, supervision, coordination, and implementation of an array of leisure service opportunities, including such organized activities as athletics, sports, arts, crafts, drama, physical fitness, music, and aquatics, utilizing recreation centers, athletic fields, swimming pools, open space, schools, and special facilities."
       }
-    }   
+    }
   ],
   "units": [
     {
@@ -330,7 +330,8 @@
   "tools": [
     {
       "id": 1,
-      "name": "Hammer"
+      "name": "Hammer",
+      "description": "The ban hammer of song and legend."
     },
     {
       "id": 2,

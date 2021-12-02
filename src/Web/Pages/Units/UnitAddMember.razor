@@ -1,0 +1,110 @@
+@using Models
+@using Models.Enums
+@using web.Shared
+@using RivetBlazor.Components
+@implements IDisposable
+@inherits Shared.PageBase
+@inject NavigationManager Navigation
+@page "/Units/{unitId}/AddMember"
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<nav role="navigation" aria-label="Breadcrumbs">
+		<ol class="rvt-breadcrumbs rvt-m-bottom-lg">
+			<li><a href="/">Home</a></li>
+			<li><a href="/Units">Units</a></li>
+			<li><a href="/Units/@UnitId">@(CurrentUnit?.Name ?? UnitId)</a></li>
+			<li aria-current="page">Add Member</li>
+		</ol>
+	</nav>
+
+	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
+		<!-- our title -->
+		<div class="rvt-m-right-sm-md-up">
+			<h1>Add Member to @(CurrentUnit?.Name ?? $"Unit {UnitId}")</h1>
+		</div>
+	</div>
+
+	<DisplayException Ex=@GeneralException />
+
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=/Units/@UnitId/AddMember">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			@if (CanEditUnitMembers)
+			{
+				<EditForm EditContext="@FormContext">
+					<SuggestionButtons T=PeopleLookupItem Label="Search" Placeholder="Enter a search term" Description="Search by username or first and last name." ButtonClickedAction=AddPerson AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name} ({s.NetId})") />
+				</EditForm>
+			}
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+@code
+{
+	[Parameter]
+	public string UnitId { get; set; }
+
+	private UnitResponse CurrentUnit;
+
+	private object ObjForContext = new object();
+	private EditContext FormContext;
+	private bool CanEditUnitMembers = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		// Setup our editcontext
+		FormContext = new EditContext(ObjForContext);
+
+		await SetLoggedInUser();
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		if (LoggedInUser != null)
+		{
+			await SetCurrentUnit();
+			await SetCurrentUnitMembers();
+		}
+	}
+
+	private async Task SetCurrentUnit()
+	{
+		var response = await Get<UnitResponse>($"units/{UnitId}");
+		CurrentUnit = response.Value;
+	}
+
+	private async Task SetCurrentUnitMembers()
+	{
+		var response = await Get<List<UnitMemberResponse>>($"units/{UnitId}/members");
+		CanEditUnitMembers = response.Permissions.HasFlag(EntityPermissions.Post);
+		if (CanEditUnitMembers == false)
+		{
+			GeneralException = new Exception($"You do not have the permissions to add users to this unit.");
+		}
+	}
+
+	private void AddPerson(PeopleLookupItem pli)
+	{
+		Navigation.NavigateTo($"/Units/{UnitId}/EditMember/{pli.NetId}");
+	}
+
+	private async Task<List<PeopleLookupItem>> GetSuggestions(string searchTerm)
+	{
+		if (searchTerm.Length < 3)
+		{
+			return new List<PeopleLookupItem>();
+		}
+
+		var response = await Get<List<PeopleLookupItem>>($"people-lookup?q={searchTerm}");
+		return response.Value;
+	}
+
+	public void Dispose() { }
+}

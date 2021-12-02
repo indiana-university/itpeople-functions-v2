@@ -1,0 +1,98 @@
+﻿@using Models
+@using Models.Enums
+@using System.Net
+@using Newtonsoft.Json
+
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Navigation
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+
+@code {
+	protected HttpClient Api() => ClientFactory.CreateClient("Api");
+	protected Exception GeneralException;
+	protected AuthenticatedUser LoggedInUser;
+
+	protected async Task SetLoggedInUser()
+	{
+		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions)> Get<T>(string uri, string error = null)
+	{
+		return await MakeRequest<T>(Api().GetAsync(uri), error);
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions)> Post<T>(string uri, object body, string error = null)
+	{
+		var bodyAsJson = JsonConvert.SerializeObject(body, Json.JsonSerializerSettings);
+		var reqContent = new StringContent(bodyAsJson, System.Text.Encoding.UTF8, "application/json");
+		return await MakeRequest<T>(Api().PostAsync(uri, reqContent), error);
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions)> Put<T>(string uri, object body, string error = null)
+	{
+		var bodyAsJson = JsonConvert.SerializeObject(body, Json.JsonSerializerSettings);
+		var reqContent = new StringContent(bodyAsJson, System.Text.Encoding.UTF8, "application/json");
+		return await MakeRequest<T>(Api().PutAsync(uri, reqContent), error);
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions)> Delete<T>(string uri, string error = null)
+	{
+		return await MakeRequest<T>(Api().DeleteAsync(uri), error);
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions)> MakeRequest<T>(Task<HttpResponseMessage> request, string error = null)
+	{
+		var result = default(T);
+		HttpResponseMessage response = null;
+		var permissions = EntityPermissions.Get;
+		try
+		{
+			response = await request;
+			if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Created && response.StatusCode != HttpStatusCode.NoContent)
+			{
+				var message = await GetErrorMessage(response, error);
+				GeneralException = new Exception(message);
+				return (result, permissions);
+			}
+			// The request succeeded, try to deserialize it.
+			var stringResult = await response.Content.ReadAsStringAsync();
+			// We have to use Newtonsoft to make sure our StringEnumConverter work.
+			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
+			// Pluck the user permissions from the response header. Eg. "GET, PUT"
+			var permsString = response.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+			if (string.IsNullOrWhiteSpace(permsString))
+			{
+				return (result, permissions);
+			}
+			// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+			foreach (var p in permsString.Split(','))
+			{
+				var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+				permissions |= ep;
+			}
+		}
+		catch (Exception ex)
+		{
+			GeneralException = ex;
+			return (result, permissions);
+		}
+
+		return (result, permissions);
+	}
+
+	protected async Task<string> GetErrorMessage(HttpResponseMessage response, string error = null)
+	{
+		if (string.IsNullOrWhiteSpace(error) == false)
+		{
+			return error;
+		}
+		var stringResult = await response.Content.ReadAsStringAsync();
+		var result = JsonConvert.DeserializeObject<ApiError>(stringResult, Json.JsonSerializerSettings);
+		if(result != null && result.Errors != null)
+		{
+			return string.Join(". ", result.Errors.ToList());
+		}
+		return $"Failed to {response.RequestMessage.Method} {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}";
+	}
+}

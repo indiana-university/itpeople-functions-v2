@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
 namespace Models
@@ -14,6 +16,8 @@ namespace Models
         /// The title/position of this membership.
         public string Title { get; set; }   
         /// The percentage of time allocated to this position by this person (in case of split appointments).
+        [DefaultValue(100)]
+        [Range(0,100)]
         public int Percentage { get; set; }
         /// Notes about this person (for admins/reporting eyes only.)
         public string Notes { get; set; }

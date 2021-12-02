@@ -89,7 +89,6 @@ namespace Integration
 			[TestCase(ValidLknopeJwt, TestEntities.UnitMembers.RSwansonLeaderId, EntityPermissions.Get, TestName="Les1", Description="As Leslie (viewer) I can't manage Ron's membership")]
 			[TestCase(ValidLknopeJwt, TestEntities.UnitMembers.LkNopeSubleadId, EntityPermissions.Get, TestName="Les2", Description="As Leslie (viewer) I can't manage Leslies's membership")]
             [TestCase(ValidLknopeJwt, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName="Les3", Description="As Leslie (viewer) I can't manage Ben's membership")]
-			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.BWyattMemberId, PermsGroups.All, TestName="Ben1", Description="As Ben (ManageMebers) I can manage Ben's membership")]
 			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.RSwansonLeaderId, EntityPermissions.Get, TestName="Ben2", Description="As Ben (ManageMebers) I can't manage Ron's membership (different unit)")]
 			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.LkNopeSubleadId,  EntityPermissions.Get, TestName="Ben3", Description="As Ben (ManageMebers) I can't manage Leslie's membership (different unit)")]
             [TestCase(ValidAdminJwt, TestEntities.UnitMembers.RSwansonLeaderId, PermsGroups.All, TestName="Adm1", Description="As a service admin I can do anything to any unit")]
@@ -187,8 +186,10 @@ namespace Integration
 			{
 				var req = new UnitMemberRequest
 				{
-					UnitId = TestEntities.Units.CityOfPawneeUnitId,
-					Percentage = 101,
+                    UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                    Role = Role.Related,
+                    Permissions = UnitPermissions.Viewer,
+                    Percentage = 101,
 				};
 				var resp = await PostAuthenticated("memberships", req, ValidRswansonJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
@@ -228,7 +229,9 @@ namespace Integration
 			{
 				var req = new UnitMemberRequest
 				{
-					UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                    UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                    Role = Role.Related,
+                    Permissions = UnitPermissions.Viewer
 				};
 				var resp = await PostAuthenticated("memberships", req, ValidRswansonJwt);
 				AssertStatusCode(resp, HttpStatusCode.Forbidden);
@@ -240,8 +243,10 @@ namespace Integration
 			{
 				var req = new UnitMemberRequest
 				{
-					UnitId = unitId,
-					PersonId = personId
+                    UnitId = unitId,
+                    Role = Role.Related,
+                    Permissions = UnitPermissions.Viewer,
+                    PersonId = personId
 				};
 				var resp = await PostAuthenticated($"memberships", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
@@ -277,11 +282,12 @@ namespace Integration
 				// {"unitId":"333","netId":"natsoto","personId":0,"title":"test","role":"Member","percentage":100}
 				var req = new UnitMemberRequest
 				{
-					UnitId = TestEntities.Units.ParksAndRecUnitId,
-					NetId = TestEntities.HrPeople.Tammy1.Netid,
-					Title = "Harridan",
-					Role = Role.Member,
-					Percentage = 100,
+                    UnitId = TestEntities.Units.ParksAndRecUnitId,
+                    NetId = TestEntities.HrPeople.Tammy1.Netid,
+                    Title = "Harridan",
+                    Role = Role.Member,
+                    Permissions = UnitPermissions.Viewer,
+                    Percentage = 100,
 				};
 				var resp = await PostAuthenticated("memberships", req, ValidAdminJwt);
 				
@@ -325,8 +331,10 @@ namespace Integration
 			{
 				var req = new UnitMemberRequest
 				{
-					UnitId = TestEntities.Units.CityOfPawneeUnitId,
-					Percentage = 101,
+                    UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                    Role = Role.Related,
+                    Permissions = UnitPermissions.Viewer,
+                    Percentage = 101,
 				};
 
 				var resp = await PutAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}", req, ValidAdminJwt);
@@ -367,7 +375,9 @@ namespace Integration
 			{
 				var req = new UnitMemberRequest
 				{
-					UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                    UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                    Role = Role.Related,
+                    Permissions = UnitPermissions.Viewer
 				};
 				var resp = await PutAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}", req, ValidRswansonJwt);
 				AssertStatusCode(resp, HttpStatusCode.Forbidden);
@@ -380,8 +390,10 @@ namespace Integration
 			{
 				var req = new UnitMemberRequest
 				{
-					UnitId = unitId,
-					PersonId = personId
+                    UnitId = unitId,
+                    PersonId = personId,
+                    Role = Role.Related,
+                    Permissions = UnitPermissions.Viewer
 				};
 				var resp = await PutAuthenticated($"memberships/{membershipId}", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
@@ -394,8 +406,10 @@ namespace Integration
 			{
 				var req = new UnitMemberRequest
 				{
-					UnitId = TestEntities.UnitMembers.RSwansonDirector.UnitId,
-					PersonId = TestEntities.UnitMembers.RSwansonDirector.PersonId
+                    UnitId = TestEntities.UnitMembers.RSwansonDirector.UnitId,
+                    PersonId = TestEntities.UnitMembers.RSwansonDirector.PersonId,
+                    Role = Role.Related,
+                    Permissions = UnitPermissions.Viewer
 				};
 
 				var resp = await PutAuthenticated($"memberships/{TestEntities.UnitMembers.LkNopeSubleadId}", req, ValidAdminJwt);
