@@ -79,13 +79,13 @@
 
 	private UnitResponse CurrentUnit;
 	private List<UnitMember> CurrentUnitMembers = new List<UnitMember>();
-	private UnitMember CurrentMember => CurrentUnitMembers.FirstOrDefault(um => CurrentPerson != null && um.Person.Netid == CurrentPerson?.Netid);
-	private Person CurrentPerson;
+	private UnitMember CurrentMember => CurrentUnitMembers.FirstOrDefault(um => CurrentPerson != null && um.Person.Netid == CurrentPerson?.NetId);
+	private PeopleLookupItem CurrentPerson;
 
 	private EntityPermissions UnitCrudPerms;
 	private EntityPermissions MembersCrudPerms;
 
-	private EntityPermissions HttpVerb => CurrentUnitMembers.Any(um => um.Person.Netid == CurrentPerson.Netid)
+	private EntityPermissions HttpVerb => CurrentUnitMembers.Any(um => um.Person.Netid == CurrentPerson.NetId)
 		? EntityPermissions.Put
 		: EntityPermissions.Post;
 	private string HumanVerb => HttpVerb == EntityPermissions.Put
@@ -135,7 +135,7 @@
 
 				Input.UnitId = CurrentUnit.Id;
 				Input.PersonId = CurrentPerson.Id;
-				Input.NetId = CurrentPerson.Netid;
+				Input.NetId = CurrentPerson.NetId;
 				Input.Role = existingMember?.Role ?? Role.Member;
 				Input.Permissions = existingMember?.Permissions ?? UnitPermissions.Viewer;
 				Input.Title = existingMember?.Title;
@@ -187,8 +187,18 @@
 
 	private async Task SetCurrentPerson()
 	{
-		var response = await Get<Person>($"people/{Username}");
-		CurrentPerson = response.Value;
+		var response = await Get<List<PeopleLookupItem>>($"people-lookup?q={Username}");
+		if(response.Value.Count() == 0)
+		{
+			GeneralException = new Exception($"Could not find a user record for {Username}");
+			return;
+		}
+		if (response.Value.Count() > 1)
+		{
+			GeneralException = new Exception($"Found multiple user records for {Username}");
+			return;
+		}
+		CurrentPerson = response.Value.First();
 	}
 
 	private async Task SetToolOptions()
@@ -220,7 +230,7 @@
 				{
 					if (CurrentMember == null)
 					{
-						GeneralException = new Exception($"Could not find existing membershp for {CurrentPerson?.Netid ?? "the selected person"}.  Unable to update.");
+						GeneralException = new Exception($"Could not find existing membershp for {CurrentPerson?.NetId ?? "the selected person"}.  Unable to update.");
 						return;
 					}
 					await Put<UnitMemberResponse>($"memberships/{CurrentMember.Id}", Input);
@@ -234,7 +244,7 @@
 			{
 				if (CurrentMember == null)
 				{
-					GeneralException = new Exception($"{CurrentPerson?.Netid ?? "The selected person"} is not a member of this unit, and their tools cannot be updated.");
+					GeneralException = new Exception($"{CurrentPerson?.NetId ?? "The selected person"} is not a member of this unit, and their tools cannot be updated.");
 					return;
 				}
 				var currentToolIds = CurrentMember.MemberTools.Select(mt => mt.ToolId);
