@@ -19,7 +19,7 @@
 			<li aria-current="page">@(CurrentPerson?.Name ?? Username)</li>
 		</ol>
 	</nav>
-	
+
 	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
 		<!-- our title -->
 		<div class="rvt-m-right-sm-md-up">
@@ -43,41 +43,24 @@
 				<EditForm EditContext="@FormContext" OnValidSubmit="SubmitForm">
 					<DataAnnotationsValidator />
 					<ValidationSummary />
-
-					@if(!CanManageMembers)
+					@if (CurrentUnit?.Id != null && (CanManageMemberTools || CanManageMembers))
 					{
-						<div class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-top-md">
-							<span class="rvt-inline-alert__icon">
-								<rvt-icon name="info-circle" />
-							</span>
-							<span class="rvt-inline-alert__message" id="radio-list-message">
-								Only the owner of the @CurrentUnit?.Name unit, or members with the "Manage Members" permission, can @HumanVerb.ToLower() a member.
-							</span>
-						</div>
+						@if (CanManageMembers)
+						{
+							<RivetInputSelect @bind-Value="Input.Role" Label="Role" Description="" Options=RoleOptions DisplayLambda=@(r => r.ToString()) Disabled=@(!CanManageMembers) />
+							<RivetInputSelect @bind-Value="Input.Permissions" Label="Unit Permissions" Description="" Options=UnitPermissionOptions DisplayLambda=@(p => p.ToString()) Disabled=@(!CanManageMembers) />
+							<RivetInputText @bind-Value="Input.Title" Label="Title" Disabled=@(!CanManageMembers) />
+							<RivetInputNumber @bind-Value="Input.Percentage" Label="Percentage" Disabled=@(!CanManageMembers) />
+							<RivetInputTextArea @bind-Value="Input.Notes" Label="Notes" Disabled=@(!CanManageMembers) />
+						}
+						@if (CanManageMemberTools)
+						{
+							<RivetInputCheckbox @bind-Value="Input.Tools" Legend="Tools" Options=ToolOptions DisplayLambda=@(t => GetToolDisplayString(t)) Disabled=@(!CanManageMemberTools) />
+						}
+						<p>
+							<button type="submit" class="rvt-button" disabled=@(FormInvalid || ShowLoader)>Save</button>
+						</p>
 					}
-					<RivetInputSelect @bind-Value="Input.Role" Label="Role" Description="" Options=RoleOptions DisplayLambda=@(r => r.ToString()) Disabled=@(!CanManageMembers) />
-					<RivetInputSelect @bind-Value="Input.Permissions" Label="Unit Permissions" Description="" Options=UnitPermissionOptions DisplayLambda=@(p => p.ToString()) Disabled=@(!CanManageMembers) />
-					<RivetInputText @bind-Value="Input.Title" Label="Title" Disabled=@(!CanManageMembers) />
-					<RivetInputNumber @bind-Value="Input.Percentage" Label="Percentage" Disabled=@(!CanManageMembers) />
-					<RivetInputTextArea @bind-Value="Input.Notes" Label="Notes" Disabled=@(!CanManageMembers) />
-					
-					@if(!CanManageMemberTools)
-					{
-						<div class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-top-md">
-							<span class="rvt-inline-alert__icon">
-								<rvt-icon name="info-circle" />
-							</span>
-							<span class="rvt-inline-alert__message" id="radio-list-message">
-								Only the owner of the @CurrentUnit?.Name unit, or members with the "Manage Members" or "Manage Tools" permission, can update a member's tools.
-							</span>
-						</div>
-					}
-
-					<RivetInputCheckbox @bind-Value="Input.Tools" Legend="Tools" Options=ToolOptions DisplayLambda=@(t => GetToolDisplayString(t)) Disabled=@(!CanManageMemberTools) />
-					
-					<p>
-						<button type="submit" class="rvt-button" disabled=@(FormInvalid || ShowLoader)>Save</button>
-					</p>
 				</EditForm>
 			</Loader>
 		</Authenticated>
@@ -101,7 +84,7 @@
 
 	private EntityPermissions UnitCrudPerms;
 	private EntityPermissions MembersCrudPerms;
-	
+
 	private EntityPermissions HttpVerb => CurrentUnitMembers.Any(um => um.Person.Netid == CurrentPerson.Netid)
 		? EntityPermissions.Put
 		: EntityPermissions.Post;
@@ -109,8 +92,8 @@
 		? "Update"
 		: "Add";
 	private bool CanManageMembers => MembersCrudPerms.HasFlag(HttpVerb);
-	
-	private bool CanManageMemberTools => 
+
+	private bool CanManageMemberTools =>
 		MembersCrudPerms.HasFlag(EntityPermissions.Post)
 		|| MembersCrudPerms.HasFlag(EntityPermissions.Put)
 		|| (LoggedInUser != null && CurrentUnitMembers.Any(um => um.Person.Netid == LoggedInUser.Username && (um.Permissions == UnitPermissions.ManageMembers || um.Permissions == UnitPermissions.ManageTools)));
@@ -134,19 +117,22 @@
 
 		await SetLoggedInUser();
 	}
-	
+
 	protected override async Task OnParametersSetAsync()
 	{
-		if(LoggedInUser != null)
+		if (LoggedInUser != null)
 		{
 			using (Loading())
 			{
-				await Task.WhenAll(new [] {SetCurrentUnit(), SetCurrentPerson(), SetToolOptions()});
-
+				await Task.WhenAll(new[] { SetCurrentUnit(), SetCurrentPerson(), SetToolOptions() });
+				if (CurrentUnit?.Id == null)
+				{
+					return;
+				}
 				// Armed with all the details about the person, unit, and current members build up our input.
 				var existingMember = CurrentUnitMembers.FirstOrDefault(m => m.PersonId == CurrentPerson?.Id);
 				List<int> existingToolIds = existingMember?.MemberTools.Select(mt => mt.ToolId).ToList() ?? new List<int>();
-							
+
 				Input.UnitId = CurrentUnit.Id;
 				Input.PersonId = CurrentPerson.Id;
 				Input.NetId = CurrentPerson.Netid;
@@ -172,24 +158,25 @@
 	{
 		var signIn = "/SignIn";
 		var uri = new Uri(Navigation.Uri);
-		if(string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
+		if (string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
 		{
 			signIn += $"?Destination={HttpUtility.UrlEncode(uri.PathAndQuery)}";
 		}
-
 		return signIn;
 	}
 
 	private async Task SetCurrentUnit()
 	{
 		var tasks = new List<Task>();
-		tasks.Add(Task.Run(async () => {
+		tasks.Add(Task.Run(async () =>
+		{
 			var response = await Get<UnitResponse>($"units/{UnitId}");
 			CurrentUnit = response.Value;
 			UnitCrudPerms = response.Permissions;
 		}));
-		
-		tasks.Add(Task.Run(async () => {
+
+		tasks.Add(Task.Run(async () =>
+		{
 			var response = await Get<List<UnitMember>>($"units/{UnitId}/members");
 			CurrentUnitMembers = response.Value;
 			MembersCrudPerms = response.Permissions;
@@ -220,58 +207,51 @@
 	private async Task SubmitForm()
 	{
 		GeneralException = null;// reset before making our requests.
-		using(Loading())
+		using (Loading())
 		{
-			Console.WriteLine("Hello from SubmitForm()");
-			
 			// Add/Update the unit member.
-			if(CanManageMembers)
+			if (CanManageMembers)
 			{
-				if(HttpVerb == EntityPermissions.Post)
+				if (HttpVerb == EntityPermissions.Post)
 				{
-					Console.WriteLine("\tCreate the member.");
 					await Post<UnitMemberResponse>("memberships", Input);
 				}
 				else
 				{
-					Console.WriteLine("\tUpdate the member.");
-					if(CurrentMember == null)
+					if (CurrentMember == null)
 					{
 						GeneralException = new Exception($"Could not find existing membershp for {CurrentPerson?.Netid ?? "the selected person"}.  Unable to update.");
 						return;
 					}
 					await Put<UnitMemberResponse>($"memberships/{CurrentMember.Id}", Input);
 				}
-
 				// Re-fetch the updated UnitMember information.
 				await SetCurrentUnit();
 			}
-			
+
 			// Update the member's tools.
-			if(CanManageMemberTools)
+			if (CanManageMemberTools)
 			{
-				Console.WriteLine("\tUpdate the member's tools.");
-				if(CurrentMember == null)
+				if (CurrentMember == null)
 				{
 					GeneralException = new Exception($"{CurrentPerson?.Netid ?? "The selected person"} is not a member of this unit, and their tools cannot be updated.");
 					return;
 				}
-
 				var currentToolIds = CurrentMember.MemberTools.Select(mt => mt.ToolId);
 				var memberToolsToRemove = CurrentMember.MemberTools
 					.Where(mt => Input.Tools.Any(t => t.Id == mt.ToolId) == false)
 					.Select(mt => mt.Id)
 					.ToList();
-				
+
 				var toolsToAdd = Input.Tools
 					.Where(t => currentToolIds.Contains(t.Id) == false)
 					.Select(t => new MemberToolRequest { MembershipId = CurrentMember.Id, ToolId = t.Id })
 					.ToList();
-				
+
 				var requestTasks = new List<Task>();
 				requestTasks.AddRange(memberToolsToRemove.Select(m => Delete<MemberToolResponse>($"membertools/{m}")));
 				requestTasks.AddRange(toolsToAdd.Select(t => Post<MemberToolResponse>("membertools", t)));
-				
+
 				await Task.WhenAll(requestTasks);
 			}
 		}
