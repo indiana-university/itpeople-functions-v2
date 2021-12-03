@@ -142,6 +142,7 @@
             string responsemsg = await response.Content.ReadAsStringAsync();
             UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
             ProfileName = UpdatedPerson.Name;
+            GeneralException = null;
         }
         else if (response.StatusCode == HttpStatusCode.NotFound)
         {
