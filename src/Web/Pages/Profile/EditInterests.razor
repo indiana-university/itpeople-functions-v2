@@ -132,7 +132,7 @@
 		if (!CrudPerms.HasFlag(EntityPermissions.Put)) 
         {
             ProfileFormInvalid = true;
-            GeneralException = new Exception($"You don not have permissions to modify.");
+            GeneralException = new Exception($"You do not have permission to modify.");
         }
 	}
 	private void GetEntityPermissions(HttpResponseMessage resp)
