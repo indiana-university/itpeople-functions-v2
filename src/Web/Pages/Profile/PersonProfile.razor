@@ -5,14 +5,9 @@
 @using System.Net
 @using System.Linq
 @using Newtonsoft.Json
-@using Newtonsoft.Json.Linq
-@using System.Web
-@using System.Collections
 @using System;
-@using System.ComponentModel.DataAnnotations;
-@using System.Reflection;
 @using Microsoft.AspNetCore.Components.Web.Extensions.Head
-@inject IHttpClientFactory ClientFactory
+@inherits PageBase
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @inject IJSRuntime JSRuntime;
 @implements IDisposable
@@ -35,7 +30,7 @@
                     You must login to view this resource.
                 </p>
                 <p>
-                    <a class="rvt-button" href="/SignIn?Destination=/People">Log In</a>
+                    <a class="rvt-button" href="/SignIn?Destination=/People/@NetId">Log In</a>
                 </p>
             </NotAuthenticated>
             <Authenticated>
@@ -62,11 +57,9 @@
                                             <div><strong>Phone: </strong>@UpdatedPerson.CampusPhone</div>
                                             <div><strong>Department: </strong><a href="/departments/@UpdatedPerson.DepartmentId">@UpdatedPerson.Department.Name</a></div>
                                         </div>
-                                    </div>                                   
-                                    
-                                    <ProfileResponsibilities CrudPerms=CrudPerms @bind-Person=UpdatedPerson />
-                                    
-                                    <ProfileExpertise CrudPerms=CrudPerms @bind-Person=UpdatedPerson />
+                                    </div>  
+                                    <ProfileResponsibilities CrudPerms=CrudPerms @bind-Person=UpdatedPerson NetId=@NetId />                                    
+                                    <ProfileExpertise CrudPerms=CrudPerms @bind-Person=UpdatedPerson NetId=@NetId/>
                                 </ChildContent>                                                                                                             
                             </ProfileContactInformation>
                             <ProfileUnitsHelper Title="IT Units">
@@ -117,13 +110,11 @@
 
 @code {
     private EntityPermissions CrudPerms;
-    private Exception GeneralException;
     private Person UpdatedPerson = new Person();
     private IEnumerable<UnitResponse> ProfileUnits = new List<UnitResponse>();
     private IEnumerable<UnitMemberResponse> Memberships = new List<UnitMemberResponse>();
     private string _PrevNetId = null;
     [Parameter] public string NetId { get; set; }
-    private HttpClient Api() => ClientFactory.CreateClient("Api");
     private bool isExpanded = false;
     private string ProfileName;
     protected bool ShowLoader = false;
@@ -132,7 +123,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if(NetId != _PrevNetId)
+        await SetLoggedInUser();
+        if (LoggedInUser != null && NetId != _PrevNetId)
         {
             using (Loading())
             {
@@ -150,7 +142,8 @@
             string responsemsg = await response.Content.ReadAsStringAsync();
             UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
             ProfileName = UpdatedPerson.Name;
-        }      
+            GeneralException = null;
+        }
         else if (response.StatusCode == HttpStatusCode.NotFound)
         {
             GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
@@ -168,18 +161,18 @@
     private string GetPageTitle() => $"{ProfileName} - IT People - Indiana University";
 
     private void GetEntityPermissions(HttpResponseMessage resp)
-	{
-		// Pluck the user permissions from the response header. Eg. "GET, PUT"
-		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
-		
-		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-		CrudPerms = 0;// Reset permissions to 0.
-		foreach(var p in permsString.Split(','))
-		{
-			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-			CrudPerms |= ep;
-		}
-	}
+    {
+        // Pluck the user permissions from the response header. Eg. "GET, PUT"
+        var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+
+        // Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+        CrudPerms = 0;// Reset permissions to 0.
+        foreach (var p in permsString.Split(','))
+        {
+            var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+            CrudPerms |= ep;
+        }
+    }
     private async Task GetPersonUnitMemberships()
     {
         var response = await Api().GetAsync($"/people/{NetId}/memberships");
@@ -195,6 +188,6 @@
             return;
         }
     }
-    
+
     public void Dispose() { }
 }
