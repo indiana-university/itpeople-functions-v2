@@ -129,25 +129,25 @@
 			return;
 		}
 		GetEntityPermissions(response);
-		if (!CrudPerms.HasFlag(EntityPermissions.Put)) 
-        {
-            ProfileFormInvalid = true;
-            GeneralException = new Exception($"You do not have permission to modify.");
-        }
+		if (!CrudPerms.HasFlag(EntityPermissions.Put))
+		{
+			ProfileFormInvalid = true;
+			GeneralException = new Exception($"You do not have permission to modify.");
+		}
 	}
 	private void GetEntityPermissions(HttpResponseMessage resp)
-    {
-        // Pluck the user permissions from the response header. Eg. "GET, PUT"
-        var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+	{
+		// Pluck the user permissions from the response header. Eg. "GET, PUT"
+		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
 
-        // Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-        CrudPerms = 0;// Reset permissions to 0.
-        foreach (var p in permsString.Split(','))
-        {
-            var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-            CrudPerms |= ep;
-        }
-    }
+		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+		CrudPerms = 0;// Reset permissions to 0.
+		foreach (var p in permsString.Split(','))
+		{
+			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+			CrudPerms |= ep;
+		}
+	}
 	private void RemoveInterest(string interest)
 	{
 		ExpertiseAsList.Remove(interest);

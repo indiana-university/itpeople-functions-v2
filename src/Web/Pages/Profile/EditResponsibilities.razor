@@ -64,7 +64,7 @@
     public EntityPermissions CrudPerms;
     private string ProfileName;
     private EditContext FormContext;
-	protected bool ProfileFormInvalid = false;
+    protected bool ProfileFormInvalid = false;
     protected bool ShowLoader = false;
     protected IDisposable Loading()
     => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
