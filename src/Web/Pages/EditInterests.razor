@@ -70,16 +70,16 @@
 
 @code {
 
-    [Parameter]
-    public string NetId { get; set; }
-    [Parameter]
+	[Parameter]
+	public string NetId { get; set; }
+	[Parameter]
 	public EntityPermissions CrudPerms { get; set; }
-    private string ProfileName;
+	private string ProfileName;
 	private string SearchTerm = "";
-    private EditContext FormContext;
-    protected bool ShowLoader = false;
-    protected IDisposable Loading()
-        => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+	private EditContext FormContext;
+	protected bool ShowLoader = false;
+	protected IDisposable Loading()
+		=> new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	public Person UpdatedPerson = new Person();
 	private List<string> ExpertiseAsList = new List<string>();
 	private List<string> Suggestions = new List<string>();
@@ -91,29 +91,29 @@
 		if (LoggedInUser != null)
 			await GetPersonProfile();
 	}
-    private async Task GetPersonProfile()
-    {
-        var response = await Api().GetAsync($"/people/{NetId}");
-        if (response.IsSuccessStatusCode)
-        {
-            string responsemsg = await response.Content.ReadAsStringAsync();
-            UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
-			ExpertiseAsList.AddRange(UpdatedPerson.Expertise.Split(',').Select(r => r.Trim()));				
-            ProfileName = UpdatedPerson.Name;
-        }      
-        else if (response.StatusCode == HttpStatusCode.NotFound)
-        {
-            GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
-            UpdatedPerson = null;
-            ProfileName = "Not Found";
-            return;
-        }
-        else
-        {
-            GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
-            return;
-        }
-    }
+	private async Task GetPersonProfile()
+	{
+		var response = await Api().GetAsync($"/people/{NetId}");
+		if (response.IsSuccessStatusCode)
+		{
+			string responsemsg = await response.Content.ReadAsStringAsync();
+			UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
+			ExpertiseAsList.AddRange(UpdatedPerson.Expertise.Split(',').Select(r => r.Trim()));
+			ProfileName = UpdatedPerson.Name;
+		}
+		else if (response.StatusCode == HttpStatusCode.NotFound)
+		{
+			GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
+			UpdatedPerson = null;
+			ProfileName = "Not Found";
+			return;
+		}
+		else
+		{
+			GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
+			return;
+		}
+	}
 	private void RemoveInterest(string interest)
 	{
 		ExpertiseAsList.Remove(interest);
