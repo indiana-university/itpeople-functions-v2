@@ -42,7 +42,7 @@
                 <a class="rvt-button" href=@GetLoginUri()>Log In</a>
             </p>
         </NotAuthenticated>
-        <Authenticated>
+        <Authenticated>          
             <h1 class="rvt-modal__title">Edit Responsibilities</h1>
             <Loader Loading="ShowLoader">
                 <EditForm EditContext="@FormContext" OnValidSubmit="SaveChanges">
@@ -50,10 +50,10 @@
                     <ValidationSummary />
                     <RivetInputFlag @bind-Value="ResponsibilitiesInput" Description="Check all the relevant responsibilities performed" Inline=false />
                     <p>
-                        <button type="submit" class="rvt-button">Save</button>
+                        <button type="submit" class="rvt-button" disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
                     </p>
                 </EditForm>
-            </Loader>
+            </Loader>            
         </Authenticated>
     </AuthenticatedView>
 </div>
@@ -61,10 +61,10 @@
 @code {
     [Parameter]
     public string NetId { get; set; }
-    [Parameter]
-    public EntityPermissions CrudPerms { get; set; }
+    public EntityPermissions CrudPerms;
     private string ProfileName;
     private EditContext FormContext;
+	protected bool ProfileFormInvalid = false;
     protected bool ShowLoader = false;
     protected IDisposable Loading()
     => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
@@ -98,6 +98,26 @@
         {
             GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
             return;
+        }
+        GetEntityPermissions(response);
+        if (!CrudPerms.HasFlag(EntityPermissions.Put)) 
+        {
+            ProfileFormInvalid = true;
+            GeneralException = new Exception($"You don not have permissions to modify.");
+        }
+
+    }
+    private void GetEntityPermissions(HttpResponseMessage resp)
+    {
+        // Pluck the user permissions from the response header. Eg. "GET, PUT"
+        var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+
+        // Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+        CrudPerms = 0;// Reset permissions to 0.
+        foreach (var p in permsString.Split(','))
+        {
+            var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+            CrudPerms |= ep;
         }
     }
     private async Task SaveChanges()

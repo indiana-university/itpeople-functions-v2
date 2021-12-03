@@ -75,7 +75,7 @@
                             </ul>
                         }
 					<p>
-						<button type="submit" class="rvt-button">Save</button>
+						<button type="submit" class="rvt-button" disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
 					</p>
                 </EditForm>
             </Loader>
@@ -87,12 +87,12 @@
 
 	[Parameter]
 	public string NetId { get; set; }
-	[Parameter]
-	public EntityPermissions CrudPerms { get; set; }
+	public EntityPermissions CrudPerms;
 	private string ProfileName;
 	private string SearchTerm = "";
 	private EditContext FormContext;
 	protected bool ShowLoader = false;
+	protected bool ProfileFormInvalid = false;
 	protected IDisposable Loading()
 		=> new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	public Person UpdatedPerson = new Person();
@@ -128,7 +128,26 @@
 			GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
 			return;
 		}
+		GetEntityPermissions(response);
+		if (!CrudPerms.HasFlag(EntityPermissions.Put)) 
+        {
+            ProfileFormInvalid = true;
+            GeneralException = new Exception($"You don not have permissions to modify.");
+        }
 	}
+	private void GetEntityPermissions(HttpResponseMessage resp)
+    {
+        // Pluck the user permissions from the response header. Eg. "GET, PUT"
+        var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+
+        // Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+        CrudPerms = 0;// Reset permissions to 0.
+        foreach (var p in permsString.Split(','))
+        {
+            var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+            CrudPerms |= ep;
+        }
+    }
 	private void RemoveInterest(string interest)
 	{
 		ExpertiseAsList.Remove(interest);
