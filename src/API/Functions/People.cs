@@ -103,7 +103,7 @@ namespace API.Functions
                 .Finally(people => Response.Ok(req, people));
 
         [FunctionName(nameof(People.PeopleWithHRGetOne))]
-        [OpenApiOperation(nameof(People.PeopleWithHRGetOne), nameof(PeopleLookupItem), Summary = "Get a person by ID from People or HR People")]
+        [OpenApiOperation(nameof(People.PeopleWithHRGetOne), nameof(People), Summary = "Get a person by NetId", Description = "Finds a user by their NetId (username).  Searches both People and HR-People.")]
         [OpenApiParameter("netId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The NetId of the person record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(PeopleLookupItem))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No person was found with the provided NetId.")]
