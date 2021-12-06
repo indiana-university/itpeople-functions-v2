@@ -652,13 +652,13 @@ namespace Integration
             [TestCase(UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
             [TestCase(UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
             [TestCase(UnitPermissions.Owner, EntityPermissions.Get, Description = "Owner")]
-            public async Task ReturnsCorrectPermissionsUnitMembersWhenUnitRetired(UnitPermissions providedPermission, EntityPermissions expectedPermission)
+            public async Task ReturnsCorrectPermissionsWhenUnitRetired(UnitPermissions providedPermission, EntityPermissions expectedPermission)
 			{
                 await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ArchivedUnitId}/members", TestEntities.Units.ArchivedUnitId, providedPermission, expectedPermission);
             }
 
             [Test]
-            public async Task ReturnsCorrectPermissionsUnitMembersWhenUnitRetiredForServiceAdmin()
+            public async Task ReturnsCorrectPermissionsWhenUnitRetiredForServiceAdmin()
             {
                 var resp = await GetAuthenticated($"units/{TestEntities.Units.ArchivedUnitId}/members", ValidAdminJwt);
                 AssertStatusCode(resp, HttpStatusCode.OK);
@@ -696,6 +696,23 @@ namespace Integration
                 Assert.True(actual.All(a => a.Unit != null));
                 Assert.True(actual.All(a => a.Unit.Id == unitId));
                 Assert.True(actual.All(a => a.Building != null));
+            }
+
+            [TestCase(UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(UnitPermissions.Owner, EntityPermissions.Get, Description = "Owner")]
+            public async Task ReturnsCorrectPermissionsWhenUnitRetired(UnitPermissions providedPermission, EntityPermissions expectedPermission)
+            {
+                await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ArchivedUnitId}/supportedBuildings", TestEntities.Units.ArchivedUnitId, providedPermission, expectedPermission);
+            }
+
+            [Test]
+            public async Task ReturnsCorrectPermissionsWhenUnitRetiredForServiceAdmin()
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.ArchivedUnitId}/supportedBuildings", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
             }
 
             [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
@@ -773,6 +790,23 @@ namespace Integration
                 
                 await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ParksAndRecUnitId}/supportedDepartments", unitWithPermissions, providedPermission, expectedPermission);
             }
+
+            [TestCase(UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(UnitPermissions.Owner, EntityPermissions.Get, Description = "Owner")]
+            public async Task ReturnsCorrectPermissionsWhenUnitRetired(UnitPermissions providedPermission, EntityPermissions expectedPermission)
+            {
+                await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ArchivedUnitId}/supportedDepartments", TestEntities.Units.ArchivedUnitId, providedPermission, expectedPermission);
+            }
+
+            [Test]
+            public async Task ReturnsCorrectPermissionsWhenUnitRetiredForServiceAdmin()
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.ArchivedUnitId}/supportedDepartments", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
+            }
         }
 
         [TestFixture]
@@ -811,6 +845,23 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Tool>>();
                 AssertIdsMatchContent(expectedToolIds, actual);
+            }
+
+            [TestCase(UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(UnitPermissions.Owner, EntityPermissions.Get, Description = "Owner")]
+            public async Task ReturnsCorrectPermissionsWhenUnitRetired(UnitPermissions providedPermission, EntityPermissions expectedPermission)
+            {
+                await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ArchivedUnitId}/tools", TestEntities.Units.ArchivedUnitId, providedPermission, expectedPermission);
+            }
+
+            [Test]
+            public async Task ReturnsCorrectPermissionsWhenUnitRetiredForServiceAdmin()
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.ArchivedUnitId}/tools", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
             }
 
             [TestCase(UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
