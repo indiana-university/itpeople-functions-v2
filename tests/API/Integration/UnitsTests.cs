@@ -647,6 +647,23 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<List<UnitMemberResponse>>();
                 Assert.AreEqual(expectNotesHidden, actual.All(a => string.IsNullOrWhiteSpace(a.Notes)));
             }
+
+            [TestCase(UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
+            [TestCase(UnitPermissions.ManageTools, EntityPermissions.Get, Description = "ManageTools")]
+            [TestCase(UnitPermissions.ManageMembers, EntityPermissions.Get, Description = "ManageMember")]
+            [TestCase(UnitPermissions.Owner, EntityPermissions.Get, Description = "Owner")]
+            public async Task ReturnsCorrectPermissionsUnitMembersWhenUnitRetired(UnitPermissions providedPermission, EntityPermissions expectedPermission)
+			{
+                await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.ArchivedUnitId}/members", TestEntities.Units.ArchivedUnitId, providedPermission, expectedPermission);
+            }
+
+            [Test]
+            public async Task ReturnsCorrectPermissionsUnitMembersWhenUnitRetiredForServiceAdmin()
+            {
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.ArchivedUnitId}/members", ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
+            }
         }
 
         [TestFixture]

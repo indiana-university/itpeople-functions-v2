@@ -130,11 +130,23 @@ namespace API.Data
         public static async Task<Result<EntityPermissions,Error>> ResolveUnitManagmentPermissions(Person requestor, int unitId, List<UnitPermissions> anyGetsAllPermissions, PeopleContext db)
         {
             if (requestor == null)
+			{
                 return Pipeline.Success(EntityPermissions.Get);
-
+            }
             // Grant all user permissions to Service Admins.
             if (requestor.IsServiceAdmin)
+			{
                 return Pipeline.Success(PermsGroups.All);
+            }
+            var unit = await db.Units.SingleOrDefaultAsync(u => u.Id == unitId);
+            if(unit == null)
+            {
+                return Pipeline.NotFound($"Could not find any units with an id of {unitId}");
+            } 
+            if(unit.Active == false) //Only service admin can change unit related items on a retired unit
+            {
+                return Pipeline.Success(EntityPermissions.Get);
+            }
 
             // Find all units in which  the requestor has the required unit permissions.
             var privilegedUnits = requestor.UnitMemberships
@@ -144,7 +156,9 @@ namespace API.Data
             // Grant minimal user permissions if *none* of the requestor's unit 
             //   memberships contain the required unit permissions. 
             if (false == privilegedUnits.Any())
+			{
                 return Pipeline.Success(EntityPermissions.Get);
+            }
 
             // Grant all user permissions if the requestor has the required unit 
             //  permissions in this unit or any parent unit in the hierarchy. 
