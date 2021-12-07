@@ -43,7 +43,7 @@ namespace API.Data
         private static async Task<Result<(Person requestor, Person target),Error>> FetchPeople(PeopleContext db, string requestorNetid, int personId)
         {
             var requestor = await FindRequestorOrDefault(db, requestorNetid);
-            var target = await db.People.Include(p => p.UnitMemberships).SingleOrDefaultAsync(p => p.Id == personId);
+            var target = await db.People.Include(p => p.UnitMemberships).ThenInclude(um => um.Unit).SingleOrDefaultAsync(p => p.Id == personId);
             return target == null
                 ? Pipeline.NotFound("No person was found with the ID provided.")
                 : Pipeline.Success((requestor, target));
@@ -51,7 +51,7 @@ namespace API.Data
         private static async Task<Result<(Person requestor, Person target),Error>> FetchPeople(PeopleContext db, string requestorNetid, string netId)
         {
             var requestor = await FindRequestorOrDefault(db, requestorNetid);
-            var target = await db.People.Include(p => p.UnitMemberships).SingleOrDefaultAsync(p => p.Netid == netId);
+            var target = await db.People.Include(p => p.UnitMemberships).ThenInclude(um => um.Unit).SingleOrDefaultAsync(p => p.Netid == netId);
             return target == null
                 ? Pipeline.NotFound("No person was found with the ID provided.")
                 : Pipeline.Success((requestor, target));
@@ -66,15 +66,15 @@ namespace API.Data
             {
                 var requestorManagedUnits = requestor
                     .UnitMemberships
-                    .Where(m => m.Permissions == UnitPermissions.Owner || m.Permissions == UnitPermissions.ManageMembers)
+                    .Where(m => (m.Permissions == UnitPermissions.Owner || m.Permissions == UnitPermissions.ManageMembers)
+                        && m.Unit.Active)
                     .Select(m => m.UnitId)
                     .ToList();
-
                 var personMemberOfUnits = target
                     .UnitMemberships
                     .Select(m => m.UnitId)
                     .ToList();
-                
+
                 var matches = requestorManagedUnits.Intersect(personMemberOfUnits);
 
                 if (requestor.IsServiceAdmin // requestor is a service admin
@@ -212,6 +212,7 @@ namespace API.Data
                 ? Task.FromResult<Person>(null)
                 : db.People
                     .Include(p => p.UnitMemberships)
+                    .ThenInclude(um => um.Unit)
                     .SingleOrDefaultAsync(p => p.Netid.ToLower() == requestorNetid.ToLower());
     }
 }

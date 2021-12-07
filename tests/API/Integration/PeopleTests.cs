@@ -224,6 +224,18 @@ namespace Integration
                 AssertPermissions(resp, expectedPermissions);
             }
 
+            [TestCase(ValidRswansonJwt, EntityPermissions.Get)]
+            [TestCase(ValidAdminJwt, PermsGroups.GetPut)]
+            public async Task HasCorrectPermissionsForRetiredUnit(string jwt, EntityPermissions expectedPermissions)
+            {
+                //retire unit
+                var archivedUnitResponse = await DeleteAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}/archive", ValidAdminJwt);
+                AssertStatusCode(archivedUnitResponse, HttpStatusCode.OK);
+
+                var ronResp = await GetAuthenticated($"people/{TestEntities.People.LKnope.Netid}", jwt);
+                AssertPermissions(ronResp, expectedPermissions);
+            }
+
             [Test]
             public async Task CanGetUserByNetid()
             {
