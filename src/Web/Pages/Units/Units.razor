@@ -10,12 +10,13 @@
 @inject IHttpClientFactory ClientFactory
 @inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @implements IDisposable
+@inherits PageBase
 @page "/Units"
 
-<Title  Value="Units - IT People - Indiana University" />
+<Title Value="Units - IT People - Indiana University" />
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
-	
+
 	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
 		<!-- our title -->
 		<div class="rvt-m-right-sm-md-up">
@@ -23,7 +24,7 @@
 		</div>
 		<!-- a place for buttons/actions to live -->
 		<div class="rvt-bg-blue rvt-m-right-sm-md-up">
-			@if(CrudPerms.HasFlag(EntityPermissions.Post))
+			@if (CrudPerms.HasFlag(EntityPermissions.Post))
 			{
 				<a class="rvt-button" href="/Units/Create">+ Add New Unit</a>
 			}
@@ -50,19 +51,19 @@
 
 			<DisplayException Ex=@GeneralException />
 			<Loader Loading=ShowLoader>
-				@if(MyUnits.Count() > 0)
+				@if (MyUnits.Count() > 0)
 				{
 					<h2 class="rvt-ts-md">My Units</h2>
 					<GridListItems Collection=@MyUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) />
 				}
 
-				@if(ActiveUnits.Count() > 0)
+				@if (ActiveUnits.Count() > 0)
 				{
 					<h2 class="rvt-ts-md">Active Units</h2>
 					<GridListItems Collection=@ActiveUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) />
 				}
 
-				@if(ArchivedUnits.Count() > 0)
+				@if (ArchivedUnits.Count() > 0)
 				{
 					<h2 class="rvt-ts-md">Archived Units</h2>
 					<GridListItems Collection=@ArchivedUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) Archived=@(u => !u.Active) />
@@ -73,22 +74,19 @@
 </div>
 
 @code {
-	private HttpClient Api() => ClientFactory.CreateClient("Api");
 	private IEnumerable<UnitResponse> MyUnits = new List<UnitResponse>();
 	private IEnumerable<UnitResponse> ActiveUnits = new List<UnitResponse>();
 	private IEnumerable<UnitResponse> ArchivedUnits = new List<UnitResponse>();
-	private AuthenticatedUser LoggedInUser;
 	private EntityPermissions CrudPerms;
 	private bool ShowLoader = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
-	private Exception GeneralException;
-	
+
 	protected override async Task OnInitializedAsync()
 	{
-		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
-		if(LoggedInUser != null)
+		await SetLoggedInUser();
+		if (LoggedInUser != null)
 		{
-			using(Loading())
+			using (Loading())
 			{
 				// Fetch my units and the whole list of units simultaneously.
 				await Task.WhenAll(new[] { FetchMyUnits(), FetchUnits() });
@@ -98,52 +96,18 @@
 
 	private async Task FetchMyUnits()
 	{
-		var resp = await Api().GetAsync($"/people/{LoggedInUser.Username}/memberships");
-		//var resp = await Api().GetAsync($"/people/1/memberships");
-		if(resp.StatusCode != HttpStatusCode.OK)
-		{
-			GeneralException = new Exception($"Failed to fetch UnitMemberships for {LoggedInUser.Username}.");
-			return;
-		}
-
-		// The request succeeded, try to deserialize it.
-		var stringResult = await resp.Content.ReadAsStringAsync();
-		// We have to use Newtonsoft to make sure our StringEnumConverter work.
-		var memberships = JsonConvert.DeserializeObject<List<UnitMemberResponse>>(stringResult, Json.JsonSerializerSettings);
-		MyUnits = memberships.Select(m => m.Unit).Distinct();
+		var response = await Get<List<UnitMemberResponse>>($"/people/{LoggedInUser.Username}/memberships", $"Failed to fetch UnitMemberships for {LoggedInUser.Username}.");
+		MyUnits = response.Value?.Select(m => m.Unit).Distinct();
 	}
 
 	private async Task FetchUnits()
 	{
-		var resp = await Api().GetAsync($"/Units");
-		if(resp.StatusCode != HttpStatusCode.OK)
-		{
-			GeneralException = new Exception($"Failed to fetch Units.");
-			return;
-		}
-		// Use Newtonsoft to deserialize for consistency's sake.
-		var stringResult = await resp.Content.ReadAsStringAsync();
-		var units = JsonConvert.DeserializeObject<List<UnitResponse>>(stringResult, Json.JsonSerializerSettings);
-		
-		ActiveUnits = units.Where(u => u.Active);
-		ArchivedUnits = units.Where(u => u.Active == false);
 
-		GetEntityPermissions(resp);
+		var response = await Get<List<UnitResponse>>($"/Units", $"Failed to fetch Units.");
+		ActiveUnits = response.Value?.Where(u => u.Active);
+		ArchivedUnits = response.Value?.Where(u => u.Active == false);
+		CrudPerms = response.Permissions;
 	}
 
-	private void GetEntityPermissions(HttpResponseMessage resp)
-	{
-		// Pluck the user permissions from the response header. Eg. "GET, PUT"
-		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
-		
-		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-		CrudPerms = 0;// Reset permissions to 0.
-		foreach(var p in permsString.Split(','))
-		{
-			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-			CrudPerms |= ep;
-		}
-	}
-
-	public void Dispose(){}
+	public void Dispose() { }
 }
