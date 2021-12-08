@@ -24,8 +24,7 @@
 				You must login to view this resource.
 			</p>
 			<p>
-				<a class="rvt-button"
-					href="/SignIn?Destination=@(HttpUtility.UrlEncode(new Uri(Navigation.Uri).PathAndQuery))">Login</a>
+				<a class="rvt-button" href="/SignIn?Destination=@(HttpUtility.UrlEncode(new Uri(Navigation.Uri).PathAndQuery))">Login</a>
 			</p>
 		</NotAuthenticated>
 		<Authenticated>
@@ -41,7 +40,7 @@
 			<Loader Loading=ShowLoader>
 				<div class="rvt-grid rvt-m-top-md">
 					<div class="rvt-grid__item-5-md-up">
-						<EditForm EditContext="@EditContext">
+						<EditForm EditContext="@EditContext" OnValidSubmit="SubmitForm">
 							<DataAnnotationsValidator />
 
 							<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
@@ -55,6 +54,13 @@
 
 							<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Responsibilities</h2>
 							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Responsibilities" />
+
+							<p>
+								<button id="apply-filter" class="rvt-button" disabled="@(GetQueryParams().Count == 0)"
+									type="submit">
+									Apply Filters
+								</button>
+							</p>
 						</EditForm>
 					</div>
 
@@ -81,7 +87,7 @@
 								</div>
 							}
 						}
-						else if (ShowNoResultsMessage)
+						else if (HasSearched && PeopleList.Count() == 0)
 						{
 							<div class="rvt-panel">
 								<p>
@@ -92,10 +98,6 @@
 						}
 					</div>
 				</div>
-				<p>
-					<button id="apply-filter" class="rvt-button" disabled="@(GetQueryParams().Count == 0)" type="submit" @onclick=@UpdateQueryString>Apply
-						Filters</button>
-				</p>
 			</Loader>
 		</Authenticated>
 	</AuthenticatedView>
@@ -107,11 +109,11 @@
 		public List<Role> Roles = new List<Role>();
 		public List<Campus> Campuses = new List<Campus>();
 		public List<Area> Areas = new List<Area>();
-		public List<Responsibilities> Responsibilities  = new List<Responsibilities>();
+		public List<Responsibilities> Responsibilities = new List<Responsibilities>();
 	}
 	private EditContext EditContext;
 	private List<Person> PeopleList = new List<Person>();
-	private bool ShowNoResultsMessage;
+	private bool HasSearched = false;
 	private PeopleSearch PeopleSearchValues = new PeopleSearch();
 	private bool ShowLoader = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
@@ -121,37 +123,33 @@
 		await SetLoggedInUser();
 		if (LoggedInUser != null)
 		{
-			EditContext = new EditContext(PeopleSearchValues);
-			Navigation.LocationChanged += LocationChanged;
-			LocationChanged(null, null);
-		}
-	}
-
-	private void LocationChanged(object sender, LocationChangedEventArgs e)
-	{
-		GeneralException = null;
-		base.InvokeAsync(async () =>
-		{
-			if (LoggedInUser != null)
+			using (Loading())
 			{
-				using (Loading())
+				EditContext = new EditContext(PeopleSearchValues);
+				var queryDict = HttpUtility.ParseQueryString(new Uri(Navigation.Uri).Query);
+				ConvertNameValueToEnum<Role>(queryDict, PeopleSearchValues.Roles, "role");
+				ConvertNameValueToEnum<Campus>(queryDict, PeopleSearchValues.Campuses, "campus");
+				ConvertNameValueToEnum<Area>(queryDict, PeopleSearchValues.Areas, "area");
+				ConvertNameValueToEnum<Responsibilities>(queryDict, PeopleSearchValues.Responsibilities, "class");
+				if (GetQueryParams().Count > 0)
 				{
-					var queryDict = HttpUtility.ParseQueryString(new Uri(Navigation.Uri).Query);
-					ConvertNameValueToEnum<Role>(queryDict, PeopleSearchValues.Roles, "role");
-					ConvertNameValueToEnum<Campus>(queryDict, PeopleSearchValues.Campuses, "campus");
-					ConvertNameValueToEnum<Area>(queryDict, PeopleSearchValues.Areas, "area");
-					ConvertNameValueToEnum<Responsibilities>(queryDict, PeopleSearchValues.Responsibilities, "class");
-					PeopleList.Clear();
-					ShowNoResultsMessage = false;
-					if (GetQueryParams().Count > 0 )
-					{
-						await GetPeople();
-					}
+					await GetPeople();
 				}
 			}
-		});
+		}
 	}
-
+	private async Task SubmitForm()
+	{
+		using (Loading())
+		{
+			// Reset GeneralException
+			GeneralException = null;
+			// Update the browser's URI to match the new Q
+			var destination = QueryHelpers.AddQueryString("/people", GetQueryParams());
+			Navigation.NavigateTo(destination);
+			await GetPeople();
+		}
+	}
 	private void ConvertNameValueToEnum<T>(NameValueCollection queryDict, List<T> values, string key)
 	{
 		values.Clear();
@@ -170,13 +168,6 @@
 				}
 			}
 		}
-	}
-
-	public void UpdateQueryString()
-	{
-		var destination = QueryHelpers.AddQueryString("/people", GetQueryParams());
-		// Navigate to destination, which will make LocationChanged() fire.
-		Navigation.NavigateTo(destination);
 	}
 
 	private Dictionary<string, string> GetQueryParams()
@@ -201,10 +192,11 @@
 
 	private async Task GetPeople()
 	{
+		HasSearched = true;
 		var requestUri = QueryHelpers.AddQueryString("/people", GetQueryParams());
-		var response = await Get<List<Person>>(requestUri);
-		PeopleList = response.Value;
-		ShowNoResultsMessage = PeopleList.Count == 0;
+		var PeopleList = (await Get<List<Person>>(requestUri)).Value;
+			Console.WriteLine(HasSearched);
+			Console.WriteLine(PeopleList.Count());
 	}
 
 	private async Task ExportResultsToCSV()
@@ -219,8 +211,5 @@
 		System.Text.Encoding.UTF8.GetBytes(builder.ToString()));
 	}
 
-	public void Dispose()
-	{
-		Navigation.LocationChanged -= LocationChanged;
-	}
+	public void Dispose() { }
 }
