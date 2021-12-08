@@ -3,7 +3,7 @@
 @using web.Shared
 @using RivetBlazor.Components
 @implements IDisposable
-@inherits Shared.PageBase
+@inherits PageBase
 @inject NavigationManager Navigation
 @page "/Units/{unitId}/AddMember"
 
@@ -36,12 +36,16 @@
 			</p>
 		</NotAuthenticated>
 		<Authenticated>
-			@if (CanEditUnitMembers)
-			{
-				<EditForm EditContext="@FormContext">
-					<SuggestionButtons T=PeopleLookupItem Label="Search" Placeholder="Enter a search term" Description="Search by username or first and last name." ButtonClickedAction=AddPerson AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name} ({s.NetId})") />
-				</EditForm>
-			}
+			<Loader Loading=ShowLoader>
+				@if (CanEditUnitMembers)
+				{
+					<EditForm EditContext="@FormContext">
+						<SuggestionButtons T=PeopleLookupItem Label="Search" Placeholder="Enter a search term"
+						Description="Search by username or first and last name." ButtonClickedAction=AddPerson
+						AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name} ({s.NetId})") />
+					</EditForm>
+				}
+			</Loader>
 		</Authenticated>
 	</AuthenticatedView>
 </div>
@@ -57,6 +61,9 @@
 	private EditContext FormContext;
 	private bool CanEditUnitMembers = false;
 
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+
 	protected override async Task OnInitializedAsync()
 	{
 		// Setup our editcontext
@@ -69,8 +76,11 @@
 	{
 		if (LoggedInUser != null)
 		{
-			await SetCurrentUnit();
-			await SetCurrentUnitMembers();
+			using (Loading())
+			{
+				await SetCurrentUnit();
+				await SetCurrentUnitMembers();
+			}
 		}
 	}
 
