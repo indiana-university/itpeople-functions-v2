@@ -8,6 +8,7 @@
 @inject NavigationManager Navigation
 @inject IHttpClientFactory ClientFactory
 @implements IDisposable
+@inherits PageBase
 @page "/Search"
 
 <Title Value="Search - IT People - Indiana University" />
@@ -88,8 +89,6 @@
 </div>
 @code {
 	private string Q = "";
-	private HttpClient Api() => ClientFactory.CreateClient("Api");
-	private Exception GeneralException;
 	private EditContext FormContext;
 	private bool FormInvalid = false;
 	private bool ShowLoader = false;
@@ -100,7 +99,7 @@
 	private IEnumerable<Person> People = new List<Person>();
 	private IEnumerable<Department> Departments = new List<Department>();
 	private IEnumerable<Building> Buildings = new List<Building>();
-	
+
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -147,42 +146,11 @@
 		HasSearched = true;
 		await Task.WhenAll(new[] { SearchUnits(), SearchPeople(), SearchDepartments(), SearchBuildings() });
 	}
-	
-	private async Task SearchUnits() => Units = await GetWithErrorHandling<List<UnitResponse>>($"/Units?q={HttpUtility.UrlEncode(Q)}");
-	private async Task SearchPeople() => People = await GetWithErrorHandling<List<Person>>($"/People?q={HttpUtility.UrlEncode(Q)}");
-	private async Task SearchDepartments() => Departments = await GetWithErrorHandling<List<Department>>($"/Departments?q={HttpUtility.UrlEncode(Q)}");
-	private async Task SearchBuildings() => Buildings = await GetWithErrorHandling<List<Building>>($"/Buildings?q={HttpUtility.UrlEncode(Q)}");
-	
-	private async Task<T> GetWithErrorHandling<T>(string uri, string error = null)
-	{
-		var result = default(T);
 
-		try
-		{
-			var resp = await Api().GetAsync(uri);
-
-			if(resp.StatusCode != HttpStatusCode.OK)
-			{
-				var message = string.IsNullOrWhiteSpace(error)
-					? $"Failed to Get {resp.RequestMessage.RequestUri} Status {resp.StatusCode} {resp.ReasonPhrase}"
-					: error;
-				GeneralException = new Exception(message);
-				return result;
-			}
-			
-			// The request succeeded, try to deserialize it.
-			var stringResult = await resp.Content.ReadAsStringAsync();
-			// We have to use Newtonsoft to make sure our StringEnumConverter work.
-			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
-		}
-		catch(Exception ex)
-		{
-			GeneralException = ex;
-			return result;
-		}
-		
-		return result;
-	}
+	private async Task SearchUnits() => Units = (await Get<List<UnitResponse>>($"/Units?q={HttpUtility.UrlEncode(Q)}")).Value;
+	private async Task SearchPeople() => People = (await Get<List<Person>>($"/People?q={HttpUtility.UrlEncode(Q)}")).Value;
+	private async Task SearchDepartments() => Departments = (await Get<List<Department>>($"/Departments?q={HttpUtility.UrlEncode(Q)}")).Value;
+	private async Task SearchBuildings() => Buildings = (await Get<List<Building>>($"/Buildings?q={HttpUtility.UrlEncode(Q)}")).Value;
 
 	public void Dispose(){
 		FormContext.OnFieldChanged -= HandleFieldChanged;
