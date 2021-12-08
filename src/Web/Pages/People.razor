@@ -194,9 +194,7 @@
 	{
 		HasSearched = true;
 		var requestUri = QueryHelpers.AddQueryString("/people", GetQueryParams());
-		var PeopleList = (await Get<List<Person>>(requestUri)).Value;
-			Console.WriteLine(HasSearched);
-			Console.WriteLine(PeopleList.Count());
+		PeopleList = (await Get<List<Person>>(requestUri)).Value;
 	}
 
 	private async Task ExportResultsToCSV()
