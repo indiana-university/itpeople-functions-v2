@@ -41,6 +41,27 @@
 		return await MakeRequest<T>(Api().DeleteAsync(uri), error);
 	}
 
+	private EntityPermissions GetEntityPermissionsFromResponse(HttpResponseMessage response)
+	{
+		var result = EntityPermissions.Get;
+		
+		// Pluck the user permissions from the response header. Eg. "GET, PUT"
+		var permsString = response.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+		if (string.IsNullOrWhiteSpace(permsString))
+		{
+			return result;
+		}
+
+		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+		foreach (var p in permsString.Split(','))
+		{
+			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+			result |= ep;
+		}
+
+		return result;
+	}
+
 	protected async Task<(T Value, EntityPermissions Permissions)> MakeRequest<T>(Task<HttpResponseMessage> request, string error = null)
 	{
 		var result = default(T);
@@ -49,28 +70,22 @@
 		try
 		{
 			response = await request;
+			
+			// Set the entity permissions based on the response.
+			permissions = GetEntityPermissionsFromResponse(response);
+			
+			// Handle errors
 			if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Created && response.StatusCode != HttpStatusCode.NoContent)
 			{
 				var message = await GetErrorMessage(response, error);
 				GeneralException = new Exception(message);
 				return (result, permissions);
 			}
+			
 			// The request succeeded, try to deserialize it.
 			var stringResult = await response.Content.ReadAsStringAsync();
 			// We have to use Newtonsoft to make sure our StringEnumConverter work.
 			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
-			// Pluck the user permissions from the response header. Eg. "GET, PUT"
-			var permsString = response.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
-			if (string.IsNullOrWhiteSpace(permsString))
-			{
-				return (result, permissions);
-			}
-			// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-			foreach (var p in permsString.Split(','))
-			{
-				var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-				permissions |= ep;
-			}
 		}
 		catch (Exception ex)
 		{
