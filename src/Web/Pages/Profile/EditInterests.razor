@@ -45,43 +45,46 @@
         <Authenticated>
 			<h1 class="rvt-modal__title">Edit Professional Interests</h1>
             <Loader Loading="ShowLoader">
-                <EditForm EditContext="@FormContext">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
-					<br />
-					<ul class="rvt-list rvt-plain-list rvt-inline-list">
-						@foreach (var Interest in ExpertiseAsList)
-						{
-							<li>
-								<span class="rvt-badge">@Interest
-									<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
-										<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
-									</button>
-								</span>
-							</li>
-						}
-					</ul>
+                @if(UpdatedPerson != null)
+				{
+					<EditForm EditContext="@FormContext">
+						<DataAnnotationsValidator />
+						<ValidationSummary />
+						<br />
+						<ul class="rvt-list rvt-plain-list rvt-inline-list">
+							@foreach (var Interest in ExpertiseAsList)
+							{
+								<li>
+									<span class="rvt-badge">@Interest
+										<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
+											<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
+										</button>
+									</span>
+								</li>
+							}
+						</ul>
 
-					<SuggestionButtons T=SuggestionItem Label="Search" Placeholder="Type an Interest"
-						Description="Type an interest and then click a button in the results below to add it to this profile."
-						ButtonClickedAction=AddInterest EnterClicksFirstSuggestion=true
-						AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => s.Name) />
+						<SuggestionButtons T=SuggestionItem Label="Search" Placeholder="Type an Interest"
+							Description="Type an interest and then click a button in the results below to add it to this profile."
+							ButtonClickedAction=AddInterest EnterClicksFirstSuggestion=true
+							AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => s.Name) />
 
-					<p>
-						@if(ShowSaveMessage)
-						{
-							<div class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-tb-sm">
-								<span class="rvt-inline-alert__icon">
-									<rvt-icon name="info-circle" />
-								</span>
-								<span class="rvt-inline-alert__message" id="radio-list-message">
-									Your changes have not yet been saved.
-								</span>
-							</div>
-						}
-						<button type="button" @onclick=SaveChanges class="rvt-button" disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
-					</p>
-                </EditForm>
+						<p>
+							@if(ShowSaveMessage)
+							{
+								<div class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-tb-sm">
+									<span class="rvt-inline-alert__icon">
+										<rvt-icon name="info-circle" />
+									</span>
+									<span class="rvt-inline-alert__message" id="radio-list-message">
+										Your changes have not yet been saved.
+									</span>
+								</div>
+							}
+							<button type="button" @onclick=SaveChanges class="rvt-button" disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
+						</p>
+					</EditForm>
+				}
             </Loader>
         </Authenticated>
     </AuthenticatedView>
@@ -112,46 +115,22 @@
 	}
 	private async Task GetPersonProfile()
 	{
-		var response = await Api().GetAsync($"/people/{NetId}");
-		if (response.IsSuccessStatusCode)
-		{
-			string responsemsg = await response.Content.ReadAsStringAsync();
-			UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
-			ExpertiseAsList.AddRange(UpdatedPerson.Expertise.Split(',').Select(r => r.Trim()));
-			ProfileName = UpdatedPerson.Name;
-		}
-		else if (response.StatusCode == HttpStatusCode.NotFound)
-		{
-			GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
-			UpdatedPerson = null;
-			ProfileName = "Not Found";
-			return;
-		}
-		else
-		{
-			GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
-			return;
-		}
-		GetEntityPermissions(response);
+		var response = await Get<Person>($"/people/{NetId}", $"No person matching the given username `{NetId}` has been found.");
+		UpdatedPerson = response.Value;
+		CrudPerms = response.Permissions;
+		
+		ProfileName = UpdatedPerson?.Name ?? "Not Found";
+		
+		var expertiseString = UpdatedPerson?.Expertise ?? "";
+		ExpertiseAsList = expertiseString.Split(',').Select(r => r.Trim()).ToList();
+		
 		if (!CrudPerms.HasFlag(EntityPermissions.Put))
 		{
 			ProfileFormInvalid = true;
 			GeneralException = new Exception($"You do not have permission to modify.");
 		}
 	}
-	private void GetEntityPermissions(HttpResponseMessage resp)
-	{
-		// Pluck the user permissions from the response header. Eg. "GET, PUT"
-		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
-
-		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-		CrudPerms = 0;// Reset permissions to 0.
-		foreach (var p in permsString.Split(','))
-		{
-			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-			CrudPerms |= ep;
-		}
-	}
+	
 	private void RemoveInterest(string interest)
 	{
 		ExpertiseAsList.Remove(interest);
@@ -179,7 +158,7 @@
 				ShowSaveMessage = true;
 			}
 		}
-		StateHasChanged();
+		StateHasChanged();// Needed because this is invoked by a child component
 	}
 
 	private async Task SaveChanges()
