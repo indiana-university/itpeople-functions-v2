@@ -115,19 +115,22 @@
 	}
 	private async Task GetPersonProfile()
 	{
-		var response = await Get<Person>($"/people/{NetId}", $"No person matching the given username `{NetId}` has been found.");
-		UpdatedPerson = response.Value;
-		CrudPerms = response.Permissions;
-		
-		ProfileName = UpdatedPerson?.Name ?? "Not Found";
-		
-		var expertiseString = UpdatedPerson?.Expertise ?? "";
-		ExpertiseAsList = expertiseString.Split(',').Select(r => r.Trim()).ToList();
-		
-		if (!CrudPerms.HasFlag(EntityPermissions.Put))
+		using(Loading())
 		{
-			ProfileFormInvalid = true;
-			GeneralException = new Exception($"You do not have permission to modify.");
+			var response = await Get<Person>($"/people/{NetId}", $"No person matching the given username `{NetId}` has been found.");
+			UpdatedPerson = response.Value;
+			CrudPerms = response.Permissions;
+			
+			ProfileName = UpdatedPerson?.Name ?? "Not Found";
+			
+			var expertiseString = UpdatedPerson?.Expertise ?? "";
+			ExpertiseAsList = expertiseString.Split(',').Select(r => r.Trim()).ToList();
+			
+			if (!CrudPerms.HasFlag(EntityPermissions.Put))
+			{
+				ProfileFormInvalid = true;
+				GeneralException = new Exception($"You do not have permission to modify.");
+			}
 		}
 	}
 	
@@ -165,31 +168,24 @@
 	{
 		try
 		{
-			Person result;
-
-			// Make an in-memory copy of Person to PUT to the server.
-			var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(UpdatedPerson, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
-			// Update objToPut's Expertise
-			objToPut.Expertise = string.Join(",", ExpertiseAsList);
-
-			var url = $"/people/{UpdatedPerson.Id}";
-
-			using (var apiClient = Api())
+			using(Loading())
 			{
-				var reqJson = JsonConvert.SerializeObject(objToPut, Json.JsonSerializerSettings);
-				var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
-				var response = await apiClient.PutAsync(url, reqContent);
+				// Make an in-memory copy of Person to PUT to the server.
+				var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(UpdatedPerson, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
+				// Update objToPut's Expertise
+				objToPut.Expertise = string.Join(",", ExpertiseAsList);
 
-				if (response.IsSuccessStatusCode == false)
+				var url = $"/people/{UpdatedPerson.Id}";
+
+				var response = await Put<Person>(url, objToPut, $"An error was encountered attempting to update Expertise at {url}");
+				if(response.RawResponse.IsSuccessStatusCode)
 				{
-					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Expertise to {url}");
+					UpdatedPerson = response.Value;
+					ExpertiseAsList = UpdatedPerson.Expertise.Split(',').Select(r => r.Trim()).ToList();
+					ShowSaveMessage = false;
+					Navigation.NavigateTo($"/People/{NetId}");
 				}
-
-				// The Response is a Person object, use it to update our Person variable
-				var stringResult = await response.Content.ReadAsStringAsync();
-				result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
 			}
-			Navigation.NavigateTo($"/People/{NetId}");
 		}
 		catch (Exception ex)
 		{
