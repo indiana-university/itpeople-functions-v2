@@ -17,26 +17,26 @@
 		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
 	}
 
-	protected async Task<(T Value, EntityPermissions Permissions)> Get<T>(string uri, string error = null)
+	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> Get<T>(string uri, string error = null)
 	{
 		return await MakeRequest<T>(Api().GetAsync(uri), error);
 	}
 
-	protected async Task<(T Value, EntityPermissions Permissions)> Post<T>(string uri, object body, string error = null)
+	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> Post<T>(string uri, object body, string error = null)
 	{
 		var bodyAsJson = JsonConvert.SerializeObject(body, Json.JsonSerializerSettings);
 		var reqContent = new StringContent(bodyAsJson, System.Text.Encoding.UTF8, "application/json");
 		return await MakeRequest<T>(Api().PostAsync(uri, reqContent), error);
 	}
 
-	protected async Task<(T Value, EntityPermissions Permissions)> Put<T>(string uri, object body, string error = null)
+	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> Put<T>(string uri, object body, string error = null)
 	{
 		var bodyAsJson = JsonConvert.SerializeObject(body, Json.JsonSerializerSettings);
 		var reqContent = new StringContent(bodyAsJson, System.Text.Encoding.UTF8, "application/json");
 		return await MakeRequest<T>(Api().PutAsync(uri, reqContent), error);
 	}
 
-	protected async Task<(T Value, EntityPermissions Permissions)> Delete<T>(string uri, string error = null)
+	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> Delete<T>(string uri, string error = null)
 	{
 		return await MakeRequest<T>(Api().DeleteAsync(uri), error);
 	}
@@ -62,7 +62,7 @@
 		return result;
 	}
 
-	protected async Task<(T Value, EntityPermissions Permissions)> MakeRequest<T>(Task<HttpResponseMessage> request, string error = null)
+	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> MakeRequest<T>(Task<HttpResponseMessage> request, string error = null)
 	{
 		var result = default(T);
 		HttpResponseMessage response = null;
@@ -80,7 +80,7 @@
 				var message = await GetErrorMessage(response, error);
 				var innerException = string.IsNullOrWhiteSpace(error) ? null : new Exception(await GetErrorMessage(response));
 				GeneralException = new Exception(message, innerException);
-				return (result, permissions);
+				return (result, permissions, response);
 			}
 
 			// The request succeeded, try to deserialize it.
@@ -91,10 +91,10 @@
 		catch (Exception ex)
 		{
 			GeneralException = ex;
-			return (result, permissions);
+			return (result, permissions, response);
 		}
 
-		return (result, permissions);
+		return (result, permissions, response);
 	}
 
 	protected async Task<string> GetErrorMessage(HttpResponseMessage response, string error = null)
