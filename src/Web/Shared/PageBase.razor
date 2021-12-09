@@ -78,10 +78,11 @@
 			if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Created && response.StatusCode != HttpStatusCode.NoContent)
 			{
 				var message = await GetErrorMessage(response, error);
-				GeneralException = new Exception(message);
+				var innerException = string.IsNullOrWhiteSpace(error) ? null : new Exception(await GetErrorMessage(response));
+				GeneralException = new Exception(message, innerException);
 				return (result, permissions);
 			}
-			
+
 			// The request succeeded, try to deserialize it.
 			var stringResult = await response.Content.ReadAsStringAsync();
 			// We have to use Newtonsoft to make sure our StringEnumConverter work.
