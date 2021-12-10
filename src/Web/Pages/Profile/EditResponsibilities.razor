@@ -30,6 +30,7 @@
 	</div>
 </div>
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<h1 class="rvt-modal__title">Edit Responsibilities</h1>
 
 	<DisplayException Ex=@GeneralException />
 
@@ -43,18 +44,20 @@
 			</p>
 		</NotAuthenticated>
 		<Authenticated>
-			<h1 class="rvt-modal__title">Edit Responsibilities</h1>
 			<Loader Loading="ShowLoader">
-				<EditForm EditContext="@FormContext" OnValidSubmit="SaveChanges">
-					<DataAnnotationsValidator />
-					<ValidationSummary />
-					<RivetInputFlag @bind-Value="ResponsibilitiesInput"
-						Description="Check all the relevant responsibilities performed" Inline=false />
-					<p>
-						<button type="submit" class="rvt-button"
-							disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
-					</p>
-				</EditForm>
+				@if (UpdatedPerson != null)
+				{
+					<EditForm EditContext="@FormContext" OnValidSubmit="SaveChanges">
+						<DataAnnotationsValidator />
+						<ValidationSummary />
+						<RivetInputFlag @bind-Value="ResponsibilitiesInput"
+							Description="Check all the relevant responsibilities performed" Inline=false />
+						<p>
+							<button type="submit" class="rvt-button"
+								disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
+						</p>
+					</EditForm>
+				}
 			</Loader>
 		</Authenticated>
 	</AuthenticatedView>
@@ -71,6 +74,7 @@
 	protected IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	public Person UpdatedPerson = new Person();
 	private Responsibilities ResponsibilitiesInput;
+	
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
@@ -78,78 +82,51 @@
 		if (LoggedInUser != null)
 			await GetPersonProfile();
 	}
+	
 	private async Task GetPersonProfile()
 	{
-		var response = await Api().GetAsync($"/people/{NetId}");
-		if (response.IsSuccessStatusCode)
+		using(Loading())
 		{
-			string responsemsg = await response.Content.ReadAsStringAsync();
-			UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
-			ResponsibilitiesInput = UpdatedPerson.Responsibilities;
-			ProfileName = UpdatedPerson.Name;
-		}
-		else if (response.StatusCode == HttpStatusCode.NotFound)
-		{
-			GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
 			UpdatedPerson = null;
 			ProfileName = "Not Found";
-			return;
-		}
-		else
-		{
-			GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
-			return;
-		}
-		GetEntityPermissions(response);
-		if (!CrudPerms.HasFlag(EntityPermissions.Put))
-		{
-			ProfileFormInvalid = true;
-			GeneralException = new Exception($"You do not have permission to modify.");
-		}
+			var response = await Get<Person>($"/people/{NetId}", $"No person matching the given username `{NetId}` has been found.");
+			if(response.RawResponse.IsSuccessStatusCode)
+			{
+				UpdatedPerson = response.Value;
+				ResponsibilitiesInput = UpdatedPerson.Responsibilities;
+				ProfileName = UpdatedPerson.Name;
+			}
 
-	}
-	private void GetEntityPermissions(HttpResponseMessage resp)
-	{
-		// Pluck the user permissions from the response header. Eg. "GET, PUT"
-		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
-
-		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-		CrudPerms = 0;// Reset permissions to 0.
-		foreach (var p in permsString.Split(','))
-		{
-			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-			CrudPerms |= ep;
+			CrudPerms = response.Permissions;
+			if (!CrudPerms.HasFlag(EntityPermissions.Put))
+			{
+				ProfileFormInvalid = true;
+				GeneralException = new Exception($"You do not have permission to modify.");
+			}
 		}
 	}
+	
 	private async Task SaveChanges()
 	{
 		try
 		{
-			Person result;
-
-			// Make an in-memory copy of Person to PUT to the server.
-			var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(UpdatedPerson,
-			Json.JsonSerializerSettings), Json.JsonSerializerSettings);
-			// Update objToPut's Responsibilities
-			objToPut.Responsibilities = ResponsibilitiesInput;
-
-			var url = $"/people/{UpdatedPerson.Id}";
-			using (var apiClient = Api())
+			using(Loading())
 			{
-				var reqJson = JsonConvert.SerializeObject(objToPut, Json.JsonSerializerSettings);
-				var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
-				var response = await apiClient.PutAsync(url, reqContent);
+				// Make an in-memory copy of Person to PUT to the server.
+				var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(UpdatedPerson,
+				Json.JsonSerializerSettings), Json.JsonSerializerSettings);
+				// Update objToPut's Responsibilities
+				objToPut.Responsibilities = ResponsibilitiesInput;
 
-				if (response.IsSuccessStatusCode == false)
+				var url = $"/people/{UpdatedPerson.Id}";
+				var response = await Put<Person>(url, objToPut, $"An error was encountered attempting to update Responsibilities at {url}");
+				if(response.RawResponse.IsSuccessStatusCode)
 				{
-					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Responsibilities to {url}");
+					UpdatedPerson = response.Value;
+					ResponsibilitiesInput = UpdatedPerson.Responsibilities;
+					Navigation.NavigateTo($"/People/{NetId}");
 				}
-
-				// The Response is a Person object, use it to update our Person variable
-				var stringResult = await response.Content.ReadAsStringAsync();
-				result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
 			}
-			Navigation.NavigateTo($"/People/{NetId}");
 		}
 		catch (Exception ex)
 		{
