@@ -81,9 +81,14 @@ module.exports = (req, res, next) => {
     const pathParts = req.path.split("/");
     const username = pathParts[3];
     // Check the people collection for them first
-    const person = Number.isInteger(+username) ? db.people.find(p => p.id == +username) : db.people.find(p => p.netId == username);
+    let person = Number.isInteger(+username) ? db.people.find(p => p.id == +username) : db.people.find(p => p.netId == username);
 
-    if (!person) {
+    // If we didn't find a match in the people collection check hrpeople next.
+    if (!person && Number.isInteger(+username) == false) {
+      person = db.hrpeople.find(p => p.netId == username);
+    }
+
+    if(!person){
       res.status(404);
       return next();
     }
