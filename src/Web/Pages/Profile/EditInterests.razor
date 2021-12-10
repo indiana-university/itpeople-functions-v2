@@ -14,38 +14,38 @@
 
 <Title Value="Edit Interests" /><br/>
 <div class="rvt-container" style="max-width: 1440px; margin: auto;">
-    <div class="rvt-grid">
-        <div class="rvt-grid__item">
-           <nav class="">
-                <ol class="rvt-breadcrumbs">
-                    <li aria-current="page">
-                        <ul class="rvt-list rvt-plain-list rvt-inline-list">
-                            <li><a href="/">Home</a></li>
-                            <li>Profiles</li>
-                            <li><a href="/People/@NetId">@ProfileName</a></li>
-                        </ul>
-                    </li>
-                </ol>
-            </nav>
-        </div>
-    </div>
+	<div class="rvt-grid">
+		<div class="rvt-grid__item">
+		   <nav class="">
+				<ol class="rvt-breadcrumbs">
+					<li aria-current="page">
+						<ul class="rvt-list rvt-plain-list rvt-inline-list">
+							<li><a href="/">Home</a></li>
+							<li>Profiles</li>
+							<li><a href="/People/@NetId">@ProfileName</a></li>
+						</ul>
+					</li>
+				</ol>
+			</nav>
+		</div>
+	</div>
 </div>
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg"> 	
-    <DisplayException Ex=@GeneralException />
+	<DisplayException Ex=@GeneralException />
 
-    <AuthenticatedView>
-        <NotAuthenticated>
-            <p>
-                You must login to view this resource.
-            </p>
-            <p>
-                <a class="rvt-button" href=@GetLoginUri()>Log In</a>
-            </p>
-        </NotAuthenticated>
-        <Authenticated>
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href=@GetLoginUri()>Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
 			<h1 class="rvt-modal__title">Edit Professional Interests</h1>
-            <Loader Loading="ShowLoader">
-                @if(UpdatedPerson != null)
+			<Loader Loading="ShowLoader">
+				@if(UpdatedPerson != null)
 				{
 					<EditForm EditContext="@FormContext">
 						<DataAnnotationsValidator />
@@ -85,9 +85,9 @@
 						</p>
 					</EditForm>
 				}
-            </Loader>
-        </Authenticated>
-    </AuthenticatedView>
+			</Loader>
+		</Authenticated>
+	</AuthenticatedView>
 </div>
 
 @code {
@@ -243,6 +243,6 @@
 
 		return signIn;
 	}
-    
-    public void Dispose() { }
+	
+	public void Dispose() { }
 }
