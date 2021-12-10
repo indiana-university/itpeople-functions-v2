@@ -133,17 +133,6 @@
 			GeneralException = ex;
 		}
 	}
-	protected string GetLoginUri()
-	{
-		var signIn = "/SignIn";
-		var uri = new Uri(Navigation.Uri);
-		if (string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
-		{
-			signIn += $"?Destination={HttpUtility.UrlEncode(uri.PathAndQuery)}";
-		}
-
-		return signIn;
-	}
 
 	public void Dispose() { }
 }

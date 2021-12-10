@@ -2,6 +2,7 @@
 @using Models.Enums
 @using System.Net
 @using Newtonsoft.Json
+@using System.Web
 
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager Navigation
@@ -15,6 +16,18 @@
 	protected async Task SetLoggedInUser()
 	{
 		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+	}
+
+	protected string GetLoginUri()
+	{
+		var signIn = "/SignIn";
+		var uri = new Uri(Navigation.Uri);
+		if (string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
+		{
+			signIn += $"?Destination={HttpUtility.UrlEncode(uri.PathAndQuery)}";
+		}
+
+		return signIn;
 	}
 
 	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> Get<T>(string uri, string error = null)
