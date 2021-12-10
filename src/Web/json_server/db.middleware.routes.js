@@ -76,6 +76,21 @@ module.exports = (req, res, next) => {
     return next();
   }
 
+  if(req.path.toLowerCase().startsWith("/people/withhr/"))
+  {
+    const pathParts = req.path.split("/");
+    const username = pathParts[3];
+    // Check the people collection for them first
+    const person = Number.isInteger(+username) ? db.people.find(p => p.id == +username) : db.people.find(p => p.netId == username);
+
+    if (!person) {
+      res.status(404);
+      return next();
+    }
+    
+    return res.send(person);
+  }
+
   if (req.path.startsWith("/people/")) {
     const pathParts = req.path.split("/");
     const username = pathParts[2];
