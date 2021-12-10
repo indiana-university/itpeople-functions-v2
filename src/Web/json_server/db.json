@@ -252,6 +252,7 @@
       "netId": "garryg",
       "title": "Person",
       "role": "Member",
+      "permissions": "Viewer",
       "percentage": 100,
       "id": 6
     },
@@ -275,6 +276,7 @@
       "netId": "garryg",
       "title": "Person",
       "role": "Member",
+      "permissions": "Viewer",
       "percentage": 100,
       "id": 9
     }
