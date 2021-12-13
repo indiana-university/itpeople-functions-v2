@@ -11,160 +11,127 @@
 @inject NavigationManager Navigation
 @page "/people/{NetId}/EditResponsibilities"
 
-<Title Value="Edit Responsibilities" /><br/>
+<Title Value="Edit Responsibilities" /><br />
 <div class="rvt-container" style="max-width: 1440px; margin: auto;">
-    <div class="rvt-grid">
-        <div class="rvt-grid__item">
-           <nav class="">
-                <ol class="rvt-breadcrumbs">
-                    <li aria-current="page">
-                        <ul class="rvt-list rvt-plain-list rvt-inline-list">
-                            <li><a href="/">Home</a></li>
-                            <li>Profiles</li>
-                            <li><a href="/People/@NetId">@ProfileName</a></li>
-                        </ul>
-                    </li>
-                </ol>
-            </nav>
-        </div>
-    </div>
+	<div class="rvt-grid">
+		<div class="rvt-grid__item">
+			<nav class="">
+				<ol class="rvt-breadcrumbs">
+					<li aria-current="page">
+						<ul class="rvt-list rvt-plain-list rvt-inline-list">
+							<li><a href="/">Home</a></li>
+							<li>Profiles</li>
+							<li><a href="/People/@NetId">@ProfileName</a></li>
+						</ul>
+					</li>
+				</ol>
+			</nav>
+		</div>
+	</div>
 </div>
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<h1 class="rvt-modal__title">Edit Responsibilities</h1>
 
-    <DisplayException Ex=@GeneralException />
+	<DisplayException Ex=@GeneralException />
 
-    <AuthenticatedView>
-        <NotAuthenticated>
-            <p>
-                You must login to view this resource.
-            </p>
-            <p>
-                <a class="rvt-button" href=@GetLoginUri()>Log In</a>
-            </p>
-        </NotAuthenticated>
-        <Authenticated>          
-            <h1 class="rvt-modal__title">Edit Responsibilities</h1>
-            <Loader Loading="ShowLoader">
-                <EditForm EditContext="@FormContext" OnValidSubmit="SaveChanges">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
-                    <RivetInputFlag @bind-Value="ResponsibilitiesInput" Description="Check all the relevant responsibilities performed" Inline=false />
-                    <p>
-                        <button type="submit" class="rvt-button" disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
-                    </p>
-                </EditForm>
-            </Loader>            
-        </Authenticated>
-    </AuthenticatedView>
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href=@GetLoginUri()>Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<Loader Loading="ShowLoader">
+				@if (UpdatedPerson != null)
+				{
+					<EditForm EditContext="@FormContext" OnValidSubmit="SaveChanges">
+						<DataAnnotationsValidator />
+						<ValidationSummary />
+						<RivetInputFlag @bind-Value="ResponsibilitiesInput"
+							Description="Check all the relevant responsibilities performed" Inline=false />
+						<p>
+							<button type="submit" class="rvt-button"
+								disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
+						</p>
+					</EditForm>
+				}
+			</Loader>
+		</Authenticated>
+	</AuthenticatedView>
 </div>
 
 @code {
-    [Parameter]
-    public string NetId { get; set; }
-    public EntityPermissions CrudPerms;
-    private string ProfileName;
-    private EditContext FormContext;
-    protected bool ProfileFormInvalid = false;
-    protected bool ShowLoader = false;
-    protected IDisposable Loading()
-    => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
-    public Person UpdatedPerson = new Person();
-    private Responsibilities ResponsibilitiesInput;
-    protected override async Task OnInitializedAsync()
-    {
-        await SetLoggedInUser();
-        FormContext = new EditContext(ResponsibilitiesInput);
-        if (LoggedInUser != null)
-            await GetPersonProfile();
-    }
-    private async Task GetPersonProfile()
-    {
-        var response = await Api().GetAsync($"/people/{NetId}");
-        if (response.IsSuccessStatusCode)
-        {
-            string responsemsg = await response.Content.ReadAsStringAsync();
-            UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
-            ResponsibilitiesInput = UpdatedPerson.Responsibilities;
-            ProfileName = UpdatedPerson.Name;
-        }
-        else if (response.StatusCode == HttpStatusCode.NotFound)
-        {
-            GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
-            UpdatedPerson = null;
-            ProfileName = "Not Found";
-            return;
-        }
-        else
-        {
-            GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
-            return;
-        }
-        GetEntityPermissions(response);
-        if (!CrudPerms.HasFlag(EntityPermissions.Put)) 
-        {
-            ProfileFormInvalid = true;
-            GeneralException = new Exception($"You do not have permission to modify.");
-        }
+	[Parameter]
+	public string NetId { get; set; }
+	public EntityPermissions CrudPerms;
+	private string ProfileName;
+	private EditContext FormContext;
+	protected bool ProfileFormInvalid = false;
+	protected bool ShowLoader = false;
+	protected IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+	public Person UpdatedPerson = new Person();
+	private Responsibilities ResponsibilitiesInput;
+	
+	protected override async Task OnInitializedAsync()
+	{
+		await SetLoggedInUser();
+		FormContext = new EditContext(ResponsibilitiesInput);
+		if (LoggedInUser != null)
+			await GetPersonProfile();
+	}
+	
+	private async Task GetPersonProfile()
+	{
+		using(Loading())
+		{
+			UpdatedPerson = null;
+			ProfileName = "Not Found";
+			var response = await Get<Person>($"/people/{NetId}", $"No person matching the given username `{NetId}` has been found.");
+			if(response.RawResponse.IsSuccessStatusCode)
+			{
+				UpdatedPerson = response.Value;
+				ResponsibilitiesInput = UpdatedPerson.Responsibilities;
+				ProfileName = UpdatedPerson.Name;
+			}
 
-    }
-    private void GetEntityPermissions(HttpResponseMessage resp)
-    {
-        // Pluck the user permissions from the response header. Eg. "GET, PUT"
-        var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+			CrudPerms = response.Permissions;
+			if (!CrudPerms.HasFlag(EntityPermissions.Put))
+			{
+				ProfileFormInvalid = true;
+				GeneralException = new Exception($"You do not have permission to modify.");
+			}
+		}
+	}
+	
+	private async Task SaveChanges()
+	{
+		try
+		{
+			using(Loading())
+			{
+				// Make an in-memory copy of Person to PUT to the server.
+				var objToPut = DeepCopy(UpdatedPerson);
+				// Update objToPut's Responsibilities
+				objToPut.Responsibilities = ResponsibilitiesInput;
 
-        // Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-        CrudPerms = 0;// Reset permissions to 0.
-        foreach (var p in permsString.Split(','))
-        {
-            var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-            CrudPerms |= ep;
-        }
-    }
-    private async Task SaveChanges()
-    {
-        try
-        {
-            Person result;
+				var url = $"/people/{UpdatedPerson.Id}";
+				var response = await Put<Person>(url, objToPut, $"An error was encountered attempting to update Responsibilities at {url}");
+				if(response.RawResponse.IsSuccessStatusCode)
+				{
+					UpdatedPerson = response.Value;
+					ResponsibilitiesInput = UpdatedPerson.Responsibilities;
+					Navigation.NavigateTo($"/People/{NetId}");
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			GeneralException = ex;
+		}
+	}
 
-            // Make an in-memory copy of Person to PUT to the server.
-            var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(UpdatedPerson, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
-            // Update objToPut's Responsibilities
-            objToPut.Responsibilities = ResponsibilitiesInput;
-
-            var url = $"/people/{UpdatedPerson.Id}";
-            using (var apiClient = Api())
-            {
-                var reqJson = JsonConvert.SerializeObject(objToPut, Json.JsonSerializerSettings);
-                var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
-                var response = await apiClient.PutAsync(url, reqContent);
-
-                if (response.IsSuccessStatusCode == false)
-                {
-                    throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Responsibilities to {url}");
-                }
-
-                // The Response is a Person object, use it to update our Person variable
-                var stringResult = await response.Content.ReadAsStringAsync();
-                result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
-            }
-            Navigation.NavigateTo($"/People/{NetId}");
-        }
-        catch (Exception ex)
-        {
-            GeneralException = ex;
-        }
-    }
-    protected string GetLoginUri()
-    {
-        var signIn = "/SignIn";
-        var uri = new Uri(Navigation.Uri);
-        if (string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
-        {
-            signIn += $"?Destination={HttpUtility.UrlEncode(uri.PathAndQuery)}";
-        }
-
-        return signIn;
-    }
-
-    public void Dispose() { }
+	public void Dispose() { }
 }

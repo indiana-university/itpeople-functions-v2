@@ -14,73 +14,80 @@
 
 <Title Value="Edit Interests" /><br/>
 <div class="rvt-container" style="max-width: 1440px; margin: auto;">
-    <div class="rvt-grid">
-        <div class="rvt-grid__item">
-           <nav class="">
-                <ol class="rvt-breadcrumbs">
-                    <li aria-current="page">
-                        <ul class="rvt-list rvt-plain-list rvt-inline-list">
-                            <li><a href="/">Home</a></li>
-                            <li>Profiles</li>
-                            <li><a href="/People/@NetId">@ProfileName</a></li>
-                        </ul>
-                    </li>
-                </ol>
-            </nav>
-        </div>
-    </div>
+	<div class="rvt-grid">
+		<div class="rvt-grid__item">
+		   <nav class="">
+				<ol class="rvt-breadcrumbs">
+					<li aria-current="page">
+						<ul class="rvt-list rvt-plain-list rvt-inline-list">
+							<li><a href="/">Home</a></li>
+							<li>Profiles</li>
+							<li><a href="/People/@NetId">@ProfileName</a></li>
+						</ul>
+					</li>
+				</ol>
+			</nav>
+		</div>
+	</div>
 </div>
-<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg"> 	
-    <DisplayException Ex=@GeneralException />
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<DisplayException Ex=@GeneralException />
 
-    <AuthenticatedView>
-        <NotAuthenticated>
-            <p>
-                You must login to view this resource.
-            </p>
-            <p>
-                <a class="rvt-button" href=@GetLoginUri()>Log In</a>
-            </p>
-        </NotAuthenticated>
-        <Authenticated>
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href=@GetLoginUri()>Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
 			<h1 class="rvt-modal__title">Edit Professional Interests</h1>
-            <Loader Loading="ShowLoader">
-                <EditForm EditContext="@FormContext" OnValidSubmit="SaveChanges">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
+			<Loader Loading="ShowLoader">
+				@if(UpdatedPerson != null)
+				{
+					<EditForm EditContext="@FormContext">
+						<DataAnnotationsValidator />
+						<ValidationSummary />
 						<br />
-                    	<ul class="rvt-list rvt-plain-list rvt-inline-list">
-                            @foreach (var Interest in ExpertiseAsList)
-                            {
-                                <li>
-                                    <span class="rvt-badge">@Interest
-                                        <button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
-                                            <rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
-                                        </button>
-                                    </span>
-                                </li>
-                            }
-                        </ul>
-                        <RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder="Type an Interest" Description="Type an interest and then click a button in the results below to add it to this profile." @oninput="e => SearchTermChanged(e.Value.ToString())" @onkeydown=SearchTermListenForEnter/>
-                        
-                        @if(Suggestions.Count > 0)
-                        {
-                            <ul class="rvt-plain-list rvt-border-all rvt-border-radius rvt-m-top-xs rvt-p-bottom-xs">
-                                @foreach (var enteredItem in Suggestions)
-                                {
-                                    <li>
-                                        <a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => AddInterest(enteredItem)) >@enteredItem </a>
-                                    </li>
-                                }
-                            </ul>
-                        }
-					<p>
-						<button type="submit" class="rvt-button" disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
-					</p>
-                </EditForm>
-            </Loader>
-        </Authenticated>
-    </AuthenticatedView>
+						<ul class="rvt-list rvt-plain-list rvt-inline-list">
+							@foreach (var Interest in ExpertiseAsList)
+							{
+								<li>
+									<span class="rvt-badge">@Interest
+										<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
+											<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
+										</button>
+									</span>
+								</li>
+							}
+						</ul>
+
+						<SuggestionButtons T=SuggestionItem Label="Search" Placeholder="Type an Interest"
+							Description="Type an interest and then click a button in the results below to add it to this profile."
+							ButtonClickedAction=AddInterest EnterClicksFirstSuggestion=true
+							AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => s.Name) />
+
+						<p>
+							@if(ShowSaveMessage)
+							{
+								<div class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-tb-sm">
+									<span class="rvt-inline-alert__icon">
+										<rvt-icon name="info-circle" />
+									</span>
+									<span class="rvt-inline-alert__message" id="radio-list-message">
+										Your changes have not yet been saved.
+									</span>
+								</div>
+							}
+							<button type="button" @onclick=SaveChanges class="rvt-button" disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
+						</p>
+					</EditForm>
+				}
+			</Loader>
+		</Authenticated>
+	</AuthenticatedView>
 </div>
 
 @code {
@@ -89,79 +96,61 @@
 	public string NetId { get; set; }
 	public EntityPermissions CrudPerms;
 	private string ProfileName;
-	private string SearchTerm = "";
+	private string ContextPlaceholder = "";
 	private EditContext FormContext;
-	protected bool ShowLoader = false;
 	protected bool ProfileFormInvalid = false;
+	private bool ShowSaveMessage = false;
+	protected bool ShowLoader = false;
 	protected IDisposable Loading()
 		=> new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	public Person UpdatedPerson = new Person();
 	private List<string> ExpertiseAsList = new List<string>();
-	private List<string> Suggestions = new List<string>();
-	private StackExchangeRequest SuggestionsRequest;
+
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
-		FormContext = new EditContext(SearchTerm);
+		FormContext = new EditContext(ContextPlaceholder);
 		if (LoggedInUser != null)
 			await GetPersonProfile();
 	}
 	private async Task GetPersonProfile()
 	{
-		var response = await Api().GetAsync($"/people/{NetId}");
-		if (response.IsSuccessStatusCode)
+		using(Loading())
 		{
-			string responsemsg = await response.Content.ReadAsStringAsync();
-			UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
-			ExpertiseAsList.AddRange(UpdatedPerson.Expertise.Split(',').Select(r => r.Trim()));
-			ProfileName = UpdatedPerson.Name;
-		}
-		else if (response.StatusCode == HttpStatusCode.NotFound)
-		{
-			GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
-			UpdatedPerson = null;
-			ProfileName = "Not Found";
-			return;
-		}
-		else
-		{
-			GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
-			return;
-		}
-		GetEntityPermissions(response);
-		if (!CrudPerms.HasFlag(EntityPermissions.Put))
-		{
-			ProfileFormInvalid = true;
-			GeneralException = new Exception($"You do not have permission to modify.");
-		}
-	}
-	private void GetEntityPermissions(HttpResponseMessage resp)
-	{
-		// Pluck the user permissions from the response header. Eg. "GET, PUT"
-		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+			var response = await Get<Person>($"/people/{NetId}", $"No person matching the given username `{NetId}` has been found.");
+			UpdatedPerson = response.Value;
+			CrudPerms = response.Permissions;
 
-		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-		CrudPerms = 0;// Reset permissions to 0.
-		foreach (var p in permsString.Split(','))
-		{
-			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-			CrudPerms |= ep;
+			ProfileName = UpdatedPerson?.Name ?? "Not Found";
+
+			var expertiseString = UpdatedPerson?.Expertise ?? "";
+			ExpertiseAsList = string.IsNullOrWhiteSpace(expertiseString) == false
+				? expertiseString.Split(',').Select(r => r.Trim()).ToList()
+				: new List<string>();
+
+			if (!CrudPerms.HasFlag(EntityPermissions.Put))
+			{
+				ProfileFormInvalid = true;
+				GeneralException = new Exception($"You do not have permission to modify.");
+			}
 		}
 	}
+
 	private void RemoveInterest(string interest)
 	{
 		ExpertiseAsList.Remove(interest);
+		ShowSaveMessage = true;
 	}
 
-	private async Task AddInterest(string interest)
+	private void AddInterest(SuggestionItem item)
 	{
-		if (string.IsNullOrWhiteSpace(interest))
+		if (item == null || string.IsNullOrWhiteSpace(item.Name))
 		{
 			return;
 		}
 
 		// If interest includes a comma it is actually multiple interests at once.
-		var newInterests = interest
+		var newInterests = item.Name
 			.Split(",")
 			.Select(e => e.Trim().ToLower())
 			.Where(e => string.IsNullOrWhiteSpace(e) == false);
@@ -171,68 +160,39 @@
 			if (ExpertiseAsList.Contains(i.Trim().ToLower()) == false)
 			{
 				ExpertiseAsList.Add(i.Trim().ToLower());
+				ShowSaveMessage = true;
 			}
 		}
-
-		// Reset the search term and clear-out suggestions.
-		SearchTerm = "";
-		await SearchTermChanged(SearchTerm);		
-	}
-
-	private async Task SearchTermListenForEnter(KeyboardEventArgs e)
-	{
-		if (e.Code == "Enter" || e.Code == "NumpadEnter")
-		{
-			await AddInterest(SearchTerm);
-		}
+		StateHasChanged();// Needed because this is invoked by a child component
 	}
 
 	private async Task SaveChanges()
 	{
 		try
 		{
-			Person result;
-
-			// Make an in-memory copy of Person to PUT to the server.
-			var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(UpdatedPerson, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
-			// Update objToPut's Expertise
-			objToPut.Expertise = string.Join(",", ExpertiseAsList);
-
-			var url = $"/people/{UpdatedPerson.Id}";
-
-			using (var apiClient = Api())
+			using(Loading())
 			{
-				var reqJson = JsonConvert.SerializeObject(objToPut, Json.JsonSerializerSettings);
-				var reqContent = new StringContent(reqJson, System.Text.Encoding.UTF8, "application/json");
-				var response = await apiClient.PutAsync(url, reqContent);
+				// Make an in-memory copy of Person to PUT to the server.
+				var objToPut = DeepCopy(UpdatedPerson);
+				// Update objToPut's Expertise
+				objToPut.Expertise = string.Join(",", ExpertiseAsList);
 
-				if (response.IsSuccessStatusCode == false)
+				var url = $"/people/{UpdatedPerson.Id}";
+
+				var response = await Put<Person>(url, objToPut, $"An error was encountered attempting to update Expertise at {url}");
+				if(response.RawResponse.IsSuccessStatusCode)
 				{
-					throw new Exception($"An error({response.StatusCode}) was encountered attempting to PUT Expertise to {url}");
+					UpdatedPerson = response.Value;
+					ExpertiseAsList = UpdatedPerson.Expertise.Split(',').Select(r => r.Trim()).ToList();
+					ShowSaveMessage = false;
+					Navigation.NavigateTo($"/People/{NetId}");
 				}
-
-				// The Response is a Person object, use it to update our Person variable
-				var stringResult = await response.Content.ReadAsStringAsync();
-				result = JsonConvert.DeserializeObject<Person>(stringResult, Json.JsonSerializerSettings);
 			}
-			Navigation.NavigateTo($"/People/{NetId}");
 		}
 		catch (Exception ex)
 		{
 			GeneralException = ex;
 		}
-	}
-
-	private async Task SearchTermChanged(string newValue)
-	{
-		SearchTerm = newValue;
-		await UpdateSuggestions(newValue);
-	}
-
-	private class StackExchangeRequest
-	{
-		public Task Task { get; set; }
-		public CancellationTokenSource TokenSource { get; set; }
 	}
 
 	private class SuggestionItem
@@ -246,78 +206,33 @@
 		public List<SuggestionItem> Items { get; set; }
 	}
 
-	private void CancelSuggestionsRequestIfRunning()
+	private async Task<List<SuggestionItem>> GetSuggestions(string searchTerm)
 	{
-		var acceptableTaskStatus = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
-		if (SuggestionsRequest != null && acceptableTaskStatus.Contains(SuggestionsRequest.Task.Status) == false)
+		var output = new List<SuggestionItem>();
+		// Using a new client instead of API so we don't send the users bearer token to Stack Exchange
+		using (var client = new HttpClient())
 		{
-			SuggestionsRequest.TokenSource.Cancel();
-		}
-	}
-
-	private async Task UpdateSuggestions(string searchTerm)
-	{
-		if (string.IsNullOrWhiteSpace(searchTerm))
-		{
-			Suggestions = new List<string>();
-			return;
-		}
-
-		// Cancel any currently running requests to the Stack Exchange API.
-		CancelSuggestionsRequestIfRunning();
-
-		// Make a cancelable request to the API and process the response.
-		var ts = new CancellationTokenSource();
-		SuggestionsRequest = new StackExchangeRequest
-		{
-			TokenSource = ts,
-			Task = Task.Run(async () =>
+			var response = await client.GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(searchTerm.ToLower())}");
+			if (response.IsSuccessStatusCode)
 			{
-				// Pause before sending the request in case the user isn't done typing.
-				// Additional keystrokes will cancel this request.
-				await Task.Delay(500);
-
-				if (ts.Token.IsCancellationRequested == false)// Only procede if this task has not been canceled.
+				var result = await response.Content.ReadFromJsonAsync<SuggestionResponse>();
+				//Make sure the user's input is the first item in the list, with no duplicates.
+				var rawSuggestions = result.Items;
+				var exactMatch = rawSuggestions.FirstOrDefault(s => s.Name.ToLower() == searchTerm.ToLower());
+				if(exactMatch != null)
 				{
-					// Using a new client instead of API so we don't send the users bearer token to Stack Exchange
-					using (var client = new HttpClient())
-					{
-						var response = await client.GetAsync($"https://api.stackexchange.com/2.2/tags?order=desc&site=stackoverflow&min=4000&sort=popular&inname={HttpUtility.UrlEncode(searchTerm.ToLower())}");
-						// If this task was canceled before we got a response do not update Suggestions.
-						if (ts.Token.IsCancellationRequested == false)
-						{
-							if (response.IsSuccessStatusCode)
-							{
-								var result = await response.Content.ReadFromJsonAsync<SuggestionResponse>();
-								//Make sure the user's input is the first item in the list, with no duplicates.
-								var rawSuggestions = result.Items.Select(i => i.Name).ToList();
-								rawSuggestions.Remove(searchTerm.ToLower());
-								rawSuggestions.Insert(0, searchTerm.ToLower());
-								Suggestions = rawSuggestions.Take(10).ToList();
-							}
-							else
-							{
-								Suggestions = new List<string> { searchTerm.ToLower() };
-							}
-						}
-					}
+					rawSuggestions.Remove(exactMatch);
 				}
-			}, ts.Token)
-		};
-
-		await SuggestionsRequest.Task;
-	}    
-	protected string GetLoginUri()
-	{
-		var signIn = "/SignIn";
-		var uri = new Uri(Navigation.Uri);
-		if (string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
-		{
-			signIn += $"?Destination={HttpUtility.UrlEncode(uri.PathAndQuery)}";
+				rawSuggestions.Insert(0, new SuggestionItem { Name = searchTerm.ToLower(), Count = 0 });
+				output = rawSuggestions.Take(10).ToList();
+			}
+			else
+			{
+				output = new List<SuggestionItem> { new SuggestionItem { Name = searchTerm.ToLower(), Count = 0 } };
+			}
 		}
-
-		return signIn;
+		return output;
 	}
-    
-    public void Dispose() { }
+
+	public void Dispose() { }
 }

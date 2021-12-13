@@ -16,30 +16,25 @@
 <Title Value="@GetPageTitle()" />
 <HeaderNavBar Page="Profiles" CurrentPage=@ProfileName />
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
-	@if (ShowLoader)
-	{
-		<div class="rvt-flex rvt-items-center rvt-justify-center rvt-m-bottom-sm">
-			<div class="rvt-loader" aria-label="Content loading"></div>
-		</div>
-	}
-	else
-	{
-		<AuthenticatedView>
-			<NotAuthenticated>
-				<p>
-					You must login to view this resource.
-				</p>
-				<p>
-					<a class="rvt-button" href="/SignIn?Destination=/People/@NetId">Log In</a>
-				</p>
-			</NotAuthenticated>
-			<Authenticated>
+	<ProfileHeader>
+		<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@(UpdatedPerson?.Name ?? $"Profile for {NetId}")</h1>
+		<div class="rvt-ts-26">@(UpdatedPerson?.Position ?? "")</div>
+	</ProfileHeader>
+	<DisplayException Ex=@GeneralException />
+		
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="@GetLoginUri()">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<Loader Loading="ShowLoader">
 				@if (UpdatedPerson != null)
 				{
-					<ProfileHeader>
-						<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@UpdatedPerson.Name</h1>
-						<div class="rvt-ts-26">@UpdatedPerson.Position</div>
-					</ProfileHeader>
 					<div class="rvt-bg-white">
 						<div class="rvt-container" style="max-width: 1440px; margin: auto;">
 							<div class="rvt-grid rvt-p-top-lg" data-testid="profile-page">
@@ -64,19 +59,10 @@
 								</ProfileContactInformation>
 								<ProfileUnitsHelper Title="IT Units">
 									<ChildContent>
-										@if (ProfileUnits.Count() >= 0)
+										@if (ProfileUnits.Count() > 0)
 										{
 											@foreach (var unit in ProfileUnits)
 											{
-												// do something with each item
-												if (unit.Id == ProfileUnits.Last().Id)
-												{
-													// do something different with the last item
-												}
-												else
-												{
-													// do something different with every item but the last
-												}
 												<div class="@((unit.Id != ProfileUnits.Last().Id) ? "rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg" : "")">
 													<div class="rvt-grid">
 														<div class="rvt-grid__item">
@@ -86,15 +72,7 @@
 													</div>
 													<div class="rvt-grid">
 														<div class="rvt-grid__item">
-															@if (Memberships.Select(pu => pu.Title).FirstOrDefault() != null)
-															{
-																<div>
-																	<strong>Title: </strong>@Memberships.Select(pu => pu.Title).FirstOrDefault()
-																</div>
-															}
-															<div>
-																<strong>Role: </strong>@Memberships.Select(pu => pu.Role).FirstOrDefault().ToString()
-															</div>
+															<DisplayUnitRole Unit=unit Memberships=Memberships />
 														</div>
 													</div>
 												</div>
@@ -112,13 +90,9 @@
 						</div>
 					</div>
 				}
-
-				<DisplayException Ex=@GeneralException />
-
-			</Authenticated>
-		</AuthenticatedView>
-	}
-
+			</Loader>
+		</Authenticated>
+	</AuthenticatedView>
 </div>
 
 @code {
@@ -149,56 +123,29 @@
 
 	private async Task GetPersonProfile()
 	{
-		var response = await Api().GetAsync($"/people/{NetId}");
-		if (response.IsSuccessStatusCode)
+		var response = await Get<Person>($"/people/{NetId}", $"No person matching the given username `{NetId}` has been found.");
+		if(response.RawResponse.IsSuccessStatusCode)
 		{
-			string responsemsg = await response.Content.ReadAsStringAsync();
-			UpdatedPerson = JsonConvert.DeserializeObject<Person>(responsemsg, Json.JsonSerializerSettings);
+			UpdatedPerson = response.Value;
 			ProfileName = UpdatedPerson.Name;
-			GeneralException = null;
-		}
-		else if (response.StatusCode == HttpStatusCode.NotFound)
-		{
-			GeneralException = new Exception($"No person matching the given username `{NetId}` has been found.");
-			UpdatedPerson = null;
-			ProfileName = "Not Found";
-			return;
 		}
 		else
 		{
-			GeneralException = new Exception($"Failed to fetch the person with status code: {response.StatusCode}");
-			return;
+			UpdatedPerson = null;
+			ProfileName = "Not Found";
 		}
-		GetEntityPermissions(response);
+
+		CrudPerms = response.Permissions;
 	}
 	private string GetPageTitle() => $"{ProfileName} - IT People - Indiana University";
 
-	private void GetEntityPermissions(HttpResponseMessage resp)
-	{
-		// Pluck the user permissions from the response header. Eg. "GET, PUT"
-		var permsString = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
-
-		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
-		CrudPerms = 0;// Reset permissions to 0.
-		foreach (var p in permsString.Split(','))
-		{
-			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
-			CrudPerms |= ep;
-		}
-	}
 	private async Task GetPersonUnitMemberships()
 	{
-		var response = await Api().GetAsync($"/people/{NetId}/memberships");
-		if (response.IsSuccessStatusCode)
+		var response = await Get<List<UnitMemberResponse>>($"/people/{NetId}/memberships");
+		if(response.RawResponse.IsSuccessStatusCode)
 		{
-			string responsemsg = await response.Content.ReadAsStringAsync();
-			Memberships = JsonConvert.DeserializeObject<List<UnitMemberResponse>>(responsemsg, Json.JsonSerializerSettings);
+			Memberships = response.Value;
 			ProfileUnits = Memberships.Select(m => m.Unit).Distinct();
-		}
-		else
-		{
-			GeneralException = new Exception($"Failed to fetch UnitMemberships for {NetId}.");
-			return;
 		}
 	}
 
