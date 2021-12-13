@@ -43,7 +43,7 @@
 				<EditForm EditContext="@FormContext" OnValidSubmit="SubmitForm">
 					<DataAnnotationsValidator />
 					<ValidationSummary />
-					@if (CurrentUnit?.Id != null && (CanManageMemberTools || CanManageMembers))
+					@if (CurrentUnit?.Id != null && CurrentPerson != null && (CanManageMemberTools || CanManageMembers))
 					{
 						@if (CanManageMembers)
 						{
@@ -85,7 +85,7 @@
 	private EntityPermissions UnitCrudPerms;
 	private EntityPermissions MembersCrudPerms;
 
-	private EntityPermissions HttpVerb => CurrentUnitMembers.Any(um => um.Person.Netid == CurrentPerson.NetId)
+	private EntityPermissions HttpVerb => CurrentUnitMembers.Any(um => um.Person.Netid == CurrentPerson?.NetId)
 		? EntityPermissions.Put
 		: EntityPermissions.Post;
 	private string HumanVerb => HttpVerb == EntityPermissions.Put
@@ -125,7 +125,7 @@
 			using (Loading())
 			{
 				await Task.WhenAll(new[] { SetCurrentUnit(), SetCurrentPerson(), SetToolOptions() });
-				if (CurrentUnit?.Id == null)
+				if (CurrentUnit?.Id == null || CurrentPerson == null)
 				{
 					return;
 				}
