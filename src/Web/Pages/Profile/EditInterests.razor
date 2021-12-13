@@ -54,16 +54,13 @@
 							<ul class="rvt-list rvt-plain-list rvt-inline-list">
 								@foreach (var Interest in ExpertiseAsList)
 								{
-									@if(string.IsNullOrWhiteSpace(Interest) == false) {
-										<li>
-											<span class="rvt-badge">@Interest
-												<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
-													<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
-												</button>
-											</span>
-										</li>
-									}
-
+									<li>
+										<span class="rvt-badge">@Interest
+											<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
+												<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
+											</button>
+										</span>
+									</li>
 								}
 							</ul>
 
@@ -128,7 +125,9 @@
 			ProfileName = UpdatedPerson?.Name ?? "Not Found";
 
 			var expertiseString = UpdatedPerson?.Expertise ?? "";
-			ExpertiseAsList = expertiseString.Split(',').Select(r => r.Trim()).ToList();
+			ExpertiseAsList = string.IsNullOrWhiteSpace(expertiseString) == false
+				? expertiseString.Split(',').Select(r => r.Trim()).ToList()
+				: new List<string>();
 
 			if (!CrudPerms.HasFlag(EntityPermissions.Put))
 			{
