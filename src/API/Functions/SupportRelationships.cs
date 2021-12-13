@@ -121,7 +121,8 @@ namespace API.Functions
 		public static Task<IActionResult> SsspSupportRelationships(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "SsspSupportRelationships")] HttpRequest req)
 			=> Security.Authenticate(req)
-				.Bind(query => SupportRelationshipsRepository.GetSssp())
+				.Bind(_ => SsspSupportRelationshipParameters.Parse(req))
+				.Bind(query => SupportRelationshipsRepository.GetSssp(query))
 				.Finally(results => Response.Ok(req, results));
 	}
 }
