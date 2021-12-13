@@ -96,18 +96,6 @@
       }
     }
   ],
-  "hrpeople": [
-    {
-      "id": 0,
-      "netId": "adwyer",
-      "name": "Andy Dwyer"
-    },
-    {
-      "id": 0,
-      "netId": "tswanso",
-      "name": "Tammy Swanson"
-    }
-  ],
   "units": [
     {
       "id": 1,

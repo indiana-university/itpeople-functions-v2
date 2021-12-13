@@ -83,11 +83,6 @@ module.exports = (req, res, next) => {
     // Check the people collection for them first
     let person = Number.isInteger(+username) ? db.people.find(p => p.id == +username) : db.people.find(p => p.netId == username);
 
-    // If we didn't find a match in the people collection check hrpeople next.
-    if (!person && Number.isInteger(+username) == false) {
-      person = db.hrpeople.find(p => p.netId == username);
-    }
-
     if(!person){
       res.status(404);
       return next();
