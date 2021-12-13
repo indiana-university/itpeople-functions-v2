@@ -390,6 +390,23 @@ namespace Integration
 				// Make sure we got what we expected.
 				Assert.AreEqual(2, actual.Count);
 				Assert.True(actual.All(r => r.Dept == TestEntities.Departments.FireName));
+
+				// Ensure explicitly URL Encoded values work
+				resp = await GetAuthenticated($"SsspSupportRelationships?dept={System.Web.HttpUtility.UrlEncode(TestEntities.Departments.FireName)}");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
+
+				// Make sure we got what we expected.
+				Assert.AreEqual(2, actual.Count);
+				Assert.True(actual.All(r => r.Dept == TestEntities.Departments.FireName));
+
+				// Ensure non-existent department names get no results
+				resp = await GetAuthenticated($"SsspSupportRelationships?dept=Department That Does Not Exist");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
+
+				// Make sure we got what we expected.
+				Assert.AreEqual(0, actual.Count);
 			}
 		}
 	}
