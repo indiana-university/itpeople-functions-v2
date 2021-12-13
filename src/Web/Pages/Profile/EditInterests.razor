@@ -30,7 +30,7 @@
 		</div>
 	</div>
 </div>
-<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg"> 	
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<DisplayException Ex=@GeneralException />
 
 	<AuthenticatedView>
@@ -120,12 +120,12 @@
 			var response = await Get<Person>($"/people/{NetId}", $"No person matching the given username `{NetId}` has been found.");
 			UpdatedPerson = response.Value;
 			CrudPerms = response.Permissions;
-			
+
 			ProfileName = UpdatedPerson?.Name ?? "Not Found";
-			
+
 			var expertiseString = UpdatedPerson?.Expertise ?? "";
 			ExpertiseAsList = expertiseString.Split(',').Select(r => r.Trim()).ToList();
-			
+
 			if (!CrudPerms.HasFlag(EntityPermissions.Put))
 			{
 				ProfileFormInvalid = true;
@@ -133,7 +133,7 @@
 			}
 		}
 	}
-	
+
 	private void RemoveInterest(string interest)
 	{
 		ExpertiseAsList.Remove(interest);
@@ -171,7 +171,7 @@
 			using(Loading())
 			{
 				// Make an in-memory copy of Person to PUT to the server.
-				var objToPut = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(UpdatedPerson, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
+				var objToPut = DeepCopy(UpdatedPerson);
 				// Update objToPut's Expertise
 				objToPut.Expertise = string.Join(",", ExpertiseAsList);
 
@@ -231,6 +231,6 @@
 		}
 		return output;
 	}
-	
+
 	public void Dispose() { }
 }

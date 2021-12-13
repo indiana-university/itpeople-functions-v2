@@ -124,4 +124,9 @@
 		}
 		return $"Failed to {response.RequestMessage.Method} {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}";
 	}
+
+	protected T DeepCopy<T>(T UpdatedEntity)
+	{
+		return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(UpdatedEntity, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
+	}
 }
