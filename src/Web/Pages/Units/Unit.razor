@@ -4,6 +4,7 @@
 @using web.Shared
 @using System.Linq
 @using Newtonsoft.Json
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @implements IDisposable
@@ -12,6 +13,7 @@
 @page "/Units/{unitId}"
 @page "/Units/{unitId}/edit"
 
+<Title Value="@GetPageTitle()" />
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<nav role="navigation" aria-label="Breadcrumbs">
 		<ol class="rvt-breadcrumbs rvt-m-bottom-lg">
@@ -716,4 +718,6 @@
 			CurrentUnit = response.Value;
 		}
 	}
+
+	private string GetPageTitle() => $"{CurrentUnit?.Name} - IT People - Indiana University";
 }
