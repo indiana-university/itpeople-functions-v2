@@ -72,7 +72,7 @@
 													</div>
 													<div class="rvt-grid">
 														<div class="rvt-grid__item">
-															@GetTitleAndRoleDisplay(unit)
+															<DisplayUnitRole Unit=unit Memberships=Memberships />
 														</div>
 													</div>
 												</div>
@@ -147,25 +147,6 @@
 			Memberships = response.Value;
 			ProfileUnits = Memberships.Select(m => m.Unit).Distinct();
 		}
-	}
-
-	// NB: MarkupStrings can be dangerous.  If I wasn't so lazy I'd have made a component to do this.
-	private MarkupString GetTitleAndRoleDisplay(UnitResponse unit)
-	{
-		var output = "";
-		var matchedMembership = Memberships.FirstOrDefault(m => m.UnitId == unit.Id);
-		
-		if(matchedMembership != null)
-		{
-			output += "<div>\n";
-			output += $"\t<strong>Title:</strong> {matchedMembership.Title}\n";
-			output += "</div>\n";
-			output += "<div>\n";
-			output += $"\t<strong>Role:</strong> {matchedMembership.Role.ToString()}\n";
-			output += "</div>";
-		}
-		
-		return new MarkupString(output);
 	}
 
 	public void Dispose() { }

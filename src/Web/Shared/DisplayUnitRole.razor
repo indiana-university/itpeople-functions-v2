@@ -1,0 +1,33 @@
+@using Models
+@implements IDisposable
+
+@if(Match != null)
+{
+	@if(string.IsNullOrWhiteSpace(Match.Title) == false)
+	{
+		<div>
+			<strong>Title:</strong> @Match.Title
+		</div>
+	}
+	<div>
+		<strong>Role:</strong> @Match.Role.ToString()
+	</div>
+}
+
+@code
+{
+	[Parameter]
+	public UnitResponse Unit { get; set; }
+
+	[Parameter]
+	public IEnumerable<UnitMemberResponse> Memberships { get; set;}
+
+	private UnitMemberResponse Match;
+
+	protected override void OnParametersSet()
+	{
+		Match = Memberships.FirstOrDefault(m => m.UnitId == Unit.Id);
+	}
+
+	public void Dispose() { }
+}
