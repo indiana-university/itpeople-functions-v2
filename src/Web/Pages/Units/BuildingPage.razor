@@ -22,6 +22,7 @@
 				</p>
 			</NotAuthenticated>
 			<Authenticated>
+				<DisplayException Ex=@GeneralException />
 				<Loader Loading="ShowLoader">
 					<div class="rvt-grid">
 						<div class="rvt-grid__item">
@@ -60,7 +61,7 @@
 				await GetSupportingUnits();
 			}
 		}
-	}    
+	}
 	private async Task GetSupportingUnits()
 	{
 		var response = await Get<List<BuildingRelationshipResponse>>($"/buildings/{BuildingId}/supportingUnits");

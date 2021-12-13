@@ -1,11 +1,8 @@
 @using Models
 @using Models.Enums
-@using Newtonsoft.Json
 @using web.Shared
-@using System.Web
 @using RivetBlazor.Components
 @using Microsoft.AspNetCore.Components.Web.Extensions.Head
-@using System.Net
 @implements IDisposable
 @inherits PageBase
 @inject NavigationManager Navigation
@@ -33,7 +30,6 @@
 	<h1 class="rvt-modal__title">Edit Responsibilities</h1>
 
 	<DisplayException Ex=@GeneralException />
-
 	<AuthenticatedView>
 		<NotAuthenticated>
 			<p>
@@ -74,7 +70,7 @@
 	protected IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	public Person UpdatedPerson = new Person();
 	private Responsibilities ResponsibilitiesInput;
-	
+
 	protected override async Task OnInitializedAsync()
 	{
 		await SetLoggedInUser();
@@ -82,7 +78,7 @@
 		if (LoggedInUser != null)
 			await GetPersonProfile();
 	}
-	
+
 	private async Task GetPersonProfile()
 	{
 		using(Loading())
@@ -105,7 +101,7 @@
 			}
 		}
 	}
-	
+
 	private async Task SaveChanges()
 	{
 		try

@@ -1,9 +1,5 @@
 @using RivetBlazor.Components
-@using Models;
-@using Models.Enums;
 @using System.Threading;
-@using System.Web;
-@using Newtonsoft.Json;
 @typeparam T
 @inject IHttpClientFactory ClientFactory;
 @implements IDisposable;
@@ -26,7 +22,7 @@
 					<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => ButtonClickedHelper(suggestion)) >@DisplayLambda(suggestion)</a>
 				</li>
 			}
-			
+
 			@if(Suggestions.Count == 0)
 			{
 				<li><em>No matches found</em></li>
@@ -120,7 +116,7 @@
 	{
 		RequestException = null;
 		Suggestions = new List<T>();
-		
+
 		if (string.IsNullOrWhiteSpace(searchTerm))
 		{
 			return;
