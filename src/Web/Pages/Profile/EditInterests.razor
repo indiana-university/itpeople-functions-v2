@@ -51,20 +51,18 @@
 						<DataAnnotationsValidator />
 						<ValidationSummary />
 						<br />
-							<ul class="rvt-list rvt-plain-list rvt-inline-list">
-								@foreach (var Interest in ExpertiseAsList)
-								{
-									<li>
-										<span class="rvt-badge">@Interest
-											<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
-												<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
-											</button>
-										</span>
-									</li>
-								}
+						<ul class="rvt-list rvt-plain-list rvt-inline-list">
+							@foreach (var Interest in ExpertiseAsList)
+							{
+								<li>
+									<span class="rvt-badge">@Interest
+										<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> RemoveInterest(Interest))">
+											<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
+										</button>
+									</span>
+								</li>
 							}
 						</ul>
-
 
 						<SuggestionButtons T=SuggestionItem Label="Search" Placeholder="Type an Interest"
 							Description="Type an interest and then click a button in the results below to add it to this profile."
