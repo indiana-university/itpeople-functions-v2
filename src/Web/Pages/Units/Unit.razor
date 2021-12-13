@@ -718,5 +718,5 @@
 		}
 	}
 
-	private string GetPageTitle() => $"{CurrentUnit?.Name} - IT People - Indiana University";
+	private string GetPageTitle() => $"{(CurrentUnit?.Name == null ? "Add Unit" : $"{CurrentUnit?.Name}")} - IT People - Indiana University";
 }
