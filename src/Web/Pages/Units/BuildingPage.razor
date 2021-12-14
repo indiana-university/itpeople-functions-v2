@@ -65,8 +65,10 @@
 	private async Task GetSupportingUnits()
 	{
 		var response = await Get<List<BuildingRelationshipResponse>>($"/buildings/{BuildingId}/supportingUnits");
-		_Building = response.Value.Where(br => br.BuildingId.ToString() == BuildingId).Select(br => br.Building).First();
-		SupportingUnits = response.Value.Select(br => br.Unit);
+		if(response.RawResponse.IsSuccessStatusCode) {
+			_Building = response.Value.Where(br => br.BuildingId.ToString() == BuildingId).Select(br => br.Building).First();
+			SupportingUnits = response.Value.Select(br => br.Unit);
+		}
 	}
 
 	private string GetPageTitle() => $"{_Building.Name} - IT People - Indiana University";

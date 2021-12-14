@@ -95,6 +95,24 @@ module.exports = (req, res, next) => {
     return res.send(supportingUnits);
   }
 
+  if(req.path.toLowerCase().startsWith("/buildings/") && req.path.toLowerCase().endsWith("/supportingunits"))
+  {
+    const pathParts = req.path.split("/");
+    const buildingId = pathParts[2];
+    let building = db.buildings.find(b => b.id == buildingId);
+    if(!building){
+      res.status(404);
+      return next();
+    }
+    let buildingRelationships = db.buildingRelationships.filter(br => br.buildingId == buildingId);
+    for(let x of buildingRelationships)
+    {
+      x.building = building;
+      x.unit = db.units.find(u => u.id == x.unitId);
+    }
+
+    return res.send(buildingRelationships);
+  }
   if(req.path.toLowerCase().startsWith("/people/withhr/"))
   {
     const pathParts = req.path.split("/");
