@@ -118,10 +118,12 @@ namespace API.Functions
 		[FunctionName(nameof(SupportRelationships.SsspSupportRelationships))]
 		[OpenApiOperation(nameof(SupportRelationships.SsspSupportRelationships), SupportRelationshipsTitle, Summary = "Lists Support Relationships using a query specifically for SSSP's use.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<SsspSupportRelationshipResponse>), Description = "A collection of department support relationship records")]
+		[OpenApiParameter("dept", In=ParameterLocation.Query, Description="Filter results by the department's name. The provided value must exactly match the department's name.")]
 		public static Task<IActionResult> SsspSupportRelationships(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "SsspSupportRelationships")] HttpRequest req)
 			=> Security.Authenticate(req)
-				.Bind(query => SupportRelationshipsRepository.GetSssp())
+				.Bind(_ => SsspSupportRelationshipParameters.Parse(req))
+				.Bind(query => SupportRelationshipsRepository.GetSssp(query))
 				.Finally(results => Response.Ok(req, results));
 	}
 }

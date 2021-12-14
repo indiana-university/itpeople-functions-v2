@@ -7,6 +7,7 @@ using Models;
 using Database;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
+using API.Functions;
 
 namespace API.Data
 {
@@ -29,7 +30,7 @@ namespace API.Data
 			=> ExecuteDbPipeline("get a support relationship by ID", db =>
 				TryFindSupportRelationship(db, id));
 
-		public static Task<Result<List<SsspSupportRelationshipResponse>, Error>> GetSssp()
+		public static Task<Result<List<SsspSupportRelationshipResponse>, Error>> GetSssp(SsspSupportRelationshipParameters query)
 			=> ExecuteDbPipeline("Get all support relationships in SSSP format", async db =>
 			{
 				// Get all the SupportRelationships that have a usable email
@@ -64,6 +65,17 @@ namespace API.Data
 					k++;
 				}
 				
+				// If we were provided a department name to filter by do so
+				// Arguably this should be up before we materialize the results
+				// from the database, but this keeps the generated "keys" consistent
+				// between requests. SSSP said that isn't important, but better safe than sorry.
+				if(string.IsNullOrWhiteSpace(query.DepartmentName) == false)
+				{
+					result = result
+						.Where(r => r.Dept == query.DepartmentName)
+						.ToList();
+				}
+
 				return Pipeline.Success(result);
 			});
 
