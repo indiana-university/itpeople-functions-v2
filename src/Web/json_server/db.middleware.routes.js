@@ -86,6 +86,12 @@ module.exports = (req, res, next) => {
       return next();
     }
     let supportingUnits = db.supportRelationships.filter(su => su.departmentId == departmentId);
+    for(let x of supportingUnits)
+    {
+      x.department = department;
+      x.unit = db.units.find(u => u.id == x.unitId);
+    }
+
     return res.send(supportingUnits);
   }
 
