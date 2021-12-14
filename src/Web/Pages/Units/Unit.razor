@@ -3,7 +3,6 @@
 @using RivetBlazor.Components
 @using web.Shared
 @using System.Linq
-@using Newtonsoft.Json
 @using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
@@ -33,8 +32,8 @@
 			</p>
 		</NotAuthenticated>
 		<Authenticated>
+			<DisplayException Ex=@GeneralException />
 			<Loader Loading="ShowLoader">
-				<DisplayException Ex=@GeneralException />
 				@if (CreateMode)
 				{
 					<section class="rvt-p-bottom-xxl">
@@ -719,5 +718,5 @@
 		}
 	}
 
-	private string GetPageTitle() => $"{CurrentUnit?.Name} - IT People - Indiana University";
+	private string GetPageTitle() => $"{(CurrentUnit?.Name == null ? "Add Unit" : $"{CurrentUnit?.Name}")} - IT People - Indiana University";
 }
