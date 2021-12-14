@@ -64,8 +64,10 @@
 	private async Task GetSupportingUnits()
 	{
 		var response = await Get<List<SupportRelationshipResponse>>($"/departments/{DepartmentId}/supportingUnits");
-		_Department = response.Value.Where(sr => sr.DepartmentId.ToString() == DepartmentId).Select(sr => sr.Department).First();
-		SupportingUnits = response.Value.Select(sr => sr.Unit);
+		if(response.RawResponse.IsSuccessStatusCode) {
+			_Department = response.Value.Where(sr => sr.DepartmentId.ToString() == DepartmentId).Select(sr => sr.Department).First();
+			SupportingUnits = response.Value.Select(sr => sr.Unit);
+		}
 	}
 
 	private string GetPageTitle() => $"{_Department.Name} - IT People - Indiana University";

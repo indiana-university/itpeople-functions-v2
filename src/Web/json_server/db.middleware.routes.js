@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
     if(req.path.startsWith("/units/") && req.path.endsWith("/archive")) {
       const pathParts = req.path.split("/");
       const unitId = pathParts[2];
-      
+
       const unit = db.units.find(u => u.id == unitId);
       if(!unit)
       {
@@ -18,14 +18,14 @@ module.exports = (req, res, next) => {
 
       // Flip the active bit
       unit.active = !unit.active;
-      
+
       // Write the changes to db.json
       saveToDb("units", unit);
 
       // Return the unit with a 200 OK
       return res.send(unit);
     }
-    
+
     next();
     res.status(204);
     return res.end();
@@ -47,7 +47,7 @@ module.exports = (req, res, next) => {
       res.status(404);
       return next();
     }
-    
+
     if(person.netId == "lsebastian") {
       res.status(400);
       // console.log(res);
@@ -76,6 +76,19 @@ module.exports = (req, res, next) => {
     return next();
   }
 
+  if(req.path.toLowerCase().startsWith("/departments/") && req.path.toLowerCase().endsWith("/supportingunits"))
+  {
+    const pathParts = req.path.split("/");
+    const departmentId = pathParts[2];
+    let department = db.departments.find(d => d.id == departmentId);
+    if(!department){
+      res.status(404);
+      return next();
+    }
+    let supportingUnits = db.supportRelationships.filter(su => su.departmentId == departmentId);
+    return res.send(supportingUnits);
+  }
+
   if(req.path.toLowerCase().startsWith("/people/withhr/"))
   {
     const pathParts = req.path.split("/");
@@ -87,8 +100,7 @@ module.exports = (req, res, next) => {
       res.status(404);
       return next();
     }
-    
-    return res.send(person);
+    return next();
   }
 
   if (req.path.startsWith("/people/")) {
@@ -129,7 +141,7 @@ function saveToDb(container, item) {
   const fs = require("fs");
   var path = require("path");
   var jsonPath = path.join(__dirname, "db.json");
-  
+
   var db = getDb();
   // Find and update item.
   for(let ix in db[container]) {
