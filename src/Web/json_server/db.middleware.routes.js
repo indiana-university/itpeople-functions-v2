@@ -124,7 +124,7 @@ module.exports = (req, res, next) => {
       res.status(404);
       return next();
     }
-    return next();
+    return res.send(person);
   }
 
   if (req.path.startsWith("/people/")) {
