@@ -367,6 +367,47 @@ namespace Integration
 				// Ensure we got the expected number of results.
 				Assert.AreEqual(expectedMatches, actual.Count);
 			}
+
+			[Test]
+			public async Task FilterSsspRelationshipResults()
+			{
+				// Reset the state of the database, and setup all our Support Relationships between Units and Departments.
+				await Setup();
+				var db = GetDb();
+				
+				var parksSupportRelationship = new SupportRelationship(UnitWithEmailId, ParksDeptId, null);
+				var fireSupportRelationship = new SupportRelationship(UnitWithEmailId, TestEntities.Departments.FireId, null);
+				var otherFireSupportRelationship = new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, TestEntities.Departments.FireId, null);
+				
+				await db.SupportRelationships.AddRangeAsync(new List<SupportRelationship> { parksSupportRelationship, fireSupportRelationship, otherFireSupportRelationship });
+				await db.SaveChangesAsync();
+
+				// Request filtered results from the API endpoint
+				var resp = await GetAuthenticated($"SsspSupportRelationships?dept={TestEntities.Departments.FireName}");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				var actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
+
+				// Make sure we got what we expected.
+				Assert.AreEqual(2, actual.Count);
+				Assert.True(actual.All(r => r.Dept == TestEntities.Departments.FireName));
+
+				// Ensure explicitly URL Encoded values work
+				resp = await GetAuthenticated($"SsspSupportRelationships?dept={System.Web.HttpUtility.UrlEncode(TestEntities.Departments.FireName)}");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
+
+				// Make sure we got what we expected.
+				Assert.AreEqual(2, actual.Count);
+				Assert.True(actual.All(r => r.Dept == TestEntities.Departments.FireName));
+
+				// Ensure non-existent department names get no results
+				resp = await GetAuthenticated($"SsspSupportRelationships?dept=Department That Does Not Exist");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
+
+				// Make sure we got what we expected.
+				Assert.AreEqual(0, actual.Count);
+			}
 		}
 	}
 }
