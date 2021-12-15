@@ -83,11 +83,15 @@
 					GeneralException = new Exception($"Was unable to validate your identity.");
 					return;
 				}
-				await localStorage.SetItemAsync("user", new AuthenticatedUser
+
+				var expClaim = handler.ReadJwtToken(jwt.AccessToken).Claims.FirstOrDefault(x => x.Type == "exp");
+				if(expClaim == null)
 				{
-					AccessToken = jwt.AccessToken,
-					Username = usernameClaim.Value
-				});
+					GeneralException = new Exception($"Was unable to determine token's expiration time.");
+					return;
+				}
+				
+				await localStorage.SetItemAsync("user", new AuthenticatedUser(jwt.AccessToken, usernameClaim.Value, expClaim.Value));
 
 				// Send the user back to where they came.
 				Destination = await localStorage.GetItemAsync<string>("AuthDestination");
