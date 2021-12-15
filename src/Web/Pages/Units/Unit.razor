@@ -534,6 +534,8 @@
 			DepartmentId = SupportRelationshipToAdd.DepartmentId,
 			SupportTypeId = SupportRelationshipToAdd?.SupportTypeId,
 		});
+		SupportRelationshipToAdd.DepartmentId = 0;
+		SupportRelationshipToAdd.Department = null;
 		SupportRelationshipToAdd.SupportType = null;
 		SupportRelationshipToAdd.SupportTypeId = null;
 		await GetSupportRelationships();
