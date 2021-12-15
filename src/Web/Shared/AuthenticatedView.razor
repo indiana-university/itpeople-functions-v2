@@ -21,7 +21,7 @@
 			</p>
 		</div>
 	}
-	
+
 	@Authenticated
 }
 else
@@ -38,40 +38,35 @@ else
 
 	private AuthenticatedUser User;
 	private bool IsAuthenticated => User != null;
-	
+
 	private bool? PreviousExpired = null;
 	private bool IsExpired => User != null && User.Expires <= DateTimeOffset.Now;
 
 	CancellationTokenSource CancelTokenSource = new CancellationTokenSource();
-	private Task WatchTask;
 
 	protected override async Task OnInitializedAsync()
 	{
 		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
-		WatchTask = WatchForExpiration();
+		WatchForExpiration(CancelTokenSource.Token);
 	}
 
-	private async Task WatchForExpiration()
+	private async Task WatchForExpiration(CancellationToken cancellationToken)
 	{
-		// Only procede if this task has not been canceled.)
-		if (CancelTokenSource.Token.IsCancellationRequested == false)
+		Console.WriteLine($"Wait two seconds between checks...");
+		await Task.Delay(2000);
+
+		//Update the user data, it could have changed in another tab.
+		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
+
+		if(PreviousExpired != IsExpired)
 		{
-			//Console.WriteLine($"Wait two seconds between checks...");
-			await Task.Delay(2000);
-
-			//Update the user data, it could have changed in another tab.
-			User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
-			
-			if(PreviousExpired != IsExpired)
-			{
-				Console.WriteLine($"Changed from {PreviousExpired} to {IsExpired}");
-				StateHasChanged();
-			}
-
-			// Update for the next pass
-			PreviousExpired = (IsExpired ? true : false);
-			WatchTask = WatchForExpiration();
+			Console.WriteLine($"Changed from {PreviousExpired} to {IsExpired}");
+			StateHasChanged();
 		}
+
+		// Update for the next pass
+		PreviousExpired = (IsExpired ? true : false);
+		Task.Run(() => WatchForExpiration(CancelTokenSource.Token), CancelTokenSource.Token);
 	}
 
 	public void Dispose()
