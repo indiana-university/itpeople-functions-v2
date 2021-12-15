@@ -43,11 +43,12 @@ else
 	
 	private string Id = System.Guid.NewGuid().ToString();
 	private DotNetObjectReference<AuthenticatedView>? jsRef;
-	private bool IsExpired => User != null && User.Expires <= DateTimeOffset.Now;
+	private bool IsExpired = false;
 
 	protected override async Task OnInitializedAsync()
 	{
 		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
+		await UpdateIsExpired();
 		jsRef = DotNetObjectReference.Create(this);
 		SetupInterop();
 	}
@@ -80,7 +81,25 @@ else
 		Console.WriteLine("Greetings from StorageChanged()!");
 		// Update the user
 		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
-		StateHasChanged();
+		await UpdateIsExpired();
+	}
+
+	[JSInvokable]
+	public async Task UpdateIsExpired()
+	{
+		Console.WriteLine("Greetings from UpdateIsExpired()!");
+		var result = false;
+		if(User != null && User.Expires <= DateTimeOffset.Now)
+		{
+			result = true;
+		}
+
+		if(IsExpired != result)
+		{
+			Console.WriteLine($"\tIsExpired changed from {IsExpired} to {result}");
+			IsExpired = result;
+			StateHasChanged();
+		}
 	}
 
 	public void Dispose()

@@ -46,6 +46,15 @@ function removeSessionInstance(id){
 	} while(pos > -1);
 }
 
+function checkIfSessionHasExpired(){
+	console.log("firing checkIfSessionHasExpired");
+	for(let instance of sessionInstances){
+		instance.ref.invokeMethodAsync("UpdateIsExpired");
+	}
+	// Wait 5 seconds and check again
+	setTimeout(checkIfSessionHasExpired, 5000);
+}
+
 window.addEventListener('storage', () => {
 	// When local storage changes, dump the list to
 	// the console.
@@ -54,5 +63,8 @@ window.addEventListener('storage', () => {
 	for(let instance of sessionInstances){
 		instance.ref.invokeMethodAsync("StorageChanged");
 	}
-  });
+});
+
+// start polling to catch when sessions have expired.
+checkIfSessionHasExpired();
 /* End of Local Storage */
