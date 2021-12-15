@@ -1,7 +1,9 @@
 @using System.Net
 @using System.Threading;
+@using Blazored.LocalStorage
 @implements IDisposable
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject IJSRuntime JSRuntime;
 @inject NavigationManager Navigation
 
 @if(IsAuthenticated)
@@ -39,44 +41,50 @@ else
 	private AuthenticatedUser User;
 	private bool IsAuthenticated => User != null;
 	
-	private bool? PreviousExpired = null;
+	private string Id = System.Guid.NewGuid().ToString();
+	private DotNetObjectReference<AuthenticatedView>? jsRef;
 	private bool IsExpired => User != null && User.Expires <= DateTimeOffset.Now;
-
-	CancellationTokenSource CancelTokenSource = new CancellationTokenSource();
-	private Task WatchTask;
 
 	protected override async Task OnInitializedAsync()
 	{
 		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
-		WatchTask = WatchForExpiration();
+		jsRef = DotNetObjectReference.Create(this);
+		SetupInterop();
 	}
 
-	private async Task WatchForExpiration()
+	private class InstanceReference
 	{
-		// Only procede if this task has not been canceled.)
-		if (CancelTokenSource.Token.IsCancellationRequested == false)
-		{
-			//Console.WriteLine($"Wait two seconds between checks...");
-			await Task.Delay(2000);
+		public string Id { get; set; }
+		public DotNetObjectReference<AuthenticatedView> Ref { get; set; }
+	}
 
-			//Update the user data, it could have changed in another tab.
-			User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
-			
-			if(PreviousExpired != IsExpired)
-			{
-				Console.WriteLine($"Changed from {PreviousExpired} to {IsExpired}");
-				StateHasChanged();
-			}
+	private void SetupInterop()
+	{
+		// Cast JSRuntime so we can use InvokeVoid, instead of InvokeVoidAsync
+		var js = (IJSInProcessRuntime)JSRuntime;
+		// Add Id to the collection defined in interop.js
+		js.InvokeVoid("sessionInstances.push", new InstanceReference { Id = Id, Ref = jsRef });
+	}
 
-			// Update for the next pass
-			PreviousExpired = (IsExpired ? true : false);
-			WatchTask = WatchForExpiration();
-		}
+	private void TeardownInterop()
+	{
+		// Cast JSRuntime so we can use InvokeVoid, instead of InvokeVoidAsync
+		var js = (IJSInProcessRuntime)JSRuntime;
+		// Add Id to the collection defined in interop.js
+		js.InvokeVoid("removeSessionInstance", Id);
+	}
+
+	[JSInvokable]
+	public async void StorageChanged()
+	{
+		Console.WriteLine("Greetings from StorageChanged()!");
+		// Update the user
+		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
+		StateHasChanged();
 	}
 
 	public void Dispose()
 	{
-		//Console.WriteLine("\tDISPOSING");
-		CancelTokenSource.Cancel();
+		TeardownInterop();
 	}
 }

@@ -25,3 +25,34 @@ document.addEventListener('modalClose', event => {
 		}
 	}
 }, false);
+
+/* Local Storage */
+var sessionInstances = [];
+function removeSessionInstance(id){
+	var pos = -1;
+	do {
+		pos = -1;// Reset
+		for(var i = 0; i < sessionInstances.length; i++)
+		{
+			if(sessionInstances[i].id == id){
+				pos = i;
+				break;
+			}
+		}
+		console.log("\tpos: " + pos);
+		if(pos > -1){
+			sessionInstances.splice(pos, 1);
+		}
+	} while(pos > -1);
+}
+
+window.addEventListener('storage', () => {
+	// When local storage changes, dump the list to
+	// the console.
+	console.log(sessionInstances);
+	console.log(JSON.parse(window.localStorage.getItem('user')));
+	for(let instance of sessionInstances){
+		instance.ref.invokeMethodAsync("StorageChanged");
+	}
+  });
+/* End of Local Storage */
