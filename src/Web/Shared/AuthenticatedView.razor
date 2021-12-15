@@ -1,5 +1,5 @@
 @implements IDisposable
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 @if(IsAuthenticated)
 {
@@ -21,7 +21,7 @@ else
 
 	protected override async Task OnInitializedAsync()
 	{
-		var user = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+		var user = await localStorage.GetItemAsync<AuthenticatedUser>("user");
 		IsAuthenticated = user == null ? false : true;
 	}
 

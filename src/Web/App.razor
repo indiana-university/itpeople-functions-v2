@@ -1,6 +1,6 @@
 ﻿@using RivetBlazor.Classes
 @using RivetBlazor.Components
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject NavigationManager Navigation
 
 <Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
@@ -30,7 +30,7 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		User = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
 		var loggedInUser = User?.Username ?? "";
 		var isLoggedIn = User != null;
 		AuthenticationDestination = new Uri(Navigation.Uri).PathAndQuery;

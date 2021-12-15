@@ -8,7 +8,7 @@
 @using System.Text.Json.Serialization
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 @using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @implements IDisposable
 @inherits PageBase
@@ -83,14 +83,14 @@
 					GeneralException = new Exception($"Was unable to validate your identity.");
 					return;
 				}
-				await sessionStorage.SetItemAsync("user", new AuthenticatedUser
+				await localStorage.SetItemAsync("user", new AuthenticatedUser
 				{
 					AccessToken = jwt.AccessToken,
 					Username = usernameClaim.Value
 				});
 
 				// Send the user back to where they came.
-				Destination = await sessionStorage.GetItemAsync<string>("AuthDestination");
+				Destination = await localStorage.GetItemAsync<string>("AuthDestination");
 				// Use forceReload to make sure the header redraws.
 				Navigation.NavigateTo(Destination, true);
 			}
@@ -109,7 +109,7 @@
 	private async Task ReallySignIn()
 	{
 		// Store destination in session storage for use when we get back.
-		await sessionStorage.SetItemAsync("AuthDestination", Destination);
+		await localStorage.SetItemAsync("AuthDestination", Destination);
 
 		// Send them to UAA to get authenticated.
 		var localUrl = Utils.Env(Configuration, "APP_WEB_URL", true) + "/signin";

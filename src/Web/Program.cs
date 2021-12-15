@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Blazored.SessionStorage;
+using Blazored.LocalStorage;
 
 namespace web
 {
@@ -19,7 +19,7 @@ namespace web
             builder.RootComponents.Add<App>("#app");
 
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-            builder.Services.AddBlazoredSessionStorage();
+            builder.Services.AddBlazoredLocalStorage();
             builder.Services.AddHttpClient("Api", client => {
                 // Get the BaseAddress from our configuration
                 client.BaseAddress = new Uri(Utils.Env(builder.Configuration, "API_URL", true));
@@ -27,7 +27,7 @@ namespace web
                 // Attempt to fetch the JWT from storage
                 // Get user data from the session
                 var sp = builder.Services.BuildServiceProvider();
-                var session = sp.GetService<ISyncSessionStorageService>();
+                var session = sp.GetService<ISyncLocalStorageService>();
 
                 var user = session.GetItem<AuthenticatedUser>("user");
                 var jwtString = user?.AccessToken ?? "";

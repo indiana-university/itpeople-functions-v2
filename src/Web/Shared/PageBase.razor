@@ -6,7 +6,7 @@
 
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager Navigation
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 @code {
 	protected HttpClient Api() => ClientFactory.CreateClient("Api");
@@ -15,7 +15,7 @@
 
 	protected async Task SetLoggedInUser()
 	{
-		LoggedInUser = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
+		LoggedInUser = await localStorage.GetItemAsync<AuthenticatedUser>("user");
 	}
 
 	protected string GetLoginUri()
