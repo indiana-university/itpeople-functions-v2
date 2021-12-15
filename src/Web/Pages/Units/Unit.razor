@@ -337,10 +337,22 @@
 													<h5 class="rvt-border-top rvt-p-top-sm">Add New Supported Department</h5>
 													<EditForm EditContext="@SupportRelationshipAddContext">
 														<RivetInputSelect @bind-Value="SupportRelationshipToAdd.SupportType" Label="Support Type" Description="" Options=SupportTypes DisplayLambda=@(r => r.Name) />
-														@if (SupportRelationshipToAdd.SupportTypeId != null)
-														{
-															<SuggestionButtons T="@SupportRelationshipResponse" Label="Department" Placeholder="Enter a search term" Description="Search by department name." ButtonClickedAction="@AddSupportRelationship" AsyncSuggestionGetter="@GetSupportRelationshipSuggestions" DisplayLambda=@(s => s.Department.Name) />
+														@if(SupportRelationshipToAdd.DepartmentId == 0) {
+															<SuggestionButtons T="@SupportRelationshipResponse" Label="Department" Placeholder="Enter a search term" Description="Search by department name." ButtonClickedAction="@SelectSupportDepartment" AsyncSuggestionGetter="@GetSupportRelationshipSuggestions" DisplayLambda=@(s => s.Department.Name) />
 														}
+														@if(SupportRelationshipToAdd.DepartmentId != 0) {
+															<p>
+																<span class="rvt-badge">
+																	@SupportRelationshipToAdd.Department.Name
+																	<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> ClearAddingSupportDepartment())">
+																		<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
+																	</button>
+																</span>
+															</p>
+														}
+														<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader)" @onclick="AddSupportRelationship">
+															Add
+														</button>
 													</EditForm>
 												</div>
 											</div>
@@ -513,19 +525,31 @@
 		await GetUnitChildren();
 		StateHasChanged();
 	}
-	private async void AddSupportRelationship(SupportRelationshipResponse request)
+	private async void AddSupportRelationship()
 	{
 		GeneralException = null;
 		await Post<SupportRelationshipResponse>("supportRelationships", new SupportRelationshipResponse
 		{
 			UnitId = CurrentUnit.Id,
-			DepartmentId = request.DepartmentId,
-			SupportTypeId = SupportRelationshipToAdd.SupportTypeId,
+			DepartmentId = SupportRelationshipToAdd.DepartmentId,
+			SupportTypeId = SupportRelationshipToAdd?.SupportTypeId,
 		});
 		SupportRelationshipToAdd.SupportType = null;
 		SupportRelationshipToAdd.SupportTypeId = null;
 		await GetSupportRelationships();
 		StateHasChanged();
+	}
+
+	public void SelectSupportDepartment(SupportRelationshipResponse request)
+	{
+		SupportRelationshipToAdd.DepartmentId = request.DepartmentId;
+		SupportRelationshipToAdd.Department = request.Department;
+		StateHasChanged();
+	}
+
+	public void ClearAddingSupportDepartment() {
+		SupportRelationshipToAdd.DepartmentId = 0;
+		SupportRelationshipToAdd.Department = null;
 	}
 
 	public string BuildingRelationshipDisplayLamba(Building building)
