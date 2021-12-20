@@ -41,12 +41,6 @@ namespace web
                 {
                     throw new Exception("Could not find an access token in Session Storage, is the user currently logged in?");
                 }
-
-                if(user.Expires <= DateTimeOffset.Now)
-                {
-                    throw new Exception("Your session has expired");
-                }
-
             });
 
             await builder.Build().RunAsync();

@@ -56,7 +56,7 @@ else
 		// Only procede if this task has not been canceled.)
 		if (CancelTokenSource.Token.IsCancellationRequested == false)
 		{
-			Console.WriteLine($"Wait two seconds between checks...");
+			// Console.WriteLine($"Wait two seconds between checks...");
 			await Task.Delay(2000);
 
 			//Update the user data, it could have changed in another tab.
@@ -64,7 +64,7 @@ else
 			
 			if(PreviousExpired != IsExpired)
 			{
-				Console.WriteLine($"Changed from {PreviousExpired} to {IsExpired}");
+				// Console.WriteLine($"Changed from {PreviousExpired} to {IsExpired}");
 				StateHasChanged();
 			}
 
@@ -76,7 +76,7 @@ else
 
 	public void Dispose()
 	{
-		Console.WriteLine("\tDISPOSING");
+		// Console.WriteLine("\tDISPOSING");
 		CancelTokenSource.Cancel();
 	}
 }
