@@ -202,6 +202,16 @@
       "state": "IN",
       "country": "USA",
       "postCode": "47501"
+    },
+    {
+      "id": 4,
+      "name": "Sullivan Street Pit",
+      "code": "Lot48",
+      "address": "321 Sullivan St",
+      "city": "Pawnee",
+      "state": "IN",
+      "country": "USA",
+      "postCode": "47501"
     }
   ],
   "memberships": [
