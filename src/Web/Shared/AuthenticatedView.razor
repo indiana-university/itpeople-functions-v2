@@ -37,9 +37,15 @@ else
 	public RenderFragment NotAuthenticated { get; set; }
 
 	private AuthenticatedUser User;
-	private bool IsAuthenticated => User != null;
+	private DateTimeOffset InitializedAt;
+	// A user Is authenticated only if:
+	// They are logged in
+	// AND their JWT did not expire before this component was loaded
+	private bool IsAuthenticated => User != null && InitializedAt != null && InitializedAt <= User.Expires;
 	
 	private bool? PreviousExpired = null;
+	// Has the user's JWT expried since they showed up?  If so show a wanring message.
+	// If they login again in another tab hide that warning.
 	private bool IsExpired => User != null && User.Expires <= DateTimeOffset.Now;
 
 	CancellationTokenSource CancelTokenSource = new CancellationTokenSource();
@@ -48,6 +54,7 @@ else
 	protected override async Task OnInitializedAsync()
 	{
 		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
+		InitializedAt = DateTimeOffset.Now;
 		WatchTask = WatchForExpiration();
 	}
 
