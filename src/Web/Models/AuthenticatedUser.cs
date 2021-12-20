@@ -13,6 +13,7 @@ namespace web
 		{
 			AccessToken = token;
 			Username = username;
+			// Convert exp from a unix epoch timestamp to a DateTimeOffset
 			var expAsDouble = double.Parse(exp);
 			Expires = new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, new TimeSpan(0, 0, 0)).AddSeconds(expAsDouble);
 		}

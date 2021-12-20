@@ -25,11 +25,11 @@ namespace web
                 client.BaseAddress = new Uri(Utils.Env(builder.Configuration, "API_URL", true));
                 
                 // Attempt to fetch the JWT from storage
-                // Get user data from the session
+                // Get user data from the Local Storage Service
                 var sp = builder.Services.BuildServiceProvider();
-                var session = sp.GetService<ISyncLocalStorageService>();
+                var localStorage = sp.GetService<ISyncLocalStorageService>();
 
-                var user = session.GetItem<AuthenticatedUser>("user");
+                var user = localStorage.GetItem<AuthenticatedUser>("user");
                 var jwtString = user?.AccessToken ?? "";
 
                 // If we got a JWT use it to add an Authorization header for API requestes.
@@ -39,7 +39,7 @@ namespace web
                 }
                 else
                 {
-                    throw new Exception("Could not find an access token in Session Storage, is the user currently logged in?");
+                    throw new Exception("Could not find an access token in Local Storage, is the user currently logged in?");
                 }
             });
 
