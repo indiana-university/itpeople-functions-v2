@@ -58,15 +58,25 @@
 		{
 			using (Loading())
 			{
-				await GetSupportingUnits();
+				var tasks = new Task[] { GetBuilding(), GetSupportingUnits() };
+				await Task.WhenAll(tasks);
 			}
 		}
 	}
+
+	private async Task GetBuilding()
+	{
+		var resp = await Get<Building>($"/buildings/{BuildingId}");
+		if(resp.RawResponse.IsSuccessStatusCode)
+		{
+			_Building = resp.Value;
+		}
+	}
+
 	private async Task GetSupportingUnits()
 	{
 		var response = await Get<List<BuildingRelationshipResponse>>($"/buildings/{BuildingId}/supportingUnits");
 		if(response.RawResponse.IsSuccessStatusCode) {
-			_Building = response.Value.Where(br => br.BuildingId.ToString() == BuildingId).Select(br => br.Building).First();
 			SupportingUnits = response.Value.Select(br => br.Unit);
 		}
 	}
