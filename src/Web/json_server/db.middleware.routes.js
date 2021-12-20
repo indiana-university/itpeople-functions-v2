@@ -60,6 +60,17 @@ module.exports = (req, res, next) => {
     }
   }
 
+  if(req.method == "POST" && req.path.toLowerCase().startsWith("/supportrelationships") && req.path.toLowerCase().endsWith("/supportrelationships")) {
+    // If someone submits a a Support Relationship that has no SupportType selected set supportTypeId to 0
+    // When it's null json-server chokes trying to expand it.
+    if(req.body.supportTypeId == null)
+    {
+      req.body.supportTypeId = 0;
+    }
+
+    return next();
+  }
+
   // GET /people/**
   if (req.method != "GET") {
     return next();
