@@ -1,4 +1,4 @@
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 @using web.Shared
 @using RivetBlazor.Components
 @using Microsoft.AspNetCore.Components.Web.Extensions.Head
@@ -40,7 +40,7 @@
 			await SetLoggedInUser();
 			if (LoggedInUser != null)
 			{
-				await sessionStorage.ClearAsync();
+				await localStorage.ClearAsync();
 				// Force redraw of the page to redraw the header
 				Navigation.NavigateTo("/SignOut", true);
 			}

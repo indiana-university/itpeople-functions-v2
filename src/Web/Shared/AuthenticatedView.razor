@@ -1,9 +1,28 @@
+@using System.Net
+@using System.Threading;
 @implements IDisposable
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager Navigation
 
 @if(IsAuthenticated)
 {
-    @Authenticated
+	@if(IsExpired)
+	{
+		<div class="rvt-alert rvt-alert--warning rvt-m-tb-md">
+			<h1 class="rvt-alert__title">Session Expired</h1>
+			<p class="rvt-alert__message">
+				<p>
+					Your session has expired.  You will need to login again before making additional requsts.
+				</p>
+				<p>
+					<a class="rvt-button" href="/SignIn?Destination=@(WebUtility.UrlEncode(new Uri(Navigation.Uri).PathAndQuery))">Log In</a>
+				</p>
+
+			</p>
+		</div>
+	}
+	
+	@Authenticated
 }
 else
 {
@@ -17,15 +36,54 @@ else
     [Parameter]
 	public RenderFragment NotAuthenticated { get; set; }
 
-	private bool IsAuthenticated = false;
+	private AuthenticatedUser User;
+	private DateTimeOffset InitializedAt;
+	// A user Is authenticated only if:
+	// They are logged in
+	// AND their JWT did not expire before this component was loaded
+	private bool IsAuthenticated => User != null && InitializedAt != null && InitializedAt <= User.Expires;
+	
+	private bool? PreviousExpired = null;
+	// Has the user's JWT expried since they showed up?  If so show a wanring message.
+	// If they login again in another tab hide that warning.
+	private bool IsExpired => User != null && User.Expires <= DateTimeOffset.Now;
+
+	CancellationTokenSource CancelTokenSource = new CancellationTokenSource();
+	private Task WatchTask;
 
 	protected override async Task OnInitializedAsync()
 	{
-		var user = await sessionStorage.GetItemAsync<AuthenticatedUser>("user");
-		IsAuthenticated = user == null ? false : true;
+		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
+		InitializedAt = DateTimeOffset.Now;
+		WatchTask = WatchForExpiration();
+	}
+
+	private async Task WatchForExpiration()
+	{
+		// Only procede if this task has not been canceled.)
+		if (CancelTokenSource.Token.IsCancellationRequested == false)
+		{
+			// Console.WriteLine($"Wait two seconds between checks...");
+			await Task.Delay(2000);
+
+			//Update the user data, it could have changed in another tab.
+			User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
+			
+			if(PreviousExpired != IsExpired)
+			{
+				// Console.WriteLine($"Changed from {PreviousExpired} to {IsExpired}");
+				StateHasChanged();
+			}
+
+			// Update for the next pass
+			PreviousExpired = (IsExpired ? true : false);
+			WatchTask = WatchForExpiration();
+		}
 	}
 
 	public void Dispose()
 	{
+		// Console.WriteLine("\tDISPOSING");
+		CancelTokenSource.Cancel();
 	}
 }
