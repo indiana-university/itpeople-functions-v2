@@ -45,6 +45,9 @@
 						<SuggestionButtons T=PeopleLookupItem Label="Search" Placeholder="Enter a search term"
 						Description="Search by username or first and last name." ButtonClickedAction=AddPerson
 						AsyncSuggestionGetter=GetSuggestions DisplayLambda=@(s => $"{s.Name} ({s.NetId})") />
+						<p>
+							<a class="rvt-button rvt-button--danger" href="/Units/@CurrentUnit.Id/Edit">Cancel</a>
+						</p>
 					</EditForm>
 				}
 			</Loader>
