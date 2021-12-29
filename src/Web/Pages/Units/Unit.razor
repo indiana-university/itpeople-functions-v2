@@ -536,8 +536,7 @@
 		});
 		SupportRelationshipToAdd.DepartmentId = 0;
 		SupportRelationshipToAdd.Department = null;
-		SupportRelationshipToAdd.SupportType = null;
-		SupportRelationshipToAdd.SupportTypeId = null;
+		SupportRelationshipToAdd.SupportType = SupportTypes.SingleOrDefault(t => t.Name == "Full Service");
 		await GetSupportRelationships();
 		StateHasChanged();
 	}
@@ -629,6 +628,7 @@
 	{
 		var response = await Get<List<SupportType>>($"/SupportTypes");
 		SupportTypes = response.Value;
+		SupportRelationshipToAdd.SupportType = SupportTypes.SingleOrDefault(t => t.Name == "Full Service");
 	}
 
 	private async Task GetUnit()
