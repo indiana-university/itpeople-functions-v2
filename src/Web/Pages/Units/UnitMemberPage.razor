@@ -60,6 +60,7 @@
 						}
 						<p>
 							<button type="submit" class="rvt-button" disabled=@(FormInvalid || ShowLoader)>Save</button>
+							<a class="rvt-button rvt-button--danger" href="/Units/@CurrentUnit.Id/Edit">Cancel</a>
 						</p>
 					}
 				</EditForm>
@@ -243,6 +244,9 @@
 				requestTasks.AddRange(toolsToAdd.Select(t => Post<MemberToolResponse>("membertools", t)));
 
 				await Task.WhenAll(requestTasks);
+			}
+			if(GeneralException == null) {
+				Navigation.NavigateTo($"/Units/{CurrentUnit.Id}/Edit");
 			}
 		}
 	}
