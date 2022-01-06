@@ -57,12 +57,14 @@
 						@if (EditMode == false)
 						{
 							<div style="display: flex; justify-content: space-between; float: right;">
+								@if (CanEditUnitDetails || CanEditUnitMembers || CanEditMemberTools)
+								{
+									<a class="rvt-button rvt-m-right-xs" href="/Units/@UnitId/Edit">
+										<rvt-icon name="pencil"></rvt-icon>
+									</a>
+								}
 								@if (CanEditUnitDetails)
 								{
-									<a class="rvt-button rvt-button--danger rvt-m-right-xs" title="Delete Unit" @onclick="DeleteUnit">
-										<rvt-icon name="trash"></rvt-icon>
-										<span class="rvt-sr-only">Delete Unit</span>
-									</a>
 									@if (CurrentUnit.Active)
 									{
 										<a class="rvt-button rvt-m-right-xs" title="Archive Unit" @onclick="ToggleArchiveStatus">
@@ -75,11 +77,9 @@
 											<rvt-icon name="lock-open"></rvt-icon>
 										</a>
 									}
-								}
-								@if (CanEditUnitDetails || CanEditUnitMembers || CanEditMemberTools)
-								{
-									<a class="rvt-button" href="/Units/@UnitId/Edit">
-										<rvt-icon name="pencil"></rvt-icon>
+									<a class="rvt-button rvt-button--danger" title="Delete Unit" @onclick="DeleteUnit">
+										<rvt-icon name="trash"></rvt-icon>
+										<span class="rvt-sr-only">Delete Unit</span>
 									</a>
 								}
 							</div>
