@@ -129,51 +129,14 @@ namespace API.Data
 
         public static async Task<Result<EntityPermissions,Error>> ResolveUnitPermissions(Person requestor, int unitId, PeopleContext db)
         {
-            if (requestor == null)
-			{
-                return Pipeline.Success(EntityPermissions.Get);
-            }
-            if(requestor.IsServiceAdmin) {
-                return Pipeline.Success(PermsGroups.All);
-            }
-
-            var unit = await db.Units.SingleOrDefaultAsync(u => u.Id == unitId);
-            if(unit == null)
-            {
-                return Pipeline.NotFound($"Could not find any units with an id of {unitId}");
-            }
-            if(unit.Active == false) //Only service admin can change unit related items on a retired unit
-            {
-                return Pipeline.Success(EntityPermissions.Get);
-            }
-
-            // Find all units in which  the requestor has the required unit permissions.
-            var privilegedUnits = requestor.UnitMemberships
-                .Where(um => um.Permissions == UnitPermissions.Owner)
-                .Select(um => um.UnitId);
-
-            // Grant minimal user permissions if *none* of the requestor's unit
-            //   memberships contain the required unit permissions.
-            if (false == privilegedUnits.Any())
-			{
-                return Pipeline.Success(EntityPermissions.Get);
-            }
-
-            // Grant all user permissions if the requestor has the required unit
-            //  permissions in this unit or any parent unit in the hierarchy.
-            //  Otherwise, grant minimal user permissions.
-            var unitsInHierarchy = (await BuildUnitTree(unitId, db)).Select(u => u.Id);
-            return (privilegedUnits.Intersect(unitsInHierarchy).Any())
-                ? Pipeline.Success(PermsGroups.GetPut)
-                : Pipeline.Success(EntityPermissions.Get);
-
+            return await ResolveUnitManagmentPermissions(requestor, unitId, new List<UnitPermissions> {UnitPermissions.Owner}, db, PermsGroups.GetPut);
         }
 
         public static Result<EntityPermissions, Error> ResolveServiceAdminPermissions(Person requestor)
             => requestor != null && requestor.IsServiceAdmin
                 ? Pipeline.Success(PermsGroups.All)
                 : Pipeline.Success(EntityPermissions.Get);
-        public static async Task<Result<EntityPermissions,Error>> ResolveUnitManagmentPermissions(Person requestor, int unitId, List<UnitPermissions> anyGetsAllPermissions, PeopleContext db)
+        public static async Task<Result<EntityPermissions,Error>> ResolveUnitManagmentPermissions(Person requestor, int unitId, List<UnitPermissions> anyGetsAllPermissions, PeopleContext db, EntityPermissions permissionsToGive = PermsGroups.All)
         {
             if (requestor == null)
 			{
@@ -211,7 +174,7 @@ namespace API.Data
             //  Otherwise, grant minimal user permissions.
             var unitsInHierarchy = (await BuildUnitTree(unitId, db)).Select(u => u.Id);
             return (privilegedUnits.Intersect(unitsInHierarchy).Any())
-                ? Pipeline.Success(PermsGroups.All)
+                ? Pipeline.Success(permissionsToGive)
                 : Pipeline.Success(EntityPermissions.Get);
         }
 
