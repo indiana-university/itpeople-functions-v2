@@ -63,7 +63,7 @@
 										<rvt-icon name="pencil"></rvt-icon>
 									</a>
 								}
-								@if (CanEditUnitDetails)
+								@if (CanDeleteUnit)
 								{
 									@if (CurrentUnit.Active)
 									{
@@ -440,6 +440,7 @@
 	private UnitResponse ChildUnitToAdd = new UnitResponse();
 	private bool UnitFormInvalid = false;
 	private bool CanEditUnitDetails = false;
+	private bool CanDeleteUnit = false;
 	private bool CanEditMemberTools = false;
 	private bool CanEditUnitMembers = false;
 	private bool CanEditSupportRelationships = false;
@@ -635,7 +636,8 @@
 	{
 		var response = await Get<UnitResponse>($"/Units/{UnitId}");
 		CurrentUnit = response.Value;
-		CanEditUnitDetails = response.Permissions.HasFlag(EntityPermissions.Post); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
+		CanEditUnitDetails = response.Permissions.HasFlag(EntityPermissions.Put); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
+		CanDeleteUnit = response.Permissions.HasFlag(EntityPermissions.Delete); //This is effectively binary and the other permissions (Put,Delete) mean the same as Post.
 	}
 
 	private async Task GetUnitChildren()
