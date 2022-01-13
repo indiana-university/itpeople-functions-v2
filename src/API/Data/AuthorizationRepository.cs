@@ -94,16 +94,10 @@ namespace API.Data
                 .Bind(person => ResolveServiceAdminPermissions(person))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
-        internal static Task<Result<EntityPermissions, Error>> DetermineUnitPermissions(HttpRequest req, string requestorNetId, int unitId)
-            => ExecuteDbPipeline("resolve unit permissions", db =>
-                FetchPersonAndMembership(db, requestorNetId)
-                .Bind(person => ResolveUnitPermissions(person, unitId, db))
-                .Tap(perms => req.SetEntityPermissions(perms)));
-
-        internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId, UnitPermissions permissions = UnitPermissions.ManageMembers)
+        internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId, UnitPermissions permissions = UnitPermissions.ManageMembers, EntityPermissions permissionsToGive = PermsGroups.All)
             => ExecuteDbPipeline($"resolve unit {unitId} and unit member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId, unitId)
-                .Bind(person => ResolveUnitManagmentPermissions(person, unitId, permissions, db))
+                .Bind(person => ResolveUnitManagmentPermissions(person, unitId, new List<UnitPermissions> {permissions}, db, permissionsToGive))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId)
@@ -125,11 +119,6 @@ namespace API.Data
             return unit == null
                 ? Pipeline.NotFound("No unit was found with the ID provided.")
                 : Pipeline.Success(requestor);
-        }
-
-        public static async Task<Result<EntityPermissions,Error>> ResolveUnitPermissions(Person requestor, int unitId, PeopleContext db)
-        {
-            return await ResolveUnitManagmentPermissions(requestor, unitId, new List<UnitPermissions> {UnitPermissions.Owner}, db, PermsGroups.GetPut);
         }
 
         public static Result<EntityPermissions, Error> ResolveServiceAdminPermissions(Person requestor)

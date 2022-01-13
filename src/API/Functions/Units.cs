@@ -44,7 +44,7 @@ namespace API.Functions
         public static Task<IActionResult> UnitsGetOne(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "units/{unitId}")] HttpRequest req, int unitId)
             => Security.Authenticate(req)
-                .Bind(requestor => AuthorizationRepository.DetermineUnitPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
+                .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId, UnitPermissions.Owner, PermsGroups.GetPut))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetOne(unitId))
                 .Finally(result => Response.Ok(req, result));
 
