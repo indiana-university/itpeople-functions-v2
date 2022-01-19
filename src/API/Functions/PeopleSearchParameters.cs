@@ -113,6 +113,22 @@ namespace API.Functions
         }
     }
 
+    public class SsspSupportRelationshipParameters : BaseSearchParameters
+    {
+        public string DepartmentName { get; set; }
+        public SsspSupportRelationshipParameters(string dept) : base(dept)
+        {
+            DepartmentName = dept;
+        }
+
+        public static Result<SsspSupportRelationshipParameters, Error> Parse(HttpRequest req) 
+        {
+            var queryParms = req.GetQueryParameterDictionary();
+            queryParms.TryGetValue("dept", out string dept);
+            return Pipeline.Success(new SsspSupportRelationshipParameters(dept));
+        }
+    }
+
     public class PeopleSearchParameters : BaseSearchParameters
     {
 

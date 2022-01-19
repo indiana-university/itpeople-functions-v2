@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Models;
 using Models.Enums;
 using NUnit.Framework;
@@ -23,6 +25,7 @@ namespace Integration
 				Assert.AreEqual(2, actual.Count);
 			}
 		}
+
 		public class GetOne : ApiTest
 		{
 			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, HttpStatusCode.OK)]
@@ -207,6 +210,152 @@ namespace Integration
 			await db.SupportRelationships.AddAsync(relationship);
 			await db.SaveChangesAsync();
 			return relationship;
+		}
+
+		public class SsspTests : ApiTest
+		{
+			private Database.PeopleContext GetDb() => Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+			private static int UnitWithEmailId = 1;
+			private static int SecondUnitWithEmailId = 2;
+			private static int UnitWithNoEmailButLeaderWhoDoesId = 3;
+			private static int UnitWithNoEmailButLeadersWhoDoId = 4;
+			private static int UnitWithNoEmailAndNoLeaderWhoDoesId  = 5;
+			private static int UnitWithEmailInactiveId = 6;
+			private static int DuplicateAId = 7;
+			private static int DuplicateBId = 8;
+			private static int ParksDeptId = TestEntities.Departments.ParksId;
+			
+			private async Task Setup()
+			{
+				var db = GetDb();
+				// Nuke existing Support Relationships and Units
+				db.Database.ExecuteSqlRaw(@"
+					TRUNCATE 
+						public.building_relationships, 
+						public.people, 
+						public.support_relationships, 
+						public.units,
+						public.unit_members,
+						public.unit_member_tools
+					RESTART IDENTITY
+					CASCADE;
+				");
+
+				var personWithEmail = new Person { Netid = "hasemail", Name="Email, Has", Position = "Middle Manager", Location="Poplars", Campus = "BL", Notes = "", PhotoUrl = "", CampusPhone = "55555", CampusEmail = "hasemail@iu.edu" };
+				var anotherPersonWithEmail = new Person { Netid = "otherperson", Name="Email, Has Also", Position = "Lower Manager", Location="Ball hall", Campus = "IN", Notes = "", PhotoUrl = "", CampusPhone = "55557", CampusEmail = "otherperson@iupui.edu" };
+				var personWithoutEmail = new Person { Netid = "noemail", Name="Email, Has Not", Position = "AVP", Location="Poplars", Campus = "BL", Notes = "", PhotoUrl = "", CampusPhone = "55556", CampusEmail = "" };
+
+				db.People.AddRange(new List<Person> {personWithEmail, anotherPersonWithEmail, personWithoutEmail});
+				await db.SaveChangesAsync();
+
+				var unitWithEmail = new Unit { Id = UnitWithEmailId, Name = "Unit With Email", Description = "", Url = "", Email = "unit@fake.com", UnitMembers = new List<UnitMember>(), Active = true };
+				var secondUnitWithEmail = new Unit { Id = SecondUnitWithEmailId, Name = "Another Unit With Email", Description = "", Url = "", Email = $"unit{SecondUnitWithEmailId}@fake.com", UnitMembers = new List<UnitMember>(), Active = true };
+				
+				var unitWithNoEmailButLeaderWhoDoes = new Unit { Id = UnitWithNoEmailButLeaderWhoDoesId, Name = "Unit Without Email, But Leader Does", Description = "", Url = "", Email = null, UnitMembers = new List<UnitMember>(), Active = true };
+				unitWithNoEmailButLeaderWhoDoes.UnitMembers.Add(new UnitMember { Person = personWithEmail, Role = Role.Leader, Permissions = UnitPermissions.ManageMembers, Notes = "" });
+				
+				var unitWithNoEmailButLeadersWhoDo = new Unit { Id = UnitWithNoEmailButLeadersWhoDoId, Name = "Unit Without Email, But LeaderS Do", Description = "", Url = "", Email = null, UnitMembers = new List<UnitMember>(), Active = true };
+				unitWithNoEmailButLeadersWhoDo.UnitMembers.Add(new UnitMember { Person = personWithEmail, Role = Role.Leader, Permissions = UnitPermissions.ManageMembers, Notes = "" });
+				unitWithNoEmailButLeadersWhoDo.UnitMembers.Add(new UnitMember { Person = anotherPersonWithEmail, Role = Role.Leader, Permissions = UnitPermissions.ManageTools, Notes = "" });
+				
+				var unitWithNoEmailAndNoLeaderWhoDoes = new Unit { Id = UnitWithNoEmailAndNoLeaderWhoDoesId, Name = "Unit Without Email, And The Leader doesn't either", Description = "", Url = "", Email = null, UnitMembers = new List<UnitMember>(), Active = true };
+				unitWithNoEmailAndNoLeaderWhoDoes.UnitMembers.Add(new UnitMember { Person = personWithoutEmail, Role = Role.Leader, Permissions = UnitPermissions.ManageMembers, Notes = "" });
+				unitWithNoEmailAndNoLeaderWhoDoes.UnitMembers.Add(new UnitMember { Person = personWithEmail, Role = Role.Member, Permissions = UnitPermissions.ManageMembers, Notes = "" });
+
+				var unitWithEmailInactive = new Unit { Id = UnitWithEmailInactiveId, Name = "Inactive Unit With Email", Description = "", Url = "", Email = "inactive@fake.com", UnitMembers = new List<UnitMember>(), Active = false };
+
+				var duplicateEmailUnitA = new Unit { Id = DuplicateAId, Name = "Duplicate A", Description = "", Url = "", Email = personWithEmail.CampusEmail, UnitMembers = new List<UnitMember>(), Active = true };
+				var duplicateEmailUnitB = new Unit { Id = DuplicateBId, Name = "Duplicate B", Description = "", Url = "", Email = null, UnitMembers = new List<UnitMember>(), Active = true };
+				duplicateEmailUnitB.UnitMembers.Add(new UnitMember { Person = personWithEmail, Role = Role.Leader, Permissions = UnitPermissions.ManageMembers, Notes = "" });
+
+				db.Units.AddRange(new List<Unit> { unitWithEmail, secondUnitWithEmail, unitWithNoEmailButLeaderWhoDoes, unitWithNoEmailButLeadersWhoDo, unitWithNoEmailAndNoLeaderWhoDoes, unitWithEmailInactive, duplicateEmailUnitA, duplicateEmailUnitB });
+				await db.SaveChangesAsync();
+			}
+
+			private static IEnumerable<TestCaseData> _Cases
+			{
+				get
+				{
+					/* Department has single support relationship */
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null) }, 1, "Supporting unit has an email");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, ParksDeptId, null) }, 1, "Supporting unit has no email but ONE leader who does");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailButLeadersWhoDoId, ParksDeptId, null) }, 2, "Supporting unit has no email, but SEVERAL leaders who do");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailAndNoLeaderWhoDoesId, ParksDeptId, null) }, 0, "Supporting unit has no email, and no leader with an email");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithEmailInactiveId, ParksDeptId, null) }, 0, "Supporting unit has an email but is no longer active.");
+
+					/* Department has multiple support relationships*/
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null), new SupportRelationship(SecondUnitWithEmailId, ParksDeptId, null) }, 2, "Both units have an email");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null), new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, ParksDeptId, null) }, 2, "One unit has an email, the other does not, but has a leader that does");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, ParksDeptId, null), new SupportRelationship(UnitWithNoEmailAndNoLeaderWhoDoesId, ParksDeptId, null) }, 1, "One unit has no email but a leader that does, and the other has no email and no leaders");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(UnitWithEmailId, ParksDeptId, null), new SupportRelationship(UnitWithEmailInactiveId, ParksDeptId, null) }, 1, "One unit has an email, the other unit is not active");
+					yield return new TestCaseData(new List<SupportRelationship> { new SupportRelationship(DuplicateAId, ParksDeptId, null), new SupportRelationship(DuplicateBId, ParksDeptId, null) }, 1, "Supported by two units each having the same email address, one getting its email from its unit the other from its unit's leader.");
+				}
+			}
+
+			[Test]
+			[TestCaseSource(nameof(_Cases))]
+			public async Task SupportRelationshipsGetSsspFormat(IEnumerable<SupportRelationship> relationships, int expectedMatches, string description)
+			{
+				await Setup();
+				var db = GetDb();
+				// Insert the provided relationships
+				db.SupportRelationships.AddRange(relationships);
+				await db.SaveChangesAsync();
+
+				// Get the listing from the API
+				var resp = await GetAuthenticated("SsspSupportRelationships");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				var actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
+				// Ensure all results are valid.
+				Assert.False(actual.Any(sr => string.IsNullOrWhiteSpace(sr.ContactEmail)));
+				Assert.False(actual.Any(sr => string.IsNullOrWhiteSpace(sr.Dept)));
+				Assert.False(actual.Any(sr => string.IsNullOrWhiteSpace(sr.DeptDescription)));
+				Assert.False(actual.Any(sr => sr.Key <= 0));
+
+				// Ensure we got the expected number of results.
+				Assert.AreEqual(expectedMatches, actual.Count);
+			}
+
+			[Test]
+			public async Task FilterSsspRelationshipResults()
+			{
+				// Reset the state of the database, and setup all our Support Relationships between Units and Departments.
+				await Setup();
+				var db = GetDb();
+				
+				var parksSupportRelationship = new SupportRelationship(UnitWithEmailId, ParksDeptId, null);
+				var fireSupportRelationship = new SupportRelationship(UnitWithEmailId, TestEntities.Departments.FireId, null);
+				var otherFireSupportRelationship = new SupportRelationship(UnitWithNoEmailButLeaderWhoDoesId, TestEntities.Departments.FireId, null);
+				
+				await db.SupportRelationships.AddRangeAsync(new List<SupportRelationship> { parksSupportRelationship, fireSupportRelationship, otherFireSupportRelationship });
+				await db.SaveChangesAsync();
+
+				// Request filtered results from the API endpoint
+				var resp = await GetAuthenticated($"SsspSupportRelationships?dept={TestEntities.Departments.FireName}");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				var actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
+
+				// Make sure we got what we expected.
+				Assert.AreEqual(2, actual.Count);
+				Assert.True(actual.All(r => r.Dept == TestEntities.Departments.FireName));
+
+				// Ensure explicitly URL Encoded values work
+				resp = await GetAuthenticated($"SsspSupportRelationships?dept={System.Web.HttpUtility.UrlEncode(TestEntities.Departments.FireName)}");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
+
+				// Make sure we got what we expected.
+				Assert.AreEqual(2, actual.Count);
+				Assert.True(actual.All(r => r.Dept == TestEntities.Departments.FireName));
+
+				// Ensure non-existent department names get no results
+				resp = await GetAuthenticated($"SsspSupportRelationships?dept=Department That Does Not Exist");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
+
+				// Make sure we got what we expected.
+				Assert.AreEqual(0, actual.Count);
+			}
 		}
 	}
 }
