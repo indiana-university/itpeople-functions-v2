@@ -52,8 +52,11 @@ namespace Models
         [JsonIgnore]
         public List<UnitMember> UnitMemberships { get; set; }
 
+        [JsonIgnore]
         public static string CsvFileName => $"it-people.csv";
+        [JsonIgnore]
         public static string CsvHeader => "Name,NetID,Email,Phone,Campus,Department,Position,Interests";
+        [JsonIgnore]
         public string AsCsvRow => $"{this.Name},{this.Netid},{this.CampusEmail},{this.CampusPhone},{this.Campus},{this.Department?.Name},{this.Position}";
 
     }
