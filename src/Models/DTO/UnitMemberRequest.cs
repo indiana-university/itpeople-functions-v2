@@ -8,10 +8,11 @@ namespace Models
         [Required]
         public int UnitId { get; set; }
         /// The role of the person in this membership as part of the unit.
-        [Required]
+        [RequiredEnum]
         public Role Role { get; set; }
         /// The permissions of the person in this membership as part of the unit. Defaults to 'viewer'.
         [DefaultValue(UnitPermissions.Viewer)]
+        [RequiredEnum]
         public UnitPermissions Permissions { get; set; }
         /// The ID of the person class. This can be null if the position is vacant.
         public int? PersonId { get; set; }

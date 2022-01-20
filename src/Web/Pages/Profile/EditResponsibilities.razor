@@ -1,0 +1,133 @@
+@using Models
+@using Models.Enums
+@using web.Shared
+@using RivetBlazor.Components
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
+@implements IDisposable
+@inherits PageBase
+@inject NavigationManager Navigation
+@page "/people/{NetId}/EditResponsibilities"
+
+<Title Value="Edit Responsibilities" /><br />
+<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+	<div class="rvt-grid">
+		<div class="rvt-grid__item">
+			<nav class="">
+				<ol class="rvt-breadcrumbs">
+					<li aria-current="page">
+						<ul class="rvt-list rvt-plain-list rvt-inline-list">
+							<li><a href="/">Home</a></li>
+							<li>Profiles</li>
+							<li><a href="/People/@NetId">@ProfileName</a></li>
+						</ul>
+					</li>
+				</ol>
+			</nav>
+		</div>
+	</div>
+</div>
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<h1 class="rvt-modal__title">Edit Responsibilities</h1>
+
+	<DisplayException Ex=@GeneralException />
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href=@GetLoginUri()>Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<Loader Loading="ShowLoader">
+				@if (UpdatedPerson != null)
+				{
+					<EditForm EditContext="@FormContext" OnValidSubmit="SaveChanges">
+						<DataAnnotationsValidator />
+						<ValidationSummary />
+						<RivetInputFlag @bind-Value="ResponsibilitiesInput"
+							Description="Check all the relevant responsibilities performed" Inline=false />
+						<p>
+							<button type="submit" class="rvt-button"
+								disabled="@(ProfileFormInvalid || ShowLoader)">Save</button>
+						</p>
+					</EditForm>
+				}
+			</Loader>
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+@code {
+	[Parameter]
+	public string NetId { get; set; }
+	public EntityPermissions CrudPerms;
+	private string ProfileName;
+	private EditContext FormContext;
+	protected bool ProfileFormInvalid = false;
+	protected bool ShowLoader = false;
+	protected IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+	public Person UpdatedPerson = new Person();
+	private Responsibilities ResponsibilitiesInput;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await SetLoggedInUser();
+		FormContext = new EditContext(ResponsibilitiesInput);
+		if (LoggedInUser != null)
+			await GetPersonProfile();
+	}
+
+	private async Task GetPersonProfile()
+	{
+		using(Loading())
+		{
+			UpdatedPerson = null;
+			ProfileName = "Not Found";
+			var response = await Get<Person>($"/people/{NetId}", $"No person matching the given username `{NetId}` has been found.");
+			if(response.RawResponse.IsSuccessStatusCode)
+			{
+				UpdatedPerson = response.Value;
+				ResponsibilitiesInput = UpdatedPerson.Responsibilities;
+				ProfileName = UpdatedPerson.Name;
+			}
+
+			CrudPerms = response.Permissions;
+			if (!CrudPerms.HasFlag(EntityPermissions.Put))
+			{
+				ProfileFormInvalid = true;
+				GeneralException = new Exception($"You do not have permission to modify.");
+			}
+		}
+	}
+
+	private async Task SaveChanges()
+	{
+		try
+		{
+			using(Loading())
+			{
+				// Make an in-memory copy of Person to PUT to the server.
+				var objToPut = DeepCopy(UpdatedPerson);
+				// Update objToPut's Responsibilities
+				objToPut.Responsibilities = ResponsibilitiesInput;
+
+				var url = $"/people/{UpdatedPerson.Id}";
+				var response = await Put<Person>(url, objToPut, $"An error was encountered attempting to update Responsibilities at {url}");
+				if(response.RawResponse.IsSuccessStatusCode)
+				{
+					UpdatedPerson = response.Value;
+					ResponsibilitiesInput = UpdatedPerson.Responsibilities;
+					Navigation.NavigateTo($"/People/{NetId}");
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			GeneralException = ex;
+		}
+	}
+
+	public void Dispose() { }
+}

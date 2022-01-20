@@ -1,0 +1,86 @@
+@using System.Linq
+@using Models
+@using web.Shared
+@using RivetBlazor.Components
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
+@implements IDisposable
+@inherits PageBase
+@page "/buildings/{BuildingId}"
+
+<Title Value="@GetPageTitle()" />
+<HeaderNavBar Page="Buildings" CurrentPage=@_Building.Name />
+<div class="rvt-bg-white rvt-m-tb-xl rvt-p-tb-xl">
+	<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+		<AuthenticatedView>
+			<NotAuthenticated>
+				<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@_Building.Name</h1>
+				<p>
+					You must login to view this resource.
+				</p>
+				<p>
+					<a class="rvt-button" href="/SignIn?Destination=/buildings/@BuildingId">Log In</a>
+				</p>
+			</NotAuthenticated>
+			<Authenticated>
+				<DisplayException Ex=@GeneralException />
+				<Loader Loading="ShowLoader">
+					<div class="rvt-grid">
+						<div class="rvt-grid__item">
+							<div class="rvt-m-bottom-xxl">
+								<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@_Building.Name</h1>
+								<p>@_Building.Address</p>
+							</div>
+						</div>
+					</div>
+					<SupportingUnits Units=@SupportingUnits />
+
+				</Loader>
+			</Authenticated>
+		</AuthenticatedView>
+	</div>
+</div>
+
+
+@code{
+	[Parameter]
+	public string BuildingId { get; set; }
+	private EditContext BuildingEditContext;
+	private Building _Building = new Building();
+	private IEnumerable<UnitResponse> SupportingUnits = new List<UnitResponse>();
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+
+	protected override async Task OnInitializedAsync()
+	{
+		BuildingEditContext = new EditContext(BuildingId);
+		await SetLoggedInUser();
+		if(LoggedInUser != null)
+		{
+			using (Loading())
+			{
+				var tasks = new Task[] { GetBuilding(), GetSupportingUnits() };
+				await Task.WhenAll(tasks);
+			}
+		}
+	}
+
+	private async Task GetBuilding()
+	{
+		var resp = await Get<Building>($"/buildings/{BuildingId}");
+		if(resp.RawResponse.IsSuccessStatusCode)
+		{
+			_Building = resp.Value;
+		}
+	}
+
+	private async Task GetSupportingUnits()
+	{
+		var response = await Get<List<BuildingRelationshipResponse>>($"/buildings/{BuildingId}/supportingUnits");
+		if(response.RawResponse.IsSuccessStatusCode) {
+			SupportingUnits = response.Value.Select(br => br.Unit);
+		}
+	}
+
+	private string GetPageTitle() => $"{_Building.Name} - IT People - Indiana University";
+	public void Dispose() { }
+}

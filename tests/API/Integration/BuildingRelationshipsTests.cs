@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Models;
+using Models.Enums;
 using NUnit.Framework;
 
 namespace Integration
@@ -18,7 +18,7 @@ namespace Integration
 				var resp = await GetAuthenticated("buildingRelationships");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<BuildingRelationshipResponse>>();
-				Assert.AreEqual(2, actual.Count);
+				Assert.AreEqual(3, actual.Count);
 			}
 		}
 
@@ -121,86 +121,23 @@ namespace Integration
 				Assert.AreEqual(1, actual.Errors.Count);
 				Assert.Contains("The provided unit already has a support relationship with the provided building.", actual.Errors);
 			}
-		}
 
-		public class BuildingRelationshipEdit : ApiTest
-		{
-			[TestCase(TestEntities.Buildings.SmallParkId, Description="Update with new Building Id and same Unit Id")]
-			[TestCase(TestEntities.Buildings.CityHallId,Description="Update with same Building Id and same Unit Id")]
-			public async Task UpdateCityHallCityOfPawnee(int buildingId)
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.Created, PermsGroups.All, Description = "Owner")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.Created, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+			public async Task BuildingRelationshipPostEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
 			{
 				var req = new BuildingRelationshipRequest
 				{
-					UnitId = TestEntities.BuildingRelationships.CityHallCityOfPawnee.UnitId,
-					BuildingId = buildingId
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
+					BuildingId = TestEntities.Buildings.RonsCabinId
 				};
-
-				var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}", req, ValidAdminJwt);
-				AssertStatusCode(resp, HttpStatusCode.OK);
-				var actual = await resp.Content.ReadAsAsync<BuildingRelationshipResponse>();
-
-				Assert.AreEqual(TestEntities.BuildingRelationships.CityHallCityOfPawneeId, actual.Id);
-				Assert.AreEqual(req.BuildingId, actual.Building.Id);
-				Assert.AreEqual(req.UnitId, actual.Unit.Id);
-			}
-
-			[Test]
-			public async Task BadRequestCannotUpdateWithMalformedBuildingRelationship()
-			{
-				var req = new
-				{
-					UnitId = TestEntities.Units.CityOfPawneeUnitId
-				};
-
-				var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}", req, ValidAdminJwt);
-				AssertStatusCode(resp, HttpStatusCode.BadRequest);
-				var actual = await resp.Content.ReadAsAsync<ApiError>();
-
-				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains("The request body was malformed, the unitId and/or buildingId field was missing.", actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
-			}
-
-			[Test]
-			public async Task UnauthorizedCannotUpdateBuildingRelationship()
-			{
-				var req = new BuildingRelationshipRequest
-				{
-					UnitId = TestEntities.BuildingRelationships.CityHallCityOfPawnee.UnitId,
-					BuildingId = TestEntities.Buildings.RonsCabin.Id
-				};
-				var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}", req, ValidRswansonJwt);
-				AssertStatusCode(resp, HttpStatusCode.Forbidden);
-			}
-
-			[TestCase(TestEntities.BuildingRelationships.CityHallCityOfPawneeId, 99999, TestEntities.Buildings.RonsCabinId, Description = "Unit Id not found")]
-			[TestCase(TestEntities.BuildingRelationships.CityHallCityOfPawneeId, TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Building Id not found")]
-			[TestCase(99999, TestEntities.Units.CityOfPawneeUnitId, 99999, Description = "Building Relationship Id not found")]
-			public async Task NotFoundCannotUpdateBuildingRelationship(int relationshipid, int unitId, int buildingId)
-			{
-				var req = new BuildingRelationshipRequest
-				{
-					UnitId = unitId,
-					BuildingId = buildingId
-				};
-				var resp = await PutAuthenticated($"buildingRelationships/{relationshipid}", req, ValidAdminJwt);
-				var actual = await resp.Content.ReadAsAsync<ApiError>();
-
-				Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
-			}
-
-			[Test]
-			public async Task ConflictUpdateBuildingRelationship()
-			{
-				var req = new BuildingRelationshipRequest
-				{
-					UnitId = TestEntities.BuildingRelationships.CityHallCityOfPawnee.UnitId,
-					BuildingId = TestEntities.BuildingRelationships.CityHallCityOfPawnee.BuildingId
-				};
-
-				var resp = await PutAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.RonsCabinCityOfPawneeId}", req, ValidAdminJwt);
-				AssertStatusCode(resp, HttpStatusCode.Conflict);
+				await PostReturnsCorrectEntityPermissions("buildingRelationships", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
 			}
 		}
 
@@ -214,6 +151,36 @@ namespace Integration
 				var resp = await DeleteAuthenticated($"buildingRelationships/{relationshipId}", jwt);
 				AssertStatusCode(resp, expectedCode);
 			}
+
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.NoContent, PermsGroups.All, Description = "Owner")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.NoContent, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+			public async Task BuildingRelationshipDeleteEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				// Add a building relationshp for Parks & Rec so we can test inheritted permissions
+				var relationship = await GenerateParksAndRecCabinRelationship();
+
+				await DeleteReturnsCorrectEntityPermissions($"buildingRelationships/{relationship.Id}", unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+			}
+		}
+
+		public static async Task<BuildingRelationship> GenerateParksAndRecCabinRelationship()
+		{
+			var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+			var relationship = new BuildingRelationship
+			{
+				BuildingId = TestEntities.Buildings.RonsCabinId,
+				UnitId = TestEntities.Units.ParksAndRecUnitId
+			};
+			await db.BuildingRelationships.AddAsync(relationship);
+			await db.SaveChangesAsync();
+
+			return relationship;
 		}
 	}
 }

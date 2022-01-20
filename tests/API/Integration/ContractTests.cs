@@ -8,7 +8,12 @@ namespace Integration
 {
     public class ContractTests
     {
+        /*
+            Do not run this test, the PactUrl has a now invalid JWT hard-coded into it.
+            We will need to decide if we want to remove these tests or fix them 
+            before shipping the blazor frontend.
         [Test]
+        */
         public void VerifyContract()
         {
             /*

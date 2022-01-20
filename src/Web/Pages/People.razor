@@ -1,0 +1,212 @@
+@using Models
+@using RivetBlazor.Components
+@using web.Shared
+@using System.Web
+@using System.Linq
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Collections.Specialized
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime;
+@implements IDisposable
+@inherits PageBase
+@page "/People"
+
+<Title Value="People - IT People - Indiana University" />
+<HeaderNavBar Page="People" />
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=@(HttpUtility.UrlEncode(new Uri(Navigation.Uri).PathAndQuery))">Login</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<div class="rvt-grid">
+				<div class="rvt-grid__item">
+					<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">IT People</h1>
+					<p>Use the filters below to find IT People based on their role within a unit, their job
+						classification, and/or campus.</p>
+				</div>
+			</div>
+
+			<DisplayException Ex=@GeneralException />
+			<Loader Loading=ShowLoader>
+				<div class="rvt-grid rvt-m-top-md">
+					<div class="rvt-grid__item-5-md-up">
+						<EditForm EditContext="@EditContext" OnValidSubmit="SubmitForm">
+							<DataAnnotationsValidator />
+
+							<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
+							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Roles" />
+
+							<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Campus</h2>
+							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Campuses" />
+
+							<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Area</h2>
+							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Areas" />
+
+							<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Responsibilities</h2>
+							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Responsibilities" />
+
+							<p>
+								<button id="apply-filter" class="rvt-button" disabled="@(GetQueryParams().Count == 0)"
+									type="submit">
+									Apply Filters
+								</button>
+							</p>
+						</EditForm>
+					</div>
+
+					<div class="rvt-grid__item-7-md-up">
+						@if (PeopleList.Count() != 0)
+						{
+							<div class="rvt-grid rvt-p-bottom-lg">
+								<button type="button" class="rvt-button" @onclick="ExportResultsToCSV" role="menuitemradio">
+									<rvt-icon name="download" />
+									<span class="rvt-m-left-xs">Export results to CSV</span>
+								</button>
+							</div>
+
+							@foreach (var person in PeopleList)
+							{
+								<div class="rvt-grid rvt-p-bottom-md">
+									<div>
+										<a href="/people/@person.Netid" class="rvt-link-bold">@person.Name</a> (<a
+									href="mailto:@person.CampusEmail">@person.Netid</a>)
+										<br>
+										@person.Position
+										<br>
+									</div>
+								</div>
+							}
+						}
+						else if (HasSearched && PeopleList.Count() == 0)
+						{
+							<div class="rvt-panel">
+								<p>
+									No people found matching those filters. You can make yourself easier to find by <a
+									href="/people/@LoggedInUser.Username">keeping your profile up to date.</a>
+								</p>
+							</div>
+						}
+					</div>
+				</div>
+			</Loader>
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+@code {
+	class PeopleSearch
+	{
+		public List<Role> Roles = new List<Role>();
+		public List<Campus> Campuses = new List<Campus>();
+		public List<Area> Areas = new List<Area>();
+		public List<Responsibilities> Responsibilities = new List<Responsibilities>();
+	}
+	private EditContext EditContext;
+	private List<Person> PeopleList = new List<Person>();
+	private bool HasSearched = false;
+	private PeopleSearch PeopleSearchValues = new PeopleSearch();
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+
+	protected override async Task OnInitializedAsync()
+	{
+		await SetLoggedInUser();
+		if (LoggedInUser != null)
+		{
+			using (Loading())
+			{
+				EditContext = new EditContext(PeopleSearchValues);
+				var queryDict = HttpUtility.ParseQueryString(new Uri(Navigation.Uri).Query);
+				ConvertNameValueToEnum<Role>(queryDict, PeopleSearchValues.Roles, "role");
+				ConvertNameValueToEnum<Campus>(queryDict, PeopleSearchValues.Campuses, "campus");
+				ConvertNameValueToEnum<Area>(queryDict, PeopleSearchValues.Areas, "area");
+				ConvertNameValueToEnum<Responsibilities>(queryDict, PeopleSearchValues.Responsibilities, "class");
+				if (GetQueryParams().Count > 0)
+				{
+					await GetPeople();
+				}
+			}
+		}
+	}
+	private async Task SubmitForm()
+	{
+		using (Loading())
+		{
+			// Reset GeneralException
+			GeneralException = null;
+			// Update the browser's URI to match the new Q
+			var destination = QueryHelpers.AddQueryString("/people", GetQueryParams());
+			Navigation.NavigateTo(destination);
+			await GetPeople();
+		}
+	}
+	private void ConvertNameValueToEnum<T>(NameValueCollection queryDict, List<T> values, string key)
+	{
+		values.Clear();
+		if (queryDict.Get(key) != null)
+		{
+			foreach (var TValue in queryDict.Get(key).Split(',').Where(v => string.IsNullOrWhiteSpace(v) == false).Select(v =>
+			v.Trim()))
+			{
+				if (Enum.TryParse(typeof(T), TValue, out var enums))
+				{
+					values.Add((T)enums);
+				}
+				else
+				{
+					GeneralException = new Exception($"'{TValue}' is not a valid '{key}'");
+				}
+			}
+		}
+	}
+
+	private Dictionary<string, string> GetQueryParams()
+	{
+		var queryParams = new Dictionary<string, string>();
+		AddOrUpdateQueryParams<Role>(queryParams, PeopleSearchValues.Roles, "role");
+		AddOrUpdateQueryParams<Responsibilities>(queryParams, PeopleSearchValues.Responsibilities, "class");
+		AddOrUpdateQueryParams<Campus>(queryParams, PeopleSearchValues.Campuses, "campus");
+		AddOrUpdateQueryParams<Area>(queryParams, PeopleSearchValues.Areas, "area");
+		return queryParams;
+	}
+
+	private void AddOrUpdateQueryParams<T>(Dictionary<string, string> queryParams, List<T> values, string key)
+	{
+		if (values.Count() == 0)
+		{
+			queryParams.Remove(key);
+			return;
+		}
+		queryParams[key] = string.Join(',', values);
+	}
+
+	private async Task GetPeople()
+	{
+		HasSearched = true;
+		var requestUri = QueryHelpers.AddQueryString("/people", GetQueryParams());
+		PeopleList = (await Get<List<Person>>(requestUri)).Value;
+	}
+
+	private async Task ExportResultsToCSV()
+	{
+		var builder = new System.Text.StringBuilder();
+		builder.AppendLine(Person.CsvHeader);
+		foreach (var person in PeopleList)
+		{
+			builder.AppendLine(person.AsCsvRow);
+		}
+		await JSRuntime.InvokeVoidAsync("saveAsFile", Person.CsvFileName,
+		System.Text.Encoding.UTF8.GetBytes(builder.ToString()));
+	}
+
+	public void Dispose() { }
+}

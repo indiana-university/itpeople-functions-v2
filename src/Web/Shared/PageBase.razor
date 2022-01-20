@@ -1,0 +1,132 @@
+﻿@using Models
+@using Models.Enums
+@using System.Net
+@using Newtonsoft.Json
+@using System.Web
+
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Navigation
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+@code {
+	protected HttpClient Api() => ClientFactory.CreateClient("Api");
+	protected Exception GeneralException;
+	protected AuthenticatedUser LoggedInUser;
+
+	protected async Task SetLoggedInUser()
+	{
+		LoggedInUser = await localStorage.GetItemAsync<AuthenticatedUser>("user");
+	}
+
+	protected string GetLoginUri()
+	{
+		var signIn = "/SignIn";
+		var uri = new Uri(Navigation.Uri);
+		if (string.IsNullOrWhiteSpace(uri?.PathAndQuery) == false)
+		{
+			signIn += $"?Destination={HttpUtility.UrlEncode(uri.PathAndQuery)}";
+		}
+
+		return signIn;
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> Get<T>(string uri, string error = null)
+	{
+		return await MakeRequest<T>(Api().GetAsync(uri), error);
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> Post<T>(string uri, object body, string error = null)
+	{
+		var bodyAsJson = JsonConvert.SerializeObject(body, Json.JsonSerializerSettings);
+		var reqContent = new StringContent(bodyAsJson, System.Text.Encoding.UTF8, "application/json");
+		return await MakeRequest<T>(Api().PostAsync(uri, reqContent), error);
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> Put<T>(string uri, object body, string error = null)
+	{
+		var bodyAsJson = JsonConvert.SerializeObject(body, Json.JsonSerializerSettings);
+		var reqContent = new StringContent(bodyAsJson, System.Text.Encoding.UTF8, "application/json");
+		return await MakeRequest<T>(Api().PutAsync(uri, reqContent), error);
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> Delete<T>(string uri, string error = null)
+	{
+		return await MakeRequest<T>(Api().DeleteAsync(uri), error);
+	}
+
+	private EntityPermissions GetEntityPermissionsFromResponse(HttpResponseMessage response)
+	{
+		var result = EntityPermissions.Get;
+		
+		// Pluck the user permissions from the response header. Eg. "GET, PUT"
+		var permsString = response.Headers.SingleOrDefault(h => h.Key == "x-user-permissions").Value?.Single();
+		if (string.IsNullOrWhiteSpace(permsString))
+		{
+			return result;
+		}
+
+		// Loop over the string values from the header, parse them one-by-one, and build-up CrudPerms
+		foreach (var p in permsString.Split(','))
+		{
+			var ep = Enum.Parse<EntityPermissions>(p.Trim(), true);
+			result |= ep;
+		}
+
+		return result;
+	}
+
+	protected async Task<(T Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> MakeRequest<T>(Task<HttpResponseMessage> request, string error = null)
+	{
+		var result = default(T);
+		HttpResponseMessage response = null;
+		var permissions = EntityPermissions.Get;
+		try
+		{
+			response = await request;
+			
+			// Set the entity permissions based on the response.
+			permissions = GetEntityPermissionsFromResponse(response);
+			
+			// Handle errors
+			if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Created && response.StatusCode != HttpStatusCode.NoContent)
+			{
+				var message = await GetErrorMessage(response, error);
+				var innerException = string.IsNullOrWhiteSpace(error) ? null : new Exception(await GetErrorMessage(response));
+				GeneralException = new Exception(message, innerException);
+				return (result, permissions, response);
+			}
+
+			// The request succeeded, try to deserialize it.
+			var stringResult = await response.Content.ReadAsStringAsync();
+			// We have to use Newtonsoft to make sure our StringEnumConverter work.
+			result = JsonConvert.DeserializeObject<T>(stringResult, Json.JsonSerializerSettings);
+		}
+		catch (Exception ex)
+		{
+			GeneralException = ex;
+			return (result, permissions, response);
+		}
+
+		return (result, permissions, response);
+	}
+
+	protected async Task<string> GetErrorMessage(HttpResponseMessage response, string error = null)
+	{
+		if (string.IsNullOrWhiteSpace(error) == false)
+		{
+			return error;
+		}
+		var stringResult = await response.Content.ReadAsStringAsync();
+		var result = JsonConvert.DeserializeObject<ApiError>(stringResult, Json.JsonSerializerSettings);
+		if(result != null && result.Errors != null)
+		{
+			return string.Join(". ", result.Errors.ToList());
+		}
+		return $"Failed to {response.RequestMessage.Method} {response.RequestMessage.RequestUri} Status {response.StatusCode} {response.ReasonPhrase}";
+	}
+
+	protected T DeepCopy<T>(T UpdatedEntity)
+	{
+		return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(UpdatedEntity, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
+	}
+}

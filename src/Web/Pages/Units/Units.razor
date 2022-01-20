@@ -1,0 +1,109 @@
+@using Models
+@using Models.Enums
+@using RivetBlazor.Components
+@using web.Shared
+@using System.Linq
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
+@inject IHttpClientFactory ClientFactory
+@implements IDisposable
+@inherits PageBase
+@page "/Units"
+
+<Title Value="Units - IT People - Indiana University" />
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+
+	<div class="rvt-flex-md-up rvt-justify-space-between-lg-up">
+		<!-- our title -->
+		<div class="rvt-m-right-sm-md-up">
+			<h1>Units</h1>
+		</div>
+		<!-- a place for buttons/actions to live -->
+		<div class="rvt-bg-blue rvt-m-right-sm-md-up">
+			@if (CrudPerms.HasFlag(EntityPermissions.Post))
+			{
+				<a class="rvt-button" href="/Units/Create">+ Add New Unit</a>
+			}
+		</div>
+	</div>
+
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn?Destination=/Units">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<p>
+				IT Units are organizations of people doing IT work. Some IT Units are primarily responsible for departmental IT support, while others are principally engaged in IT service development and delivery.
+			</p>
+
+			<p>
+				Use the search bar to find people or units doing IT work at IU.
+			</p>
+
+			<DisplayException Ex=@GeneralException />
+			<Loader Loading=ShowLoader>
+				@if (MyUnits.Count() > 0)
+				{
+					<h2 class="rvt-ts-md">My Units</h2>
+					<GridListItems Collection=@MyUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) />
+				}
+
+				@if (ActiveUnits.Count() > 0)
+				{
+					<h2 class="rvt-ts-md">Active Units</h2>
+					<GridListItems Collection=@ActiveUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) />
+				}
+
+				@if (ArchivedUnits.Count() > 0)
+				{
+					<h2 class="rvt-ts-md">Archived Units</h2>
+					<GridListItems Collection=@ArchivedUnits LinkText=@(u => u.Name) LinkUri=@(u => $"/Units/{u.Id}") Details=@(u => u.Description) Archived=@(u => !u.Active) />
+				}
+			</Loader>
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+@code {
+	private IEnumerable<UnitResponse> MyUnits = new List<UnitResponse>();
+	private IEnumerable<UnitResponse> ActiveUnits = new List<UnitResponse>();
+	private IEnumerable<UnitResponse> ArchivedUnits = new List<UnitResponse>();
+	private EntityPermissions CrudPerms;
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+
+	protected override async Task OnInitializedAsync()
+	{
+		await SetLoggedInUser();
+		if (LoggedInUser != null)
+		{
+			using (Loading())
+			{
+				// Fetch my units and the whole list of units simultaneously.
+				await Task.WhenAll(new[] { FetchMyUnits(), FetchUnits() });
+			}
+		}
+	}
+
+	private async Task FetchMyUnits()
+	{
+		var response = await Get<List<UnitMemberResponse>>($"/people/{LoggedInUser.Username}/memberships", $"Failed to fetch UnitMemberships for {LoggedInUser.Username}.");
+		MyUnits = response.Value?.Select(m => m.Unit).Distinct();
+	}
+
+	private async Task FetchUnits()
+	{
+
+		var response = await Get<List<UnitResponse>>($"/Units", $"Failed to fetch Units.");
+		ActiveUnits = response.Value?.Where(u => u.Active);
+		ArchivedUnits = response.Value?.Where(u => u.Active == false);
+		CrudPerms = response.Permissions;
+	}
+
+	public void Dispose() { }
+}

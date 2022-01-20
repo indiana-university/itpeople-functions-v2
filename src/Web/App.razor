@@ -1,0 +1,51 @@
+﻿@using RivetBlazor.Classes
+@using RivetBlazor.Components
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager Navigation
+
+<Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
+	<Found Context="routeData">
+		<CascadingValue Value="@HeaderTitle">
+			<CascadingValue Value="@NavLinks">
+				<RouteView RouteData="@routeData" DefaultLayout="@typeof(RivetMainLayout)" />
+			</CascadingValue>
+		</CascadingValue>
+	</Found>
+	<NotFound>
+		<CascadingValue Value="@HeaderTitle">
+			<CascadingValue Value="@NavLinks">
+				<LayoutView Layout="@typeof(RivetMainLayout)">
+					<p>Sorry, there's nothing at this address.</p>
+				</LayoutView>
+			</CascadingValue>
+		</CascadingValue>
+	</NotFound>
+</Router>
+@code{
+	public string HeaderTitle = "IT People";
+	public List<IHeaderItem> NavLinks = new List<IHeaderItem>();
+	private List<HeaderLink> ProfileLinks = new List<HeaderLink>();
+	private AuthenticatedUser User = null;
+	private string AuthenticationDestination;
+
+	protected override async Task OnInitializedAsync()
+	{
+		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
+		var loggedInUser = User?.Username ?? "";
+		var isLoggedIn = User != null;
+		AuthenticationDestination = new Uri(Navigation.Uri).PathAndQuery;
+		var signInUrl = $"/SignIn?Destination={System.Net.WebUtility.UrlEncode(AuthenticationDestination)}";
+		
+		// Build up NavLinks.
+		NavLinks = new List<IHeaderItem>();
+		if(isLoggedIn)
+		{
+			NavLinks.Add(new HeaderLink("/People", "People"));
+			NavLinks.Add(new HeaderLink("/Units", "Units"));
+			NavLinks.Add(new HeaderLink("/Search", "Search"));
+			ProfileLinks.Insert(0, new HeaderLink($"/People/{loggedInUser}", "Profile", "Manage your profile information"));
+		}
+
+		NavLinks.Add(new HeaderProfile(loggedInUser, signInUrl, "/SignOut", ProfileLinks, null, isLoggedIn));
+	}
+}

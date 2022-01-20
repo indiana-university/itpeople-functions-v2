@@ -1,0 +1,28 @@
+@implements IDisposable
+
+
+<div class="rvt-grid__item-6-md-up rvt-p-all-lg">
+	<div class="rvt-grid">
+		<div class="rvt-grid__item rvt-border-all rvt-border-radius rvt-bg-white" style="overflow: auto;">   
+			<div class="rvt-grid">
+				<div class="rvt-grid__item rvt-bg-cream rvt-border-all rvt-p-all-xs rvt-p-left-md rvt-p-right-md rvt-ts-18 rvt-text-bold" style="color: rgb(51, 51, 51);">@Title</div>
+			</div>
+			<div class="rvt-grid">
+				<div class="rvt-grid__item rvt-p-all-md">					
+					@ChildContent					
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+		
+
+@code {
+	[Parameter]
+	public String Title { get; set; }
+
+	[Parameter]
+	public RenderFragment ChildContent { get; set; }
+	protected override void OnInitialized() { }
+	public void Dispose() { }
+}

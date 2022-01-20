@@ -12,15 +12,16 @@ using NUnit.Framework;
 
 namespace Integration
 {
-	public abstract class ApiTest
+    public abstract class ApiTest
     {
         // valid from 1/1/2000 - 1/19/2038 💥
-        public const string ValidRswansonJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoicnN3YW5zbyIsImV4cCI6MjE0NzQ4MzY0OH0.WdfqZFA78p9-R0AQdL4tFA8_mPMlsivWZalK4CyNQBaLiSec4sCZ7f_AzVcMZMG9rn1dXlwkHghxqOVP2d66WxVu4-7Ho1n5ZuSHVHL15vmHaAe_oMZDeyxR6WXfM06xjXm5BDImkGJ-soowQYkqxLcVSG_pnavd24xT9-KgglF_qv9d6h0cqS5m1pk4Aml0aVYA0u9PTThQ2Lxz2tqvJXepUbkS1kZaATSL6Vim5lRyw89xGybgzH4Ins4SaAqAkBEkuVPSPoskniaqo74uJr31Z_EwREFblbE5c6nmiexmBwbazHAe3xgVNONBNZ3c85-Zk9sBrxnKyUvQHioQkQ";
-        public const string ValidAdminJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiam9obmRvZSIsImV4cCI6MjE0NzQ4MzY0OH0.Yu5I3mKSfbK6xDDMsfUCO4S0HGfcuPnKveAVYk2b5bTK-znl99Ua4T2fynuoEMBkcHMy6udUMUcEWE0G8LD0ja5LSgaXAMretZzkrHzxsdBp05pJP51rPA7Ok1o2d9oZQu8nq4PotPR_kumDPk2x9HzQkDUInUBu9v3r_8-u8ikaMn4TVLIKw_P9x9mSwWg3wl85MKyun1xRiw5nC0DyZP39WUw14wkCS9I616PC4OwL1wiwMCDaoMxtg29DNqWasUsFXxHy4dfC5iRZC69I30tH49tn99vSrH9Kobiq5KnUAlP8ojabap2_sT_UVWQheS9zgvl_xYD2z9HU-5xvwg";
-        public const string ValidLknopeJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoibGtub3BlIiwiZXhwIjoyMTQ3NDgzNjQ4fQ.juIkziH7BiRwVCWLYBrDIh28UeSpj4yrukzfy4E4AGWHGdOxbd1jQfe9bj7nr5mirEB0Zy0DMo-Yumut5pYRp1PGW9IhBkMIMjxSxxQl-XT4oXJsyy3JeLnmibmoPogeTyDrp_Q5WDbJWx6TzgQEsgEoJSWtWmjr3XpcL8IR4xMbcs-kaBrDGIhcJvjJsYhyOBLVKQyP3ji9N6aP6WPtnLdO67LZ4kigrHFjryKJ3e-sVtuMVPX2j_UZxkdAVZnFlAcksLzDdxXcXT7-4EXUshkBzO5fXMXE6BYI1sHdKKJJZYBXh5YIBkU2dfhATFBv9U3jkCGuFbN2xnbYN5BN5A";
-        public const string ValidBwyattJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiYnd5YXR0IiwiZXhwIjoyMTQ3NDgzNjQ4fQ.TpTdpChOHR5gNXZwwPD02qeaTXFeIK3xq8pT1g6WREL1AgAs-uWc2TZeC44x1AD2rBeXWmCzHdkwPLfUJwa19jBu44lSu0BSeYKSL3fvf6RAvb0Hsf8zU_z-_qBo7js-ydXrRdnwKh3O5SwYq1nGGcDNgOU03f857elR_LPwvLt_KckOO0UYOHRHwBB51CkHtEez9QkbyaJdlxBko52w0jb4bLWrAA4QOfOrypTE6oeN8vFG1z0sd3rCh1yuU-6yc7aXHVZ5HmmzLXUSE3HJVsoPTwi4pG78gB_jqR0DSE8rHvfPz4m2kkzIZZdt2g11NcHSKeaUo3r4LFupQ2s4eg";
-        public const string ValidCtraegerJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiY3RyYWVnZXIiLCJleHAiOjIxNDc0ODM2NDh9.hj0v52e6c3Q-1A9EE9cJMJ8Hm4zrAbVb2PCwBSF7uS-RkbIC26RBdkllP5Rb2GDo32U8dGisdiXzFcqtMhuHFfootJz8JDCzgcA6_t6ibc3NFq9CkqqWcjjlSPckQ8HPSGCmVsNsXPY6hk_aZLtuPZ_YqdeaTEicKr_hyu7rehoJNhimoi2iVKqOo9VYHhenrfkVcniZmREflvNMlbFijUlozjjFQgkycwGRflnIyaUXg50w4z-8QZEqonvnRbrbfJB8AcYE65MWL4lpklKATP1eYI9uNW0Irxcv5Hh7LB1N6RVPFgSfNCGAjpR4c__5O2_ogFMe2iTqIj5ax8QE9A";
-        public const string ValidServiceAcct = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwiZXhwIjoyMTQ3NDgzNjQ4LCJzY29wZSI6WyJyZWFkIl0sImNsaWVudF9pZCI6InVpdHN3ZWIifQ.B7erbZUyovd4Pdxw8zjV2DVXzajOYRWG4Y9fLfY61gbWv36HuHqmOTPRC4PkTLAcGabGrjpwzf6JwLsYfUyw1AFH5lsIAp-X0zJ6_sZ8slmKOAqaVfnxol1jYncY_a9JWSbbOSCIzdt-C4j3EPTaI5kHOK0Jr0fbs0uJUGD8aM_7Pd-wFqAGz5QpeAcNgWz9pVYNVrOmy7Q6dgHnIEojtHxf5c2HiOmArzDqcAwZFvP2AGVH_nVKWA72a7ITLqlYfr982xUms5glI_ldCREH6_ajG3UZ2xLiegyiPoH_moL2QY7ED53zX3qiw6XSSJxX1H9TXcGMDDXwhuFgNTYcRw";
+        public const string ValidRswansonJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoicnN3YW5zbyIsImV4cCI6MjE0NzQ4MzY0OH0.lrXQNXZ3eBSZ2CT3AHwxcEKCVqCpe2bO3kJJvnbgoHzbmDsKn_Lt1XqB98ujRY6f7Kfv0e04qokCfNVZRaMqbeJ-1D08XsmYzEXzw6gY2C8eHHMM-969xkxEWSV_tMH_4cMOC1cpFqOjbI1SpRyC2qD3ZKcwpRwGw2-k3omrQOWxdJL6oW63lk6QtTKgy-Ehblwu_t7kr6vbI6BIRliTBcRsrKlNypgri39-an0ehbKRK6EHeOlWV1Z5D0JmjaAMrpD--tWEFUuqE__mnwnNTm6uiVIppZX7P1AGDiWVykRL3ffHFSItzn_LjlffpmPIAZktgrSfLU81673NVpWnSw";
+        public const string ValidAdminJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiam9obmRvZSIsImV4cCI6MjE0NzQ4MzY0OH0.UzxAU42jriBusgHzTXAfeT3y10irIrZZ1Mx9x8zafd7VZi3_hgnWXF93cBz0nBJhGwkzBssVDyCqGfhUtwwaG8DNpWKI5Ulo0A5vVYDmn6oNjKJd58oY9Adl9sRCbeK2mcz1jWZztIGCVMoE54D1jy7qA5VeK6o7f_IkRYuDYUYX_i9cKDjOZT953o17oYko1WeHh832ZBGpcLWgZssa2SSZsAyZevz74dq8gRfvhP9n2pDt45r6ZjjddEjWggWYqpWKLw88i20NfNiaKxGmRZ_RLJuQCuJb1ZjgZpv1fzUxAXSCuHlIUpW_Fy-ct0ElXp2yJS6ORCk0-EkbL7-GbA";
+        public const string ValidLknopeJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoibGtub3BlIiwiZXhwIjoyMTQ3NDgzNjQ4fQ.tCPsxFSXUXRTIHUwN7H9zE3TtzncY8nJmRBLz-kiyAbx9WKokCOTzMRGRwxOmySPaMjs2HhvKW8LUFVIyPjRqqaIdQEzDD5QuZ7AhLsPHPFsvBOLnRuKy8_ySvSnXwl4l7uUSXjuFEruV7M93ZjzpkAgFPPMWPJO-axoFb4Z6Fecg8dzkefWmaPS175ZYHrJhwP2tUlhPuDuFy6hvM2u6Zg5qSspkGBo9Shzc9zT7pwn_R3nCRFkh62bso3YRyurfnrWyfOBYKkbwKeJTHWvfu_75Ik8Mva-rk4a24GdnbfIdOOr_wcNNTb37nQYo0VCORCHJAumVjOj0GB8qoeaKw";
+        public const string ValidBwyattJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiYnd5YXR0IiwiZXhwIjoyMTQ3NDgzNjQ4fQ.AGGknbG4dY6wqM3EekowxBSOiKBtLvkmWamouO2wVKV-3LUWRCzhVlMuf2RRs6G7GystLuy4RbQAwrNKZL26jueFnhXol_BCwE-X30MX7RkuuvbyO67Tvv99pL56-6k7VWUstNNIYT82Y1II5SdKibTIIO_jcDf-pxQpWBYCIrSmnqhS-zn_YyqcsUhQuuzeXqI-k3t5ZiLJcNfkghTaw8-wNDbl1Oadd4Gz8CXfKb-K-agGWowNxlKgB0mxDWptSuHe0Clfphxr9fjXXGRPz4P0qbWrf33eKC20nRkUBNJ23OKvfPW9KNTCs6bhsc_FhbIby0qFOiTiIjfT0dySvg";
+        public const string ValidCtraegerJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiY3RyYWVnZXIiLCJleHAiOjIxNDc0ODM2NDh9.nch1skbWZrxgv-o26dMmnlv0gVf4c5YWlf-Mdd56DnWSVCgrzl0EBFjhDvkHLNE6bcQjz2ZDfJ--goVaMpNoLJXR6zv-ybMMxb1hEKUO0Ra0_Ox_DiAs7MMBdlcB0ZF8F51F0CuRw02HD5g7OSN-pyyIg1o2muJhPMoGCS6KGVk5WoTSKPEteqwCpdRUHw-h4Gq-upQtsmmfLamvj1cos5LaDfwQtXCos_ADkXj7o9ywTT4KKD1cdqWLagc20WOimcmuOUPImdLPS-w6rVIp24oyk7L39zQOKPKgE1TyZiuaHfG9rHX8gIP6zkPio3hrv2ANB3Wz33tO1OAAOmloJA";
+        public const string ValidJgergichJwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwidXNlcl9uYW1lIjoiZ2FycnlnIiwiZXhwIjoyMTQ3NDgzNjQ4fQ.nzXBDn19dkV0h9-vRHkZto3jbxHigeWFXO726vX6rymmjtqqEDFgDka9CP4K3yFydNbsEi9vIzS-SdfgqJhJgw44D4_N2pYo2sj_RL0oYyMnnUuAiOugEzLmZph1fVxQ77xYQ9L9LMGVX3hneeNEmE5ZrK_RaFdNHzEsrFMK-UB-2Ol5AW9GH1vVcAxuebN8PCyHx1VFaPjArbazV6x3ot_8bgacKby3XFS2ecGc2Tm1eKcOg3reFB5NrkXMc_khPrpWPCy_XHXKa7KFoGIn9zhkzBOGipDZ-E9rqWDtE7hQRjbZWYWU1-Xx5ohsaXWcKiEEsX416zVaNOR8pppszA";
+        public const string ValidServiceAcct = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk0NjY4NDgwMCwiZXhwIjoyMTQ3NDgzNjQ4LCJzY29wZSI6WyJyZWFkIl0sImNsaWVudF9pZCI6InVpdHN3ZWIifQ.cZJ9SwfUISJ7TK6Hfhi21_dKJMrVSYRfszA1BcSm8Ftnyy3vX19dsPEdwyNYJRfF1jbeG7XqXTRG2E71JS0H5U3OC-9baAdiVe9v7hLkmaa2SdLXS_e2p_PZMSRt3zKXJD3Rn3GwCnk1JIFDwA61MuZrvUmBW0JOCU3Ljkx2XzgdinUKv97dwIyaSddPoP9i98ntE8iueU5VDPB6Gi6T9e-NreglEm65jVgbRbLatUSF7CeoNEBBbT7zc_bV05j9lsIuRHRy3OXwYUdijiXNrNw_cDHAqLWvWXnaTlKxWIw10-Qa_JydoDHxVER60TMjRmhtwrKzNLBNtAc_4xQmlw";
         
         [SetUp]
         public async Task Init()
@@ -94,6 +95,7 @@ namespace Integration
         {
             var actualHeader = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions");
             Assert.NotNull(actualHeader, "Permissions header is not present");
+            Assert.NotNull(actualHeader.Value, "Permissions header was present but is null");
             Assert.AreEqual(1, actualHeader.Value.Count(), "Permissions header should have one value");
             Assert.AreEqual(expectedPermissions.ToString(), actualHeader.Value.Single());
         }
@@ -129,6 +131,104 @@ namespace Integration
             {
                 Assert.Fail(error);
             }
+        }
+
+        private static async Task SetJerryUnitPermissions(int unitId, UnitPermissions providedPermission)
+        {
+            // Add user Jerry Gergich, who is not in Test Entities, and only used for this test.
+            var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+            var jerry = new Person
+            {
+                Netid = "garryg",
+                Name = "Gergich, Jerry",
+                NameFirst = "Jerry",
+                NameLast = "Gergich",
+                Position = "Waiting for Retirement",
+                Location = "BL",
+                Campus = "Pawnee",
+                CampusPhone = "812.856.5557",
+                CampusEmail = "garryg@pawnee.in.us",
+                Expertise = "Going unnoticed",
+                Notes = "",
+                PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg",
+                Responsibilities = Responsibilities.None,
+                DepartmentId = TestEntities.Departments.Parks.Id,
+                IsServiceAdmin = false
+            };
+            await db.People.AddAsync(jerry);
+
+            var membership = new UnitMember
+            {
+                Person = jerry,
+                UnitId = unitId,
+                Permissions = providedPermission,
+                Title = "Forgotten Man",
+                Percentage = 100,
+                Notes = "",
+                MemberTools = new List<MemberTool>()
+            };
+            await db.UnitMembers.AddAsync(membership);
+            await db.SaveChangesAsync();
+        }
+
+        ///<summary>Verifies that GET requests the URL by a user with certain UnitPermissions returns the expected EntityPermissions.</summary>
+        protected async Task<HttpResponseMessage> GetReturnsCorrectEntityPermissions(string url, int unitId, UnitPermissions providedPermission, EntityPermissions expectedPermission)
+        {
+            await SetJerryUnitPermissions(unitId, providedPermission);
+
+            // GET request the provided url with Jerry's JWT
+            var resp = await GetAuthenticated(url, ValidJgergichJwt);
+            AssertStatusCode(resp, HttpStatusCode.OK);
+
+            // Verify they get the expectedPermission.
+            AssertPermissions(resp, expectedPermission);
+
+            return resp;
+        }
+
+        ///<summary>Verifies that POST requests the URL by a user with certain UnitPermissions returns the expected status code and EntityPermissions.</summary>
+        protected async Task<HttpResponseMessage> PostReturnsCorrectEntityPermissions(string url, object body, int unitId, UnitPermissions providedPermission, HttpStatusCode expectedStatusCode, EntityPermissions expectedPermission)
+        {
+            await SetJerryUnitPermissions(unitId, providedPermission);
+
+            // POST request the provided url with Jerry's JWT
+            var resp = await PostAuthenticated(url, body, ValidJgergichJwt);
+            AssertStatusCode(resp, expectedStatusCode);
+            
+            // Verify they get the expectedPermission.
+            AssertPermissions(resp, expectedPermission);
+
+            return resp;
+        }
+
+        ///<summary>Verifies that PUT requests the URL by a user with certain UnitPermissions returns the expected status code and EntityPermissions.</summary>
+        protected async Task<HttpResponseMessage> PutReturnsCorrectEntityPermissions(string url, object body, int unitId, UnitPermissions providedPermission, HttpStatusCode expectedStatusCode, EntityPermissions expectedPermission)
+        {
+            await SetJerryUnitPermissions(unitId, providedPermission);
+
+            // PUT request the provided url with Jerry's JWT
+            var resp = await PutAuthenticated(url, body, ValidJgergichJwt);
+            AssertStatusCode(resp, expectedStatusCode);
+            
+            // Verify they get the expectedPermission.
+            AssertPermissions(resp, expectedPermission);
+
+            return resp;
+        }
+
+        ///<summary>Verifies that DELETE requests the URL by a user with certain UnitPermissions returns the expected status code and EntityPermissions.</summary>
+        protected async Task<HttpResponseMessage> DeleteReturnsCorrectEntityPermissions(string url, int unitId, UnitPermissions providedPermission, HttpStatusCode expectedStatusCode, EntityPermissions expectedPermission)
+        {
+            await SetJerryUnitPermissions(unitId, providedPermission);
+
+            // DELETE request the provided url with Jerry's JWT
+            var resp = await DeleteAuthenticated(url, ValidJgergichJwt);
+            AssertStatusCode(resp, expectedStatusCode);
+            
+            // Verify they get the expectedPermission.
+            AssertPermissions(resp, expectedPermission);
+
+            return resp;
         }
     }
 

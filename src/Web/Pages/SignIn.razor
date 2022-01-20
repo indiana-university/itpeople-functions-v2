@@ -1,0 +1,128 @@
+@using Microsoft.Extensions.Configuration
+@using System.Web
+@using System.Net
+@using System.IdentityModel.Tokens.Jwt;
+@using System.Linq
+@using RivetBlazor.Components
+@using web.Shared
+@using System.Text.Json.Serialization
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
+@implements IDisposable
+@inherits PageBase
+@page "/SignIn"
+<Title Value="Sign In - IT People - Indiana University" />
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">Sign In</h1>
+	<DisplayException Ex=@GeneralException />
+	<Loader Loading=ShowLoader>
+		@if (string.IsNullOrWhiteSpace(Code))
+		{
+			<p>
+				Sending you to UAA service to authenticate.
+			</p>
+		}
+		else
+		{
+			<p>Sending you back to @Destination</p>
+		}
+	</Loader>
+</div>
+@code {
+	private string Code;
+
+	// Use a custom setter to prevent redirect loops and invalid targets.
+	private string _Destination = "/";
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+	private string Destination
+	{
+		get => _Destination;
+		set
+		{
+			if (string.IsNullOrWhiteSpace(value)
+				|| value.StartsWith("/SignIn", StringComparison.OrdinalIgnoreCase)
+				|| value.StartsWith("/SignOut", StringComparison.OrdinalIgnoreCase)
+				|| value.StartsWith('/') == false)
+			{
+				_Destination = "/";
+			}
+			else
+			{
+				_Destination = value;
+			}
+		}
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		using (Loading())
+		{
+			// Read the queryString from the Uri, if it has the value for Code set it and use it.
+			var query = new Uri(Navigation.Uri).Query;
+			var queryDict = HttpUtility.ParseQueryString(query);
+			Code = queryDict.Get("code");
+			Destination = queryDict.Get("destination");
+			if (string.IsNullOrWhiteSpace(Code) == false)
+			{
+				// Do the work to go fetch the JWT from UAA
+				var baseUri = Utils.Env(Configuration, "API_URL", true);
+				var jwtResp = await new HttpClient().GetAsync($"{baseUri}/auth?oauth_code={Uri.EscapeDataString(Code)}");
+				if (jwtResp.StatusCode != HttpStatusCode.OK)
+				{
+					GeneralException = new Exception($"Was unable to redeem the code for an oauth token got status code {jwtResp.StatusCode}.");
+					return;
+				}
+				var jwt = await jwtResp.Content.ReadFromJsonAsync<JwtResponse>();
+				var handler = new JwtSecurityTokenHandler();
+				var usernameClaim = handler.ReadJwtToken(jwt.AccessToken).Claims.FirstOrDefault(x => x.Type == "user_name");
+				if (usernameClaim == null)
+				{
+					GeneralException = new Exception($"Was unable to validate your identity.");
+					return;
+				}
+
+				var expClaim = handler.ReadJwtToken(jwt.AccessToken).Claims.FirstOrDefault(x => x.Type == "exp");
+				if(expClaim == null)
+				{
+					GeneralException = new Exception($"Was unable to determine token's expiration time.");
+					return;
+				}
+				
+				await localStorage.SetItemAsync("user", new AuthenticatedUser(jwt.AccessToken, usernameClaim.Value, expClaim.Value));
+
+				// Send the user back to where they came.
+				Destination = await localStorage.GetItemAsync<string>("AuthDestination");
+				// Use forceReload to make sure the header redraws.
+				Navigation.NavigateTo(Destination, true);
+			}
+			else
+			{
+				await ReallySignIn();
+			}
+		}
+	}
+	public class JwtResponse
+	{
+		[JsonPropertyName("access_token")]
+		public string AccessToken { get; set; }
+	}
+
+	private async Task ReallySignIn()
+	{
+		// Store destination in session storage for use when we get back.
+		await localStorage.SetItemAsync("AuthDestination", Destination);
+
+		// Send them to UAA to get authenticated.
+		var localUrl = Utils.Env(Configuration, "APP_WEB_URL", true) + "/signin";
+		var oauthUrl = Utils.Env(Configuration, "UAA_OAUTH2_AUTH_URL", true);
+		var clientId = Utils.Env(Configuration, "UAA_OAUTH2_CLIENT_ID", true);
+		var signInUri =
+		$"{oauthUrl}?response_type=code&client_id={Uri.EscapeDataString(clientId)}&redirect_uri={Uri.EscapeDataString(localUrl)}";
+		Navigation.NavigateTo(signInUri);
+	}
+
+	public void Dispose() { }
+}

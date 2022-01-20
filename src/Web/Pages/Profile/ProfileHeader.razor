@@ -1,0 +1,21 @@
+@implements IDisposable
+
+<div>
+    <div class="rvt-container" style="max-width: 1440px; margin: auto;">
+        <div class="rvt-bg-white">
+            <div class="rvt-grid" style="justify-content: center;">
+                <div class="rvt-grid__item-9-md-up rvt-text-center rvt-m-top-md">
+                    @ChildContent
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+    protected override void OnInitialized() { }
+    public void Dispose() { }
+}

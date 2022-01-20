@@ -35,17 +35,6 @@ namespace API.Data
 				.Bind(created => TryFindBuildingRelationship(db, created.Id))
 			);
 
-		internal static async Task<Result<BuildingRelationship, Error>> UpdateBuildingRelationship(HttpRequest req,BuildingRelationshipRequest body, int relationshipId)
-		{
-			return await ExecuteDbPipeline($"update building relationship {relationshipId}", db =>
-				ValidateRequest(db, body, relationshipId)
-				.Bind(_ => TryFindBuildingRelationship(db, relationshipId))
-                .Tap(existing => LogPrevious(req, existing))
-				.Bind(existing => TryUpdateBuildingRelationship(db, existing, body))
-				.Bind(_ => TryFindBuildingRelationship(db, relationshipId))
-			);
-		}
-
 		internal static async Task<Result<bool, Error>> DeleteBuildingRelationship(HttpRequest req, int relationshipId)
 		{
 			return await ExecuteDbPipeline($"delete building relationship {relationshipId}", db =>
@@ -95,16 +84,6 @@ namespace API.Data
 				return Pipeline.Conflict("The provided unit already has a support relationship with the provided building.");
 			}
 			return Pipeline.Success(body);
-		}
-
-
-		private static async Task<Result<BuildingRelationship, Error>> TryUpdateBuildingRelationship(PeopleContext db, BuildingRelationship existing, BuildingRelationshipRequest body)
-		{
-			existing.UnitId = body.UnitId;
-			existing.BuildingId = body.BuildingId;
-
-			await db.SaveChangesAsync();
-			return Pipeline.Success(existing);
 		}
 
 		private static async Task<Result<bool, Error>> TryDeleteBuildingRelationship(PeopleContext db, HttpRequest req, BuildingRelationship buildingRelationship)

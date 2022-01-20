@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -5,7 +6,7 @@ using System.Linq;
 
 namespace Models
 {
-	public class ToolResponse : Entity
+	public class ToolResponse : Entity, IComparable
 	{
 		/// The name of this tool.
 		public string Name { get; set; }
@@ -22,5 +23,6 @@ namespace Models
 
 		public static List<ToolResponse> ConvertList(List<Tool> source)
             => source.Select(t => t.ToToolResponse()).ToList();
+
 	}
 }

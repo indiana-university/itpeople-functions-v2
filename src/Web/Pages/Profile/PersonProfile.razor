@@ -1,0 +1,150 @@
+@using Models
+@using Models.Enums
+@using RivetBlazor.Components
+@using web.Shared
+@using System.Linq
+@using System;
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
+@inherits PageBase
+@inject IJSRuntime JSRuntime;
+@implements IDisposable
+@page "/People/{NetId}"
+
+<Title Value="@GetPageTitle()" />
+<HeaderNavBar Page="Profiles" CurrentPage=@ProfileName />
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<ProfileHeader>
+		<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">@(UpdatedPerson?.Name ?? $"Profile for {NetId}")</h1>
+		<div class="rvt-ts-26">@(UpdatedPerson?.Position ?? "")</div>
+	</ProfileHeader>
+	<DisplayException Ex=@GeneralException />
+
+	<AuthenticatedView>
+		<NotAuthenticated>
+			<p>
+				You must login to view this resource.
+			</p>
+			<p>
+				<a class="rvt-button" href="@GetLoginUri()">Log In</a>
+			</p>
+		</NotAuthenticated>
+		<Authenticated>
+			<Loader Loading="ShowLoader">
+				@if (UpdatedPerson != null)
+				{
+					<div class="rvt-bg-white">
+						<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+							<div class="rvt-grid rvt-p-top-lg" data-testid="profile-page">
+								<ProfileContactInformation Title="Contact Information">
+									<ChildContent>
+										<div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
+											<div>
+												@if (@UpdatedPerson.Location != null)
+												{
+													<div><strong>Location: </strong>@UpdatedPerson.Location</div>
+
+												}
+												<div><strong>Campus: </strong>@UpdatedPerson.Campus</div>
+												<div><strong>Email: </strong><a href="mailto:@UpdatedPerson.CampusEmail">@UpdatedPerson.CampusEmail</a></div>
+												<div><strong>Phone: </strong>@UpdatedPerson.CampusPhone</div>
+												<div><strong>Department: </strong><a href="/departments/@UpdatedPerson.DepartmentId">@UpdatedPerson.Department.Name</a></div>
+											</div>
+										</div>
+										<ProfileResponsibilities CrudPerms=CrudPerms @bind-Person=UpdatedPerson NetId=@NetId />
+										<ProfileExpertise CrudPerms=CrudPerms @bind-Person=UpdatedPerson NetId=@NetId />
+									</ChildContent>
+								</ProfileContactInformation>
+								<ProfileUnitsHelper Title="IT Units">
+									<ChildContent>
+										@if (ProfileUnits.Count() > 0)
+										{
+											@foreach (var unit in ProfileUnits)
+											{
+												<div class="@((unit.Id != ProfileUnits.Last().Id) ? "rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg" : "")">
+													<div class="rvt-grid">
+														<div class="rvt-grid__item">
+															<a href="/units/@unit.Id"><h2 class="rvt-ts-23 rvt-text-bold">@unit.Name</h2></a>
+															<div class="rvt-m-bottom-sm">@unit.Description</div>
+														</div>
+													</div>
+													<div class="rvt-grid">
+														<div class="rvt-grid__item">
+															<DisplayUnitRole Unit=unit Memberships=Memberships />
+														</div>
+													</div>
+												</div>
+											}
+										}
+										else
+										{
+											<p> No Units</p>
+
+										}
+									</ChildContent>
+
+								</ProfileUnitsHelper>
+							</div>
+						</div>
+					</div>
+				}
+			</Loader>
+		</Authenticated>
+	</AuthenticatedView>
+</div>
+
+@code {
+	private EntityPermissions CrudPerms;
+	private Person UpdatedPerson = new Person();
+	private IEnumerable<UnitResponse> ProfileUnits = new List<UnitResponse>();
+	private IEnumerable<UnitMemberResponse> Memberships = new List<UnitMemberResponse>();
+	private string _PrevNetId = null;
+	[Parameter] public string NetId { get; set; }
+	private bool isExpanded = false;
+	private string ProfileName;
+	protected bool ShowLoader = false;
+	protected IDisposable Loading()
+		=> new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+
+	protected override async Task OnParametersSetAsync()
+	{
+		await SetLoggedInUser();
+		if (LoggedInUser != null && NetId != _PrevNetId)
+		{
+			using (Loading())
+			{
+				await Task.WhenAll(new[] { GetPersonProfile(), GetPersonUnitMemberships() });
+			}
+		}
+		_PrevNetId = NetId;
+	}
+
+	private async Task GetPersonProfile()
+	{
+		var response = await Get<Person>($"/people/{NetId}", $"No person matching the given username `{NetId}` has been found.");
+		if(response.RawResponse.IsSuccessStatusCode)
+		{
+			UpdatedPerson = response.Value;
+			ProfileName = UpdatedPerson.Name;
+		}
+		else
+		{
+			UpdatedPerson = null;
+			ProfileName = "Not Found";
+		}
+
+		CrudPerms = response.Permissions;
+	}
+	private string GetPageTitle() => $"{ProfileName} - IT People - Indiana University";
+
+	private async Task GetPersonUnitMemberships()
+	{
+		var response = await Get<List<UnitMemberResponse>>($"/people/{NetId}/memberships");
+		if(response.RawResponse.IsSuccessStatusCode)
+		{
+			Memberships = response.Value;
+			ProfileUnits = Memberships.Select(m => m.Unit).Distinct();
+		}
+	}
+
+	public void Dispose() { }
+}

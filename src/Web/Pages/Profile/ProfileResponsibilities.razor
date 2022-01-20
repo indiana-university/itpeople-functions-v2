@@ -1,0 +1,49 @@
+@using Models;
+@using Models.Enums;
+@using System.ComponentModel.DataAnnotations;
+@using System.Reflection;
+@inject IHttpClientFactory ClientFactory;
+@implements IDisposable;
+
+<div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
+	<div>
+		<div style="float: right;">
+			@if (CrudPerms.HasFlag(EntityPermissions.Put))
+			{
+				<a href=@($"/people/{NetId}/EditResponsibilities") class="rvt-button rvt-button--plain"
+				title="Edit Responsibilities">
+					<rvt-icon name="pencil" /><span class="rvt-sr-only">Edit Responsibilities</span>
+				</a>
+			}
+		</div>
+		<h2 class="rvt-ts-23 rvt-text-bold">Responsibilities</h2>
+		<p>What kinds of work do you do on a day-to-day basis?</p>
+		@foreach (var item in Person.Responsibilities.ToString().Split(',').Select(r => r.Trim()))
+		{
+			<ul class="rvt-list rvt-plain-list">
+				<li>@GetEnumDisplayName(item)</li>
+			</ul>
+		}
+	</div>
+</div>
+
+@code {
+	[Parameter]
+	public EntityPermissions CrudPerms { get; set; }
+	
+	[Parameter]
+	public string NetId { get; set; }
+	[Parameter]
+	public Person Person { get; set; }
+	// Enable two-way binding.
+	[Parameter]
+	public EventCallback<Person> PersonChanged { get; set; }
+	private string GetEnumDisplayName(string enumValue)
+	{
+		var fieldInfo = Person.Responsibilities.GetType().GetFields();
+		var field = fieldInfo.FirstOrDefault(f => f.Name == enumValue);
+		return field != null ? field.GetCustomAttribute<DisplayAttribute>()?.GetName() ?? field.Name : enumValue;
+	}
+
+	public void Dispose() { }
+}
