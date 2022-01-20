@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Models;
+using Models.Enums;
 using NUnit.Framework;
 
 namespace Integration
@@ -149,109 +150,26 @@ namespace Integration
 				Assert.Contains(ArchivedUnitError, actual.Errors);
 				Assert.AreEqual("(none)", actual.Details);
 			}
+
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.Created, PermsGroups.All, Description = "Owner")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.Created, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+			public async Task SupportRelationshipPostEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
+					DepartmentId = TestEntities.Departments.AuditorId
+				};
+				await PostReturnsCorrectEntityPermissions("supportRelationships", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+			}
 		}
 	
-		public class SupportRelationshipEdit : ApiTest
-		{
-			[TestCase(TestEntities.Departments.AuditorId, Description="Update with new Department Id and same Unit Id")]
-			[TestCase(TestEntities.Departments.ParksId,Description="Update with same Department Id and same Unit Id")]
-			public async Task UpdateParksAndRecRelationship(int departmentId)
-			{
-				var req = new SupportRelationshipRequest
-				{
-					UnitId = TestEntities.SupportRelationships.ParksAndRecRelationship.UnitId,
-					DepartmentId = departmentId
-				};
-
-				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecRelationshipId}", req, ValidAdminJwt);
-				AssertStatusCode(resp, HttpStatusCode.OK);
-				var actual = await resp.Content.ReadAsAsync<SupportRelationshipResponse>();
-
-				Assert.AreEqual(TestEntities.SupportRelationships.ParksAndRecRelationshipId, actual.Id);
-				Assert.AreEqual(req.DepartmentId, actual.Department.Id);
-				Assert.AreEqual(req.UnitId, actual.Unit.Id);
-			}
-
-			[Test]
-			public async Task BadRequestCannotUpdateWithMalformedSupportRelationship()
-			{
-				var req = new
-				{
-					UnitId = TestEntities.Units.CityOfPawneeUnitId
-				};
-
-				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecRelationshipId}", req, ValidAdminJwt);
-				AssertStatusCode(resp, HttpStatusCode.BadRequest);
-				var actual = await resp.Content.ReadAsAsync<ApiError>();
-
-				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains("The request body was malformed, the unitId, departmentId, and/or supportTypeId field was missing or invalid.", actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
-			}
-
-			[Test]
-			public async Task UnauthorizedCannotUpdateSupportRelationship()
-			{
-				var req = new SupportRelationshipRequest
-				{
-					UnitId = TestEntities.Units.Auditor.Id,
-					DepartmentId = TestEntities.Departments.FireId
-				};
-				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecRelationshipId}", req, ValidRswansonJwt);
-				AssertStatusCode(resp, HttpStatusCode.Forbidden);
-			}
-
-			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, 99999, TestEntities.Departments.FireId, null, Description = "Unit Id not found")]
-			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.Units.CityOfPawneeUnitId, 99999, null, Description = "Department Id not found")]
-			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, TestEntities.Units.CityOfPawneeUnitId, TestEntities.Departments.AuditorId, 99999, Description = "Support Type Id not found")]
-			[TestCase(99999, TestEntities.Units.CityOfPawneeUnitId, 99999, null, Description = "Department Support Relationship Id not found")]
-			public async Task NotFoundCannotUpdateSupportRelationship(int relationshipid, int unitId, int departmentId, int? supportTypeId)
-			{
-				var req = new SupportRelationshipRequest
-				{
-					UnitId = unitId,
-					DepartmentId = departmentId,
-					SupportTypeId = supportTypeId
-				};
-				var resp = await PutAuthenticated($"supportRelationships/{relationshipid}", req, ValidAdminJwt);
-				var actual = await resp.Content.ReadAsAsync<ApiError>();
-
-				Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
-			}
-
-			[Test]
-			public async Task ConflictUpdateSupportRelationship()
-			{
-				var req = new SupportRelationshipRequest
-				{
-					UnitId = TestEntities.SupportRelationships.ParksAndRecRelationship.UnitId,
-					DepartmentId = TestEntities.SupportRelationships.ParksAndRecRelationship.DepartmentId
-				};
-
-				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.PawneeUnitFireId}", req, ValidAdminJwt);
-				AssertStatusCode(resp, HttpStatusCode.Conflict);
-			}
-
-			//Cannot update relationship to use an inactive Unit
-			[Test]
-			public async Task CannotUpdateSupportRelationshipToUseArchivedUnit()
-			{
-				var changeToInactiveUnit = new SupportRelationshipRequest {
-					UnitId = TestEntities.Units.ArchivedUnitId,
-					DepartmentId = TestEntities.Departments.FireId
-				};
-
-				var resp = await PutAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.PawneeUnitFireId}", changeToInactiveUnit, ValidAdminJwt);
-
-				var actual = await resp.Content.ReadAsAsync<ApiError>();
-				AssertStatusCode(resp, HttpStatusCode.BadRequest);
-
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains(ArchivedUnitError, actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
-			}
-		}
 		public class SupportRelationshipDelete : ApiTest
 		{
 			[TestCase(TestEntities.SupportRelationships.ParksAndRecRelationshipId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin can delete a support relationship.")]
@@ -262,6 +180,36 @@ namespace Integration
 				var resp = await DeleteAuthenticated($"supportRelationships/{relationshipId}", jwt);
 				AssertStatusCode(resp, expectedCode);
 			}
+
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember")]
+			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Owner, HttpStatusCode.NoContent, PermsGroups.All, Description = "Owner")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageTools, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageTools Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.ManageMembers, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "ManageMember Inheritted From Parent")]
+			[TestCase(TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, HttpStatusCode.NoContent, PermsGroups.All, Description = "Owner Inheritted From Parent")]
+			public async Task SupportRelationshipDeleteEntityPermissions(int unitWithPermissions, UnitPermissions providedPermission, HttpStatusCode expectedCode, EntityPermissions expectedPermission)
+			{
+				// Add a support relationshp for Parks & Rec so we can test inheritted permissions
+				var relationship = await GenerateParksAndRecSupportingAuditDept();
+
+				await DeleteReturnsCorrectEntityPermissions($"supportRelationships/{relationship.Id}", unitWithPermissions, providedPermission, expectedCode, expectedPermission);
+			}
+		}
+
+		public static async Task<SupportRelationship> GenerateParksAndRecSupportingAuditDept()
+		{
+			var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+			var relationship = new SupportRelationship
+			{
+				UnitId = TestEntities.Units.ParksAndRecUnitId,
+				DepartmentId = TestEntities.Departments.AuditorId,
+				SupportTypeId = TestEntities.SupportTypes.FullServiceId
+			};
+			await db.SupportRelationships.AddAsync(relationship);
+			await db.SaveChangesAsync();
+			return relationship;
 		}
 
 		public class SsspTests : ApiTest

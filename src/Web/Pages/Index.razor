@@ -1,0 +1,28 @@
+﻿@using web.Shared;
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
+@implements IDisposable
+@page "/"
+
+<Title Value="IT People - Indiana University" />
+
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">IT People</h1>
+	<AuthenticatedView>
+		<Authenticated>
+			<p>
+				IT People is a directory of people doing or supporting information technology (IT) work at Indiana University. You can search for <a href="/units">units</a> and people by name, or browse all units and their membership.
+			</p>
+		</Authenticated>
+		<NotAuthenticated>
+			<p>
+				IT People is a directory of people doing or supporting information technology (IT) work at Indiana University. Please log in to browse the directory.
+			</p>
+			<p>
+				<a class="rvt-button" href="/SignIn">Log In</a>
+			</p>
+		</NotAuthenticated>
+	</AuthenticatedView>
+</div>
+@code{
+	public void Dispose() {	}
+}

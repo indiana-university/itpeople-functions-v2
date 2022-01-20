@@ -60,6 +60,7 @@ namespace StateServer
             peopleContext.BuildingRelationships.AddRange(new List<BuildingRelationship> {
                 TestEntities.BuildingRelationships.CityHallCityOfPawnee,
                 TestEntities.BuildingRelationships.RonsCabinCityOfPawnee,
+                TestEntities.BuildingRelationships.SmallParkParksandRec
             });
 
             peopleContext.Departments.AddRange(new List<Department> {
@@ -102,7 +103,7 @@ namespace StateServer
                 TestEntities.UnitMembers.BWyattAditor,
                 TestEntities.UnitMembers.AdminLeader,
                 TestEntities.UnitMembers.ArchivedRon,
-                TestEntities.UnitMembers.ArchivedApril,
+                TestEntities.UnitMembers.ArchivedApril
             });
             
             peopleContext.Tools.AddRange(new List<Tool> { 

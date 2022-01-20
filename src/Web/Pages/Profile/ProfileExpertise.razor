@@ -1,0 +1,51 @@
+@using Models;
+@using Models.Enums;
+@inject IHttpClientFactory ClientFactory;
+@implements IDisposable;
+
+<div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
+	<div class="rvt-flex">
+		<div class="rvt-grow-1">
+			<h2 class="rvt-ts-23 rvt-text-bold">Professional interests</h2>
+		</div>
+		<div class="rvt-m-left-sm">
+			@if (CrudPerms.HasFlag(EntityPermissions.Put))
+			{
+				<a href=@($"/people/{NetId}/EditInterests") class="rvt-button rvt-button--plain" title="Edit Interests">
+					<rvt-icon name="pencil" /><span class="rvt-sr-only">Edit Interests</span>
+				</a>
+			}
+		</div>
+	</div>
+	<p>What kinds of skills, technologies, or languages do you want to work with or learn about?</p>
+	<ul class="rvt-list rvt-plain-list rvt-inline-list">
+		@if (string.IsNullOrWhiteSpace(Person.Expertise))
+		{
+			<li>None</li>
+		}
+		else
+		{
+			@foreach (var Interest in Person.Expertise.Split(","))
+			{
+				@if(string.IsNullOrWhiteSpace(Interest) == false)
+				{
+					<li><span class="rvt-badge">@Interest</span></li>
+				}
+			}
+		}
+	</ul>
+</div>
+
+
+@code {
+	[Parameter]
+	public string NetId { get; set; }
+	[Parameter]
+	public EntityPermissions CrudPerms { get; set; }
+	[Parameter]
+	public Person Person { get; set; }
+	// Enable two-way binding.
+	[Parameter]
+	public EventCallback<Person> PersonChanged { get; set; }	
+	public void Dispose() { }
+}

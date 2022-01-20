@@ -1,0 +1,51 @@
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@using web.Shared
+@using RivetBlazor.Components
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
+@inject NavigationManager Navigation
+@implements IDisposable
+@inherits PageBase
+@page "/SignOut"
+<Title Value="Sign Out - IT People - Indiana University" />
+<div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
+	<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">Sign Out</h1>
+	<DisplayException Ex=@GeneralException />
+	<Loader Loading=ShowLoader>
+		@if (User != null)
+		{
+			<p>
+				Logging you out...
+			</p>
+		}
+		else
+		{
+			<p>
+				Your session has ended. If you wish to end your IU Login session please <a
+				href="https://idp.login.iu.edu/idp/profile/cas/logout">click here</a>.
+			</p>
+		}
+	</Loader>
+</div>
+
+@code
+{
+	private AuthenticatedUser User;
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+
+	protected override async Task OnInitializedAsync()
+	{
+		using (Loading())
+		{
+			await SetLoggedInUser();
+			if (LoggedInUser != null)
+			{
+				await localStorage.ClearAsync();
+				// Force redraw of the page to redraw the header
+				Navigation.NavigateTo("/SignOut", true);
+			}
+		}
+	}
+
+	public void Dispose() { }
+}

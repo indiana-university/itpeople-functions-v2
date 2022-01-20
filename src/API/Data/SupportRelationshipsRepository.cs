@@ -86,16 +86,6 @@ namespace API.Data
 				.Bind(created => TryFindSupportRelationship(db, created.Id))
 			);
 
-		internal static async Task<Result<SupportRelationship, Error>> UpdateSupportRelationship(HttpRequest req,SupportRelationshipRequest body, int relationshipId)
-		{
-			return await ExecuteDbPipeline($"update support relationship {relationshipId}", db =>
-				ValidateRequest(db, body, relationshipId)
-				.Bind(_ => TryFindSupportRelationship(db, relationshipId))
-                .Tap(existing => LogPrevious(req, existing))
-				.Bind(existing => TryUpdateSupportRelationship(db, existing, body))
-				.Bind(_ => TryFindSupportRelationship(db, relationshipId))
-			);
-		}	
 		internal static async Task<Result<bool, Error>> DeleteSupportRelationship(HttpRequest req, int relationshipId)
 		{
 			return await ExecuteDbPipeline($"delete support relationship {relationshipId}", db =>
@@ -158,15 +148,6 @@ namespace API.Data
 			return Pipeline.Success(body);
 		}
 		
-		private static async Task<Result<SupportRelationship, Error>> TryUpdateSupportRelationship(PeopleContext db, SupportRelationship existing, SupportRelationshipRequest body)
-		{
-			existing.UnitId = body.UnitId;
-			existing.DepartmentId = body.DepartmentId;
-			existing.SupportTypeId = body.SupportTypeId;
-
-			await db.SaveChangesAsync();
-			return Pipeline.Success(existing);
-		}
 		private static async Task<Result<bool, Error>> TryDeleteSupportRelationship(PeopleContext db, HttpRequest req, SupportRelationship supportRelationship)
 		{
 			db.SupportRelationships.Remove(supportRelationship);

@@ -1,0 +1,72 @@
+@implements IDisposable
+@inject IJSRuntime JSRuntime;
+
+<div class="rvt-modal" id="@Id" role="dialog" aria-labelledby="modal-example-title" aria-hidden="true" tabindex=-1>
+	<div class="rvt-modal__inner">
+		<header class="rvt-modal__header">
+			<h1 class="rvt-modal__title" id="modal-example-title">@Title</h1>
+		</header>
+		<div class="rvt-modal__body">
+			@Content
+		</div>
+		<div class="rvt-modal__controls">
+			@Controls
+		</div>
+		<button type="button" class="rvt-button rvt-modal__close" data-modal-close=@Id>
+			<rvt-icon name="close" /><span class="rvt-sr-only">close</span>
+		</button>
+	</div>
+</div>
+
+
+@code
+{
+	///<summary> The ID for this modal form. This is useful if you want to programatically close the form using	Modal.close().</summary>
+	[Parameter]
+	public string Id { get; set; }
+
+	///<summary> The title text that should appear at the top of the modal.</summary>
+	[Parameter]
+	public string Title { get; set; }
+
+	///<summary> The rvt-modal__body of the modal.</summary>
+	[Parameter]
+	public RenderFragment Content { get; set; }
+
+	///<summary> The content rvt-modal__controls div.</summary>
+	[Parameter]
+	public RenderFragment Controls { get; set; }
+
+	public void ConfirmBeforeClose()
+	{
+		AddToModalConfirmBeforeCloseList();
+	}
+	public void DoNotConfirmBeforeClose()
+	{
+		RemoveFromModalConfirmBeforeCloseList();
+	}
+	public async Task Close()
+	{
+		await JSRuntime.InvokeVoidAsync("Modal.close", Id);
+	}
+	private void AddToModalConfirmBeforeCloseList()
+	{
+		// Cast JSRuntime so we can use InvokeVoid, instead of InvokeVoidAsync
+		var js = (IJSInProcessRuntime)JSRuntime;
+		// Add Id to the collection defined in interop.js
+		js.InvokeVoid("modalsConfirmBeforeClose.push", Id);
+	}
+	private void RemoveFromModalConfirmBeforeCloseList()
+	{
+		// Cast JSRuntime so we can use InvokeVoid, instead of InvokeVoidAsync
+		var js = (IJSInProcessRuntime)JSRuntime;
+		// Remove Id from the collection defined in interop.js
+		js.InvokeVoid("removeModalConfirmBeforeClose", Id);
+	}
+
+	public void Dispose()
+	{
+		// Make sure we remove Id from the collection of modals to watch in interop.js
+		RemoveFromModalConfirmBeforeCloseList();
+	}
+}

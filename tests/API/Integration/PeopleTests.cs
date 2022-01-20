@@ -153,10 +153,10 @@ namespace Integration
 
             [TestCase("Owner", new int[]{ TestEntities.People.RSwansonId })]
             [TestCase("Viewer", new int[]{ TestEntities.People.LKnopeId })]
-            [TestCase("ManageMembers", new int[]{ TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId })]
-            [TestCase("managemembers", new int[]{ TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "Case insensitive match for Permissions.")]
-            [TestCase("ManageTools", new int[0])]
-            [TestCase("Viewer, ManageMembers", new int[]{ TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "Multiple Permissions provided.")]
+            [TestCase("ManageMembers", new int[]{ TestEntities.People.ServiceAdminId })]
+            [TestCase("managemembers", new int[]{ TestEntities.People.ServiceAdminId }, Description = "Case insensitive match for Permissions.")]
+            [TestCase("ManageTools", new int[] { TestEntities.People.BWyattId })]
+            [TestCase("Viewer, ManageMembers", new int[]{ TestEntities.People.LKnopeId, TestEntities.People.ServiceAdminId }, Description = "Multiple Permissions provided.")]
             public async Task CanSearchByPermission(string permissions, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?permission={permissions}");
@@ -222,6 +222,18 @@ namespace Integration
             {
                 var resp = await GetAuthenticated($"people/{personId}", jwt);
                 AssertPermissions(resp, expectedPermissions);
+            }
+
+            [TestCase(ValidRswansonJwt, EntityPermissions.Get)]
+            [TestCase(ValidAdminJwt, PermsGroups.GetPut)]
+            public async Task HasCorrectPermissionsForRetiredUnit(string jwt, EntityPermissions expectedPermissions)
+            {
+                //retire unit
+                var archivedUnitResponse = await DeleteAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}/archive", ValidAdminJwt);
+                AssertStatusCode(archivedUnitResponse, HttpStatusCode.OK);
+
+                var ronResp = await GetAuthenticated($"people/{TestEntities.People.LKnope.Netid}", jwt);
+                AssertPermissions(ronResp, expectedPermissions);
             }
 
             [Test]
@@ -383,6 +395,33 @@ namespace Integration
                     db.HrPeople.Add(new HrPerson { Id = TestEntities.HrPeople.Tammy1Id + n, Netid = $"tammy{n}", Name = $"Swanson, Tammy{n}", Campus = "Pawnee", HrDepartment = "N/A" });
                 }
                 await db.SaveChangesAsync();
+            }
+        }
+        public class WithHrGeOne : ApiTest
+        {
+
+            [Test]
+            public async Task ThrowsNotFoundWhenNoMatches()
+            {
+                var resp = await GetAuthenticated("people/withHR/notrealperson");
+                AssertStatusCode(resp, HttpStatusCode.NotFound);
+            }
+
+            [Test]
+            public async Task GetHrPerson()
+            {
+                var resp = await GetAuthenticated($"people/withHR/{TestEntities.HrPeople.Tammy1.Netid}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<PeopleLookupItem>();
+                Assert.AreEqual(actual.NetId, TestEntities.HrPeople.Tammy1.Netid);
+            }
+            [Test]
+            public async Task GetPerson()
+            {
+                var resp = await GetAuthenticated($"people/withHR/{TestEntities.People.BWyatt.Netid}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<PeopleLookupItem>();
+                Assert.AreEqual(actual.NetId, TestEntities.People.BWyatt.Netid);
             }
         }
     }
