@@ -16,6 +16,7 @@ namespace Integration
 	{
 		public const string MalformedError = "The request body was malformed or the unitId field was missing.";
 		public const string ValidationPercentageError = "The field Percentage must be between 0 and 100.";
+		public const string ValidationRoleError = "The Role field is required.";
 		public const string ArchivedUnitError = "The provided unit has been archived and is not available for new Unit Members.";
 
 		public class GetAll : ApiTest
@@ -142,7 +143,7 @@ namespace Integration
 				};
 				await db.UnitMembers.AddAsync(chrisCityMembership);
 				await db.SaveChangesAsync();
-				
+
 				// Get "parks & rec", they should have PermsGroups.All because "City of Pawnee" is "Parks & Rec's" parent.
 				var resp = await GetAuthenticated($"memberships/{chrisCityMembership.Id}", ValidCtraegerJwt);
                 AssertStatusCode(resp, HttpStatusCode.OK);
@@ -201,6 +202,28 @@ namespace Integration
 			}
 
 			[Test]
+			public async Task UnitMembersCannotCreateWithoutRole()
+			{
+				var req = new UnitMemberRequest
+				{
+                    UnitId = TestEntities.Units.CityOfPawneeUnitId,
+					Permissions = UnitPermissions.Viewer,
+					PersonId = TestEntities.HrPeople.Tammy1Id,
+					Role = 0,
+					Title = "Title",
+					Percentage = 100,
+					Notes = ""
+				};
+				var resp = await PostAuthenticated("memberships", req, ValidRswansonJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains(ValidationRoleError, actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
+			}
+
+			[Test]
 			public async Task UnitMemberCannotCreateForArchivedUnit()
 			{
 				var req = new UnitMemberRequest
@@ -213,9 +236,9 @@ namespace Integration
 					Percentage = 50,
 					Notes = ""
 				};
-				
+
 				var resp = await PostAuthenticated("memberships", req, ValidAdminJwt);
-				
+
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
@@ -290,7 +313,7 @@ namespace Integration
                     Percentage = 100,
 				};
 				var resp = await PostAuthenticated("memberships", req, ValidAdminJwt);
-				
+
 				AssertStatusCode(resp, HttpStatusCode.Created);
 				var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
 			}
@@ -344,6 +367,29 @@ namespace Integration
 				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
 				Assert.AreEqual(1, actual.Errors.Count);
 				Assert.Contains(ValidationPercentageError, actual.Errors);
+				Assert.AreEqual("(none)", actual.Details);
+			}
+
+			[Test]
+			public async Task BadRequestCannotUpdateUnitMemberWithoutRole()
+			{
+				var req = new UnitMemberRequest
+				{
+					UnitId = TestEntities.Units.CityOfPawneeUnitId,
+					Permissions = UnitPermissions.Viewer,
+					PersonId = TestEntities.HrPeople.Tammy1Id,
+					Title = "Title",
+					Percentage = 100,
+					Notes = ""
+				};
+
+				var resp = await PutAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var actual = await resp.Content.ReadAsAsync<ApiError>();
+
+				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+				Assert.AreEqual(1, actual.Errors.Count);
+				Assert.Contains(ValidationRoleError, actual.Errors);
 				Assert.AreEqual("(none)", actual.Details);
 			}
 
@@ -433,9 +479,9 @@ namespace Integration
 			{
 				var resp = await DeleteAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}", ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.NoContent);
-				
+
 				var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
-				
+
 				Assert.IsEmpty(db.MemberTools.Where(mt => mt.MembershipId == TestEntities.UnitMembers.RSwansonLeaderId));
 				Assert.IsEmpty(db.MemberTools.Where(mt => mt.Tool == null));
 				Assert.IsEmpty(db.MemberTools.Where(mt => mt.UnitMember == null));
