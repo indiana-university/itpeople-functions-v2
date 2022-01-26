@@ -23,6 +23,7 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<Department>), Description = "A collection of department records")]
 		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = "The search query was malformed or incorrect. See response content for additional information.")]
 		[OpenApiParameter("q", In = ParameterLocation.Query, Description = "filter by department name/description, ex: 'Parks' or 'PA-PARK'")]
+		[OpenApiParameter("limit", In = ParameterLocation.Query, Description = "Restrict the number of responses to no more than this integer. ex: `15` or `20`.  `0` or less will return all records.")]
 		public static Task<IActionResult> DepartmentsGetAll(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments")] HttpRequest req)
 			=> Security.Authenticate(req)

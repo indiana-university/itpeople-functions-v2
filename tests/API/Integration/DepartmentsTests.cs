@@ -54,6 +54,18 @@ namespace Integration
 				var actual = await resp.Content.ReadAsAsync<List<Department>>();
 				Assert.AreEqual(0, actual.Count);
 			}
+
+			[TestCase("0", 3)]
+			[TestCase("2", 2)]
+			[TestCase("-1", 3)]
+			[TestCase("twenty-five", 3)]
+			public async Task KnowYourLimitations(string limit, int expectedRecords)
+			{
+				var resp = await GetAuthenticated($"Departments?limit={limit}");
+				AssertStatusCode(resp, HttpStatusCode.OK);
+				var actual = await resp.Content.ReadAsAsync<List<Department>>();
+				Assert.AreEqual(expectedRecords, actual.Count);
+			}
 		}
 		public class GetOne : ApiTest
 		{
