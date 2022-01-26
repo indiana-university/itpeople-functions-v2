@@ -81,9 +81,9 @@ namespace API.Functions
             var queryParms = req.GetQueryParameterDictionary();
             queryParms.TryGetValue("q", out string q);
             
-            queryParms.TryGetValue("limit", out string limitString);
+            queryParms.TryGetValue("_limit", out string limitString);
             int.TryParse(limitString, out int limit);
-            
+
             return Pipeline.Success(new DepartmentSearchParameters(q, limit));
         }
     }

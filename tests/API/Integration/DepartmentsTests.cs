@@ -61,7 +61,7 @@ namespace Integration
 			[TestCase("twenty-five", 3)]
 			public async Task KnowYourLimitations(string limit, int expectedRecords)
 			{
-				var resp = await GetAuthenticated($"Departments?limit={limit}");
+				var resp = await GetAuthenticated($"Departments?_limit={limit}");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Department>>();
 				Assert.AreEqual(expectedRecords, actual.Count);
