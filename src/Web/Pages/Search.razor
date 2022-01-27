@@ -147,7 +147,7 @@
 
 	private async Task SearchUnits() => Units = (await Get<List<UnitResponse>>($"/Units?q={HttpUtility.UrlEncode(Q)}")).Value;
 	private async Task SearchPeople() => People = (await Get<List<Person>>($"/People?q={HttpUtility.UrlEncode(Q)}")).Value;
-	private async Task SearchDepartments() => Departments = (await Get<List<Department>>($"/Departments?q={HttpUtility.UrlEncode(Q)}")).Value;
+	private async Task SearchDepartments() => Departments = (await Get<List<Department>>($"/Departments?q={HttpUtility.UrlEncode(Q)}&_limit=25")).Value;
 	private async Task SearchBuildings() => Buildings = (await Get<List<Building>>($"/Buildings?q={HttpUtility.UrlEncode(Q)}")).Value;
 
 	public void Dispose(){
