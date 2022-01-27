@@ -15,12 +15,18 @@ namespace API.Data
     {
 		internal static Task<Result<List<Department>, Error>> GetAll(DepartmentSearchParameters query)
             => ExecuteDbPipeline("search all departments", async db => {
-                    var result = await db.Departments.Where(d =>
+                    IQueryable<Department> dbQuery = db.Departments.Where(d =>
                         string.IsNullOrWhiteSpace(query.Q) 
                         || EF.Functions.ILike(d.Name, $"%{query.Q}%")
                         || EF.Functions.ILike(d.Description, $"%{query.Q}%"))
-                        .OrderBy(d => d.Name)
-                        .Take(25)
+                        .OrderBy(d => d.Name);
+
+                    if(query.Limit > 0)
+                    {
+                        dbQuery = dbQuery.Take(query.Limit);
+                    }
+
+                    var result = await dbQuery
                         .AsNoTracking()
                         .ToListAsync();
                     return Pipeline.Success(result);

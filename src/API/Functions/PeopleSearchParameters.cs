@@ -69,14 +69,22 @@ namespace API.Functions
 
     public class DepartmentSearchParameters : BaseSearchParameters
     {
-        public DepartmentSearchParameters(string q) : base(q)
-        {}
+        public int Limit { get; }
+
+        public DepartmentSearchParameters(string q, int limit = 0) : base(q)
+        {
+            Limit = limit;
+        }
 
         public static Result<DepartmentSearchParameters, Error> Parse(HttpRequest req) 
         {
             var queryParms = req.GetQueryParameterDictionary();
             queryParms.TryGetValue("q", out string q);
-            return Pipeline.Success(new DepartmentSearchParameters(q));
+            
+            queryParms.TryGetValue("_limit", out string limitString);
+            int.TryParse(limitString, out int limit);
+
+            return Pipeline.Success(new DepartmentSearchParameters(q, limit));
         }
     }
 
