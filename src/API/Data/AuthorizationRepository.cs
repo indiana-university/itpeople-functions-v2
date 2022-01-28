@@ -94,16 +94,15 @@ namespace API.Data
                 .Bind(person => ResolveServiceAdminPermissions(person))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
-        internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId, UnitPermissions permissions = UnitPermissions.ManageMembers, EntityPermissions permissionsToGive = PermsGroups.All)
-            => ExecuteDbPipeline($"resolve unit {unitId} and unit member management permissions", db =>
-                FetchPersonAndMembership(db, requestorNetId, unitId)
-                .Bind(person => ResolveUnitManagmentPermissions(person, unitId, new List<UnitPermissions> {permissions}, db, permissionsToGive))
-                .Tap(perms => req.SetEntityPermissions(perms)));
-internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId, List<UnitPermissions> permissions, EntityPermissions permissionsToGive = PermsGroups.All)
+        internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId, List<UnitPermissions> permissions, EntityPermissions permissionsToGive = PermsGroups.All)
             => ExecuteDbPipeline($"resolve unit {unitId} and unit member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId, unitId)
                 .Bind(person => ResolveUnitManagmentPermissions(person, unitId, permissions, db, permissionsToGive))
                 .Tap(perms => req.SetEntityPermissions(perms)));
+        
+        internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId, UnitPermissions permissions = UnitPermissions.ManageMembers, EntityPermissions permissionsToGive = PermsGroups.All)
+            => DetermineUnitManagementPermissions(req, requestorNetId, unitId, new List<UnitPermissions> { permissions }, permissionsToGive);
+        
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId)
             => ExecuteDbPipeline($"resolve unit {membershipId} member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId)
