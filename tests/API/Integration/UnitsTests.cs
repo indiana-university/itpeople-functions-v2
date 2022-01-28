@@ -106,6 +106,50 @@ namespace Integration
             [TestCase(TestEntities.Units.ParksAndRecUnitId, TestEntities.Units.CityOfPawneeUnitId, UnitPermissions.Owner, PermsGroups.GetPut, Description = "Owner Inheritted From Parent")]
             public async Task ReturnsCorrectPermissionsSingleUnit(int unitToCheck, int unitWithPermissions, UnitPermissions providedPermission, EntityPermissions expectedPermission)
                 => await GetReturnsCorrectEntityPermissions($"units/{unitToCheck}", unitWithPermissions, providedPermission, expectedPermission);
+            
+            [Test]
+            public async Task BegottenUnitPermissions()
+            {
+                // Add units 4 levels deep under Parks & Rec unit.
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                
+                var childUnit = new Unit("Child", "Child of Parks & Rec", "bleh", "bleh@fake.com", TestEntities.Units.ParksAndRecUnitId);
+                await db.Units.AddAsync(childUnit);
+                await db.SaveChangesAsync();
+
+                var grandChildUnit = new Unit("Grandchild", "Grandchild of Parks & Rec", "bleh", "bleh@fake.com", childUnit.Id);
+                await db.Units.AddAsync(grandChildUnit);
+                await db.SaveChangesAsync();
+
+                var greatGrandChildUnit = new Unit("Great-Grandchild", "Great-Grandchild of Parks & Rec", "bleh", "bleh@fake.com", grandChildUnit.Id);
+                await db.Units.AddAsync(greatGrandChildUnit);
+                await db.SaveChangesAsync();
+
+                var greatGreatGrandChildUnit = new Unit("Great-Great-Grandchild", "Great-Great-Grandchild of Parks & Rec", "bleh", "bleh@fake.com", greatGrandChildUnit.Id);
+                await db.Units.AddAsync(greatGreatGrandChildUnit);
+                await db.SaveChangesAsync();
+
+                // Ron is the owner of the Parks and Rec unit, he should have the same permissions on all child units.
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.GetPut);
+                
+                resp = await GetAuthenticated($"units/{childUnit.Id}", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.GetPut);
+
+                resp = await GetAuthenticated($"units/{grandChildUnit.Id}", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.GetPut);
+
+                resp = await GetAuthenticated($"units/{greatGrandChildUnit.Id}", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.GetPut);
+
+                resp = await GetAuthenticated($"units/{greatGreatGrandChildUnit.Id}", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.GetPut);
+            }
         }
 
         public class UnitCreate : ApiTest
@@ -870,6 +914,50 @@ namespace Integration
             [TestCase(UnitPermissions.Owner, PermsGroups.All, Description = "Owner")]
             public async Task ReturnsCorrectPermissionsForUnitPermissions(UnitPermissions providedPermission, EntityPermissions expectedPermission)
                 => await GetReturnsCorrectEntityPermissions($"units/{TestEntities.Units.AuditorId}/tools", TestEntities.Units.AuditorId, providedPermission, expectedPermission);
+            
+            [Test]
+            public async Task BegottenUnitToolsPermissions()
+            {
+                // Add units 4 levels deep under Parks & Rec unit.
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                
+                var childUnit = new Unit("Child", "Child of Parks & Rec", "bleh", "bleh@fake.com", TestEntities.Units.ParksAndRecUnitId);
+                await db.Units.AddAsync(childUnit);
+                await db.SaveChangesAsync();
+
+                var grandChildUnit = new Unit("Grandchild", "Grandchild of Parks & Rec", "bleh", "bleh@fake.com", childUnit.Id);
+                await db.Units.AddAsync(grandChildUnit);
+                await db.SaveChangesAsync();
+
+                var greatGrandChildUnit = new Unit("Great-Grandchild", "Great-Grandchild of Parks & Rec", "bleh", "bleh@fake.com", grandChildUnit.Id);
+                await db.Units.AddAsync(greatGrandChildUnit);
+                await db.SaveChangesAsync();
+
+                var greatGreatGrandChildUnit = new Unit("Great-Great-Grandchild", "Great-Great-Grandchild of Parks & Rec", "bleh", "bleh@fake.com", greatGrandChildUnit.Id);
+                await db.Units.AddAsync(greatGreatGrandChildUnit);
+                await db.SaveChangesAsync();
+
+                // Ron is the owner of the Parks and Rec unit, he should have the same permissions on all child units.
+                var resp = await GetAuthenticated($"units/{TestEntities.Units.ParksAndRecUnitId}/tools", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
+                
+                resp = await GetAuthenticated($"units/{childUnit.Id}/tools", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
+
+                resp = await GetAuthenticated($"units/{grandChildUnit.Id}/tools", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
+
+                resp = await GetAuthenticated($"units/{greatGrandChildUnit.Id}/tools", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
+
+                resp = await GetAuthenticated($"units/{greatGreatGrandChildUnit.Id}/tools", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
+            }
         }
     }
 }

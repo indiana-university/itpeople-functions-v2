@@ -170,6 +170,52 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, EntityPermissions.Get);
 			}
+
+			[Test]
+			public async Task BegottenMemberToolsPermissions()
+            {
+                // Add units 4 levels deep under Parks & Rec unit.
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                
+                var childUnit = new Unit("Child", "Child of Parks & Rec", "bleh", "bleh@fake.com", TestEntities.Units.ParksAndRecUnitId);
+                await db.Units.AddAsync(childUnit);
+                await db.SaveChangesAsync();
+
+                var grandChildUnit = new Unit("Grandchild", "Grandchild of Parks & Rec", "bleh", "bleh@fake.com", childUnit.Id);
+                await db.Units.AddAsync(grandChildUnit);
+                await db.SaveChangesAsync();
+
+                var greatGrandChildUnit = new Unit("Great-Grandchild", "Great-Grandchild of Parks & Rec", "bleh", "bleh@fake.com", grandChildUnit.Id);
+                await db.Units.AddAsync(greatGrandChildUnit);
+                await db.SaveChangesAsync();
+
+                var greatGreatGrandChildUnit = new Unit("Great-Great-Grandchild", "Great-Great-Grandchild of Parks & Rec", "bleh", "bleh@fake.com", greatGrandChildUnit.Id);
+                await db.Units.AddAsync(greatGreatGrandChildUnit);
+                await db.SaveChangesAsync();
+
+				// Add a person to the greatGreatGrandChildUnit
+				// Grant them a tool on the unit.
+				var member =  new UnitMember
+				{
+					Role = Role.Member,
+					Permissions = UnitPermissions.Viewer,
+					PersonId = TestEntities.People.ALudgateId,
+					Title = "Fifth Columnist",
+					Percentage = 100,
+					Notes = "notes",
+					UnitId = greatGreatGrandChildUnit.Id,
+					MemberTools = new List<MemberTool>(){ new MemberTool{ ToolId = TestEntities.Tools.SawId } }
+				};
+				await db.UnitMembers.AddAsync(member);
+				await db.SaveChangesAsync();
+
+				var memberToolId = member.MemberTools.First().Id;
+
+                // Ron is the owner of the Parks and Rec unit, he should have the same permissions on all child units.
+                var resp = await GetAuthenticated($"membertools/{memberToolId}", ValidRswansonJwt);
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                AssertPermissions(resp, PermsGroups.All);
+            }
 		}
 
 		public class UnitMemberToolsCreate : ApiTest
