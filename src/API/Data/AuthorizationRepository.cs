@@ -99,7 +99,11 @@ namespace API.Data
                 FetchPersonAndMembership(db, requestorNetId, unitId)
                 .Bind(person => ResolveUnitManagmentPermissions(person, unitId, new List<UnitPermissions> {permissions}, db, permissionsToGive))
                 .Tap(perms => req.SetEntityPermissions(perms)));
-
+internal static Task<Result<EntityPermissions, Error>> DetermineUnitManagementPermissions(HttpRequest req, string requestorNetId, int unitId, List<UnitPermissions> permissions, EntityPermissions permissionsToGive = PermsGroups.All)
+            => ExecuteDbPipeline($"resolve unit {unitId} and unit member management permissions", db =>
+                FetchPersonAndMembership(db, requestorNetId, unitId)
+                .Bind(person => ResolveUnitManagmentPermissions(person, unitId, permissions, db, permissionsToGive))
+                .Tap(perms => req.SetEntityPermissions(perms)));
         internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequest req, string requestorNetId, int membershipId)
             => ExecuteDbPipeline($"resolve unit {membershipId} member management permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId)
