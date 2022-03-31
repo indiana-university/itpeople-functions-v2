@@ -112,5 +112,10 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(_ => PeopleRepository.WithHrGetOne(netId))
                 .Finally(result => Response.Ok(req, result));
+        
+        [FunctionName(nameof(PeopleFromActiveDirectory))]
+        public static Task<IActionResult> PeopleFromActiveDirectory([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "people/fromAD/{netId}")] HttpRequest req, string netId)
+            => PeopleRepository.GetOneActiveDirectory(netId)
+                .Finally(result => Response.Ok(req, result));
     }
 }

@@ -9,6 +9,8 @@ using Models;
 using API.Functions;
 using System;
 using Microsoft.AspNetCore.Http;
+using Novell.Directory.Ldap.Controls;
+using Novell.Directory.Ldap;
 
 namespace API.Data
 {
@@ -136,6 +138,38 @@ namespace API.Data
             => ExecuteDbPipeline("get a person or hr people by Netid", db =>
                 TryFindPersonWithHr(db, netId));
         
+        public static async Task<Result<PeopleLookupItem, Error>> GetOneActiveDirectory(string netId)
+        {
+            try
+            {
+                using (var ldap = GetLdapConnection())
+                {
+                    var userDn = $"cn={netId},ou=Accounts,dc=ads,dc=iu,dc=edu";
+                    var result = ldap.Read(userDn);
+                    var attributes = result.getAttributeSet();
+
+                    if(attributes.getAttribute("title")?.StringValue == "group")
+                    {
+                        return Pipeline.BadRequest($"\"{netId}\" is a group account. Group accounts should not be added to IT People.");
+                    }
+
+                    var pli = new PeopleLookupItem
+                    {
+                        Id = 0,
+                        NetId = netId,
+                        Name = attributes.getAttribute("displayName")?.StringValue ?? $"{attributes.getAttribute("sn")}, {attributes.getAttribute("givenName")}"
+                    };
+
+                    return Pipeline.Success(pli);
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.GetType()}");
+                return Pipeline.InternalServerError($"Encountered an error fetching \"{netId}\" from Active Directory.", ex);
+            }
+        }
+        
         private static Result<List<UnitMember>, Error> GetActiveMemberships(Person person)
             => Pipeline.Success(person.UnitMemberships.Where(um => um.Unit.Active).ToList());
 
@@ -205,5 +239,15 @@ namespace API.Data
                     var result = await SearchBothByNameOrNetId(db, query).ToListAsync();
                     return Pipeline.Success(result);
                 });
+    
+        public static LdapConnection GetLdapConnection()
+        {
+            var adsUser = $"ads\\{Utils.Env("AdQueryUser", required:true)}";
+            var adsPassword = Utils.Env("AdQueryPassword", required:true);
+            var ldap = new LdapConnection() {SecureSocketLayer = true};
+            ldap.Connect("ads.iu.edu", 636);
+            ldap.Bind(adsUser, adsPassword);
+            return ldap;
+        }
     }
 }
