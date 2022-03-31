@@ -165,7 +165,13 @@ namespace API.Data
             }
             catch(Exception ex)
             {
-                Console.WriteLine($"Error: {ex.GetType()}");
+                // for not found responses give a 404
+                if(ex is LdapException && ex.Message == "No Such Object")
+                {
+                    return Pipeline.NotFound($"No user found in Active Directory with username \"{netId}\"");
+                }
+
+                // In other cases just present the error.
                 return Pipeline.InternalServerError($"Encountered an error fetching \"{netId}\" from Active Directory.", ex);
             }
         }
