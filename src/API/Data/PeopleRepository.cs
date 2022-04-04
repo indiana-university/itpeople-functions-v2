@@ -155,47 +155,8 @@ namespace API.Data
         
 
         public static Result<PeopleLookupItem, Error> GetOneActiveDirectory(string netId)
-        {
-            try
-            {
-                if(netId.Any(c => LdapSpecialCharacters.Contains(c)))
-                {
-                    throw new Exception($"LDAP netId cannot contain {string.Join(", ", LdapSpecialCharacters)}");
-                }
-
-                using (var ldap = GetLdapConnection())
-                {
-                    var userDn = $"cn={netId},ou=Accounts,dc=ads,dc=iu,dc=edu";
-                    var result = ldap.Read(userDn);
-                    var attributes = result.getAttributeSet();
-
-                    if(attributes.getAttribute("title")?.StringValue == "group")
-                    {
-                        return Pipeline.BadRequest($"\"{netId}\" is a group account. Group accounts should not be added to IT People.");
-                    }
-
-                    var pli = new PeopleLookupItem
-                    {
-                        Id = null,
-                        NetId = netId,
-                        Name = attributes.getAttribute("displayName")?.StringValue ?? $"{attributes.getAttribute("sn")}, {attributes.getAttribute("givenName")}"
-                    };
-
-                    return Pipeline.Success(pli);
-                }
-            }
-            catch(Exception ex)
-            {
-                // for not found responses give a 404
-                if(ex is LdapException && ex.Message == "No Such Object")
-                {
-                    return Pipeline.NotFound($"No user found in Active Directory with username \"{netId}\"");
-                }
-
-                // In other cases just present the error.
-                return Pipeline.InternalServerError($"Encountered an error fetching \"{netId}\" from Active Directory.", ex);
-            }
-        }
+            => TryFindPersonWithAd(netId)
+                .Bind(adPerson => Pipeline.Success(new PeopleLookupItem { Id = null, NetId = adPerson.Netid, Name = adPerson.Name}));
         
         private static Result<List<UnitMember>, Error> GetActiveMemberships(Person person)
             => Pipeline.Success(person.UnitMemberships.Where(um => um.Unit.Active).ToList());
@@ -246,6 +207,64 @@ namespace API.Data
             }
 
             return Pipeline.NotFound("No person, HR person, or Active Directory user found with that netid.");
+        }
+
+        public static Result<Person, Error> TryFindPersonWithAd(string netId)
+        {
+            try
+            {
+                if(netId.Any(c => LdapSpecialCharacters.Contains(c)))
+                {
+                    throw new Exception($"LDAP netId cannot contain {string.Join(", ", LdapSpecialCharacters)}");
+                }
+
+                using (var ldap = GetLdapConnection())
+                {
+                    var userDn = $"cn={netId},ou=Accounts,dc=ads,dc=iu,dc=edu";
+                    var result = ldap.Read(userDn);
+                    var attributes = result.getAttributeSet();
+
+                    if(attributes.getAttribute("title")?.StringValue == "group")
+                    {
+                        return Pipeline.BadRequest($"\"{netId}\" is a group account. Group accounts should not be added to IT People.");
+                    }
+                    
+                    // Useful for seeing all LDAP attributes
+                    // foreach(var attr in attributes)
+                    // {
+                    //     Console.WriteLine(attr);
+                    // }
+                    
+                    var adPerson = new Person
+                    {
+                        Netid = netId,
+                        Name = $"{attributes.getAttribute("givenName")?.StringValue} {attributes.getAttribute("sn")?.StringValue}",
+                        NameFirst = $"{attributes.getAttribute("givenName")?.StringValue}",
+                        NameLast = $"{attributes.getAttribute("sn")?.StringValue}",
+                        Position = $"{attributes.getAttribute("title")?.StringValue}",
+                        Campus = $"{attributes.getAttribute("l")?.StringValue}",
+                        CampusPhone = $"{attributes.getAttribute("telephoneNumber")?.StringValue}",
+                        CampusEmail = $"{attributes.getAttribute("mail")?.StringValue}",
+                        Location = "",
+                        Expertise = "",
+                        Notes = "",
+                        PhotoUrl = ""
+                    };
+
+                    return Pipeline.Success(adPerson);
+                }
+            }
+            catch(Exception ex)
+            {
+                // for not found responses give a 404
+                if(ex is LdapException && ex.Message == "No Such Object")
+                {
+                    return Pipeline.NotFound($"No user found in Active Directory with username \"{netId}\"");
+                }
+
+                // In other cases just present the error.
+                return Pipeline.InternalServerError($"Encountered an error fetching \"{netId}\" from Active Directory.", ex);
+            }
         }
 
         private static async Task<Result<Person, Error>> TryFindPerson(PeopleContext db, string username)
