@@ -232,10 +232,20 @@ namespace API.Data
 			{
                 return Pipeline.Success(new PeopleLookupItem { Id = person.Id, NetId = person.Netid, Name = person.Name });
 			}
+            
             var hrPerson = await db.HrPeople.SingleOrDefaultAsync(p => p.Netid == netId);
-            return hrPerson == null
-                ? Pipeline.NotFound("No person or HR person found with that netid.")
-                : Pipeline.Success(new PeopleLookupItem { Id = 0, NetId = hrPerson.Netid, Name = hrPerson.Name });
+            if(hrPerson != null)
+            {
+                return Pipeline.Success(new PeopleLookupItem { Id = 0, NetId = hrPerson.Netid, Name = hrPerson.Name });
+            }
+
+            var adResult = GetOneActiveDirectory(netId);
+            if(adResult.IsSuccess)
+            {
+                return adResult.Value;
+            }
+
+            return Pipeline.NotFound("No person, HR person, or Active Directory user found with that netid.");
         }
 
         private static async Task<Result<Person, Error>> TryFindPerson(PeopleContext db, string username)
