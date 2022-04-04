@@ -209,7 +209,7 @@ namespace API.Data
             return Pipeline.NotFound("No person, HR person, or Active Directory user found with that netid.");
         }
 
-        public static Result<Person, Error> TryFindPersonWithAd(string netId)
+        public static Result<HrPerson, Error> TryFindPersonWithAd(string netId)
         {
             try
             {
@@ -235,7 +235,7 @@ namespace API.Data
                     //     Console.WriteLine(attr);
                     // }
                     
-                    var adPerson = new Person
+                    var adPerson = new HrPerson
                     {
                         Netid = netId,
                         Name = $"{attributes.getAttribute("givenName")?.StringValue} {attributes.getAttribute("sn")?.StringValue}",
@@ -245,10 +245,8 @@ namespace API.Data
                         Campus = $"{attributes.getAttribute("l")?.StringValue}",
                         CampusPhone = $"{attributes.getAttribute("telephoneNumber")?.StringValue}",
                         CampusEmail = $"{attributes.getAttribute("mail")?.StringValue}",
-                        Location = "",
-                        Expertise = "",
-                        Notes = "",
-                        PhotoUrl = ""
+                        HrDepartment = $"{attributes.getAttribute("division")?.StringValue}",
+                        HrDepartmentDescription = $"{attributes.getAttribute("department")?.StringValue}"
                     };
 
                     return Pipeline.Success(adPerson);
