@@ -290,9 +290,9 @@ namespace API.Data
 
         internal static Task<Result<List<PeopleLookupItem>, Error>> GetAllWithHr(HrPeopleSearchParameters query)
             => ExecuteDbPipeline("search all people by netId", async db => {
-                    var result = await SearchBothByNameOrNetId(db, query);
-                    var x = result.ToList();
-                    return Pipeline.Success(x);
+                    var response = await SearchBothByNameOrNetId(db, query);
+                    var result = response.ToList();
+                    return Pipeline.Success(result);
                 });
     
         public static LdapConnection GetLdapConnection()
