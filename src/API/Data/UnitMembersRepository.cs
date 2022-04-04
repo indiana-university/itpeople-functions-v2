@@ -95,9 +95,15 @@ namespace API.Data
 			var hrPerson = await db.HrPeople.SingleOrDefaultAsync(p => p.Netid == body.NetId);
 			if (hrPerson == null)
 			{
-				return Pipeline.NotFound("The specified person does not exist in the HR directory.");
+				var adResult = PeopleRepository.TryFindPersonWithAd(body.NetId);
+				if(adResult.IsFailure)
+				{
+					return Pipeline.NotFound("The specified person does not exist in the HR API or Active Directory.");
+				}
+
+				hrPerson = adResult.Value;
 			}
-			
+
 			var matchingDepartment = await db.Departments.SingleOrDefaultAsync(d => d.Name.Equals(hrPerson.HrDepartment));
 			if (matchingDepartment == null)
 			{
