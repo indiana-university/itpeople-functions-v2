@@ -9,12 +9,15 @@ using Models;
 using API.Functions;
 using System;
 using Microsoft.AspNetCore.Http;
+using Novell.Directory.Ldap.Controls;
+using Novell.Directory.Ldap;
 
 namespace API.Data
 {
 
     public class PeopleRepository : DataRepository
     {
+        private static List<char> LdapSpecialCharacters = new List<char> { ',', '/', '\\', '#', '+', '<', '>', ';', '"', '=', ' ', ':', '|', '*', '?' };
 
         internal static Task<Result<List<Person>, Error>> GetAll(PeopleSearchParameters query)
             => ExecuteDbPipeline("search all people", async db => {
@@ -101,11 +104,11 @@ namespace API.Data
                 .AsNoTracking();
         }
 
-        private static IQueryable<PeopleLookupItem> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
+        private static async Task<IQueryable<PeopleLookupItem>> SearchBothByNameOrNetId(PeopleContext db, HrPeopleSearchParameters query)
         {
             var parsedName = GetParsedName(query.Q);
             //Get existing people matches
-            var peopleMatches = db.People
+            var peopleMatches = await db.People
                 .Where(p=> EF.Functions.ILike(p.Netid, $"%{query.Q}%")
                             || EF.Functions.ILike(p.Name, $"%{query.Q}%")
                             || ((string.IsNullOrWhiteSpace(parsedName.firstName) == false
@@ -113,16 +116,30 @@ namespace API.Data
                                 && EF.Functions.ILike(p.Name, $"{parsedName.firstName}%{parsedName.lastName}%")))
                 .Select(p => new PeopleLookupItem { Id = p.Id, NetId = p.Netid, Name = p.Name })
                 .Take(query.Limit)
-                .AsNoTracking();
+                .AsNoTracking()
+                .ToListAsync();
             var existingNetIds = peopleMatches.Select(p => p.NetId.ToLower()).ToList();
 
             //Get possible matches from the HrPeople table, and exclude any existing users.
-            var hrPeopleMatches = SearchHrPeopleByNameOrNetId(db, query)
+            var hrPeopleMatches = await SearchHrPeopleByNameOrNetId(db, query)
                 .Where(h => existingNetIds.Contains(h.NetId.ToLower()) == false)
-                .Take(query.Limit);
-
-            return peopleMatches
+                .Take(query.Limit)
+                .ToListAsync();
+            
+            //If there are no results from People or HrPeople query AD for them.
+            var adMatches = new List<PeopleLookupItem>();
+            if(peopleMatches.Count() == 0 && hrPeopleMatches.Count() == 0)
+            {
+                var adResult = GetOneActiveDirectory(query.Q);
+                if(adResult.IsSuccess)
+                {
+                    adMatches.Add(adResult.Value);
+                }
+            }
+            
+            return peopleMatches.AsQueryable()
                 .Union(hrPeopleMatches)
+                .Union(adMatches)
                 .Take(query.Limit);
         }
 
@@ -135,6 +152,11 @@ namespace API.Data
         public static Task<Result<PeopleLookupItem, Error>> WithHrGetOne(string netId)
             => ExecuteDbPipeline("get a person or hr people by Netid", db =>
                 TryFindPersonWithHr(db, netId));
+        
+
+        public static Result<PeopleLookupItem, Error> GetOneActiveDirectory(string netId)
+            => TryFindPersonWithAd(netId)
+                .Bind(adPerson => Pipeline.Success(new PeopleLookupItem { Id = null, NetId = adPerson.Netid, Name = adPerson.Name}));
         
         private static Result<List<UnitMember>, Error> GetActiveMemberships(Person person)
             => Pipeline.Success(person.UnitMemberships.Where(um => um.Unit.Active).ToList());
@@ -171,10 +193,76 @@ namespace API.Data
 			{
                 return Pipeline.Success(new PeopleLookupItem { Id = person.Id, NetId = person.Netid, Name = person.Name });
 			}
+            
             var hrPerson = await db.HrPeople.SingleOrDefaultAsync(p => p.Netid == netId);
-            return hrPerson == null
-                ? Pipeline.NotFound("No person or HR person found with that netid.")
-                : Pipeline.Success(new PeopleLookupItem { Id = 0, NetId = hrPerson.Netid, Name = hrPerson.Name });
+            if(hrPerson != null)
+            {
+                return Pipeline.Success(new PeopleLookupItem { Id = 0, NetId = hrPerson.Netid, Name = hrPerson.Name });
+            }
+
+            var adResult = GetOneActiveDirectory(netId);
+            if(adResult.IsSuccess)
+            {
+                return adResult.Value;
+            }
+
+            return Pipeline.NotFound("No person, HR person, or Active Directory user found with that netid.");
+        }
+
+        public static Result<HrPerson, Error> TryFindPersonWithAd(string netId)
+        {
+            try
+            {
+                if(netId.Any(c => LdapSpecialCharacters.Contains(c)))
+                {
+                    throw new Exception($"LDAP netId cannot contain {string.Join(", ", LdapSpecialCharacters)}");
+                }
+
+                using (var ldap = GetLdapConnection())
+                {
+                    var userDn = $"cn={netId},ou=Accounts,dc=ads,dc=iu,dc=edu";
+                    var result = ldap.Read(userDn);
+                    var attributes = result.getAttributeSet();
+
+                    if(attributes.getAttribute("title")?.StringValue == "group")
+                    {
+                        return Pipeline.BadRequest($"\"{netId}\" is a group account. Group accounts should not be added to IT People.");
+                    }
+                    
+                    // Useful for seeing all LDAP attributes
+                    // foreach(var attr in attributes)
+                    // {
+                    //     Console.WriteLine(attr);
+                    // }
+                    
+                    var adPerson = new HrPerson
+                    {
+                        Netid = netId,
+                        Name = $"{attributes.getAttribute("givenName")?.StringValue} {attributes.getAttribute("sn")?.StringValue}",
+                        NameFirst = $"{attributes.getAttribute("givenName")?.StringValue}",
+                        NameLast = $"{attributes.getAttribute("sn")?.StringValue}",
+                        Position = $"{attributes.getAttribute("title")?.StringValue}",
+                        Campus = $"{attributes.getAttribute("l")?.StringValue}",
+                        CampusPhone = $"{attributes.getAttribute("telephoneNumber")?.StringValue}",
+                        CampusEmail = $"{attributes.getAttribute("mail")?.StringValue}",
+                        HrDepartment = $"{attributes.getAttribute("division")?.StringValue}",
+                        HrDepartmentDescription = $"{attributes.getAttribute("department")?.StringValue}"
+                    };
+
+                    return Pipeline.Success(adPerson);
+                }
+            }
+            catch(Exception ex)
+            {
+                // for not found responses give a 404
+                if(ex is LdapException && ex.Message == "No Such Object")
+                {
+                    return Pipeline.NotFound($"No user found in Active Directory with username \"{netId}\"");
+                }
+
+                // In other cases just present the error.
+                return Pipeline.InternalServerError($"Encountered an error fetching \"{netId}\" from Active Directory.", ex);
+            }
         }
 
         private static async Task<Result<Person, Error>> TryFindPerson(PeopleContext db, string username)
@@ -202,8 +290,19 @@ namespace API.Data
 
         internal static Task<Result<List<PeopleLookupItem>, Error>> GetAllWithHr(HrPeopleSearchParameters query)
             => ExecuteDbPipeline("search all people by netId", async db => {
-                    var result = await SearchBothByNameOrNetId(db, query).ToListAsync();
+                    var response = await SearchBothByNameOrNetId(db, query);
+                    var result = response.ToList();
                     return Pipeline.Success(result);
                 });
+    
+        public static LdapConnection GetLdapConnection()
+        {
+            var adsUser = $"ads\\{Utils.Env("AdQueryUser", required:true)}";
+            var adsPassword = Utils.Env("AdQueryPassword", required:true);
+            var ldap = new LdapConnection() {SecureSocketLayer = true};
+            ldap.Connect("ads.iu.edu", 636);
+            ldap.Bind(adsUser, adsPassword);
+            return ldap;
+        }
     }
 }
