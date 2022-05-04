@@ -16,7 +16,6 @@ namespace Integration
         public string ContainerName { get; }
         public TextWriter Progress { get; }
         public TextWriter Error { get; }
-        // public StartAction StartAction { get; private set; } = StartAction.none;
 
         protected DockerContainer(TextWriter progress, TextWriter error, string imageName, string containerName)
         {
@@ -27,19 +26,11 @@ namespace Integration
         }
 
         public async Task Start(IDockerClient client)
-        {
-            // if (StartAction != StartAction.none) return;
+        {           
+            Progress.WriteLine($"⏳ Fetching Docker image '{ImageName}'. This can take a long time -- hang in there!");
 
-            var images =
-                await client.Images.ListImagesAsync(new ImagesListParameters { MatchName = ImageName });
-
-            if (images.Count == 0)
-            {
-                Progress.WriteLine($"⏳ Fetching Docker image '{ImageName}'. This can take a long time -- hang in there!");
-
-                await client.Images.CreateImageAsync(
-                    new ImagesCreateParameters { FromImage = ImageName }, null, new ConsoleProgress(Progress));
-            }
+            await client.Images.CreateImageAsync(
+                new ImagesCreateParameters { FromImage = ImageName }, null, new ConsoleProgress(Progress));        
 
             var list = await client.Containers.ListContainersAsync(new ContainersListParameters
             {
@@ -57,7 +48,6 @@ namespace Integration
                 if (container.State == "running")
                 {
                     Progress.WriteLine($"😎 Container '{ContainerName}' is already running.");
-                    // StartAction = StartAction.external;
                     return;
                 }
             }
@@ -67,7 +57,6 @@ namespace Integration
             {
                 throw new InvalidOperationException($"😫 Container '{ContainerName}' did not start!!!!");
             }
-            // StartAction = StartAction.started;
         }
 
         public async Task WaitUntilReady()
