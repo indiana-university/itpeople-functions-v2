@@ -5,6 +5,7 @@
 
 variables:
   agentPool: 'CSSD-Linux-ELA'
+  NUGET_PACKAGES: '/opt/cssd/nuget'
 
 resources:
   repositories:
