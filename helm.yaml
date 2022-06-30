@@ -1,0 +1,74 @@
+namespace: ua-vpit--client-services-support--cssd
+
+image:
+  repository: registry.docker.iu.edu/cssd/itepeople-api #I fat-fingered this, we can fix it once we get out of the sandbox phase.
+  tag: 2022.0.4
+  pullPolicy: Always
+
+# NOTE: If your Harbor image repository is private, add your
+#       imagePullSecrets here. For more information, please
+#       refer to https://kube.iu.edu/configure-cd.
+imagePullSecrets:
+  - name: pullcred
+
+resources:
+  limits:
+    cpu: 0.1         # 10% of a CPU
+    memory: 500Mi    # 1 GB of Memory
+  requests:
+    cpu: 0
+    memory: 0
+
+health:
+  livenessPath: /ping
+  readinessPath: /ping
+
+# NOTE: If deploying to an environment other than es-sandbox, you may need to change the host domain
+ingress:
+  enabled: true
+  hosts:
+    - host: itpeople.apps-snd.iu.edu # e.g: "kubebootexample.apps-snd.iu.edu"
+      paths:
+        - path: /
+          pathType: Prefix
+
+# We should label all our Kubernetes resources with the HIGHEST data classification
+# they will be expected to handle.
+dataClassification: "university-internal"
+
+# ENV variables we need to use when starting our function app container
+# ENV AzureWebJobsScriptRoot=/app/home/site/wwwroot
+# ENV AzureFunctionsJobHost__Logging__Console__IsEnabled=true
+# ENV AzureWebJobsDisableHomepage=true
+# ENV IncludeStackTraceInError=true
+# ENV JwtPublicKey=-----BEGIN\ PUBLIC\ KEY-----\\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1SU1LfVLPHCozMxH2Mo\\n4lgOEePzNm0tRgeLezV6ffAt0gunVTLw7onLRnrq0/IzW7yWR7QkrmBL7jTKEn5u\\n+qKhbwKfBstIs+bMY2Zkp18gnTxKLxoS2tFczGkPLPgizskuemMghRniWaoLcyeh\\nkd3qqGElvW/VDL5AaWTg0nLVkjRo9z+40RQzuVaE8AkAFmxZzow3x+VJYKdjykkJ\\n0iT9wCS0DRTXu269V264Vf/3jvredZiKRkgwlL9xNAwxXFg0x/XFw005UWVRIkdg\\ncKWTjpBP2dPwVZ4WWC+9aGVd+Gyn1o0CLelf4rEjGoXbAAEgAqeGUxrcIlbjXfbc\\nmwIDAQAB\\n-----END\ PUBLIC\ KEY-----
+env:
+  - name: AzureWebJobsScriptRoot
+    value: "/app/home/site/wwwroot"
+  - name: AzureFunctionsJobHost__Logging__Console__IsEnabled
+    value: "true"
+  - name: AzureWebJobsDisableHomepage
+    value: "false"
+  - name: IncludeStackTraceInError
+    value: "true"
+  - name: "ReleaseVersion"
+    value: "0.0.0-Not Set"
+  - name: "OAuthTokenUrl"
+    value: "https://apps-test.iu.edu/uaa-stg/oauth/token"
+  - name: "OAuthRedirectUrl"
+    value: "https://itpeople.apps-snd.iu.edu/signin"
+  - name: "JwtPublicKey"
+    value: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjU8NG3DQtS84VF52Azk3VM7uB5aGxSofjlv5BWGCu0285MCMwx62y7n1WYdkRPJkADGJUNST4Ux3kkmgj3djn6a10p4FWXGSPBH9V4GaHfMevlDc1o2CfZOAuLT5/FPF+H2XOnSQT6H6cTVU8Yp0iy2Fm21dk3JEDwred9QDpuegjTG8F/2WS403Qv4s5Nq5ATcHvKPQOBHsnXc2LUH7Mu09g02ro4aXiF2h5ytRsQDVCN3hkzMgR6O06XjUs57bwtmwMSXwhH1u4cexdhOgQcGZ2OH+X9uYjfAAluT8OkDTFMT32OZUdB6qTHZnR91tf5xe/oPc/BEL9TSsWk+O7wIDAQAB\n-----END PUBLIC KEY-----"
+
+# ENV variables to pull from Kubernetes secrets
+secretEnv:
+  - name: DatabaseConnectionString #the env variable name
+    secret: itpeople-api-20220630a #The name of the secret we'll store on kubernetes
+    key: DatabaseConnectionString #the name of the key in the kube secret
+  - name: OAuthClientId
+    secret: itpeople-api-20220630a
+    key: OAuthClientId
+  - name: OAuthClientSecret
+    secret: itpeople-api-20220630a
+    key: OAuthClientSecret
+
