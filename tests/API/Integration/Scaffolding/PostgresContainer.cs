@@ -10,7 +10,7 @@ namespace Integration
     public class PostgresContainer : DatabaseContainer
     {
         public PostgresContainer(TextWriter progress, TextWriter error) 
-            : base(progress, error, "postgres:11.7-alpine")
+            : base(progress, error, "postgres:11.16-alpine")
         {
         }
 
