@@ -34,7 +34,9 @@ namespace Tasks
             
             try
             {
-                return await resp.Content.ReadAsAsync<T>();
+                var jsonString = await resp.Content.ReadAsStringAsync();
+                var result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(jsonString);
+                return result;
             }
             catch (Exception ex)
             {
