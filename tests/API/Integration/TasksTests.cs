@@ -40,7 +40,7 @@ namespace Integration
 			}
 			
 			[Test]
-			public async Task DeserializesDenodoBuildings()
+			public async Task MapToBuildingBlankDescription()
 			{
 				// Make a response to feed to Tasks.Utils.DeserializeResponse()
 				var resp = new System.Net.Http.HttpResponseMessage();
@@ -52,7 +52,7 @@ namespace Integration
 				resp.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
 				resp.StatusCode = System.Net.HttpStatusCode.OK;
 
-				var results = await Tasks.Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(nameof(DeserializesDenodoBuildings), resp, "Testing what the heck is going on.");
+				var results = await Tasks.Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(nameof(MapToBuildingBlankDescription), resp, "Testing what the heck is going on.");
 				Assert.AreEqual(4, results.Elements.Count());
 
 				// Validate mapping works, and records are successfully stored in the database.
@@ -65,24 +65,6 @@ namespace Integration
 					await db.Buildings.AddAsync(building);
 					await db.SaveChangesAsync();
 				}
-			}
-
-			[Test]
-			public async Task DeserializeProfileApiResponse()
-			{
-				// Make a response to feed to Tasks.Utils.DeserializeResponse()
-				var resp = new System.Net.Http.HttpResponseMessage();
-				resp.RequestMessage = new System.Net.Http.HttpRequestMessage()
-				{
-					RequestUri = new Uri("https://fake.com/a/fake/path/for/profiles")
-				};
-				resp.Content = new System.Net.Http.StringContent(_SampleProfileApiJson);
-				resp.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-				resp.StatusCode = System.Net.HttpStatusCode.OK;
-
-				var results = await Tasks.Utils.DeserializeResponse<ProfileResponse>(nameof(DeserializesDenodoBuildings), resp, "Testing what the heck is going on.");
-
-				Assert.AreEqual(3, results.employees.Count());
 			}
 		}
 
