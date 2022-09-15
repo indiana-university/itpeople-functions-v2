@@ -26,7 +26,7 @@ namespace Tasks
 
         public void MapToBuilding(Building record)
         {
-            record.Name = Description;
+            record.Name = string.IsNullOrWhiteSpace(Description) ? Name : Description;
             record.Code = BuildingCode;
             record.Address = Street ?? "";
             record.City = City ?? "";
