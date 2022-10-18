@@ -45,7 +45,7 @@ namespace Models
                 Title = Title,
                 Percentage = Percentage,
                 Notes = (perms.HasFlag(EntityPermissions.Post) || perms.HasFlag(EntityPermissions.Put) || perms.HasFlag(EntityPermissions.Delete)) ? Notes : "",
-                Person = new PersonResponse(Person),
+                Person = Person == null ? null : new PersonResponse(Person),
                 UnitId = UnitId,
                 Unit = new UnitResponse(Unit),
                 MemberTools = MemberTools.Select(mt => mt.ToMemberToolResponse()).ToList()
