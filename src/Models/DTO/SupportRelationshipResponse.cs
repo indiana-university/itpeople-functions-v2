@@ -13,7 +13,7 @@ namespace Models
         [Required]
         public int DepartmentId { get; set; }
         /// The department in this relationship.
-        public Department Department { get; set; }
+        public DepartmentResponse Department { get; set; }
         /// The unit in this relationship.
         public UnitResponse Unit { get; set; }
         /// The ID of the support type in this relationship
@@ -29,7 +29,7 @@ namespace Models
         {
             Id = sr.Id;
             DepartmentId = sr.DepartmentId;
-            Department = sr.Department;
+            Department = new DepartmentResponse(sr.Department);
             UnitId = sr.UnitId;
             Unit = new UnitResponse(sr.Unit);
             SupportTypeId = sr.SupportTypeId;

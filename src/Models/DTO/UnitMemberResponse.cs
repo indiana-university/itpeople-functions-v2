@@ -24,7 +24,7 @@ namespace Models
         /// The netid of the person related to this membership.       
         public string Netid { get => this.Person?.Netid; }
         /// The person related to this membership.
-        public Person Person { get; set; }
+        public PersonResponse Person { get; set; }
         /// The ID of the unit class.
         public int UnitId { get; set; }
         /// The unit related to this membership.

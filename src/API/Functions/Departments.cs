@@ -20,7 +20,7 @@ namespace API.Functions
 	{
 		[FunctionName(nameof(Departments.DepartmentsGetAll))]
 		[OpenApiOperation(nameof(Departments.DepartmentsGetAll), nameof(Departments), Summary = "List all Departments", Description = @"Get a list of university Departments.")]
-		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<Department>), Description = "A collection of department records")]
+		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<DepartmentResponse>), Description = "A collection of department records")]
 		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = "The search query was malformed or incorrect. See response content for additional information.")]
 		[OpenApiParameter("q", In = ParameterLocation.Query, Description = "filter by department name/description, ex: 'Parks' or 'PA-PARK'")]
 		[OpenApiParameter("_limit", In = ParameterLocation.Query, Description = "Restrict the number of responses to no more than this integer. ex: `15` or `20`.  `0` or less will return all records.")]
@@ -34,7 +34,7 @@ namespace API.Functions
 		[FunctionName(nameof(Departments.DepartmentsGetOne))]
 		[OpenApiOperation(nameof(Departments.DepartmentsGetOne), nameof(Departments), Summary = "Find a department by ID")]
 		[OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
-		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Department), Description = "A department record")]
+		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(DepartmentResponse), Description = "A department record")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No department was found with the ID provided.")]
 		public static Task<IActionResult> DepartmentsGetOne(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "departments/{departmentId}")] HttpRequest req, int departmentId)

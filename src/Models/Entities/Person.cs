@@ -6,8 +6,7 @@ using Newtonsoft.Json.Converters;
 
 namespace Models
 {
-    /// A person doing or supporting IT work
-    public class Person : Entity
+    public class PersonResponse : Entity
     {
         /// <summary>The net id (username) of this person.</summary>
         [Required] 
@@ -45,8 +44,37 @@ namespace Models
 
         /// Entity Navigation
 
-        /// <summary>The department in this relationship.</summary>
-        public Department Department { get; set; }
+        /// <summary>The DTO representation of a Department in this relationship.</summary>
+        public DepartmentResponse Department { get; set; }
+
+        public PersonResponse() {}
+
+        public PersonResponse(Person person)
+        {
+            Id = person.Id;
+            Name = person.Name;
+            NameFirst = person.NameFirst;
+            NameLast = person.NameLast;
+            Position = person.Position;
+            Location = person.Location;
+            Campus = person.Campus;
+            CampusPhone = person.CampusPhone;
+            CampusEmail = person.CampusEmail;
+            Expertise = person.Expertise;
+            Notes = person.Notes;
+            PhotoUrl = person.PhotoUrl;
+            Responsibilities = person.Responsibilities;
+            IsServiceAdmin = person.IsServiceAdmin;
+            Department = person.Department == null ? null : new DepartmentResponse(person.Department);
+        }
+    }
+
+    /// A person doing or supporting IT work
+    public class Person : PersonResponse
+    {
+        /// Entity Navigation
+        /// <summary>The Department in this relationship.</summary>
+        public new Department Department { get; set; }
 
         /// <summary>The units of which this person is a member</summary>
         [JsonIgnore]
