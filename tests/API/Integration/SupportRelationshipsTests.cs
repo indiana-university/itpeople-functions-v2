@@ -364,5 +364,29 @@ namespace Integration
 				Assert.AreEqual(0, actual.Count);
 			}
 		}
+
+		public class SupportRelationshipReportSupportingUnit : ApiTest
+		{
+			[Test]
+			/// <summary>When a Department has SupportRelationship added for it, the Department.ReportSupportingUnit must not be null.</summary>
+			public async Task CreatingSupportRelationshipMustSetAReportSupportingUnit()
+			{
+				throw new NotImplementedException("Test not written, yet.");
+			}
+
+			[Test]
+			/// <summary>A notification should be generated when the last SupportRelationship is removed from a department.</summary>
+			public async Task NotificationCreatedWhenLastSupportRelationshipRemoved()
+			{
+				throw new NotImplementedException("Test not written, yet.");
+			}
+
+			[Test]
+			/// <summary>A notification should be generated when the last SupportRelationship is removed from a department.</summary>
+			public async Task NotificationCreatedWhenSupportRelationshipChangeRequested()
+			{
+				throw new NotImplementedException("Test not written, yet.");
+			}
+		}
 	}
 }
