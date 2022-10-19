@@ -4,6 +4,8 @@ using NUnit.Framework;
 using Docker.DotNet;
 using System.Linq;
 using Docker.DotNet.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Integration
 {
@@ -79,9 +81,19 @@ namespace Integration
         [OneTimeTearDown]
         public void OneTimeTeardown()
         {
-            AppContainer.Stop(_client).Wait(60*1000);
-            DbContainer.Stop(_client).Wait(60*1000);
-            StateContainer.Stop(_client).Wait(60*1000);
+            // Wait a beat to let the tests draw their outpu.
+            Task.Delay(1000).Wait();
+
+            // Stop all the containers at once rather than one-at-a-time.
+            var stopTasks = new Task[]
+            {
+                AppContainer.Stop(_client),
+                DbContainer.Stop(_client),
+                StateContainer.Stop(_client)
+            };
+            
+            int twoMinutes = 60 * 2 * 1000;
+            Task.WaitAll(stopTasks, twoMinutes);
         }
     }
 }

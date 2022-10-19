@@ -94,6 +94,7 @@ namespace Integration
             {
                 Progress.WriteLine($"⏳ Stopping '{ContainerName}'....");
                 await client.Containers.StopContainerAsync(ContainerName, new ContainerStopParameters());
+                Progress.WriteLine($"✅ Stopped '{ContainerName}'.");
             }
             catch(Exception ex)
             {
