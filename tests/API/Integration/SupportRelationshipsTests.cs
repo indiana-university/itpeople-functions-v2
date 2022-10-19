@@ -241,6 +241,13 @@ namespace Integration
 					CASCADE;
 				");
 
+				db.Departments.AddRange(new List<Department> {
+					TestEntities.Departments.Parks,
+					TestEntities.Departments.Fire,
+					TestEntities.Departments.Auditor
+				});
+				await db.SaveChangesAsync();
+
 				var personWithEmail = new Person { Netid = "hasemail", Name="Email, Has", Position = "Middle Manager", Location="Poplars", Campus = "BL", Notes = "", PhotoUrl = "", CampusPhone = "55555", CampusEmail = "hasemail@iu.edu" };
 				var anotherPersonWithEmail = new Person { Netid = "otherperson", Name="Email, Has Also", Position = "Lower Manager", Location="Ball hall", Campus = "IN", Notes = "", PhotoUrl = "", CampusPhone = "55557", CampusEmail = "otherperson@iupui.edu" };
 				var personWithoutEmail = new Person { Netid = "noemail", Name="Email, Has Not", Position = "AVP", Location="Poplars", Campus = "BL", Notes = "", PhotoUrl = "", CampusPhone = "55556", CampusEmail = "" };
