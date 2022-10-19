@@ -26,6 +26,7 @@ namespace Models
                 : new UnitResponse(department.ReportSupportingUnit);
         }
     }
+
     public class Department : DepartmentResponse
     {    
         public new Unit ReportSupportingUnit { get; set; }
