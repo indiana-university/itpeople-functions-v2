@@ -181,27 +181,5 @@ namespace Integration
 				Assert.That(actual.First().Unit.Id, Is.EqualTo(expected.First().Unit.Id));
 			}
 		}
-
-		public class DepartmentReportSupportingUnit : ApiTest
-		{
-			[Test]
-			public async Task ReportSupportingUnitCannotBeNullWhenSupportRelationshipsExist()
-			{
-				throw new NotImplementedException("Test not yet implemented.");
-			}
-
-			[Test]
-			public async Task ReportSupportingUnitMustBeNullWhenNoSupportRelationshipsExist()
-			{
-				throw new NotImplementedException("Test not yet implemented.");
-			}
-
-			[Test]
-			/// <summary>The department's SupportingUnit cannot be set to a unit that is not one of the units in the building's SupportRelationships, or one of those units' parents.</summary>
-			public async Task ReportSupportingUnitMustBeInASupportRelationshipUnitAncestry()
-			{
-				throw new NotImplementedException("Test not yet implemented.");
-			}
-		}
 	}
 }

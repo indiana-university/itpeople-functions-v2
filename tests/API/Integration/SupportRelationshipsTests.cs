@@ -367,22 +367,80 @@ namespace Integration
 
 		public class SupportRelationshipReportSupportingUnit : ApiTest
 		{
-			[Test]
+			private Database.PeopleContext GetDb() => Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+
 			/// <summary>When a Department has SupportRelationship added for it, the Department.ReportSupportingUnit must not be null.</summary>
+			[Test]
 			public async Task CreatingSupportRelationshipMustSetAReportSupportingUnit()
 			{
-				throw new NotImplementedException("Test not written, yet.");
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = TestEntities.Units.Auditor.Id,
+					DepartmentId = TestEntities.Departments.Fire.Id,
+					SupportTypeId = TestEntities.SupportTypes.DesktopEndpoint.Id
+				};
+				var resp = await PostAuthenticated("SupportRelationships", req, ValidAdminJwt);
+				
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var error = await resp.Content.ReadAsAsync<ApiError>();
+				Assert.Contains("To be determined.", error.Errors);
 			}
 
 			[Test]
+			public async Task ReportSupportingUnitCannotBeNullWhenSupportRelationshipsExist()
+			{
+				throw new NotImplementedException("Test not yet implemented.");
+			}
+
+			[Test]
+			public async Task ReportSupportingUnitMustBeNullWhenNoSupportRelationshipsExist()
+			{
+				// Create a SupportRelationship and set the department's ReportSupportingUnit.
+				// TODO: Replace this DB work with real API requests and assertions
+				// Presently - October 19, 2022 - the API isn't in shape for this.
+				var db = GetDb();
+				var auditorUnit = db.Units.Single(u => u.Id == TestEntities.Units.AuditorId);
+				var fireDepartment = db.Departments
+					.Include(d => d.ReportSupportingUnit)
+					.Single(d => d.Id == TestEntities.Departments.FireId);
+				var supportType = db.SupportTypes.Single(st => st.Id == TestEntities.SupportTypes.WebAppInfrastructureId);
+				var sr = new SupportRelationship
+				{
+					Unit = auditorUnit,
+					Department = fireDepartment,
+					SupportType = supportType
+				};
+
+				await db.SupportRelationships.AddAsync(sr);
+				fireDepartment.ReportSupportingUnit = auditorUnit;
+				await db.SaveChangesAsync();
+
+				// Request to RemoveSupportRelationship
+				var resp = await DeleteAuthenticated($"supportRelationships/{sr.Id}", ValidAdminJwt);
+				// We expect it to be deleted.
+				AssertStatusCode(resp, HttpStatusCode.NoContent);
+				
+				// We also expect that fireDepartment to no longer have a 
+				await db.Entry(fireDepartment).ReloadAsync();// Get the latest data from the DB.
+				Assert.IsNull(fireDepartment.ReportSupportingUnit);
+			}
+
+			/// <summary>The department's SupportingUnit cannot be set to a unit that is not one of the units in the building's SupportRelationships, or one of those units' parents.</summary>
+			[Test]
+			public async Task ReportSupportingUnitMustBeInASupportRelationshipUnitAncestry()
+			{
+				throw new NotImplementedException("Test not yet implemented.");
+			}
+
 			/// <summary>A notification should be generated when the last SupportRelationship is removed from a department.</summary>
+			[Test]
 			public async Task NotificationCreatedWhenLastSupportRelationshipRemoved()
 			{
 				throw new NotImplementedException("Test not written, yet.");
 			}
 
-			[Test]
 			/// <summary>A notification should be generated when the last SupportRelationship is removed from a department.</summary>
+			[Test]
 			public async Task NotificationCreatedWhenSupportRelationshipChangeRequested()
 			{
 				throw new NotImplementedException("Test not written, yet.");
