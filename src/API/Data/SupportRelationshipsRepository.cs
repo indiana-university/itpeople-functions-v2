@@ -125,7 +125,7 @@ namespace API.Data
 			{
 				case CanChangeReportSupportingUnit.Yes:
 					var department = await db.Departments.SingleAsync(d => d.Id == body.DepartmentId);
-					department.ReportSupportingUnitId = body.SupportTypeId;
+					department.ReportSupportingUnitId = body.ReportSupportingUnitId;
 					break;
 				case CanChangeReportSupportingUnit.MayRequest:
 					throw new NotImplementedException("WIP: cannot change it.");
