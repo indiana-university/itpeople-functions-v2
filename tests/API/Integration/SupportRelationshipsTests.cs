@@ -365,13 +365,14 @@ namespace Integration
 			}
 		}
 
+		/*
 		public class SupportRelationshipReportSupportingUnit : ApiTest
 		{
 			private Database.PeopleContext GetDb() => Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
 
 			/// <summary>When a Department has SupportRelationship added for it, the Department.ReportSupportingUnit must not be null.</summary>
 			[Test]
-			public async Task CreatingSupportRelationshipMustSetAReportSupportingUnit()
+			public async Task CreatingSupportRelationshipMustSetAReportSupportingUnit(string jwt, HttpStatusCode expectedStatusCode)
 			{
 				var req = new SupportRelationshipRequest
 				{
@@ -384,6 +385,37 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var error = await resp.Content.ReadAsAsync<ApiError>();
 				Assert.Contains("To be determined.", error.Errors);
+			}
+
+			[TestCase(ValidAdminJwt, true)]
+			[TestCase(ValidRswansonJwt, false)]// Ron is the leader of the Parks & Rec unit, but not an admin.
+			public async Task OnlyAdminsChangeDepartmentReportSupportingUnitWhenMultipleSupportRelationshipsExist(string jwt, bool canSet)
+			{
+				//Make a request to establish a SupportRelationship for the "Parks & Rec" unit to the "Parks Department" department
+				//Since "Parks Department" already has a SupportRelationship with City of Pawnee only an Admin should be able
+				//to change "Park Department's" ReportSupportingUnit.
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
+					DepartmentId = TestEntities.Departments.ParksId,
+					SupportTypeId = TestEntities.SupportTypes.DesktopEndpoint.Id,
+					ReportSupportingUnitId = TestEntities.Units.ParksAndRecUnitId
+				};
+
+				var resp = await PostAuthenticated("SupportRelationShips", req, jwt);
+				AssertStatusCode(resp, HttpStatusCode.Created);
+				var actual = await resp.Content.ReadAsAsync<SupportRelationshipResponse>();
+
+				if(canSet)
+				{
+					Assert.AreEqual(TestEntities.Units.ParksAndRecUnitId, actual.Department.ReportSupportingUnitId);
+				}
+				else
+				{
+					//It should not have changed, but a notification of Ron's request to change it should have been created.
+					Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Department.ReportSupportingUnitId);
+					throw new NotImplementedException("Have not determined how notifications will work, yet.");
+				}
 			}
 
 			[Test]
@@ -446,5 +478,6 @@ namespace Integration
 				throw new NotImplementedException("Test not written, yet.");
 			}
 		}
+		*/
 	}
 }

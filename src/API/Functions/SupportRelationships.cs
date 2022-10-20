@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
+using Models.Enums;
 
 namespace API.Functions
 {
@@ -60,13 +61,15 @@ namespace API.Functions
 		{
 			string requestorNetId = null;
 			SupportRelationshipRequest supportRelationshipRequest = null;
+			EntityPermissions permissions = EntityPermissions.Get;
 			return Security.Authenticate(req)
 			.Tap(requestor => requestorNetId = requestor)
 			.Bind(requestor => Request.DeserializeBody<SupportRelationshipRequest>(req))
 			.Tap(srr => supportRelationshipRequest = srr)
 			.Bind(srr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, srr.UnitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
+			.Tap(perms => permissions = perms)
 			.Bind(perms => AuthorizationRepository.AuthorizeCreation(perms))
-			.Bind(authorized => SupportRelationshipsRepository.CreateSupportRelationship(supportRelationshipRequest))
+			.Bind(authorized => SupportRelationshipsRepository.CreateSupportRelationship(supportRelationshipRequest, permissions, requestorNetId))
 			.Bind(sr => Pipeline.Success(new SupportRelationshipResponse(sr)))
 			.Finally(result => Response.Created(req, result));
 		}

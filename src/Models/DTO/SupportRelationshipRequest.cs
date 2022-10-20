@@ -6,6 +6,8 @@ namespace Models
         public int  UnitId { get; set; }
         /// The ID of the department in this relationship
         public int  DepartmentId { get; set; }
+        /// The ID of the Unit to use as the department's ReportSupportingUnitId
+        public int ReportSupportingUnitId { get; set; }
         /// The ID of the support type in this relationship
         public int? SupportTypeId { get; set; }
     }

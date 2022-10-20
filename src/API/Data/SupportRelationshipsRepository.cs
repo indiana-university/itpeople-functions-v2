@@ -8,6 +8,8 @@ using Database;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
 using API.Functions;
+using Models.Enums;
+using System;
 
 namespace API.Data
 {
@@ -79,11 +81,12 @@ namespace API.Data
 				return Pipeline.Success(result);
 			});
 
-		internal static async Task<Result<SupportRelationship, Error>> CreateSupportRelationship(SupportRelationshipRequest body)
+		internal static async Task<Result<SupportRelationship, Error>> CreateSupportRelationship(SupportRelationshipRequest body, EntityPermissions perms, string requestorNetId)
 			=> await ExecuteDbPipeline("create a support relationship", db =>
-				ValidateRequest(db, body)
+				ValidateRequest(db, body, perms, requestorNetId)
 				.Bind(_ => TryCreateSupportRelationship(db, body))
 				.Bind(created => TryFindSupportRelationship(db, created.Id))
+				.Bind(created => TrySetDepartmentReportSupportingUnit(db, perms, requestorNetId, created))
 			);
 
 		internal static async Task<Result<bool, Error>> DeleteSupportRelationship(HttpRequest req, int relationshipId)
@@ -94,12 +97,31 @@ namespace API.Data
 				.Bind(existing => TryDeleteSupportRelationship(db, req, existing))
 			);
 		}
+		
+		// TODO - This all really belongs in validateRequest.
+		private static async Task<Result<SupportRelationship, Error>> TrySetDepartmentReportSupportingUnit(PeopleContext db, EntityPermissions perms, string requestorNetId, SupportRelationship supportRelationship)
+		{
+			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, supportRelationship.UnitId, supportRelationship.DepartmentId);
+
+			switch(allowed)
+			{
+				case CanChangeReportSupportingUnit.Yes:
+					throw new NotImplementedException("WIP: can change it.");
+					break;
+				case CanChangeReportSupportingUnit.MayRequest:
+					throw new NotImplementedException("WIP: cannot change it.");
+					break;
+				default:
+					return Pipeline.Forbidden();
+			}
+		}
 
 		private static async Task<Result<SupportRelationship, Error>> TryFindSupportRelationship(PeopleContext db, int id)
 		{
 			var result = await db.SupportRelationships
 				.Include(r => r.Unit)
 				.Include(r => r.Department)
+					.ThenInclude(d => d.ReportSupportingUnit)
 				.Include(r => r.SupportType)
 				.SingleOrDefaultAsync(r => r.Id == id);
 			return result == null
@@ -120,7 +142,43 @@ namespace API.Data
 			return Pipeline.Success(relationship);
 		}
 
-		private static async Task<Result<SupportRelationshipRequest, Error>> ValidateRequest(PeopleContext db, SupportRelationshipRequest body, int? existingRelationshipId = null)
+		private enum CanChangeReportSupportingUnit
+		{
+			No = 0,
+			InvalidUnit = 1,
+			Yes = 2,
+			MayRequest = 3
+		}
+
+		private static async Task<CanChangeReportSupportingUnit> CanUpdateDepartmentReportSupportingUnit(PeopleContext db, EntityPermissions perms, string requestorNetId, int unitId, int departmentId)
+		{
+			if (perms.HasFlag(EntityPermissions.Post))
+			{
+				var requestor = await db.People.SingleOrDefaultAsync(p => p.Netid == requestorNetId);
+
+				if (requestor?.IsServiceAdmin == true)
+				{
+					return CanChangeReportSupportingUnit.Yes;
+				}
+
+				var departmentHasOtherRelationships = await db.SupportRelationships
+					.Include(sr => sr.Unit)
+					.Include(sr => sr.Department)
+					.Where(sr => sr.DepartmentId == departmentId && sr.UnitId != unitId)
+					.AnyAsync();
+				
+				// TODO: More checks about if the target Department.ReportSupportingUnit family tree is acceptable will go here.
+				// return CanChangeReportSupportingUnit.InvalidUnit;
+
+				return departmentHasOtherRelationships
+					? CanChangeReportSupportingUnit.MayRequest
+					: CanChangeReportSupportingUnit.Yes;
+			}
+
+			return CanChangeReportSupportingUnit.No;
+		}
+
+		private static async Task<Result<SupportRelationshipRequest, Error>> ValidateRequest(PeopleContext db, SupportRelationshipRequest body, EntityPermissions perms, string requestorNetId, int? existingRelationshipId = null)
 		{
 			if (body.UnitId == 0 || body.DepartmentId == 0 || body.SupportTypeId == 0)
 			{
@@ -145,6 +203,23 @@ namespace API.Data
 			{
 				return Pipeline.NotFound("The specified support type does not exist.");
 			}
+
+			
+			//Ensure the user has provided a ReportSupportingUnitId and has the permissions required to set the Department.ReportSupportingUnit they have provided.
+			if(body.ReportSupportingUnitId == 0)
+			{
+				return Pipeline.BadRequest("The request body was malformed, the reportSupportingUnitId field was missing or invalid.");
+			}
+			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId);
+			if(allowed == CanChangeReportSupportingUnit.No)
+			{
+				return Pipeline.BadRequest("You do have the permissions required to set the Department Report Supporting Unit you provided.");
+			}
+			if(allowed == CanChangeReportSupportingUnit.InvalidUnit)
+			{
+				return Pipeline.BadRequest("You may only set the Department Report Supporting Unit to your own unit or one of its parent units.");
+			}
+
 			return Pipeline.Success(body);
 		}
 		
