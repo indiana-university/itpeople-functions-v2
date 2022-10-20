@@ -416,14 +416,14 @@ namespace Integration
 				{
 					//It should not have changed, but a notification of Ron's request to change it should have been created.
 					Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Department.ReportSupportingUnitId);
-					throw new NotImplementedException("Have not determined how notifications will work, yet.");
+					Assert.True(false, "Revist once we figure out notifications.");
 				}
 			}
 
 			[Test]
 			public async Task ReportSupportingUnitCannotBeNullWhenSupportRelationshipsExist()
 			{
-				throw new NotImplementedException("Test not yet implemented.");
+				Assert.True(false, "Test not written, yet.");
 			}
 
 			[Test]
@@ -443,12 +443,12 @@ namespace Integration
 				// Create a SupportRelationship and set the department's ReportSupportingUnit.
 				var req = new SupportRelationshipRequest
 				{
-					UnitId = TestEntities.Units.AuditorId,
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
 					DepartmentId = testDept.Id,
 					SupportTypeId = TestEntities.SupportTypes.DesktopEndpointId,
-					ReportSupportingUnitId = TestEntities.Units.AuditorId
+					ReportSupportingUnitId = TestEntities.Units.ParksAndRecUnitId
 				};
-				var createResponse = await PostAuthenticated("SupportRelationships", req, ValidAdminJwt);
+				var createResponse = await PostAuthenticated("SupportRelationships", req, ValidRswansonJwt);// Rswanson is the Parks & Rec unit leadter, should be able to create.
 				AssertStatusCode(createResponse, HttpStatusCode.Created);
 				var createResult = await createResponse.Content.ReadAsAsync<SupportRelationship>();
 				Assert.AreEqual(req.UnitId, createResult.Unit.Id);
@@ -457,36 +457,40 @@ namespace Integration
 				Assert.AreEqual(req.ReportSupportingUnitId, createResult.Department.ReportSupportingUnit.Id);
 
 				// Request to RemoveSupportRelationship
-				var resp = await DeleteAuthenticated($"supportRelationships/{createResult.Id}", ValidAdminJwt);
+				var resp = await DeleteAuthenticated($"supportRelationships/{createResult.Id}", ValidRswansonJwt);// Rswanson is the Parks & Rec unit leadter, should be able to delete.
 				// We expect it to be deleted.
 				AssertStatusCode(resp, HttpStatusCode.NoContent);
+
 				
 				// We also expect that fireDepartment to no longer have a ReportSupportingUnit
 				var fireDepartment = db.Departments
 					.Include(d => d.ReportSupportingUnit)
 					.Single(d => d.Id == TestEntities.Departments.FireId);
 				Assert.IsNull(fireDepartment.ReportSupportingUnit);
+				
+				// TODO - Ensure a notification was created when removed by a non-Admin.
+				Assert.True(false, "Revist once we figure out notifications.");
 			}
 
 			/// <summary>The department's SupportingUnit cannot be set to a unit that is not one of the units in the building's SupportRelationships, or one of those units' parents.</summary>
 			[Test]
 			public async Task ReportSupportingUnitMustBeInASupportRelationshipUnitAncestry()
 			{
-				throw new NotImplementedException("Test not yet implemented.");
+				Assert.True(false, "Test not yet implemented.");
 			}
 
 			/// <summary>A notification should be generated when the last SupportRelationship is removed from a department.</summary>
 			[Test]
 			public async Task NotificationCreatedWhenLastSupportRelationshipRemoved()
 			{
-				throw new NotImplementedException("Test not written, yet.");
+				Assert.True(false, "Test not yet implemented.");
 			}
 
 			/// <summary>A notification should be generated when the last SupportRelationship is removed from a department.</summary>
 			[Test]
 			public async Task NotificationCreatedWhenSupportRelationshipChangeRequested()
 			{
-				throw new NotImplementedException("Test not written, yet.");
+				Assert.True(false, "Test not yet implemented.");
 			}
 		}
 	}
