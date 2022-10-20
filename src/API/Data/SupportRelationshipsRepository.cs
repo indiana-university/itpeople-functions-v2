@@ -84,9 +84,8 @@ namespace API.Data
 		internal static async Task<Result<SupportRelationship, Error>> CreateSupportRelationship(SupportRelationshipRequest body, EntityPermissions perms, string requestorNetId)
 			=> await ExecuteDbPipeline("create a support relationship", db =>
 				ValidateRequest(db, body, perms, requestorNetId)
-				.Bind(_ => TryCreateSupportRelationship(db, body))
+				.Bind(_ => TryCreateSupportRelationship(db, perms, requestorNetId, body))
 				.Bind(created => TryFindSupportRelationship(db, created.Id))
-				.Bind(created => TrySetDepartmentReportSupportingUnit(db, perms, requestorNetId, created))
 			);
 
 		internal static async Task<Result<bool, Error>> DeleteSupportRelationship(HttpRequest req, int relationshipId)
@@ -96,24 +95,6 @@ namespace API.Data
                 .Tap(existing => LogPrevious(req, existing))
 				.Bind(existing => TryDeleteSupportRelationship(db, req, existing))
 			);
-		}
-		
-		// TODO - This all really belongs in validateRequest.
-		private static async Task<Result<SupportRelationship, Error>> TrySetDepartmentReportSupportingUnit(PeopleContext db, EntityPermissions perms, string requestorNetId, SupportRelationship supportRelationship)
-		{
-			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, supportRelationship.UnitId, supportRelationship.DepartmentId);
-
-			switch(allowed)
-			{
-				case CanChangeReportSupportingUnit.Yes:
-					throw new NotImplementedException("WIP: can change it.");
-					break;
-				case CanChangeReportSupportingUnit.MayRequest:
-					throw new NotImplementedException("WIP: cannot change it.");
-					break;
-				default:
-					return Pipeline.Forbidden();
-			}
 		}
 
 		private static async Task<Result<SupportRelationship, Error>> TryFindSupportRelationship(PeopleContext db, int id)
@@ -128,7 +109,7 @@ namespace API.Data
 				? Pipeline.NotFound("No support relationship was found with the ID provided.")
 				: Pipeline.Success(result);
 		}
-		private static async Task<Result<SupportRelationship, Error>> TryCreateSupportRelationship(PeopleContext db, SupportRelationshipRequest body)
+		private static async Task<Result<SupportRelationship, Error>> TryCreateSupportRelationship(PeopleContext db, EntityPermissions perms, string requestorNetId, SupportRelationshipRequest body)
 		{
 			var relationship = new SupportRelationship
 			{
@@ -138,6 +119,21 @@ namespace API.Data
 			};
 
 			db.SupportRelationships.Add(relationship);
+
+			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId);
+			switch(allowed)
+			{
+				case CanChangeReportSupportingUnit.Yes:
+					var department = await db.Departments.SingleAsync(d => d.Id == body.DepartmentId);
+					department.ReportSupportingUnitId = body.SupportTypeId;
+					break;
+				case CanChangeReportSupportingUnit.MayRequest:
+					throw new NotImplementedException("WIP: cannot change it.");
+					break;
+				default:
+					return Pipeline.Forbidden();
+			}
+
 			await db.SaveChangesAsync();
 			return Pipeline.Success(relationship);
 		}

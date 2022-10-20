@@ -164,7 +164,8 @@ namespace Integration
 				var req = new SupportRelationshipRequest
 				{
 					UnitId = TestEntities.Units.ParksAndRecUnitId,
-					DepartmentId = TestEntities.Departments.AuditorId
+					DepartmentId = TestEntities.Departments.AuditorId,
+					ReportSupportingUnitId = TestEntities.Units.ParksAndRecUnitId
 				};
 				await PostReturnsCorrectEntityPermissions("supportRelationships", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
 			}
