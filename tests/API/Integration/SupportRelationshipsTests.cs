@@ -430,32 +430,31 @@ namespace Integration
 			public async Task ReportSupportingUnitMustBeNullWhenNoSupportRelationshipsExist()
 			{
 				// Create a SupportRelationship and set the department's ReportSupportingUnit.
-				// TODO: Replace this DB work with real API requests and assertions
-				// Presently - October 19, 2022 - the API isn't in shape for this.
-				var db = GetDb();
-				var auditorUnit = db.Units.Single(u => u.Id == TestEntities.Units.AuditorId);
-				var fireDepartment = db.Departments
-					.Include(d => d.ReportSupportingUnit)
-					.Single(d => d.Id == TestEntities.Departments.FireId);
-				var supportType = db.SupportTypes.Single(st => st.Id == TestEntities.SupportTypes.WebAppInfrastructureId);
-				var sr = new SupportRelationship
+				var req = new SupportRelationshipRequest
 				{
-					Unit = auditorUnit,
-					Department = fireDepartment,
-					SupportType = supportType
+					UnitId = TestEntities.Units.AuditorId,
+					DepartmentId = TestEntities.Departments.FireId,
+					SupportTypeId = TestEntities.SupportTypes.DesktopEndpointId,
+					ReportSupportingUnitId = TestEntities.Units.AuditorId
 				};
-
-				await db.SupportRelationships.AddAsync(sr);
-				fireDepartment.ReportSupportingUnit = auditorUnit;
-				await db.SaveChangesAsync();
+				var createResponse = await PostAuthenticated("SupportRelationships", req, ValidAdminJwt);
+				AssertStatusCode(createResponse, HttpStatusCode.Created);
+				var createResult = await createResponse.Content.ReadAsAsync<SupportRelationship>();
+				Assert.AreEqual(req.UnitId, createResult.Unit.Id);
+				Assert.AreEqual(req.DepartmentId, createResult.Department.Id);
+				Assert.AreEqual(req.SupportTypeId, createResult.SupportType.Id);
+				Assert.AreEqual(req.ReportSupportingUnitId, createResult.Department.ReportSupportingUnit.Id);
 
 				// Request to RemoveSupportRelationship
-				var resp = await DeleteAuthenticated($"supportRelationships/{sr.Id}", ValidAdminJwt);
+				var resp = await DeleteAuthenticated($"supportRelationships/{createResult.Id}", ValidAdminJwt);
 				// We expect it to be deleted.
 				AssertStatusCode(resp, HttpStatusCode.NoContent);
 				
-				// We also expect that fireDepartment to no longer have a 
-				await db.Entry(fireDepartment).ReloadAsync();// Get the latest data from the DB.
+				// We also expect that fireDepartment to no longer have a ReportSupportingUnit
+				var db = GetDb();
+				var fireDepartment = db.Departments
+					.Include(d => d.ReportSupportingUnit)
+					.Single(d => d.Id == TestEntities.Departments.FireId);
 				Assert.IsNull(fireDepartment.ReportSupportingUnit);
 			}
 
