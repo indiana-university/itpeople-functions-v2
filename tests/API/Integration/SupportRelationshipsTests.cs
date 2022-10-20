@@ -371,6 +371,41 @@ namespace Integration
 		{
 			private Database.PeopleContext GetDb() => Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
 
+			private async Task<Department> CreateDepartment(string name = "Test Department", string description = "Test Dept. description")
+			{
+				var db = GetDb();
+				var dept = new Department
+				{
+					Name = name,
+					Description = description,
+				};
+
+				await db.Departments.AddAsync(dept);
+				await db.SaveChangesAsync();
+
+				return dept;
+			}
+
+			private async Task<SupportRelationship> CreateSupportRelationship(int departmentId, int unitId, int supportTypeId, int reportSupportingUnitId, string jwt = ValidAdminJwt)
+			{
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = unitId,
+					DepartmentId = departmentId,
+					SupportTypeId = supportTypeId,
+					ReportSupportingUnitId = reportSupportingUnitId
+				};
+
+				var createResponse = await PostAuthenticated("SupportRelationships", req, jwt);
+				AssertStatusCode(createResponse, HttpStatusCode.Created);
+				var createResult = await createResponse.Content.ReadAsAsync<SupportRelationship>();
+				Assert.AreEqual(req.UnitId, createResult.Unit.Id);
+				Assert.AreEqual(req.DepartmentId, createResult.Department.Id);
+				Assert.AreEqual(req.SupportTypeId, createResult.SupportType.Id);
+				Assert.AreEqual(req.ReportSupportingUnitId, createResult.Department.ReportSupportingUnit.Id);
+				return createResult;
+			}
+
 			/// <summary>When a Department has SupportRelationship added for it, the Department.ReportSupportingUnit must not be null.</summary>
 			[Test]
 			public async Task CreatingSupportRelationshipMustSetAReportSupportingUnit()
@@ -421,55 +456,53 @@ namespace Integration
 			}
 
 			[Test]
-			public async Task ReportSupportingUnitCannotBeNullWhenSupportRelationshipsExist()
-			{
-				Assert.True(false, "Test not written, yet.");
-			}
-
-			[Test]
 			public async Task ReportSupportingUnitMustBeNullWhenNoSupportRelationshipsExist()
 			{
 				// Create a new Department to test with.
-				var db = GetDb();
-				var testDept = new Department
-				{
-					Name = "Test",
-					Description = "A test department, doomed to disposal",
-				};
-
-				await db.Departments.AddAsync(testDept);
-				await db.SaveChangesAsync();
+				var testDept = await CreateDepartment();
 
 				// Create a SupportRelationship and set the department's ReportSupportingUnit.
-				var req = new SupportRelationshipRequest
-				{
-					UnitId = TestEntities.Units.ParksAndRecUnitId,
-					DepartmentId = testDept.Id,
-					SupportTypeId = TestEntities.SupportTypes.DesktopEndpointId,
-					ReportSupportingUnitId = TestEntities.Units.ParksAndRecUnitId
-				};
-				var createResponse = await PostAuthenticated("SupportRelationships", req, ValidRswansonJwt);// Rswanson is the Parks & Rec unit leadter, should be able to create.
-				AssertStatusCode(createResponse, HttpStatusCode.Created);
-				var createResult = await createResponse.Content.ReadAsAsync<SupportRelationship>();
-				Assert.AreEqual(req.UnitId, createResult.Unit.Id);
-				Assert.AreEqual(req.DepartmentId, createResult.Department.Id);
-				Assert.AreEqual(req.SupportTypeId, createResult.SupportType.Id);
-				Assert.AreEqual(req.ReportSupportingUnitId, createResult.Department.ReportSupportingUnit.Id);
+				// Rswanson is the Parks & Rec unit leadter, should be able to create.
+				var createResult = await CreateSupportRelationship(testDept.Id, TestEntities.Units.ParksAndRecUnitId, TestEntities.SupportTypes.DesktopEndpointId, TestEntities.Units.ParksAndRecUnitId, ValidRswansonJwt);
 
 				// Request to RemoveSupportRelationship
 				var resp = await DeleteAuthenticated($"supportRelationships/{createResult.Id}", ValidRswansonJwt);// Rswanson is the Parks & Rec unit leadter, should be able to delete.
 				// We expect it to be deleted.
 				AssertStatusCode(resp, HttpStatusCode.NoContent);
 
-				
 				// We also expect that fireDepartment to no longer have a ReportSupportingUnit
+				var db = GetDb();
 				var fireDepartment = db.Departments
 					.Include(d => d.ReportSupportingUnit)
-					.Single(d => d.Id == TestEntities.Departments.FireId);
+					.Single(d => d.Id == testDept.Id);
 				Assert.IsNull(fireDepartment.ReportSupportingUnit);
-				
+
 				// TODO - Ensure a notification was created when removed by a non-Admin.
 				Assert.True(false, "Revist once we figure out notifications.");
+			}
+
+			[Test]
+			public async Task ReportSupportingUnitDoesNotBecomeNullWhenSupportRelationshipsExist()
+			{
+				// Create a new Department to test with.
+				var testDept = await CreateDepartment();
+
+				// Create two SupportRelationships for the department, one for Parks & Rec unit, and one for the Auditor unit.
+				// Set the ReportSupportingUnit to be parks and rec. 
+				var parksSR = await CreateSupportRelationship(testDept.Id, TestEntities.Units.ParksAndRecUnitId, TestEntities.SupportTypes.DesktopEndpointId, TestEntities.Units.ParksAndRecUnitId);
+				var auditorSR = await CreateSupportRelationship(testDept.Id, TestEntities.Units.AuditorId, TestEntities.SupportTypes.ResearchInfrastructureId, TestEntities.Units.ParksAndRecUnitId);
+
+				// Delete the Parks & Rec support relationship
+				var resp = await DeleteAuthenticated($"SupportRelationships/{parksSR.Id}", ValidRswansonJwt);// Ron is the leader of the unit, so he should be able to perform this delete.
+				AssertStatusCode(resp, HttpStatusCode.NoContent);
+
+				// Department.ReportSupportingUnit should have defaulted to the auditor
+				var db = GetDb();
+				var departmentResult = await db.Departments.SingleOrDefaultAsync(d => d.Id == testDept.Id);
+				Assert.AreEqual(auditorSR.Unit.Id, departmentResult.ReportSupportingUnit?.Id);
+
+				// A notification should have been created about the automatic change.
+				// TODO
 			}
 
 			/// <summary>The department's SupportingUnit cannot be set to a unit that is not one of the units in the building's SupportRelationships, or one of those units' parents.</summary>
