@@ -367,14 +367,13 @@ namespace Integration
 			}
 		}
 
-		/*
 		public class SupportRelationshipReportSupportingUnit : ApiTest
 		{
 			private Database.PeopleContext GetDb() => Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
 
 			/// <summary>When a Department has SupportRelationship added for it, the Department.ReportSupportingUnit must not be null.</summary>
 			[Test]
-			public async Task CreatingSupportRelationshipMustSetAReportSupportingUnit(string jwt, HttpStatusCode expectedStatusCode)
+			public async Task CreatingSupportRelationshipMustSetAReportSupportingUnit()
 			{
 				var req = new SupportRelationshipRequest
 				{
@@ -386,7 +385,7 @@ namespace Integration
 				
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var error = await resp.Content.ReadAsAsync<ApiError>();
-				Assert.Contains("To be determined.", error.Errors);
+				Assert.Contains("The request body was malformed, the reportSupportingUnitId field was missing or invalid.", error.Errors);
 			}
 
 			[TestCase(ValidAdminJwt, true)]
@@ -405,12 +404,13 @@ namespace Integration
 				};
 
 				var resp = await PostAuthenticated("SupportRelationShips", req, jwt);
+				var respAsString = await resp.Content.ReadAsStringAsync();
 				AssertStatusCode(resp, HttpStatusCode.Created);
 				var actual = await resp.Content.ReadAsAsync<SupportRelationshipResponse>();
 
 				if(canSet)
 				{
-					Assert.AreEqual(TestEntities.Units.ParksAndRecUnitId, actual.Department.ReportSupportingUnitId);
+					Assert.AreEqual(TestEntities.Units.ParksAndRecUnitId, actual.Department.ReportSupportingUnit.Id);
 				}
 				else
 				{
@@ -480,6 +480,5 @@ namespace Integration
 				throw new NotImplementedException("Test not written, yet.");
 			}
 		}
-		*/
 	}
 }
