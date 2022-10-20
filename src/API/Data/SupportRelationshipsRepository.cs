@@ -224,18 +224,28 @@ namespace API.Data
 			db.SupportRelationships.Remove(supportRelationship);
 
 			// If the Department has no other SupportRelationships, set Department.ReportSupportingUnit to null.
-			var hasOtherSRs = db.SupportRelationships
+			var otherSRs = await db.SupportRelationships
 				.Include(sr => sr.Unit)
 				.Include(sr => sr.Department)
 				.Where(sr =>
 					sr.Id != supportRelationship.Id
 					&& sr.Department.Id == supportRelationship.Department.Id
 				)
-				.Any();
+				.ToListAsync();
 			
-			if(hasOtherSRs == false)
+			var department = await db.Departments.SingleAsync(d => d.Id == supportRelationship.Department.Id);
+			
+			// if the DepartMent.ReportSupportingUnit is now not one of the Department's SupportUnit's Units(or their parents) we need to change the value
+			var acceptableReportUnits = new List<Unit>();
+			foreach(var sr in otherSRs)
 			{
-				var department = await db.Departments.SingleAsync(d => d.Id == supportRelationship.Department.Id);
+				var familyTree = await AuthorizationRepository.BuildUnitTree(sr.Unit.Id, db);
+				acceptableReportUnits.AddRange(familyTree);
+			}
+
+			var reportUnitIsAcceptable = acceptableReportUnits.Any(a => a.Id == department.ReportSupportingUnit.Id);
+			if(reportUnitIsAcceptable == false)
+			{
 				department.ReportSupportingUnit = null;
 				// TODO - Generate a notification that Department no longer has a ReportSupportingUnit when action done by user that is not an admin.
 			}

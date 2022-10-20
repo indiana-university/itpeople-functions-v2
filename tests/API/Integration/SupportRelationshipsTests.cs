@@ -481,8 +481,44 @@ namespace Integration
 				Assert.True(false, "Revist once we figure out notifications.");
 			}
 
+			///<summary>
+			/// When a SupportRelation ship for a department is deleted, and the
+			/// Department.ReportSupportingUnit is no still related to one of the Department's
+			/// other SupportRelationships' Unit then Department.ReportSupportingUnit should not change.
+			///</summary>
 			[Test]
 			public async Task ReportSupportingUnitDoesNotBecomeNullWhenSupportRelationshipsExist()
+			{
+				// Create a new Department to test with.
+				var testDept = await CreateDepartment();
+
+				// Create two SupportRelationships for the department, one for Parks & Rec unit, and one for the Auditor unit.
+				// Set the ReportSupportingUnit to be City of Pawnee - the Parks & Rec and Auditor units mutal parent.. 
+				var parksSR = await CreateSupportRelationship(testDept.Id, TestEntities.Units.ParksAndRecUnitId, TestEntities.SupportTypes.DesktopEndpointId, TestEntities.Units.CityOfPawneeUnitId);
+				var auditorSR = await CreateSupportRelationship(testDept.Id, TestEntities.Units.AuditorId, TestEntities.SupportTypes.ResearchInfrastructureId, TestEntities.Units.CityOfPawneeUnitId);
+
+				// Delete the Parks & Rec support relationship
+				var resp = await DeleteAuthenticated($"SupportRelationships/{parksSR.Id}", ValidRswansonJwt);// Ron is the leader of the unit, so he should be able to perform this delete.
+				AssertStatusCode(resp, HttpStatusCode.NoContent);
+
+				// Department.ReportSupportingUnit should have defaulted to the auditor
+				var db = GetDb();
+				var departmentResult = await db.Departments
+					.Include(d => d.ReportSupportingUnit)
+					.SingleOrDefaultAsync(d => d.Id == testDept.Id);
+				Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, departmentResult.ReportSupportingUnit?.Id);
+
+				// TODO A notification should have been created about the automatic change.
+				Assert.True(false, "Revist once we figure out notifications.");
+			}
+
+			///<summary>
+			/// When a SupportRelation ship for a department is deleted, and the
+			/// Department.ReportSupportingUnit is no longer related to any of the Department's
+			/// other SupportRelationships then Department.ReportSupportingUnit should become null
+			///</summary>
+			[Test]
+			public async Task ReportSupportingUnitBecomesNullWhenSupportRelationshipsEnd()
 			{
 				// Create a new Department to test with.
 				var testDept = await CreateDepartment();
@@ -499,10 +535,7 @@ namespace Integration
 				// Department.ReportSupportingUnit should have defaulted to the auditor
 				var db = GetDb();
 				var departmentResult = await db.Departments.SingleOrDefaultAsync(d => d.Id == testDept.Id);
-				Assert.AreEqual(auditorSR.Unit.Id, departmentResult.ReportSupportingUnit?.Id);
-
-				// A notification should have been created about the automatic change.
-				// TODO
+				Assert.IsNull(departmentResult.ReportSupportingUnit);
 			}
 
 			/// <summary>The department's SupportingUnit cannot be set to a unit that is not one of the units in the building's SupportRelationships, or one of those units' parents.</summary>

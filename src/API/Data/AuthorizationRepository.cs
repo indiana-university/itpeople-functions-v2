@@ -173,7 +173,7 @@ namespace API.Data
         public static async Task<Result<EntityPermissions,Error>> ResolveUnitManagmentPermissions(Person requestor, int unitId, UnitPermissions getsAllPermissions, PeopleContext db)
             => await ResolveUnitManagmentPermissions(requestor, unitId, new List<UnitPermissions> { getsAllPermissions }, db);
 
-        private static Task<List<Unit>> BuildUnitTree(int unitId, PeopleContext db)
+        public static Task<List<Unit>> BuildUnitTree(int unitId, PeopleContext db)
             => db.Units.FromSqlInterpolated($@"
                 WITH RECURSIVE parentage AS (
                 -- first row
