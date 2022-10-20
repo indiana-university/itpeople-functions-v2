@@ -222,6 +222,24 @@ namespace API.Data
 		private static async Task<Result<bool, Error>> TryDeleteSupportRelationship(PeopleContext db, HttpRequest req, SupportRelationship supportRelationship)
 		{
 			db.SupportRelationships.Remove(supportRelationship);
+
+			// If the Department has no other SupportRelationships, set Department.ReportSupportingUnit to null.
+			var hasOtherSRs = db.SupportRelationships
+				.Include(sr => sr.Unit)
+				.Include(sr => sr.Department)
+				.Where(sr =>
+					sr.Id != supportRelationship.Id
+					&& sr.Department.Id == supportRelationship.Department.Id
+				)
+				.Any();
+			
+			if(hasOtherSRs == false)
+			{
+				var department = await db.Departments.SingleAsync(d => d.Id == supportRelationship.Department.Id);
+				department.ReportSupportingUnit = null;
+				// TODO - Generate a notification that Department no longer has a ReportSupportingUnit when action done by user that is not an admin.
+			}
+
 			await db.SaveChangesAsync();
 			return Pipeline.Success(true);
 		}

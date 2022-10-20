@@ -429,11 +429,22 @@ namespace Integration
 			[Test]
 			public async Task ReportSupportingUnitMustBeNullWhenNoSupportRelationshipsExist()
 			{
+				// Create a new Department to test with.
+				var db = GetDb();
+				var testDept = new Department
+				{
+					Name = "Test",
+					Description = "A test department, doomed to disposal",
+				};
+
+				await db.Departments.AddAsync(testDept);
+				await db.SaveChangesAsync();
+
 				// Create a SupportRelationship and set the department's ReportSupportingUnit.
 				var req = new SupportRelationshipRequest
 				{
 					UnitId = TestEntities.Units.AuditorId,
-					DepartmentId = TestEntities.Departments.FireId,
+					DepartmentId = testDept.Id,
 					SupportTypeId = TestEntities.SupportTypes.DesktopEndpointId,
 					ReportSupportingUnitId = TestEntities.Units.AuditorId
 				};
@@ -451,7 +462,6 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.NoContent);
 				
 				// We also expect that fireDepartment to no longer have a ReportSupportingUnit
-				var db = GetDb();
 				var fireDepartment = db.Departments
 					.Include(d => d.ReportSupportingUnit)
 					.Single(d => d.Id == TestEntities.Departments.FireId);
