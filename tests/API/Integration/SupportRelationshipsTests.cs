@@ -55,7 +55,8 @@ namespace Integration
 			{
 				UnitId = TestEntities.Units.Auditor.Id,
 				DepartmentId = TestEntities.Departments.Fire.Id,
-				SupportTypeId = TestEntities.SupportTypes.DesktopEndpoint.Id
+				SupportTypeId = TestEntities.SupportTypes.DesktopEndpoint.Id,
+				ReportSupportingUnitId = TestEntities.Units.Auditor.Id
 			};
 
 			//201 
