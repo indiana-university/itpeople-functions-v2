@@ -542,7 +542,30 @@ namespace Integration
 			[Test]
 			public async Task ReportSupportingUnitMustBeInASupportRelationshipUnitAncestry()
 			{
-				Assert.True(false, "Test not yet implemented.");
+				var db = GetDb();
+
+				// Create a new Department to test with.
+				var testDept = await CreateDepartment();
+
+				// Add a new unit that is independent from all the other units in the DB.
+				var indieUnit = new Unit("Independent Unit", "tu ne cede malis, sed contra audentior ito", "https://example.com", "fake@example.com");
+				await db.Units.AddAsync(indieUnit);
+				await db.SaveChangesAsync();
+
+				// Make a request that provides a ReportSupportingUnitId that is not in the ancestry of any units
+				// testDept has a SupportRelationship with.
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = TestEntities.Units.ParksAndRecUnitId,
+					DepartmentId = testDept.Id,
+					SupportTypeId = TestEntities.SupportTypes.WebAppInfrastructureId,
+					ReportSupportingUnitId = indieUnit.Id
+				};
+
+				var resp = await PostAuthenticated("SupportRelationships", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var error = await resp.Content.ReadAsAsync<ApiError>();
+				Assert.Contains("You may only set the Department Report Supporting Unit to your own unit or one of its parent units.", error.Errors);
 			}
 
 			/// <summary>A notification should be generated when the last SupportRelationship is removed from a department.</summary>
