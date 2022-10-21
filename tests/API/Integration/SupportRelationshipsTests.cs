@@ -369,6 +369,7 @@ namespace Integration
 
 		public class SupportRelationshipReportSupportingUnit : ApiTest
 		{
+			private const string _InvalidUnit = "You may only set the Department Report Supporting Unit to your own unit or one of its parent units.";
 			private Database.PeopleContext GetDb() => Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
 
 			private async Task<Department> CreateDepartment(string name = "Test Department", string description = "Test Dept. description")
@@ -539,8 +540,10 @@ namespace Integration
 			}
 
 			/// <summary>The department's SupportingUnit cannot be set to a unit that is not one of the units in the building's SupportRelationships, or one of those units' parents.</summary>
-			[Test]
-			public async Task ReportSupportingUnitMustBeInASupportRelationshipUnitAncestry()
+			[TestCase(ValidAdminJwt, HttpStatusCode.BadRequest, _InvalidUnit, Description = "Admin Bad Assignment")]
+			[TestCase(ValidRswansonJwt, HttpStatusCode.BadRequest, _InvalidUnit, Description = "Other team's leader")]
+			[TestCase(ValidBwyattJwt, HttpStatusCode.Forbidden, "You are not authorized to make this request.", Description = "Non-Lead should get 403")]
+			public async Task ReportSupportingUnitMustBeInASupportRelationshipUnitAncestry(string jwt, HttpStatusCode expectedCode, string expectedError)
 			{
 				var db = GetDb();
 
@@ -562,10 +565,10 @@ namespace Integration
 					ReportSupportingUnitId = indieUnit.Id
 				};
 
-				var resp = await PostAuthenticated("SupportRelationships", req, ValidAdminJwt);
-				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+				var resp = await PostAuthenticated("SupportRelationships", req, jwt);
+				AssertStatusCode(resp, expectedCode);
 				var error = await resp.Content.ReadAsAsync<ApiError>();
-				Assert.Contains("You may only set the Department Report Supporting Unit to your own unit or one of its parent units.", error.Errors);
+				Assert.Contains(expectedError, error.Errors);
 			}
 
 			/// <summary>A notification should be generated when the last SupportRelationship is removed from a department.</summary>
