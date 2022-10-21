@@ -478,12 +478,12 @@ namespace Integration
 				// We expect it to be deleted.
 				AssertStatusCode(resp, HttpStatusCode.NoContent);
 
-				// We also expect that fireDepartment to no longer have a ReportSupportingUnit
+				// We also expect that after the update testDept will no longer have a ReportSupportingUnit
 				var db = GetDb();
-				var fireDepartment = db.Departments
+				var updatedDept = db.Departments
 					.Include(d => d.ReportSupportingUnit)
 					.Single(d => d.Id == testDept.Id);
-				Assert.IsNull(fireDepartment.ReportSupportingUnit);
+				Assert.IsNull(updatedDept.ReportSupportingUnit);
 
 				// Ensure a notification was created when removed by a non-Admin.
 				var notifications = await db.Notifications.ToListAsync();
@@ -494,7 +494,7 @@ namespace Integration
 
 			///<summary>
 			/// When a SupportRelation ship for a department is deleted, and the
-			/// Department.ReportSupportingUnit is no still related to one of the Department's
+			/// Department.ReportSupportingUnit is still related to one of the Department's
 			/// other SupportRelationships' Unit then Department.ReportSupportingUnit should not change.
 			///</summary>
 			[Test]
@@ -518,15 +518,19 @@ namespace Integration
 					.Include(d => d.ReportSupportingUnit)
 					.SingleOrDefaultAsync(d => d.Id == testDept.Id);
 				Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, departmentResult.ReportSupportingUnit?.Id);
+
+				// No notification should have been made.
+				Assert.AreEqual(0, db.Notifications.Count());
 			}
 
 			///<summary>
+			/// A variation on 
 			/// When a SupportRelation ship for a department is deleted, and the
 			/// Department.ReportSupportingUnit is no longer related to any of the Department's
 			/// other SupportRelationships then Department.ReportSupportingUnit should become null
 			///</summary>
 			[Test]
-			public async Task ReportSupportingUnitBecomesNullWhenSupportRelationshipsEnd()
+			public async Task ReportSupportingUnitBecomesNullWhenRelatedSupportRelationshipsEnd()
 			{
 				// Create a new Department to test with.
 				var testDept = await CreateDepartment();
@@ -542,8 +546,14 @@ namespace Integration
 
 				// Department.ReportSupportingUnit should have defaulted to the auditor
 				var db = GetDb();
-				var departmentResult = await db.Departments.SingleOrDefaultAsync(d => d.Id == testDept.Id);
+				var departmentResult = await db.Departments.Include(d => d.ReportSupportingUnit).SingleOrDefaultAsync(d => d.Id == testDept.Id);
 				Assert.IsNull(departmentResult.ReportSupportingUnit);
+
+				// Ensure a notification was created when removed by a non-Admin.
+				var notifications = await db.Notifications.ToListAsync();
+				Assert.AreEqual(1, notifications.Count);
+				var expectedMessage = $"rswanso has removed Support Relationship between the unit {parksSR.Unit.Name} and department {testDept.Name}.  The department no longer has a Report Supporting Unit.";
+				Assert.AreEqual(expectedMessage, notifications.First().Message);
 			}
 
 			/// <summary>The department's SupportingUnit cannot be set to a unit that is not one of the units in the building's SupportRelationships, or one of those units' parents.</summary>
