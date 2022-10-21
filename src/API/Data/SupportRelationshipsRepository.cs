@@ -120,7 +120,7 @@ namespace API.Data
 
 			db.SupportRelationships.Add(relationship);
 
-			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId);
+			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId, body.ReportSupportingUnitId);
 			switch(allowed)
 			{
 				case CanChangeReportSupportingUnit.Yes:
@@ -146,27 +146,48 @@ namespace API.Data
 			MayRequest = 3
 		}
 
-		private static async Task<CanChangeReportSupportingUnit> CanUpdateDepartmentReportSupportingUnit(PeopleContext db, EntityPermissions perms, string requestorNetId, int unitId, int departmentId)
+		private static async Task<CanChangeReportSupportingUnit> CanUpdateDepartmentReportSupportingUnit(PeopleContext db, EntityPermissions perms, string requestorNetId, int unitId, int departmentId, int reportUnitId)
 		{
 			if (perms.HasFlag(EntityPermissions.Post))
 			{
 				var requestor = await db.People.SingleOrDefaultAsync(p => p.Netid == requestorNetId);
+
+				var departmentOtherRelationships = await db.SupportRelationships
+					.Include(sr => sr.Unit)
+					.Include(sr => sr.Department)
+					.Where(sr => sr.DepartmentId == departmentId && sr.UnitId != unitId)
+					.ToListAsync();
+
+				// Ensure the reportUnitId is in one of the department's SupportRelationship units' ancestry.
+				var unitIdsToCheckAncestry = new List<int> { unitId };
+				// Admins can set a ReportSupportingUnit based on ANY of the departments SupportRelationships
+				if(requestor?.IsServiceAdmin == true)
+				{
+					unitIdsToCheckAncestry.AddRange(departmentOtherRelationships.Select(sr => sr.UnitId));
+				}
+
+				// Build a list of all the acceptable units this user can set.
+				var acceptableUnitIds = new List<int>();
+				foreach(var unitIdToCheck in unitIdsToCheckAncestry)
+				{
+					var familyTree = await AuthorizationRepository.BuildUnitTree(unitIdToCheck, db);
+					acceptableUnitIds.AddRange(familyTree.Select(u => u.Id));
+				}
+
+				if(acceptableUnitIds.Contains(reportUnitId) == false)
+				{
+					return CanChangeReportSupportingUnit.InvalidUnit;
+				}
 
 				if (requestor?.IsServiceAdmin == true)
 				{
 					return CanChangeReportSupportingUnit.Yes;
 				}
 
-				var departmentHasOtherRelationships = await db.SupportRelationships
-					.Include(sr => sr.Unit)
-					.Include(sr => sr.Department)
-					.Where(sr => sr.DepartmentId == departmentId && sr.UnitId != unitId)
-					.AnyAsync();
-				
-				// TODO: More checks about if the target Department.ReportSupportingUnit family tree is acceptable will go here.
-				// return CanChangeReportSupportingUnit.InvalidUnit;
-
-				return departmentHasOtherRelationships
+				// This user is a team leader, if there are no other SupportRelationships
+				//  for the department they can set the ReportSupportingUnit.
+				// If there are other SupportRelationships they can only request.
+				return departmentOtherRelationships.Any()
 					? CanChangeReportSupportingUnit.MayRequest
 					: CanChangeReportSupportingUnit.Yes;
 			}
@@ -206,7 +227,7 @@ namespace API.Data
 			{
 				return Pipeline.BadRequest("The request body was malformed, the reportSupportingUnitId field was missing or invalid.");
 			}
-			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId);
+			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId, body.ReportSupportingUnitId);
 			if(allowed == CanChangeReportSupportingUnit.No)
 			{
 				return Pipeline.BadRequest("You do have the permissions required to set the Department Report Supporting Unit you provided.");
