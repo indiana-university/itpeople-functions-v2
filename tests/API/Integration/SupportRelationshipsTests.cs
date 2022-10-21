@@ -512,15 +512,12 @@ namespace Integration
 				var resp = await DeleteAuthenticated($"SupportRelationships/{parksSR.Id}", ValidRswansonJwt);// Ron is the leader of the unit, so he should be able to perform this delete.
 				AssertStatusCode(resp, HttpStatusCode.NoContent);
 
-				// Department.ReportSupportingUnit should have defaulted to the auditor
+				// Department.ReportSupportingUnit should have remained the City of Pawnee unit.
 				var db = GetDb();
 				var departmentResult = await db.Departments
 					.Include(d => d.ReportSupportingUnit)
 					.SingleOrDefaultAsync(d => d.Id == testDept.Id);
 				Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, departmentResult.ReportSupportingUnit?.Id);
-
-				// TODO A notification should have been created about the automatic change.
-				Assert.True(false, "Revist once we figure out notifications.");
 			}
 
 			///<summary>
