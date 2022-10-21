@@ -428,13 +428,17 @@ namespace Integration
 			[TestCase(ValidRswansonJwt, false)]// Ron is the leader of the Parks & Rec unit, but not an admin.
 			public async Task OnlyAdminsChangeDepartmentReportSupportingUnitWhenMultipleSupportRelationshipsExist(string jwt, bool canSet)
 			{
-				//Make a request to establish a SupportRelationship for the "Parks & Rec" unit to the "Parks Department" department
-				//Since "Parks Department" already has a SupportRelationship with City of Pawnee only an Admin should be able
-				//to change "Park Department's" ReportSupportingUnit.
+				// Make a new department, and establish a SupportRelationship and ReportSupportingUnit to the "City of Pawneee" unit.
+				var testDepartment = await CreateDepartment();
+				var citySR = await CreateSupportRelationship(testDepartment.Id, TestEntities.Units.CityOfPawneeUnitId, TestEntities.SupportTypes.FullServiceId, TestEntities.Units.CityOfPawneeUnitId);
+				
+				// Make a request to create a new SupportRelationship for testDepartment to the "Parks & Rec" unit, and to also change the ReportSupportingUnit to "Parks & Rec".
+				// If they are an Admin this will work.
+				// If they are just a unit leader, it will simply make a request, because now there is more than one SupportRelationshp.
 				var req = new SupportRelationshipRequest
 				{
 					UnitId = TestEntities.Units.ParksAndRecUnitId,
-					DepartmentId = TestEntities.Departments.ParksId,
+					DepartmentId = testDepartment.Id,
 					SupportTypeId = TestEntities.SupportTypes.DesktopEndpoint.Id,
 					ReportSupportingUnitId = TestEntities.Units.ParksAndRecUnitId
 				};
@@ -451,8 +455,11 @@ namespace Integration
 				else
 				{
 					//It should not have changed, but a notification of Ron's request to change it should have been created.
-					Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Department.ReportSupportingUnitId);
-					Assert.True(false, "Revist once we figure out notifications.");
+					Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Department.ReportSupportingUnit.Id);
+					var db = GetDb();
+					var notifications = await db.Notifications.ToListAsync();
+					Assert.AreEqual(1, notifications.Count);
+					Assert.AreEqual($"rswanso requests to change {testDepartment.Name} Report Supporting Unit to {TestEntities.Units.ParksAndRecUnit.Name}.", notifications.First().Message);
 				}
 			}
 
