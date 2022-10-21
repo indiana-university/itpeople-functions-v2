@@ -51,6 +51,7 @@ namespace Database
         public DbSet<HrPerson> HrPeople { get; set; }
         public DbSet<HistoricalPerson> HistoricalPeople { get; set; }
         public DbSet<SupportType> SupportTypes { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {   
