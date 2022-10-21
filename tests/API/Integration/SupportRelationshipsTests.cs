@@ -485,8 +485,11 @@ namespace Integration
 					.Single(d => d.Id == testDept.Id);
 				Assert.IsNull(fireDepartment.ReportSupportingUnit);
 
-				// TODO - Ensure a notification was created when removed by a non-Admin.
-				Assert.True(false, "Revist once we figure out notifications.");
+				// Ensure a notification was created when removed by a non-Admin.
+				var notifications = await db.Notifications.ToListAsync();
+				Assert.AreEqual(1, notifications.Count);
+				var expectedMessage = $"rswanso has removed Support Relationship between the unit {createResult.Unit.Name} and department {testDept.Name}.  The department no longer has a Report Supporting Unit.";
+				Assert.AreEqual(expectedMessage, notifications.First().Message);
 			}
 
 			///<summary>

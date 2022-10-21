@@ -89,7 +89,7 @@ namespace API.Functions
 				.Bind(requestor => SupportRelationshipsRepository.GetOne(relationshipId))
 				.Bind(sr => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestorNetId, sr.UnitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
 				.Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
-				.Bind(_ => SupportRelationshipsRepository.DeleteSupportRelationship(req, relationshipId))
+				.Bind(_ => SupportRelationshipsRepository.DeleteSupportRelationship(req, requestorNetId, relationshipId))
 				.Finally(result => Response.NoContent(req, result));
 		}
 

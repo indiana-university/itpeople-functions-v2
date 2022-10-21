@@ -88,12 +88,12 @@ namespace API.Data
 				.Bind(created => TryFindSupportRelationship(db, created.Id))
 			);
 
-		internal static async Task<Result<bool, Error>> DeleteSupportRelationship(HttpRequest req, int relationshipId)
+		internal static async Task<Result<bool, Error>> DeleteSupportRelationship(HttpRequest req, string requestorNetId, int relationshipId)
 		{
 			return await ExecuteDbPipeline($"delete support relationship {relationshipId}", db =>
 				TryFindSupportRelationship(db, relationshipId)
                 .Tap(existing => LogPrevious(req, existing))
-				.Bind(existing => TryDeleteSupportRelationship(db, req, existing))
+				.Bind(existing => TryDeleteSupportRelationship(db, req, requestorNetId, existing))
 			);
 		}
 
@@ -130,6 +130,7 @@ namespace API.Data
 			{
 				case CanChangeReportSupportingUnit.Yes:
 					department.ReportSupportingUnitId = body.ReportSupportingUnitId;
+					// TODO - Log the change to building before we do this.
 					break;
 				case CanChangeReportSupportingUnit.MayRequest:
 					// Make a notification about the requested change.
@@ -251,7 +252,7 @@ namespace API.Data
 			return Pipeline.Success(body);
 		}
 		
-		private static async Task<Result<bool, Error>> TryDeleteSupportRelationship(PeopleContext db, HttpRequest req, SupportRelationship supportRelationship)
+		private static async Task<Result<bool, Error>> TryDeleteSupportRelationship(PeopleContext db, HttpRequest req, string requestorNetId, SupportRelationship supportRelationship)
 		{
 			db.SupportRelationships.Remove(supportRelationship);
 
@@ -278,8 +279,10 @@ namespace API.Data
 			var reportUnitIsAcceptable = acceptableReportUnits.Any(a => a.Id == department.ReportSupportingUnit.Id);
 			if(reportUnitIsAcceptable == false)
 			{
+				// TODO - Log this change to the Department.
 				department.ReportSupportingUnit = null;
-				// TODO - Generate a notification that Department no longer has a ReportSupportingUnit when action done by user that is not an admin.
+				// Generate a notification that Department no longer has a ReportSupportingUnit when action done by user that is not an admin.
+				await db.Notifications.AddAsync(new Notification { Message = $"{requestorNetId} has removed Support Relationship between the unit {supportRelationship.Unit.Name} and department {supportRelationship.Department.Name}.  The department no longer has a Report Supporting Unit." });
 			}
 
 			await db.SaveChangesAsync();
