@@ -120,15 +120,26 @@ namespace API.Data
 
 			db.SupportRelationships.Add(relationship);
 
+			// Get the full department, to update or generate a notification.
+			var department = await db.Departments
+				.Include(d => d.ReportSupportingUnit)
+				.SingleAsync(d => d.Id == body.DepartmentId);
+
 			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId, body.ReportSupportingUnitId);
 			switch(allowed)
 			{
 				case CanChangeReportSupportingUnit.Yes:
-					var department = await db.Departments.SingleAsync(d => d.Id == body.DepartmentId);
 					department.ReportSupportingUnitId = body.ReportSupportingUnitId;
 					break;
 				case CanChangeReportSupportingUnit.MayRequest:
-					throw new NotImplementedException("WIP: cannot change it.");
+					// Make a notification about the requested change.
+					var reqReportUnit = await db.Units.SingleAsync(u => u.Id == body.ReportSupportingUnitId);
+					var notification = new Notification
+					{
+						Message = $"{requestorNetId} requests to change {department.Name} Report Supporting Unit to {reqReportUnit.Name}."
+					};
+
+					await db.Notifications.AddAsync(notification);
 					break;
 				default:
 					return Pipeline.Forbidden();
