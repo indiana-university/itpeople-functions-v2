@@ -587,20 +587,6 @@ namespace Integration
 				var error = await resp.Content.ReadAsAsync<ApiError>();
 				Assert.Contains(expectedError, error.Errors);
 			}
-
-			/// <summary>A notification should be generated when the last SupportRelationship is removed from a department.</summary>
-			[Test]
-			public async Task NotificationCreatedWhenLastSupportRelationshipRemoved()
-			{
-				Assert.True(false, "Test not yet implemented.");
-			}
-
-			/// <summary>A notification should be generated when the last SupportRelationship is removed from a department.</summary>
-			[Test]
-			public async Task NotificationCreatedWhenSupportRelationshipChangeRequested()
-			{
-				Assert.True(false, "Test not yet implemented.");
-			}
 		}
 	}
 }
