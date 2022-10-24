@@ -195,12 +195,10 @@ namespace API.Functions
         public static Result<NotificationsParameters, Error> Parse(HttpRequest req) 
         {
             var queryParms = req.GetQueryParameterDictionary();
-            Console.WriteLine($"\n\n\tQuery Params: {string.Join(", ", queryParms.Keys)}");
             queryParms.TryGetValue("showReviewed", out string showReviewedString);
-            Console.WriteLine($"\n\n\tshowReviewedString: {showReviewedString}");
+            
             var truthyStrings = new List<string> { "true", "t", "yes", "y", "1" }; 
             bool result = truthyStrings.Any(ts => ts.Equals(showReviewedString, StringComparison.InvariantCultureIgnoreCase));
-            Console.WriteLine($"\tresult: {result}");
 
             return Pipeline.Success(new NotificationsParameters(result));
         }
