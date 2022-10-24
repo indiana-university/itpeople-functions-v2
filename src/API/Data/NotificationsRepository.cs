@@ -5,6 +5,7 @@ using API.Functions;
 using API.Middleware;
 using CSharpFunctionalExtensions;
 using Database;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
@@ -32,6 +33,29 @@ namespace API.Data
 			=> ExecuteDbPipeline("get a notification by ID", db => 
 				TryFindNotification(db, id));
 		
+
+		internal static async Task<Result<Notification, Error>> ReviewNotification(HttpRequest req, string requestorNetId, int notificationId)
+        {
+            return await ExecuteDbPipeline($"review notification {notificationId}", db =>
+                TryFindNotification(db, notificationId)
+				.Tap(existing => LogPrevious(req, existing))
+				.Bind(notification => TryReviewNotification(db, req, notification, requestorNetId))
+				.Bind(_ => TryFindNotification(db, notificationId)));
+        }
+
+		private static async Task<Result<Notification, Error>> TryReviewNotification(PeopleContext db, HttpRequest req, Notification notification, string requestorNetId)
+		{
+			if(notification.Reviewed.HasValue == false)
+			{
+				LogPrevious(req, notification);
+
+				notification.Reviewed = System.DateTime.Now;
+				notification.Netid = requestorNetId;
+				await db.SaveChangesAsync();
+			}
+
+			return Pipeline.Success(notification);
+		}
 
 		private static async Task<Result<Notification,Error>> TryFindNotification (PeopleContext db, int id)
 		{
