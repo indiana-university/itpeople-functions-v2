@@ -31,5 +31,19 @@ namespace API.Functions
 				.Bind(_ => NotificationsParameters.Parse(req))
 				.Bind(httpQuery => NotificationsRepository.GetAll(httpQuery))
 				.Finally(notifications => Response.Ok(req, notifications));
+
+		[FunctionName(nameof(Notifications.NotificationsGetOne))]
+		[OpenApiOperation(nameof(Notifications.NotificationsGetOne), nameof(Notifications), Summary = "Find a Notification by ID")]
+		[OpenApiParameter("notificationId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the Notification record.")]
+		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(Notification))]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No notification was found with the provided ID.")]
+		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You do not have permission to get Notifications.")]
+		public static Task<IActionResult> NotificationsGetOne(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "notifications/{notificationId}")] HttpRequest req, int notificationId)
+			=> Security.Authenticate(req)
+				.Bind(requestor => AuthorizationRepository.ResolveNotificationPermissions(req, requestor))
+				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))// I know this is out of place, but permissions are weird, you have to have the PUT permissions to view/review Notifications
+				.Bind(_ => NotificationsRepository.GetOne(notificationId))
+				.Finally(result => Response.Ok(req, result));
 	}
 }

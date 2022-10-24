@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using API.Functions;
 using API.Middleware;
 using CSharpFunctionalExtensions;
+using Database;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
@@ -26,5 +27,19 @@ namespace API.Data
 					.ToListAsync();
 				return Pipeline.Success(result);
 			});
+		
+		public static Task<Result<Notification, Error>> GetOne(int id) 
+			=> ExecuteDbPipeline("get a notification by ID", db => 
+				TryFindNotification(db, id));
+		
+
+		private static async Task<Result<Notification,Error>> TryFindNotification (PeopleContext db, int id)
+		{
+			var notification = await db.Notifications
+				.SingleOrDefaultAsync(n => n.Id == id);
+			return notification == null
+				? Pipeline.NotFound($"No Notification found with ID ({id}).")
+				: Pipeline.Success(notification);
+		}
 	}
 }
