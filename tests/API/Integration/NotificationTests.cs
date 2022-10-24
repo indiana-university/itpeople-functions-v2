@@ -139,7 +139,7 @@ namespace Integration
 				Assert.AreEqual(notification.Id, actual.Id);
 				Assert.AreEqual(notification.Message, actual.Message);
 				Assert.NotNull(actual.Reviewed);
-				Assert.AreEqual("rswanso", actual.Netid);
+				Assert.AreEqual("johndoe", actual.Netid);
 			}
 
 		}
