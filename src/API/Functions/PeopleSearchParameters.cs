@@ -195,8 +195,13 @@ namespace API.Functions
         public static Result<NotificationsParameters, Error> Parse(HttpRequest req) 
         {
             var queryParms = req.GetQueryParameterDictionary();
+            return Parse(queryParms);
+        }
+
+        public static Result<NotificationsParameters, Error> Parse(IDictionary<string, string> queryParms)
+        {
             queryParms.TryGetValue("showReviewed", out string showReviewedString);
-            
+
             var truthyStrings = new List<string> { "true", "t", "yes", "y", "1" }; 
             bool result = truthyStrings.Any(ts => ts.Equals(showReviewedString, StringComparison.InvariantCultureIgnoreCase));
 

@@ -23,4 +23,26 @@ namespace Unit
             Assert.AreEqual(expected, result.Value.Expertise);
         }
     }
+
+    public class NotificationsParametersTests
+    {
+        [TestCase("1", true)]
+        [TestCase("0", false)]
+        [TestCase("", false)]
+        [TestCase("true", true)]
+        [TestCase("TRUE", true)]
+        [TestCase("Yes", true)]
+        [TestCase("Y", true)]
+        [TestCase("no", false)]
+        [TestCase("No", false)]
+        [TestCase("N", false)]
+        [TestCase("n", false)]
+        public void CanParseBools(string query, bool expected)
+        {
+            var dict = new Dictionary<string,string> {{"showReviewed", query}};
+            var result = NotificationsParameters.Parse(dict);
+
+            Assert.AreEqual(expected, result.Value.ShowReviewed);
+        }
+    }
 }
