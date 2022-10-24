@@ -128,6 +128,13 @@ namespace API.Data
             => requestor != null && requestor.IsServiceAdmin
                 ? Pipeline.Success(PermsGroups.All)
                 : Pipeline.Success(EntityPermissions.Get);
+        
+        public static async Task<Result<EntityPermissions, Error>> ResolveNotificationPermissions(HttpRequest req, string requestorNetId)
+            => await ExecuteDbPipeline("resolve notification permissions", db =>
+                FetchPersonAndMembership(db, requestorNetId)
+                .Bind(requestor => ResolveServiceAdminPermissions(requestor))
+                .Tap(perms => req.SetEntityPermissions(perms)));
+
         public static async Task<Result<EntityPermissions,Error>> ResolveUnitManagmentPermissions(Person requestor, int unitId, List<UnitPermissions> anyGetsAllPermissions, PeopleContext db, EntityPermissions permissionsToGive = PermsGroups.All)
         {
             if (requestor == null)
