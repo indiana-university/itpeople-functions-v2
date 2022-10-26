@@ -60,7 +60,7 @@ docker run --name itepeople-db-dev -e "POSTGRES_USER=SA" -e "POSTGRES_PASSWORD=a
 
 This gives us a connection string for our new container of 
 ```
-Server=localhost;Port=5434;Database=ItPeople;User Id=SA;Password=abcd1234@
+Server=localhost;Port=5434;Database=ItPeople;User Id=SA;Password=abcd1234@;
 ```
 
 ### Local Function App (API)
