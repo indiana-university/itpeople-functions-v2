@@ -338,7 +338,7 @@
 													<EditForm EditContext="@SupportRelationshipAddContext">
 														<RivetInputSelect @bind-Value="SupportRelationshipToAdd.SupportType" Label="Support Type" Description="" Options=SupportTypes DisplayLambda=@(r => r.Name) />
 														@if(SupportRelationshipToAdd.DepartmentId == 0) {
-															<SuggestionButtons T="@SupportRelationshipResponse" Label="Department" Placeholder="Enter a search term" Description="Search by department name." ButtonClickedAction="@SelectSupportDepartment" AsyncSuggestionGetter="@GetSupportRelationshipSuggestions" DisplayLambda=@(s => s.Department.Name) />
+															<SuggestionButtons T="@EnrichedSRR" Label="Department" Placeholder="Enter a search term" Description="Search by department name." ButtonClickedAction="@SelectSupportDepartment" AsyncSuggestionGetter="@GetSupportRelationshipSuggestions" DisplayLambda=@(s => s.Department.Name) />
 														}
 														@if(SupportRelationshipToAdd.DepartmentId != 0) {
 															<p>
@@ -436,7 +436,7 @@
 	private EditContext ChildUnitAddContext;
 	private UnitRequest UnitToUpdate = new UnitRequest();
 	private Building BuildingRelationshipToAdd = new Building();
-	private SupportRelationshipResponse SupportRelationshipToAdd = new SupportRelationshipResponse();
+	private EnrichedSRR SupportRelationshipToAdd = new EnrichedSRR();
 	private UnitResponse ChildUnitToAdd = new UnitResponse();
 	private bool UnitFormInvalid = false;
 	private bool CanEditUnitDetails = false;
@@ -526,32 +526,46 @@
 		await GetUnitChildren();
 		StateHasChanged();
 	}
-	private async void AddSupportRelationship()
+	private async Task AddSupportRelationship()
 	{
 		GeneralException = null;
-		await Post<SupportRelationshipResponse>("supportRelationships", new SupportRelationshipResponse
+		var result = await Post<SupportRelationshipResponse>("supportRelationships", new SupportRelationshipRequest
 		{
 			UnitId = CurrentUnit.Id,
 			DepartmentId = SupportRelationshipToAdd.DepartmentId,
-			SupportTypeId = SupportRelationshipToAdd?.SupportTypeId,
+			SupportTypeId = SupportRelationshipToAdd?.SupportTypeId
 		});
-		SupportRelationshipToAdd.DepartmentId = 0;
-		SupportRelationshipToAdd.Department = null;
-		SupportRelationshipToAdd.SupportType = null;
-		SupportRelationshipToAdd.SupportTypeId = null;
-		await GetSupportRelationships();
-		StateHasChanged();
+		if(result.RawResponse.IsSuccessStatusCode)
+		{
+			SupportRelationshipToAdd = new EnrichedSRR();
+			await GetSupportRelationships();
+			StateHasChanged();
+		}
+		// TODO - Add a bool to diplay an error message in the SupportRelationship form.
 	}
 
-	public void SelectSupportDepartment(SupportRelationshipResponse request)
+	private void SelectSupportDepartment(EnrichedSRR request)
 	{
 		SupportRelationshipToAdd.DepartmentId = request.DepartmentId;
 		SupportRelationshipToAdd.Department = request.Department;
+		GetValidReportSupportUnits();
 		StateHasChanged();
 	}
 
+	///<summary>Gets a list of units that the user could set/request as the Department's ReportSupportingUnit.</summary>
+	private async Task GetValidReportSupportUnits()
+	{
+		Console.WriteLine("Ding!");
+		if(SupportRelationshipToAdd.DepartmentId != null)
+		{
+			var result = await Get<List<UnitResponse>>($"ValidReportSupportingUnits?unitId={CurrentUnit.Id}&departmentId={SupportRelationshipToAdd.DepartmentId}");
+			Console.WriteLine($"Got {result.Value.Count} valid units for Reporting.");
+		}
+	}
+
 	public void ClearAddingSupportDepartment() {
-		SupportRelationshipToAdd.DepartmentId = 0;
+		Console.WriteLine($"Dong! {SupportRelationshipToAdd?.DepartmentId}, {SupportRelationshipToAdd?.Department?.Name}");
+		//SupportRelationshipToAdd.DepartmentId = 0;
 		SupportRelationshipToAdd.Department = null;
 	}
 
@@ -607,15 +621,13 @@
 		return response.Value;
 	}
 
-	private async Task<List<SupportRelationshipResponse>> GetSupportRelationshipSuggestions(string searchTerm)
+	private async Task<List<EnrichedSRR>> GetSupportRelationshipSuggestions(string searchTerm)
 	{
 		var response = await Get<List<Department>>($"/departments?q={searchTerm}&_limit=15");
-		return response.Value.Select(department => new SupportRelationshipResponse
+		return response.Value.Select(department => new EnrichedSRR
 		{
-			UnitId = CurrentUnit.Id,
+			Unit = CurrentUnit,
 			Department = department,
-			DepartmentId = department.Id,
-			SupportTypeId = SupportRelationshipToAdd.SupportTypeId,
 			SupportType = SupportRelationshipToAdd.SupportType
 		}).ToList();
 	}
@@ -747,4 +759,51 @@
 	}
 
 	private string GetPageTitle() => $"{(CurrentUnit?.Name == null ? "Add Unit" : $"{CurrentUnit?.Name}")} - IT People - Indiana University";
+
+	private class EnrichedSRR : SupportRelationshipRequest
+	{
+		private Models.UnitResponse _Unit;
+		public Models.UnitResponse Unit
+		{
+			get => _Unit;
+			set
+			{
+				_Unit = value;
+				UnitId = _Unit.Id;
+			}
+		}
+
+		private Department? _Department;
+		public Department? Department
+		{
+			get => _Department;
+			set
+			{
+				_Department = value;
+				DepartmentId = _Department?.Id ?? 0;
+			}
+		}
+
+		private SupportType _SupportType;
+		public SupportType SupportType
+		{
+			get => _SupportType;
+			set
+			{
+				_SupportType = value;
+				SupportTypeId = _SupportType?.Id;
+			}
+		}
+
+		private Models.Unit _ReportSupportingUnit;
+		public Models.Unit ReportSupportingUnit
+		{
+			get => _ReportSupportingUnit;
+			set
+			{
+				_ReportSupportingUnit = value;
+				ReportSupportingUnitId = _ReportSupportingUnit.Id;
+			}
+		}
+	}
 }
