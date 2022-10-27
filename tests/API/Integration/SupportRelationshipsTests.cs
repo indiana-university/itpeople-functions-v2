@@ -587,6 +587,94 @@ namespace Integration
 				var error = await resp.Content.ReadAsAsync<ApiError>();
 				Assert.Contains(expectedError, error.Errors);
 			}
+
+
+			private async Task<(Unit UnitA, Unit UnitA_1, Unit UnitA_1_1, Unit UnitA_2, Unit UnitB, Unit UnitB_1)> GenerateUnitFamilyTrees(Database.PeopleContext db)
+			{
+				var unitA = new Unit("Unit A", "A top", "http://fake.com", "fake@fake.com");
+				await db.Units.AddAsync(unitA);
+				await db.SaveChangesAsync();
+				
+				var unitA_1 = new Unit("Unit A-1", "A child", "http://fake.com", "fake@fake.com", unitA.Id);
+				await db.Units.AddAsync(unitA_1);
+				await db.SaveChangesAsync();
+
+				var unitA_1_1 = new Unit("Unit A-1-1", "A grandchild", "http://fake.com", "fake@fake.com", unitA_1.Id);
+				await db.Units.AddAsync(unitA_1_1);
+				await db.SaveChangesAsync();
+
+				var unitA_2 = new Unit("Unit A-2", "A child", "http://fake.com", "fake@fake.com", unitA.Id);
+				await db.Units.AddAsync(unitA_2);
+				await db.SaveChangesAsync();
+
+				var unitB = new Unit("Unit B", "B top", "http://fake.com", "fake@fake.com");
+				await db.Units.AddAsync(unitB);
+				await db.SaveChangesAsync();
+
+				var unitB_1 = new Unit("Unit B-1", "B child", "http://fake.com", "fake@fake.com", unitB.Id);
+				await db.Units.AddAsync(unitB_1);
+				await db.SaveChangesAsync();
+
+				return (unitA, unitA_1, unitA_1_1, unitA_2, unitB, unitB_1);
+			}
+
+			[Test]
+			public async Task AdminGetsSupportingUnitSuggestionsForAllSupportRelationships()
+			{
+				var db = GetDb();
+				var units = await GenerateUnitFamilyTrees(db);
+				var testDept = await CreateDepartment();
+				// Make a SupportRelationship between unitB_1 and testDept.
+				await CreateSupportRelationship(testDept.Id, units.UnitB_1.Id, TestEntities.SupportTypes.DesktopEndpointId, units.UnitB_1.Id);
+
+				// Make a GET request to find the valid ReportSupportingUnits for an Admin user as if they were going to make a new SupportRelationship between UnitA_1_1 and testDept.
+				var resp = await GetAuthenticated($"ValidReportSupportingUnits?departmentId={testDept.Id}&unitId={units.UnitA_1_1.Id}", ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.OK);
+
+				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
+
+				var expected = new List<Unit> { units.UnitA, units.UnitA_1, units.UnitA_1_1, units.UnitB, units.UnitB_1 };
+
+				var actualIds = actual.Select(u => u.Id).ToList();
+				var expectedIds = expected.Select(u => u.Id).ToList();
+				Assert.That(actualIds, Is.EquivalentTo(expectedIds));
+			}
+
+			[Test]
+			public async Task UnitLeaderGetsSupportingUnitSuggestionsForUnitFamilyTree()
+			{
+				var db = GetDb();
+				var units = await GenerateUnitFamilyTrees(db);
+				var testDept = await CreateDepartment();
+				// Make a SupportRelationship between unitB_1 and testDept.
+				await CreateSupportRelationship(testDept.Id, units.UnitB_1.Id, TestEntities.SupportTypes.DesktopEndpointId, units.UnitB_1.Id);
+
+				// Make Ron the lead for UnitA_1
+				var ronUnitMembership = new UnitMember
+				{
+					UnitId = units.UnitA_1.Id,
+					PersonId = TestEntities.People.RSwansonId,
+					Role = Role.Leader,
+					Permissions = UnitPermissions.ManageMembers,
+					Title = "Lord Protector",
+					Percentage = 1,
+					Notes = string.Empty
+				};
+				await db.UnitMembers.AddAsync(ronUnitMembership);
+				await db.SaveChangesAsync();
+
+				// Make a GET request to find the valid ReportSupportingUnits for Ron as if he were going to make a new SupportRelationship between UnitA_1_1 and testDept.
+				var resp = await GetAuthenticated($"ValidReportSupportingUnits?departmentId={testDept.Id}&unitId={units.UnitA_1_1.Id}", ValidRswansonJwt);
+				AssertStatusCode(resp, HttpStatusCode.OK);
+
+				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
+
+				var expected = new List<Unit> { units.UnitA, units.UnitA_1, units.UnitA_1_1 };
+
+				var actualIds = actual.Select(u => u.Id).ToList();
+				var expectedIds = expected.Select(u => u.Id).ToList();
+				Assert.That(actualIds, Is.EquivalentTo(expectedIds));
+			}
 		}
 	}
 }

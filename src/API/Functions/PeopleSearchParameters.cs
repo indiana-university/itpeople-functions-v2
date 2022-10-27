@@ -184,6 +184,35 @@ namespace API.Functions
         }
     }
 
+    public class ValidReportSupportingUnitsParameters : BaseSearchParameters
+    {
+		public int DepartmentId { get; set; }
+        public int UnitId { get; set; }
+		
+        public ValidReportSupportingUnitsParameters(int departmentId, int unitId) : base(string.Empty)
+		{
+            DepartmentId = departmentId;
+            UnitId = unitId;
+		}
+
+        public static Result<ValidReportSupportingUnitsParameters, Error> Parse(HttpRequest req)
+        {
+            var queryParms = req.GetQueryParameterDictionary();
+            return Parse(queryParms);
+        }
+
+        public static Result<ValidReportSupportingUnitsParameters, Error> Parse(IDictionary<string, string> queryParams)
+        {
+            queryParams.TryGetValue("departmentId", out string departmentIdStr);
+            var departmentId = int.Parse(departmentIdStr);
+            
+            queryParams.TryGetValue("unitId", out string unitIdStr);
+            var unitId = int.Parse(unitIdStr);
+
+            return Pipeline.Success(new ValidReportSupportingUnitsParameters(departmentId, unitId));
+        }
+    }
+
     public class NotificationsParameters : BaseSearchParameters
     {
         public bool ShowReviewed { get; set; }
