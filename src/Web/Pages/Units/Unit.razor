@@ -352,6 +352,7 @@
 														}
 														<Loader Loading=@ShowLoadingReportSupportingUnits>
 															<p>Report Supporting Unit will go here.</p>
+															<RivetInputSelect @bind-Value="SupportRelationshipToAdd.ReportSupportingUnit" Label="Report as Supported By" Description="lotta stuff to explain here." Options=ReportSupportingUnitOptions DisplayLambda=@(r => r.Name) disabled=@ShowLoadingReportSupportingUnits />
 														</Loader>
 														<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader || ShowLoadingReportSupportingUnits)" @onclick="AddSupportRelationship">
 															Add
@@ -442,6 +443,7 @@
 	private EnrichedSRR SupportRelationshipToAdd = new EnrichedSRR();
 	private bool ShowSrError = false;
 	private bool ShowLoadingReportSupportingUnits = false;
+	private List<UnitResponse> ReportSupportingUnitOptions = new List<UnitResponse>();
 	private IDisposable LoadingReportSupportingUnits() => new DisposableLoader(s => ShowLoadingReportSupportingUnits = s, StateHasChanged);
 	private UnitResponse ChildUnitToAdd = new UnitResponse();
 	private bool UnitFormInvalid = false;
@@ -540,7 +542,8 @@
 		{
 			UnitId = CurrentUnit.Id,
 			DepartmentId = SupportRelationshipToAdd.DepartmentId,
-			SupportTypeId = SupportRelationshipToAdd?.SupportTypeId
+			SupportTypeId = SupportRelationshipToAdd?.SupportTypeId,
+			ReportSupportingUnitId = SupportRelationshipToAdd.ReportSupportingUnitId
 		});
 		if(result.RawResponse.IsSuccessStatusCode)
 		{
@@ -557,6 +560,7 @@
 	private void SelectSupportDepartment(EnrichedSRR request)
 	{
 		SupportRelationshipToAdd.Department = request.Department;
+		SupportRelationshipToAdd.ReportSupportingUnit = request.Department.ReportSupportingUnit;
 		SetValidReportSupportUnits();
 		StateHasChanged();
 	}
@@ -569,7 +573,14 @@
 			if(SupportRelationshipToAdd.DepartmentId != null)
 			{
 				var result = await Get<List<UnitResponse>>($"ValidReportSupportingUnits?unitId={CurrentUnit.Id}&departmentId={SupportRelationshipToAdd.DepartmentId}");
-				Console.WriteLine($"Got {result.Value.Count} valid units for Reporting.");
+				if(result.RawResponse.IsSuccessStatusCode)
+				{
+					ReportSupportingUnitOptions = result.Value;
+				}
+				else
+				{
+					ShowSrError = true;
+				}
 			}
 			// Useful for debugging when the form is disabled.
 			// await Task.Delay(7000);
@@ -806,14 +817,14 @@
 			}
 		}
 
-		private Models.Unit _ReportSupportingUnit;
-		public Models.Unit ReportSupportingUnit
+		private UnitResponse? _ReportSupportingUnit;
+		public UnitResponse? ReportSupportingUnit
 		{
 			get => _ReportSupportingUnit;
 			set
 			{
 				_ReportSupportingUnit = value;
-				ReportSupportingUnitId = _ReportSupportingUnit.Id;
+				ReportSupportingUnitId = _ReportSupportingUnit?.Id ?? 0;
 			}
 		}
 	}
