@@ -4,7 +4,7 @@
 @inject IHttpClientFactory ClientFactory;
 @implements IDisposable;
 
-<RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder=@Placeholder Description=@Description @oninput="e => SearchTermChanged(e.Value.ToString())" @onkeydown=SearchTermListenForEnter/>
+<RivetInputText @bind-Value="SearchTerm" Label="Search" Placeholder=@Placeholder Description=@Description @oninput="e => SearchTermChanged(e.Value.ToString())" @onkeydown=SearchTermListenForEnter disabled=@Disabled/>
 @if(string.IsNullOrWhiteSpace(SearchTerm) == false)
 {
 	<Loader Loading="ShowLoader">
@@ -19,7 +19,7 @@
 			@foreach (var suggestion in Suggestions)
 			{
 				<li>
-					<a class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => ButtonClickedHelper(suggestion)) >@DisplayLambda(suggestion)</a>
+					<button type="button" class="rvt-button rvt-button--secondary rvt-button--full-width" @onclick=@(() => ButtonClickedHelper(suggestion))  disabled=@Disabled>@DisplayLambda(suggestion)</button>
 				</li>
 			}
 
@@ -60,6 +60,10 @@
 	///<summary> Takes a suggestion and generates the text to be displayed in a button.</summary>
 	[Parameter]
 	public Func<T, string> DisplayLambda { get; set; }
+
+	///<summary> Disables the input and suggested buttons when true.</summary>
+	[Parameter]
+	public bool Disabled { get; set; } = false;
 
 	private string SearchTerm = "";
 	private List<T> Suggestions = new List<T>();
