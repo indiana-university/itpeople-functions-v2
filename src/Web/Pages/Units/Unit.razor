@@ -336,21 +336,24 @@
 												<div class="rvt-grid__item ">
 													<h5 class="rvt-border-top rvt-p-top-sm">Add New Supported Department</h5>
 													<EditForm EditContext="@SupportRelationshipAddContext">
-														<RivetInputSelect @bind-Value="SupportRelationshipToAdd.SupportType" Label="Support Type" Description="" Options=SupportTypes DisplayLambda=@(r => r.Name) />
+														<RivetInputSelect @bind-Value="SupportRelationshipToAdd.SupportType" Label="Support Type" Description="" Options=SupportTypes DisplayLambda=@(r => r.Name) disabled=@ShowLoadingReportSupportingUnits />
 														@if(SupportRelationshipToAdd.DepartmentId == 0) {
-															<SuggestionButtons T="@EnrichedSRR" Label="Department" Placeholder="Enter a search term" Description="Search by department name." ButtonClickedAction="@SelectSupportDepartment" AsyncSuggestionGetter="@GetSupportRelationshipSuggestions" DisplayLambda=@(s => s.Department.Name) />
+															<SuggestionButtons T="@EnrichedSRR" Label="Department" Placeholder="Enter a search term" Description="Search by department name." ButtonClickedAction="@SelectSupportDepartment" AsyncSuggestionGetter="@GetSupportRelationshipSuggestions" DisplayLambda=@(s => s.Department.Name) Disabled=@ShowLoadingReportSupportingUnits />
 														}
 														@if(SupportRelationshipToAdd.DepartmentId != 0) {
 															<p>
 																<span class="rvt-badge">
 																	@SupportRelationshipToAdd.Department.Name
-																	<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> ClearAddingSupportDepartment())">
+																	<button type="button" class="rvt-button rvt-button--plain rvt-p-all-xxs" title="remove" style="height: auto;" @onclick="@(()=> ClearAddingSupportDepartment())" disabled=@ShowLoadingReportSupportingUnits>
 																		<rvt-icon name="trash"></rvt-icon><span class="rvt-sr-only">trash</span>
 																	</button>
 																</span>
 															</p>
 														}
-														<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader)" @onclick="AddSupportRelationship">
+														<Loader Loading=@ShowLoadingReportSupportingUnits>
+															<p>Report Supporting Unit will go here.</p>
+														</Loader>
+														<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader || ShowLoadingReportSupportingUnits)" @onclick="AddSupportRelationship">
 															Add
 														</button>
 													</EditForm>
@@ -437,6 +440,9 @@
 	private UnitRequest UnitToUpdate = new UnitRequest();
 	private Building BuildingRelationshipToAdd = new Building();
 	private EnrichedSRR SupportRelationshipToAdd = new EnrichedSRR();
+	private bool ShowSrError = false;
+	private bool ShowLoadingReportSupportingUnits = false;
+	private IDisposable LoadingReportSupportingUnits() => new DisposableLoader(s => ShowLoadingReportSupportingUnits = s, StateHasChanged);
 	private UnitResponse ChildUnitToAdd = new UnitResponse();
 	private bool UnitFormInvalid = false;
 	private bool CanEditUnitDetails = false;
@@ -529,6 +535,7 @@
 	private async Task AddSupportRelationship()
 	{
 		GeneralException = null;
+		ShowSrError = false;
 		var result = await Post<SupportRelationshipResponse>("supportRelationships", new SupportRelationshipRequest
 		{
 			UnitId = CurrentUnit.Id,
@@ -541,31 +548,35 @@
 			await GetSupportRelationships();
 			StateHasChanged();
 		}
-		// TODO - Add a bool to diplay an error message in the SupportRelationship form.
+		else
+		{
+			ShowSrError = true;
+		}
 	}
 
 	private void SelectSupportDepartment(EnrichedSRR request)
 	{
-		SupportRelationshipToAdd.DepartmentId = request.DepartmentId;
 		SupportRelationshipToAdd.Department = request.Department;
-		GetValidReportSupportUnits();
+		SetValidReportSupportUnits();
 		StateHasChanged();
 	}
 
 	///<summary>Gets a list of units that the user could set/request as the Department's ReportSupportingUnit.</summary>
-	private async Task GetValidReportSupportUnits()
+	private async Task SetValidReportSupportUnits()
 	{
-		Console.WriteLine("Ding!");
-		if(SupportRelationshipToAdd.DepartmentId != null)
+		using(LoadingReportSupportingUnits())
 		{
-			var result = await Get<List<UnitResponse>>($"ValidReportSupportingUnits?unitId={CurrentUnit.Id}&departmentId={SupportRelationshipToAdd.DepartmentId}");
-			Console.WriteLine($"Got {result.Value.Count} valid units for Reporting.");
+			if(SupportRelationshipToAdd.DepartmentId != null)
+			{
+				var result = await Get<List<UnitResponse>>($"ValidReportSupportingUnits?unitId={CurrentUnit.Id}&departmentId={SupportRelationshipToAdd.DepartmentId}");
+				Console.WriteLine($"Got {result.Value.Count} valid units for Reporting.");
+			}
+			// Useful for debugging when the form is disabled.
+			// await Task.Delay(7000);
 		}
 	}
 
 	public void ClearAddingSupportDepartment() {
-		Console.WriteLine($"Dong! {SupportRelationshipToAdd?.DepartmentId}, {SupportRelationshipToAdd?.Department?.Name}");
-		//SupportRelationshipToAdd.DepartmentId = 0;
 		SupportRelationshipToAdd.Department = null;
 	}
 
