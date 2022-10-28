@@ -15,10 +15,12 @@ namespace API.Data
     {
 		internal static Task<Result<List<Department>, Error>> GetAll(DepartmentSearchParameters query)
             => ExecuteDbPipeline("search all departments", async db => {
-                    IQueryable<Department> dbQuery = db.Departments.Where(d =>
-                        string.IsNullOrWhiteSpace(query.Q) 
-                        || EF.Functions.ILike(d.Name, $"%{query.Q}%")
-                        || EF.Functions.ILike(d.Description, $"%{query.Q}%"))
+                    IQueryable<Department> dbQuery = db.Departments
+                        .Include(d => d.ReportSupportingUnit)
+                        .Where(d =>
+                            string.IsNullOrWhiteSpace(query.Q) 
+                            || EF.Functions.ILike(d.Name, $"%{query.Q}%")
+                            || EF.Functions.ILike(d.Description, $"%{query.Q}%"))
                         .OrderBy(d => d.Name);
 
                     if(query.Limit > 0)
@@ -40,6 +42,7 @@ namespace API.Data
         private static async Task<Result<Department,Error>> TryFindDepartment (PeopleContext db, int id)
         {
             var result = await db.Departments
+                .Include(d => d.ReportSupportingUnit)
                 .SingleOrDefaultAsync(d => d.Id == id);
             return result == null
                 ? Pipeline.NotFound("No department was found with the ID provided.")
@@ -72,6 +75,7 @@ namespace API.Data
         {
             var result = await db.SupportRelationships
                 .Include(r => r.Department)
+                    .ThenInclude(r => r.ReportSupportingUnit)
                 .Include(r => r.Unit.Parent)
                 .Include(r => r.SupportType)
                 .Where(r => r.DepartmentId == departmentId)
