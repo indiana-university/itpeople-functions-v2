@@ -52,6 +52,7 @@ namespace Models
         public PersonResponse(Person person)
         {
             Id = person.Id;
+            Netid = person.Netid;
             Name = person.Name;
             NameFirst = person.NameFirst;
             NameLast = person.NameLast;
