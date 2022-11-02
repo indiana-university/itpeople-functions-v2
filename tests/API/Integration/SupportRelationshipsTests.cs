@@ -464,6 +464,47 @@ namespace Integration
 			}
 
 			[Test]
+			public async Task OwnerCanLeaveDepartmentReportSupportingUnitAsExistingValueOutsideTheirUnitAncestry()
+			{
+				var db = GetDb();
+				var units = await GenerateUnitFamilyTrees(db);
+				var testDept = await CreateDepartment();
+				// Make a SupportRelationship between unitB_1 and testDept.
+				await CreateSupportRelationship(testDept.Id, units.UnitB_1.Id, TestEntities.SupportTypes.DesktopEndpointId, units.UnitB_1.Id);
+
+				// Make Ron the lead for UnitA_1
+				var ronUnitMembership = new UnitMember
+				{
+					UnitId = units.UnitA_1.Id,
+					PersonId = TestEntities.People.RSwansonId,
+					Role = Role.Leader,
+					Permissions = UnitPermissions.Owner,
+					Title = "Lord Protector",
+					Percentage = 1,
+					Notes = string.Empty
+				};
+				await db.UnitMembers.AddAsync(ronUnitMembership);
+				await db.SaveChangesAsync();
+
+				// Ron adds a SupportRelationship for his unit, but leaves Department.ReportSupportingUnit unchanged.
+				var req = new SupportRelationshipRequest
+				{
+					UnitId = units.UnitA_1.Id,
+					DepartmentId = testDept.Id,
+					SupportTypeId = TestEntities.SupportTypes.WebAppInfrastructureId,
+					ReportSupportingUnitId = units.UnitB_1.Id
+				};
+
+				var resp = await PostAuthenticated("SupportRelationships", req, ValidRswansonJwt);
+				AssertStatusCode(resp, HttpStatusCode.Created);
+				var actual = await resp.Content.ReadAsAsync<SupportRelationshipResponse>();
+				Assert.AreEqual(testDept.Id, actual.Department.Id);
+				
+				var notifications = await db.Notifications.ToListAsync();
+				Assert.AreEqual(0, notifications.Count);
+			}
+
+			[Test]
 			public async Task ReportSupportingUnitMustBeNullWhenNoSupportRelationshipsExist()
 			{
 				// Create a new Department to test with.
@@ -669,7 +710,7 @@ namespace Integration
 
 				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
 
-				var expected = new List<Unit> { units.UnitA, units.UnitA_1, units.UnitA_1_1 };
+				var expected = new List<Unit> { units.UnitA, units.UnitA_1, units.UnitA_1_1, units.UnitB_1 };
 
 				var actualIds = actual.Select(u => u.Id).ToList();
 				var expectedIds = expected.Select(u => u.Id).ToList();

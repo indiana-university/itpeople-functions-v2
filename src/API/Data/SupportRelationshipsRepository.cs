@@ -194,6 +194,16 @@ namespace API.Data
 				acceptableUnits.AddRange(familyTree);
 			}
 
+			// If the department's current ReportSupportingUnit is not in acceptableUnits add it.
+			var department = await db.Departments
+				.Include(d => d.ReportSupportingUnit)
+				.SingleAsync(d => d.Id == departmentId);
+			
+			if(department.ReportSupportingUnit != null && acceptableUnits.Any(u => u.Id == department.ReportSupportingUnit.Id) == false)
+			{
+				acceptableUnits.Add(department.ReportSupportingUnit);
+			}
+
 			return acceptableUnits;
 		}
 
@@ -217,6 +227,15 @@ namespace API.Data
 				}
 
 				if (requestor?.IsServiceAdmin == true)
+				{
+					return CanChangeReportSupportingUnit.Yes;
+				}
+
+				// If it isn't changing the request is fine.
+				var department = await db.Departments
+					.Include(d => d.ReportSupportingUnit)
+					.SingleAsync(d => d.Id == departmentId);
+				if(department.ReportSupportingUnit?.Id == reportUnitId)
 				{
 					return CanChangeReportSupportingUnit.Yes;
 				}
