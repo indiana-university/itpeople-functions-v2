@@ -351,12 +351,45 @@
 															</p>
 														}
 														<Loader Loading=@ShowLoadingReportSupportingUnits>
-															<p>Report Supporting Unit will go here.</p>
-															<RivetInputSelect @bind-Value="SupportRelationshipToAdd.ReportSupportingUnit" Label="Report as Supported By" Description="lotta stuff to explain here." Options=ReportSupportingUnitOptions DisplayLambda=@(r => r.Name) disabled=@ShowLoadingReportSupportingUnits />
+															<RivetInputSelect @bind-Value="SupportRelationshipToAdd.ReportSupportingUnit" Label="Report as Supported By" Description="The selected unit will be listed on reports as the primary support provider for this department." Options=ReportSupportingUnitOptions DisplayLambda=@(r => r.Name) disabled=@ShowLoadingReportSupportingUnits />
+															@* Show non-admins that their change will be a request, and not an instant change. *@
+															@if(
+																IsAdmin == false
+																&& SupportRelationshipToAdd.Department?.ReportSupportingUnit != null
+																&& SupportRelationshipToAdd.ReportSupportingUnitId != SupportRelationshipToAdd.Department?.ReportSupportingUnit?.Id)
+															{
+																<div class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--warning">
+																	<span class="rvt-inline-alert__icon">
+																		<rvt-icon aria-hidden="true" name="exclamation"></rvt-icon>
+																	</span>
+																	<span class="rvt-inline-alert__message">
+																		The Support Relationship will be created when you submit this form,
+																		but the Department's Report Supporting Unit will not be changed until
+																		an IT People admin has reviewed your request.
+																	</span>
+																</div>
+															}
 														</Loader>
-														<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader || ShowLoadingReportSupportingUnits)" @onclick="AddSupportRelationship">
-															Add
-														</button>
+														<div class="rvt-grid">
+															<div class="rvt-grid__item-2-sm-up">
+																<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(ShowLoader || ShowLoadingReportSupportingUnits)" @onclick="AddSupportRelationship">
+																	Add
+																</button>
+															</div>
+															<div class="rvt-grid__item-10-sm-up rvt-p-top-sm">
+																@if(ShowSrError)
+																{
+																	<div class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--danger">
+																		<span class="rvt-inline-alert__icon">
+																			<rvt-icon aria-hidden="true" name="close-circle"></rvt-icon>
+																		</span>
+																		<span class="rvt-inline-alert__message">
+																			Error encountered: See full error at the top of the page.
+																		</span>
+																	</div>
+																}
+															</div>
+														</div>
 													</EditForm>
 												</div>
 											</div>
@@ -454,6 +487,7 @@
 	private bool CanEditSupportRelationships = false;
 	private bool CanEditBuildingRelationships = false;
 	private bool CanEditUnitChildren = false;
+	private bool IsAdmin = false;
 	private List<(Role Role, string Description)> RoleDescriptions = new List<(Role, string)> {
 		(Role.Leader, "Unit Leaders are VPs, directors, managers."),
 		(Role.Sublead, "Unit Subleads are team leads and co-admins."),
@@ -494,7 +528,8 @@
 					GetSupportRelationships(),
 					GetBuildingRelationships(),
 					GetUnitTools(),
-					GetSupportTypes()
+					GetSupportTypes(),
+					SetIsAdmin()
 				});
 				if (CurrentUnit != null)
 				{
@@ -694,6 +729,25 @@
 		var response = await Get<List<ToolResponse>>($"/Units/{UnitId}/tools");
 		UnitTools = response.Value;
 		CanEditMemberTools = response.Permissions.HasFlag(PermsGroups.All);
+	}
+
+	private async Task SetIsAdmin()
+	{
+		if(LoggedInUser == null || string.IsNullOrWhiteSpace(LoggedInUser.Username))
+		{
+			IsAdmin = false;
+			return;
+		}
+
+		var response = await Get<PersonResponse>($"/People/{LoggedInUser.Username}");
+		if(response.RawResponse.IsSuccessStatusCode == false)
+		{
+			GeneralException = new Exception($"Unable to fetch details for Person identified by username {LoggedInUser.Username}");
+			IsAdmin = false;
+			return;
+		}
+
+		IsAdmin = response.Value.IsServiceAdmin;
 	}
 
 	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
