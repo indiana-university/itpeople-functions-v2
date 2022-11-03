@@ -49,8 +49,9 @@ namespace Models
 			}
 		}
 
-		private UnitResponse? _ReportSupportingUnit;
-		public UnitResponse? ReportSupportingUnit
+		private UnitResponse _ReportSupportingUnit;
+		[Required]
+		public UnitResponse ReportSupportingUnit
 		{
 			get => _ReportSupportingUnit;
 			set

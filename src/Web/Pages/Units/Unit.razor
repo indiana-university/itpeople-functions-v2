@@ -336,6 +336,7 @@
 												<div class="rvt-grid__item ">
 													<h5 class="rvt-border-top rvt-p-top-sm">Add New Supported Department</h5>
 													<EditForm EditContext="@SupportRelationshipAddContext">
+														<DataAnnotationsValidator/>
 														<RivetInputSelect @bind-Value="SupportRelationshipToAdd.SupportType" Label="Support Type" Description="" Options=SupportTypes DisplayLambda=@(r => r.Name) disabled=@ShowLoadingReportSupportingUnits />
 														@if(SupportRelationshipToAdd.DepartmentId == 0) {
 															<SuggestionButtons T="@EnrichedSRR" Label="Department" Placeholder="Enter a search term" Description="Search by department name." ButtonClickedAction="@SelectSupportDepartment" AsyncSuggestionGetter="@GetSupportRelationshipSuggestions" DisplayLambda=@(s => s.Department.Name) Disabled=@ShowLoadingReportSupportingUnits />
@@ -356,6 +357,7 @@
 															@if(
 																IsAdmin == false
 																&& SupportRelationshipToAdd.Department?.ReportSupportingUnit != null
+																&& SupportRelationshipToAdd.ReportSupportingUnit != null
 																&& SupportRelationshipToAdd.ReportSupportingUnitId != SupportRelationshipToAdd.Department?.ReportSupportingUnit?.Id)
 															{
 																<div class="rvt-inline-alert rvt-inline-alert--standalone rvt-inline-alert--warning">
@@ -624,6 +626,7 @@
 
 	public void ClearAddingSupportDepartment() {
 		SupportRelationshipToAdd.Department = null;
+		ReportSupportingUnitOptions = new List<UnitResponse>();
 	}
 
 	public string BuildingRelationshipDisplayLamba(Building building)
