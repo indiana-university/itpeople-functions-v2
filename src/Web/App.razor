@@ -1,7 +1,11 @@
 ﻿@using RivetBlazor.Classes
 @using RivetBlazor.Components
+@using System.Net
+@using Newtonsoft.Json
+@using Models
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject NavigationManager Navigation
+@inject IHttpClientFactory ClientFactory
 
 <Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
 	<Found Context="routeData">
@@ -27,6 +31,7 @@
 	private List<HeaderLink> ProfileLinks = new List<HeaderLink>();
 	private AuthenticatedUser User = null;
 	private string AuthenticationDestination;
+	protected HttpClient Api() => ClientFactory.CreateClient("Api");
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -38,14 +43,64 @@
 		
 		// Build up NavLinks.
 		NavLinks = new List<IHeaderItem>();
+		RenderFragment avatar = null;
 		if(isLoggedIn)
 		{
 			NavLinks.Add(new HeaderLink("/People", "People"));
 			NavLinks.Add(new HeaderLink("/Units", "Units"));
 			NavLinks.Add(new HeaderLink("/Search", "Search"));
+
 			ProfileLinks.Insert(0, new HeaderLink($"/People/{loggedInUser}", "Profile", "Manage your profile information"));
+			
+			avatar = await GetNotifications();
+			ProfileLinks.Insert(0, new HeaderLink("/Notifications", "Notifications", "Review system notifications", avatar));
 		}
 
-		NavLinks.Add(new HeaderProfile(loggedInUser, signInUrl, "/SignOut", ProfileLinks, null, isLoggedIn));
+		NavLinks.Add(new HeaderProfile(loggedInUser, signInUrl, "/SignOut", ProfileLinks, null, isLoggedIn, avatar));
+	}
+
+	private async Task<RenderFragment> GetNotifications()
+	{
+		try
+		{
+			//Make sure the user is logged in.
+			if(User !=null && User.Expires > DateTimeOffset.Now)
+			{
+				//Only check notifications if the current user is an Admin.
+				var personResp = await Api().GetAsync($"/People/{User.Username}");
+				if(personResp.StatusCode != HttpStatusCode.OK)
+				{
+					throw new Exception($"Failed to fetch user details. Status Code: {personResp.StatusCode}");
+				}
+				var personString = await personResp.Content.ReadAsStringAsync();
+				var person = JsonConvert.DeserializeObject<Person>(personString, Json.JsonSerializerSettings);
+
+				if(person.IsServiceAdmin)
+				{
+					// Fetch notifications that need reviewed.
+					var resp = await Api().GetAsync("notifications");
+					if(resp.StatusCode != HttpStatusCode.OK)
+					{
+						throw new Exception($"Failed to fatch Notifications.  Status Code: {resp.StatusCode}");
+					}
+
+					// The request succeeded, try to deserialize it.
+					var stringResult = await resp.Content.ReadAsStringAsync();
+					// We have to use Newtonsoft to make sure our StringEnumConverter work.
+					var result = JsonConvert.DeserializeObject<List<Notification>>(stringResult, Json.JsonSerializerSettings);
+					
+					if(result.Count > 0)
+					{
+						return @<span class="rvt-badge rvt-badge--info rvt-m-right-xxs" aria-hidden="true">@result.Count</span>;
+					}
+				}
+			}
+		}
+		catch(Exception ex)
+		{
+			return @<span class="rvt-badge rvt-badge--danger rvt-m-right-xxs" aria-hidden="true" title=@ex.Message>!</span>;
+		}
+
+		return @<span style="display: none;" />;
 	}
 }
