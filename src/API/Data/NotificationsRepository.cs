@@ -23,8 +23,7 @@ namespace API.Data
 
 				var result = await queryable
 					.AsNoTracking()
-					.OrderByDescending(n => n.Reviewed)
-					.ThenByDescending(n => n.Created)
+					.OrderByDescending(n => n.Created)
 					.ToListAsync();
 				return Pipeline.Success(result);
 			});

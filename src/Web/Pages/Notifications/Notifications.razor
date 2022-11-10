@@ -1,0 +1,133 @@
+@using System.Linq
+@using Models
+@using web.Shared
+@using RivetBlazor.Components
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
+@using System.Web
+@implements IDisposable
+@inherits PageBase
+@inject NavigationManager Navigation
+@page "/notifications"
+
+<Title Value="Notifications - IT People - Indiana University" />
+<HeaderNavBar Page="Notifications" />
+<div class="rvt-bg-white rvt-m-tb-xl rvt-p-tb-xl">
+	<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+		<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">Notifications</h1>
+		<DisplayException Ex=@GeneralException />
+		<AuthenticatedView>
+			<NotAuthenticated>
+				<p>
+					You must login to view this resource.
+				</p>
+				<p>
+					<a class="rvt-button" href="/SignIn?Destination=/notifications">Log In</a>
+				</p>
+			</NotAuthenticated>
+			<Authenticated>
+				<Loader Loading="ShowLoader">
+					<p>
+						<button 
+							class=@(_ShowReviewed ? "rvt-button rvt-button--secondary" : "rvt-button")
+							@onclick=ToggleShowReviewed
+						>
+							@(_ShowReviewed ? "Hide Reviewed Notifications" : "Show Reviewed Notifications")
+						</button>
+					</p>
+					<table class="rvt-table-stripes">
+						<thead>
+							<tr>
+								<th class="rvt-text-center" scope="col">Message</th>
+								<th class="rvt-text-center" scope="col">Created</th>
+								<th class="rvt-text-center" scope="col">Reviewed</th>
+								<th class="rvt-text-center" scope="col">Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							@foreach (var item in _Notifications)
+							{
+								<tr>
+									<td>@item.Message</td>
+									<td>@item.Created</td>
+									<td class="rvt-ts-xs rvt-text-center">
+										@item.Netid<br/>
+										@item.Reviewed
+									</td>
+									<td>
+										@if(item.Reviewed == null)
+										{
+											<div class="rvt-button-group">
+												<button class="rvt-button" @onclick=@(() => ReviewNotification(item))>Mark as Reviewed</button>
+											</div>
+										}
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</Loader>
+			</Authenticated>
+		</AuthenticatedView>
+	</div>
+</div>
+
+
+@code{
+	private bool _ShowReviewed = false;
+	private List<Notification> _Notifications = new List<Notification>();
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+	private List<string> TruthyStrings = new List<string> { "true", "t", "yes", "y", "1" };
+
+	protected override async Task OnInitializedAsync()
+	{
+		await SetLoggedInUser();
+
+		// Read the queryString from the Uri, if it has the value for _ShowReviewed set it and use it.
+		var query = new Uri(Navigation.Uri).Query;
+		var queryDict = HttpUtility.ParseQueryString(query);
+		var showReviewedString = queryDict.Get("showReviewed");
+		_ShowReviewed = TruthyStrings.Any(ts => ts.Equals(showReviewedString, StringComparison.InvariantCultureIgnoreCase));
+
+		if(LoggedInUser != null)
+		{
+			await GetNotifications();
+		}
+	}
+
+	public void Dispose() { }
+
+	private async Task GetNotifications()
+	{
+		using (Loading())
+		{
+			GeneralException = null;
+			// Update the browser's URI to match the current value of _ShowReviewed
+			var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+			Navigation.NavigateTo($"{uri.AbsolutePath}?ShowReviewed={_ShowReviewed}");
+
+			// Get data from the API
+			var result = await Get<List<Notification>>($"notifications?showReviewed={_ShowReviewed}");
+			_Notifications = result.Value;
+		}
+	}
+
+	private async Task ToggleShowReviewed()
+	{
+		_ShowReviewed = !_ShowReviewed;
+		await GetNotifications();
+	}
+
+	private async Task ReviewNotification(Notification notification)
+	{
+		using (Loading())
+		{
+			GeneralException = null;
+			var result = await Put<Notification>($"notifications/{notification.Id}", notification);
+			if(result.RawResponse.IsSuccessStatusCode)
+			{
+				await GetNotifications();
+			}
+		}
+	}
+}
