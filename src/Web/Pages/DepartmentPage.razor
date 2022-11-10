@@ -32,7 +32,7 @@
 							</div>
 						</div>
 					</div>
-					<SupportingUnits Units=@SupportingUnits />
+					<SupportingUnits Units=@SupportingUnits ReportSupportingUnit=@_Department.ReportSupportingUnit DepartmentId=@DepartmentId IsAdmin=@_IsAdmin />
 				</Loader>
 			</Authenticated>
 		</AuthenticatedView>
@@ -46,6 +46,7 @@
 	private EditContext DepartmentEditContext;
 	private Department _Department = new Department();
 	private IEnumerable<UnitResponse> SupportingUnits = new List<UnitResponse>();
+	private bool _IsAdmin = false;
 	private bool ShowLoader = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 
@@ -57,7 +58,7 @@
 		{
 			using (Loading())
 			{
-				var tasks = new Task[] { GetDepartment(), GetSupportingUnits() };
+				var tasks = new Task[] { GetDepartment(), GetSupportingUnits(), SetIsAdmin() };
 				await Task.WhenAll(tasks);
 			}
 		}
@@ -79,6 +80,8 @@
 			SupportingUnits = response.Value.Select(sr => sr.Unit);
 		}
 	}
+
+	private async Task SetIsAdmin() => _IsAdmin = await IsUserAdmin();
 
 	private string GetPageTitle() => $"{_Department.Name} - IT People - Indiana University";
 	public void Dispose() { }
