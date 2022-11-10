@@ -3,6 +3,7 @@
 @using System.Net
 @using Newtonsoft.Json
 @using Models
+@using web.Shared
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject NavigationManager Navigation
 @inject IHttpClientFactory ClientFactory
@@ -67,7 +68,7 @@
 			if(User !=null && User.Expires > DateTimeOffset.Now)
 			{
 				//Only check notifications if the current user is an Admin.
-				var personResp = await Api().GetAsync($"/People/{User.Username}");
+				/*var personResp = await Api().GetAsync($"/People/{User.Username}");
 				if(personResp.StatusCode != HttpStatusCode.OK)
 				{
 					throw new Exception($"Failed to fetch user details. Status Code: {personResp.StatusCode}");
@@ -75,7 +76,8 @@
 				var personString = await personResp.Content.ReadAsStringAsync();
 				var person = JsonConvert.DeserializeObject<Person>(personString, Json.JsonSerializerSettings);
 
-				if(person.IsServiceAdmin)
+				if(person.IsServiceAdmin)*/
+				if(await PageBase.IsUserAdmin(User.Username, Api()))
 				{
 					// Fetch notifications that need reviewed.
 					var resp = await Api().GetAsync("notifications");

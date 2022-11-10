@@ -129,4 +129,25 @@
 	{
 		return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(UpdatedEntity, Json.JsonSerializerSettings), Json.JsonSerializerSettings);
 	}
+
+	public static async Task<bool> IsUserAdmin(string username, HttpClient apiClient)
+	{
+		if(string.IsNullOrWhiteSpace(username))
+		{
+			return false;
+		}
+
+		var personResp = await apiClient.GetAsync($"/People/{username}");
+		if(personResp.StatusCode != HttpStatusCode.OK)
+		{
+			throw new Exception($"Failed to fetch details for Person identified by username {username}. Status Code: {personResp.StatusCode}");
+		}
+		var personString = await personResp.Content.ReadAsStringAsync();
+		var person = JsonConvert.DeserializeObject<Person>(personString, Json.JsonSerializerSettings);
+
+		return person.IsServiceAdmin;
+	}
+
+	protected async Task<bool>IsUserAdmin(string username = null)
+		=> await IsUserAdmin(username ?? LoggedInUser?.Username, Api());
 }

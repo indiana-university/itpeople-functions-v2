@@ -734,24 +734,7 @@
 		CanEditMemberTools = response.Permissions.HasFlag(PermsGroups.All);
 	}
 
-	private async Task SetIsAdmin()
-	{
-		if(LoggedInUser == null || string.IsNullOrWhiteSpace(LoggedInUser.Username))
-		{
-			IsAdmin = false;
-			return;
-		}
-
-		var response = await Get<PersonResponse>($"/People/{LoggedInUser.Username}");
-		if(response.RawResponse.IsSuccessStatusCode == false)
-		{
-			GeneralException = new Exception($"Unable to fetch details for Person identified by username {LoggedInUser.Username}");
-			IsAdmin = false;
-			return;
-		}
-
-		IsAdmin = response.Value.IsServiceAdmin;
-	}
+	private async Task SetIsAdmin() => IsAdmin = await IsUserAdmin();
 
 	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
 	{
