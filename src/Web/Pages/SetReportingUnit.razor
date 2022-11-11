@@ -1,0 +1,120 @@
+@using System.Linq
+@using Models
+@using web.Shared
+@using RivetBlazor.Components
+@using Microsoft.AspNetCore.Components.Web.Extensions.Head
+@implements IDisposable
+@inherits PageBase
+@page "/departments/{DepartmentId}/SetReportingUnit"
+
+<Title Value="@GetPageTitle()" />
+<HeaderNavBar Page="Departments" CurrentPage=@_Department.Name />
+<div class="rvt-bg-white rvt-m-tb-xl rvt-p-tb-xl">
+	<div class="rvt-container" style="max-width: 1440px; margin: auto;">
+		<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">Set ReportSupportingUnit @_Department.Name</h1>
+		<DisplayException Ex=@GeneralException />
+
+		<AuthenticatedView>
+			<NotAuthenticated>
+				<p>
+					You must login to view this resource.
+				</p>
+				<p>
+					<a class="rvt-button" href="/SignIn?Destination=/departments/@DepartmentId/SetReportingUnit">Log In</a>
+				</p>
+			</NotAuthenticated>
+			<Authenticated>
+				<Loader Loading="ShowLoader">
+					<div class="rvt-grid">
+						<div class="rvt-grid__item">
+							<div class="rvt-m-bottom-xxl">
+								<p>@_Department.Description</p>
+
+								<EditForm EditContext="@DepartmentEditContext">
+									<RivetInputSelect
+										@bind-Value="_Department.ReportSupportingUnit"
+										Label="Report as Supported By"
+										Description="The selected unit will be listed on reports as the primary support provider for this department."
+										Options=@ReportSupportingUnitOptions
+										DisplayLambda=@(r => r.Name)
+										disabled=@ShowLoader
+									/>
+									<p>
+										<button type="submit" class="rvt-button rvt-m-top-md" disabled=@(ShowLoader || _Department.ReportSupportingUnit == null) @onclick="UpdateSupportRelationship">
+											Set
+										</button>
+									</p>
+								</EditForm>
+							</div>
+						</div>
+					</div>
+				</Loader>
+			</Authenticated>
+		</AuthenticatedView>
+	</div>
+</div>
+
+@code
+{
+	[Parameter]
+	public string DepartmentId { get; set; }
+	private EditContext DepartmentEditContext;
+	private Department _Department = new Department();
+	private List<Unit> ReportSupportingUnitOptions = new List<Unit>();
+	private bool ShowLoader = false;
+	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
+
+	protected override async Task OnInitializedAsync()
+	{
+		Console.WriteLine("Begin init");
+		DepartmentEditContext = new EditContext(_Department);
+		await SetLoggedInUser();
+		if(LoggedInUser != null)
+		{
+			using (Loading())
+			{
+				var tasks = new Task[] { GetDepartment(), SetValidReportSupportUnits() };
+				await Task.WhenAll(tasks);
+			}
+		}
+		Console.WriteLine("End init");
+	}
+
+	public void Dispose() { }
+
+	private async Task GetDepartment()
+	{
+		var resp = await Get<Department>($"/departments/{DepartmentId}");
+		if(resp.RawResponse.IsSuccessStatusCode)
+		{
+			_Department = resp.Value;
+		}
+	}
+
+	private async Task SetValidReportSupportUnits()
+	{
+		Console.WriteLine("\tBegin valid");
+		ReportSupportingUnitOptions = new List<Unit>();
+		int.TryParse(DepartmentId, out int id);
+
+		var result = await GetValidSupportUnits(0, id);
+		if(result.RawResponse.IsSuccessStatusCode)
+		{
+			var stringResult = await result.RawResponse.Content.ReadAsStringAsync();
+			Console.WriteLine(stringResult);
+			ReportSupportingUnitOptions = result.Value.Select(ur => new Unit { Id = ur.Id, Name = ur.Name }).ToList();
+		}
+		Console.WriteLine("\tEnd valid");
+	}
+	
+	private async Task UpdateSupportRelationship()
+	{
+		GeneralException = null;
+		using(Loading())
+		{
+			var result = await Put<SupportRelationshipResponse>("SetDepartmentReportSupportingUnit", _Department);
+		}
+	}
+
+	private string GetPageTitle() => $"{_Department.Name} - IT People - Indiana University";
+}

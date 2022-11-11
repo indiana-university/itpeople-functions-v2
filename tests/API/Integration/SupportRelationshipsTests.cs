@@ -755,17 +755,14 @@ namespace Integration
 				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 
-				// Ensure we cannot set to any of the invalid units.
 				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA_2 };
 				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 
-				// Ensure we cannot set to any of the invalid units.
 				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitB };
 				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 
-				// Ensure we cannot set to any of the invalid units.
 				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitB_1 };
 				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
