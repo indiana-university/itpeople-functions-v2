@@ -160,7 +160,7 @@ namespace API.Data
 			return Pipeline.Success(relationship);
 		}
 
-		private enum CanChangeReportSupportingUnit
+		public enum CanChangeReportSupportingUnit
 		{
 			No = 0,
 			InvalidUnit = 1,
@@ -207,7 +207,7 @@ namespace API.Data
 			return acceptableUnits;
 		}
 
-		private static async Task<CanChangeReportSupportingUnit> CanUpdateDepartmentReportSupportingUnit(PeopleContext db, EntityPermissions perms, string requestorNetId, int unitId, int departmentId, int reportUnitId)
+		public static async Task<CanChangeReportSupportingUnit> CanUpdateDepartmentReportSupportingUnit(PeopleContext db, EntityPermissions perms, string requestorNetId, int unitId, int departmentId, int reportUnitId)
 		{
 			if (perms.HasFlag(EntityPermissions.Post))
 			{

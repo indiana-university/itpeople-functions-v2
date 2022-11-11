@@ -716,6 +716,100 @@ namespace Integration
 				var expectedIds = expected.Select(u => u.Id).ToList();
 				Assert.That(actualIds, Is.EquivalentTo(expectedIds));
 			}
+
+			// The following tests really belong in DepartmentsTests, but all the tooling is here.
+			[Test]
+			public async Task AdminCanSetValidReportSupportingUnit()
+			{
+				var db = GetDb();
+				var dept = await CreateDepartment();
+				var units = await GenerateUnitFamilyTrees(db);
+				// Create a support Relationship between dept and UnitA_1.
+				// This means unitA and unitA_1 are valid options, and all other units are not.
+				await CreateSupportRelationship(dept.Id, units.UnitA_1.Id, TestEntities.SupportTypes.FullServiceId, units.UnitA_1.Id);
+
+				// Make a request to set dept.ReportSupportingUnit to UnitA.
+				var req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA };
+				var resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.OK);
+
+				var actual = await resp.Content.ReadAsAsync<Department>();
+				Assert.AreEqual(dept.Id, actual.Id);
+				Assert.AreEqual(dept.Name, actual.Name);
+				Assert.AreEqual(dept.Description, actual.Description);
+				Assert.AreEqual(units.UnitA.Id, actual.ReportSupportingUnit.Id);
+
+				// Make a request to set dept.ReportSupportingUnit to UnitA_1
+				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA_1 };
+				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.OK);
+
+				actual = await resp.Content.ReadAsAsync<Department>();
+				Assert.AreEqual(dept.Id, actual.Id);
+				Assert.AreEqual(dept.Name, actual.Name);
+				Assert.AreEqual(dept.Description, actual.Description);
+				Assert.AreEqual(units.UnitA_1.Id, actual.ReportSupportingUnit.Id);
+
+				// Ensure we cannot set to any of the invalid units.
+				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA_1_1 };
+				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+				// Ensure we cannot set to any of the invalid units.
+				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA_2 };
+				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+				// Ensure we cannot set to any of the invalid units.
+				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitB };
+				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+				// Ensure we cannot set to any of the invalid units.
+				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitB_1 };
+				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.BadRequest);
+			}
+
+			[Test]
+			public async Task HandlesNonExistantDepartmentOrUnit()
+			{
+				var db = GetDb();
+				var dept = await CreateDepartment();
+				var units = await GenerateUnitFamilyTrees(db);
+				// Create a support Relationship between dept and UnitA_1.
+				// This means unitA and unitA_1 are valid options, and all other units are not.
+				await CreateSupportRelationship(dept.Id, units.UnitA_1.Id, TestEntities.SupportTypes.FullServiceId, units.UnitA_1.Id);
+
+				// Make a request to set with a bad unit value
+				var req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = new Unit { Id = 40000, Name = "Not Real" } };
+				var resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.NotFound);
+
+				// Make a request to set with a bad department value
+				req = new Department { Id = 40000, Name = "Not Real", ReportSupportingUnit = units.UnitA_1 };
+				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.NotFound);
+			}
+
+			[TestCase(ValidRswansonJwt)]
+			[TestCase(ValidLknopeJwt)]
+			[TestCase(ValidJgergichJwt)]
+			[TestCase(ValidBwyattJwt)]
+			public async Task NonAdminCannotSetValidReportSupportingUnit(string jwt)
+			{
+				var db = GetDb();
+				var dept = await CreateDepartment();
+				var units = await GenerateUnitFamilyTrees(db);
+				// Create a support Relationship between dept and UnitA_1.
+				// This means unitA and unitA_1 are valid options, and all other units are not.
+				await CreateSupportRelationship(dept.Id, units.UnitA_1.Id, TestEntities.SupportTypes.FullServiceId, units.UnitA_1.Id);
+
+				// Make a request to set dept.ReportSupportingUnit to UnitA.
+				var req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA };
+				var resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, jwt);
+				AssertStatusCode(resp, HttpStatusCode.Forbidden);
+			}
 		}
 	}
 }

@@ -66,5 +66,24 @@ namespace API.Functions
 						.Bind(_ => DepartmentsRepository.GetSupportingUnits(departmentId))
 						.Bind(sr => Pipeline.Success(SupportRelationshipResponse.ConvertList(sr)))
 						.Finally(result => Response.Ok(req, result));
+		
+		[FunctionName(nameof(Departments.SetDepartmentReportSupportingUnit))]
+		[OpenApiOperation(nameof(Departments.SetDepartmentReportSupportingUnit), nameof(Departments), Summary = "Set a department's Report Supporting Unit", Description="Placeholder")]
+		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(DepartmentResponse))]
+		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(DepartmentResponse), Description = "The updated department.")]
+		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The requestor is not an admin.")]
+		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No matching department or unit were found.")]
+		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit is not a valid Report Supporting Unit for the department based on its existing support relationships.")]
+		public static Task<IActionResult> SetDepartmentReportSupportingUnit([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "SetDepartmentReportSupportingUnit")] HttpRequest req)
+		{
+			string requestor = null;
+			return Security.Authenticate(req)
+				.Tap(netId => requestor = netId)
+				.Bind(netId => AuthorizationRepository.DetermineServiceAdminPermissions(req, netId))
+				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
+				.Bind(_ => Request.DeserializeBody<DepartmentResponse>(req))
+				.Bind(body => DepartmentsRepository.SetDepartmentReportSupportingUnit(req, body, requestor))
+				.Finally(result => Response.Ok(req, result));
+		}
 	}
 }
