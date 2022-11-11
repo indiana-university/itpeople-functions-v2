@@ -39,7 +39,7 @@
 							</div>
 						}
 
-						@if(ReportSupportingUnit == null && Units.Count() > 0)
+						@if(IsAdmin && ReportSupportingUnit == null && Units.Count() > 0)
 						{
 							<div class="rvt-alert rvt-alert--info rvt-m-bottom-md" role="alertdialog" aria-labelledby="information-alert-title">
 								<h1 class="rvt-alert__title" id="information-alert-title">No Report Supporting Unit Set.</h1>
