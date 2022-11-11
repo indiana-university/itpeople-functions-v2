@@ -150,4 +150,7 @@
 
 	protected async Task<bool>IsUserAdmin(string username = null)
 		=> await IsUserAdmin(username ?? LoggedInUser?.Username, Api());
+	
+	protected async Task<(List<UnitResponse> Value, EntityPermissions Permissions, HttpResponseMessage RawResponse)> GetValidSupportUnits(int unitId, int departmentId)
+		=> await Get<List<UnitResponse>>($"ValidReportSupportingUnits?unitId={unitId}&departmentId={departmentId}");
 }

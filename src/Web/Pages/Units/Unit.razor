@@ -609,7 +609,7 @@
 		{
 			if(SupportRelationshipToAdd.DepartmentId != null)
 			{
-				var result = await Get<List<UnitResponse>>($"ValidReportSupportingUnits?unitId={CurrentUnit.Id}&departmentId={SupportRelationshipToAdd.DepartmentId}");
+				var result = await GetValidSupportUnits(CurrentUnit.Id, SupportRelationshipToAdd.DepartmentId);
 				if(result.RawResponse.IsSuccessStatusCode)
 				{
 					ReportSupportingUnitOptions = result.Value;
