@@ -38,6 +38,22 @@
 								</div>
 							</div>
 						}
+
+						@if(ReportSupportingUnit == null && Units.Count() > 0)
+						{
+							<div class="rvt-alert rvt-alert--info rvt-m-bottom-md" role="alertdialog" aria-labelledby="information-alert-title">
+								<h1 class="rvt-alert__title" id="information-alert-title">No Report Supporting Unit Set.</h1>
+								<p class="rvt-alert__message">
+									Without a Report Supporting Unit set the department may not appear correctly in some reports.
+									<div class="rvt-m-top-sm">
+										<a class="rvt-button" href="/Departments/@DepartmentId/SetReportingUnit">
+											Set Report Supporting Unit
+										</a>
+									</div>
+								</p>
+							</div>
+						}
+
 						@foreach (var unit in Units.Where(u => u.Id != ReportSupportingUnit?.Id))
 						{
 							<div class="rvt-grid">
