@@ -37,6 +37,10 @@
 	protected override async Task OnInitializedAsync()
 	{
 		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
+		if(User != null && User.Expires < DateTimeOffset.Now)
+		{
+			User = null;
+		}
 		var loggedInUser = User?.Username ?? "";
 		var isLoggedIn = User != null;
 		AuthenticationDestination = new Uri(Navigation.Uri).PathAndQuery;
@@ -53,48 +57,40 @@
 
 			ProfileLinks.Insert(0, new HeaderLink($"/People/{loggedInUser}", "Profile", "Manage your profile information"));
 			
-			avatar = await GetNotifications();
-			ProfileLinks.Insert(0, new HeaderLink("/Notifications", "Notifications", "Review system notifications", avatar));
+			// Only admins need to see Notifications.
+			var isAdmin = await PageBase.IsUserAdmin(User?.Username, Api());
+			avatar = await GetNotifications(isAdmin);
+			if(isAdmin)
+			{
+				ProfileLinks.Insert(0, new HeaderLink("/Notifications", "Notifications", "Review system notifications", avatar));
+			}
 		}
 
 		NavLinks.Add(new HeaderProfile(loggedInUser, signInUrl, "/SignOut", ProfileLinks, null, isLoggedIn, avatar));
 	}
 
-	private async Task<RenderFragment> GetNotifications()
+	private async Task<RenderFragment> GetNotifications(bool isAdmin)
 	{
 		try
 		{
-			//Make sure the user is logged in.
-			if(User !=null && User.Expires > DateTimeOffset.Now)
+			// Only admins see notifications.
+			if(isAdmin)
 			{
-				//Only check notifications if the current user is an Admin.
-				/*var personResp = await Api().GetAsync($"/People/{User.Username}");
-				if(personResp.StatusCode != HttpStatusCode.OK)
+				// Fetch notifications that need reviewed.
+				var resp = await Api().GetAsync("notifications");
+				if(resp.StatusCode != HttpStatusCode.OK)
 				{
-					throw new Exception($"Failed to fetch user details. Status Code: {personResp.StatusCode}");
+					throw new Exception($"Failed to fatch Notifications.  Status Code: {resp.StatusCode}");
 				}
-				var personString = await personResp.Content.ReadAsStringAsync();
-				var person = JsonConvert.DeserializeObject<Person>(personString, Json.JsonSerializerSettings);
 
-				if(person.IsServiceAdmin)*/
-				if(await PageBase.IsUserAdmin(User.Username, Api()))
+				// The request succeeded, try to deserialize it.
+				var stringResult = await resp.Content.ReadAsStringAsync();
+				// We have to use Newtonsoft to make sure our StringEnumConverter work.
+				var result = JsonConvert.DeserializeObject<List<Notification>>(stringResult, Json.JsonSerializerSettings);
+				
+				if(result.Count > 0)
 				{
-					// Fetch notifications that need reviewed.
-					var resp = await Api().GetAsync("notifications");
-					if(resp.StatusCode != HttpStatusCode.OK)
-					{
-						throw new Exception($"Failed to fatch Notifications.  Status Code: {resp.StatusCode}");
-					}
-
-					// The request succeeded, try to deserialize it.
-					var stringResult = await resp.Content.ReadAsStringAsync();
-					// We have to use Newtonsoft to make sure our StringEnumConverter work.
-					var result = JsonConvert.DeserializeObject<List<Notification>>(stringResult, Json.JsonSerializerSettings);
-					
-					if(result.Count > 0)
-					{
-						return @<span class="rvt-badge rvt-badge--info rvt-m-right-xxs" aria-hidden="true">@result.Count</span>;
-					}
+					return @<span class="rvt-badge rvt-badge--info rvt-m-right-xxs" aria-hidden="true">@result.Count</span>;
 				}
 			}
 		}
