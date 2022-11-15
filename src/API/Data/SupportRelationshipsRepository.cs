@@ -204,7 +204,7 @@ namespace API.Data
 				acceptableUnits.Add(department.ReportSupportingUnit);
 			}
 
-			return acceptableUnits;
+			return acceptableUnits.Distinct().ToList();
 		}
 
 		public static async Task<CanChangeReportSupportingUnit> CanUpdateDepartmentReportSupportingUnit(PeopleContext db, EntityPermissions perms, string requestorNetId, int unitId, int departmentId, int reportUnitId)

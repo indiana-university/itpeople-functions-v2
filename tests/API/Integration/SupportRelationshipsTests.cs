@@ -717,6 +717,32 @@ namespace Integration
 				Assert.That(actualIds, Is.EquivalentTo(expectedIds));
 			}
 
+			[Test]
+			public async Task SupportingUnitSuggestionsHasNoDuplicates()
+			{
+				var db = GetDb();
+				var units = await GenerateUnitFamilyTrees(db);
+				var testDept = await CreateDepartment();
+				// Make a support Relationship for UnitA_1
+				await CreateSupportRelationship(testDept.Id, units.UnitA_1.Id, TestEntities.SupportTypes.DesktopEndpointId, units.UnitA_1.Id);
+
+				// When we get recomendations for UnitA_2, UnitA_1's sibling, we should not get any duplicate recomendations.
+				var resp = await GetAuthenticated($"ValidReportSupportingUnits?departmentId={testDept.Id}&unitId={units.UnitA_2.Id}", ValidAdminJwt);
+				AssertStatusCode(resp, HttpStatusCode.OK);
+
+				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
+
+				// The siblings, UnitA_1 and UnitA_2, share a common parent in UnitA. UnitA should only occur once in the result.
+				var unitACount = actual.Where(u => u.Id == units.UnitA.Id).Count();
+				Assert.AreEqual(1, unitACount);
+				
+				// Ensure we got all the other units we expected.
+				var expected = new List<Unit> { units.UnitA, units.UnitA_1, units.UnitA_2 };
+				var actualIds = actual.Select(u => u.Id).ToList();
+				var expectedIds = expected.Select(u => u.Id).ToList();
+				Assert.That(actualIds, Is.EquivalentTo(expectedIds));
+			}
+
 			// The following tests really belong in DepartmentsTests, but all the tooling is here.
 			[Test]
 			public async Task AdminCanSetValidReportSupportingUnit()
