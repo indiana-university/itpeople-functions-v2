@@ -81,11 +81,11 @@ namespace API.Data
 				return Pipeline.Success(result);
 			});
 		
-		public static async Task<Result<List<UnitResponse>, Error>> GetValidReportSupportingUnits(string requestorNetId, int departmentId, int unitId)
+		public static async Task<Result<List<UnitResponse>, Error>> GetValidPrimarySupportUnits(string requestorNetId, int departmentId, int unitId)
 		{
-			return await ExecuteDbPipeline("Find the valid ReportSupportingUnits for departmentId.", async db =>
+			return await ExecuteDbPipeline("Find the valid PrimarySupportUnits for departmentId.", async db =>
 			{
-				var validUnits = await TryGetValidReportSupportingUnits(db, requestorNetId, unitId, departmentId);
+				var validUnits = await TryGetValidPrimarySupportUnits(db, requestorNetId, unitId, departmentId);
 				var response = validUnits.Select(u => new UnitResponse(u)).ToList();
 				return Pipeline.Success(response);
 			});
@@ -112,7 +112,7 @@ namespace API.Data
 			var result = await db.SupportRelationships
 				.Include(r => r.Unit)
 				.Include(r => r.Department)
-					.ThenInclude(d => d.ReportSupportingUnit)
+					.ThenInclude(d => d.PrimarySupportUnit)
 				.Include(r => r.SupportType)
 				.SingleOrDefaultAsync(r => r.Id == id);
 			return result == null
@@ -132,22 +132,22 @@ namespace API.Data
 
 			// Get the full department, to update or generate a notification.
 			var department = await db.Departments
-				.Include(d => d.ReportSupportingUnit)
+				.Include(d => d.PrimarySupportUnit)
 				.SingleAsync(d => d.Id == body.DepartmentId);
 
-			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId, body.ReportSupportingUnitId);
+			var allowed = await CanUpdateDepartmentPrimarySupportUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId, body.PrimarySupportUnitId);
 			switch(allowed)
 			{
-				case CanChangeReportSupportingUnit.Yes:
-					department.ReportSupportingUnitId = body.ReportSupportingUnitId;
+				case CanChangePrimarySupportUnit.Yes:
+					department.PrimarySupportUnitId = body.PrimarySupportUnitId;
 					// TODO - Log the change to building before we do this.
 					break;
-				case CanChangeReportSupportingUnit.MayRequest:
+				case CanChangePrimarySupportUnit.MayRequest:
 					// Make a notification about the requested change.
-					var reqReportUnit = await db.Units.SingleAsync(u => u.Id == body.ReportSupportingUnitId);
+					var reqReportUnit = await db.Units.SingleAsync(u => u.Id == body.PrimarySupportUnitId);
 					var notification = new Notification
 					{
-						Message = $"{requestorNetId} requests to change {department.Name} Report Supporting Unit to {reqReportUnit.Name}."
+						Message = $"{requestorNetId} requests to change {department.Name} Primary Support Unit to {reqReportUnit.Name}."
 					};
 
 					await db.Notifications.AddAsync(notification);
@@ -160,7 +160,7 @@ namespace API.Data
 			return Pipeline.Success(relationship);
 		}
 
-		public enum CanChangeReportSupportingUnit
+		public enum CanChangePrimarySupportUnit
 		{
 			No = 0,
 			InvalidUnit = 1,
@@ -168,7 +168,7 @@ namespace API.Data
 			MayRequest = 3
 		}
 
-		private static async Task<List<Unit>> TryGetValidReportSupportingUnits(PeopleContext db, string requestorNetId, int unitId, int departmentId)
+		private static async Task<List<Unit>> TryGetValidPrimarySupportUnits(PeopleContext db, string requestorNetId, int unitId, int departmentId)
 		{
 			var requestor = await db.People.SingleOrDefaultAsync(p => p.Netid == requestorNetId);
 
@@ -180,7 +180,7 @@ namespace API.Data
 
 			// Ensure the reportUnitId is in one of the department's SupportRelationship units' ancestry.
 			var unitIdsToCheckAncestry = new List<int> { unitId };
-			// Admins can set a ReportSupportingUnit based on ANY of the departments SupportRelationships
+			// Admins can set a PrimarySupportUnit based on ANY of the departments SupportRelationships
 			if(requestor?.IsServiceAdmin == true)
 			{
 				unitIdsToCheckAncestry.AddRange(departmentOtherRelationships.Select(sr => sr.UnitId));
@@ -194,20 +194,20 @@ namespace API.Data
 				acceptableUnits.AddRange(familyTree);
 			}
 
-			// If the department's current ReportSupportingUnit is not in acceptableUnits add it.
+			// If the department's current PrimarySupportUnit is not in acceptableUnits add it.
 			var department = await db.Departments
-				.Include(d => d.ReportSupportingUnit)
+				.Include(d => d.PrimarySupportUnit)
 				.SingleAsync(d => d.Id == departmentId);
 			
-			if(department.ReportSupportingUnit != null && acceptableUnits.Any(u => u.Id == department.ReportSupportingUnit.Id) == false)
+			if(department.PrimarySupportUnit != null && acceptableUnits.Any(u => u.Id == department.PrimarySupportUnit.Id) == false)
 			{
-				acceptableUnits.Add(department.ReportSupportingUnit);
+				acceptableUnits.Add(department.PrimarySupportUnit);
 			}
 
 			return acceptableUnits.Distinct().ToList();
 		}
 
-		public static async Task<CanChangeReportSupportingUnit> CanUpdateDepartmentReportSupportingUnit(PeopleContext db, EntityPermissions perms, string requestorNetId, int unitId, int departmentId, int reportUnitId)
+		public static async Task<CanChangePrimarySupportUnit> CanUpdateDepartmentPrimarySupportUnit(PeopleContext db, EntityPermissions perms, string requestorNetId, int unitId, int departmentId, int reportUnitId)
 		{
 			if (perms.HasFlag(EntityPermissions.Post))
 			{
@@ -218,37 +218,37 @@ namespace API.Data
 					.Where(sr => sr.DepartmentId == departmentId && sr.UnitId != unitId)
 					.ToListAsync();
 
-				var acceptableReportUnits = await TryGetValidReportSupportingUnits(db, requestorNetId, unitId, departmentId);
+				var acceptableReportUnits = await TryGetValidPrimarySupportUnits(db, requestorNetId, unitId, departmentId);
 				var acceptableUnitIds = acceptableReportUnits.Select(u => u.Id).ToList();
 
 				if(acceptableUnitIds.Contains(reportUnitId) == false)
 				{
-					return CanChangeReportSupportingUnit.InvalidUnit;
+					return CanChangePrimarySupportUnit.InvalidUnit;
 				}
 
 				if (requestor?.IsServiceAdmin == true)
 				{
-					return CanChangeReportSupportingUnit.Yes;
+					return CanChangePrimarySupportUnit.Yes;
 				}
 
 				// If it isn't changing the request is fine.
 				var department = await db.Departments
-					.Include(d => d.ReportSupportingUnit)
+					.Include(d => d.PrimarySupportUnit)
 					.SingleAsync(d => d.Id == departmentId);
-				if(department.ReportSupportingUnit?.Id == reportUnitId)
+				if(department.PrimarySupportUnit?.Id == reportUnitId)
 				{
-					return CanChangeReportSupportingUnit.Yes;
+					return CanChangePrimarySupportUnit.Yes;
 				}
 
 				// This user is a team leader, if there are no other SupportRelationships
-				//  for the department they can set the ReportSupportingUnit.
+				//  for the department they can set the PrimarySupportUnit.
 				// If there are other SupportRelationships they can only request.
 				return departmentOtherRelationships.Any()
-					? CanChangeReportSupportingUnit.MayRequest
-					: CanChangeReportSupportingUnit.Yes;
+					? CanChangePrimarySupportUnit.MayRequest
+					: CanChangePrimarySupportUnit.Yes;
 			}
 
-			return CanChangeReportSupportingUnit.No;
+			return CanChangePrimarySupportUnit.No;
 		}
 
 		private static async Task<Result<SupportRelationshipRequest, Error>> ValidateRequest(PeopleContext db, SupportRelationshipRequest body, EntityPermissions perms, string requestorNetId, int? existingRelationshipId = null)
@@ -278,19 +278,19 @@ namespace API.Data
 			}
 
 			
-			//Ensure the user has provided a ReportSupportingUnitId and has the permissions required to set the Department.ReportSupportingUnit they have provided.
-			if(body.ReportSupportingUnitId == 0)
+			//Ensure the user has provided a PrimarySupportUnitId and has the permissions required to set the Department.PrimarySupportUnit they have provided.
+			if(body.PrimarySupportUnitId == 0)
 			{
-				return Pipeline.BadRequest("The request body was malformed, the reportSupportingUnitId field was missing or invalid.");
+				return Pipeline.BadRequest("The request body was malformed, the primarySupportUnitId field was missing or invalid.");
 			}
-			var allowed = await CanUpdateDepartmentReportSupportingUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId, body.ReportSupportingUnitId);
-			if(allowed == CanChangeReportSupportingUnit.No)
+			var allowed = await CanUpdateDepartmentPrimarySupportUnit(db, perms, requestorNetId, body.UnitId, body.DepartmentId, body.PrimarySupportUnitId);
+			if(allowed == CanChangePrimarySupportUnit.No)
 			{
-				return Pipeline.BadRequest("You do have the permissions required to set the Department Report Supporting Unit you provided.");
+				return Pipeline.BadRequest("You do have the permissions required to set the Department Primary Support Unit you provided.");
 			}
-			if(allowed == CanChangeReportSupportingUnit.InvalidUnit)
+			if(allowed == CanChangePrimarySupportUnit.InvalidUnit)
 			{
-				return Pipeline.BadRequest("You may only set the Department Report Supporting Unit to your own unit or one of its parent units.");
+				return Pipeline.BadRequest("You may only set the Department Primary Support Unit to your own unit or one of its parent units.");
 			}
 
 			return Pipeline.Success(body);
@@ -300,7 +300,7 @@ namespace API.Data
 		{
 			db.SupportRelationships.Remove(supportRelationship);
 
-			// If the Department has no other SupportRelationships, set Department.ReportSupportingUnit to null.
+			// If the Department has no other SupportRelationships, set Department.PrimarySupportUnit to null.
 			var otherSRs = await db.SupportRelationships
 				.Include(sr => sr.Unit)
 				.Include(sr => sr.Department)
@@ -312,7 +312,7 @@ namespace API.Data
 			
 			var department = await db.Departments.SingleAsync(d => d.Id == supportRelationship.Department.Id);
 			
-			// if the DepartMent.ReportSupportingUnit is now not one of the Department's SupportUnit's Units(or their parents) we need to change the value
+			// if the DepartMent.PrimarySupportUnit is now not one of the Department's SupportUnit's Units(or their parents) we need to change the value
 			var acceptableReportUnits = new List<Unit>();
 			foreach(var sr in otherSRs)
 			{
@@ -320,13 +320,13 @@ namespace API.Data
 				acceptableReportUnits.AddRange(familyTree);
 			}
 
-			var reportUnitIsAcceptable = acceptableReportUnits.Any(a => a.Id == department.ReportSupportingUnit.Id);
+			var reportUnitIsAcceptable = acceptableReportUnits.Any(a => a.Id == department.PrimarySupportUnit.Id);
 			if(reportUnitIsAcceptable == false)
 			{
 				// TODO - Log this change to the Department.
-				department.ReportSupportingUnit = null;
-				// Generate a notification that Department no longer has a ReportSupportingUnit when action done by user that is not an admin.
-				await db.Notifications.AddAsync(new Notification { Message = $"{requestorNetId} has removed Support Relationship between the unit {supportRelationship.Unit.Name} and department {supportRelationship.Department.Name}.  The department no longer has a Report Supporting Unit." });
+				department.PrimarySupportUnit = null;
+				// Generate a notification that Department no longer has a PrimarySupportUnit when action done by user that is not an admin.
+				await db.Notifications.AddAsync(new Notification { Message = $"{requestorNetId} has removed Support Relationship between the unit {supportRelationship.Unit.Name} and department {supportRelationship.Department.Name}.  The department no longer has a Primary Support Unit." });
 			}
 
 			await db.SaveChangesAsync();

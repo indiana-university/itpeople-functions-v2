@@ -10,9 +10,9 @@ namespace Models
         /// A description or longer name of this department.
         public string Description { get; set; }
         
-        public int? ReportSupportingUnitId { get; set; }
+        public int? PrimarySupportUnitId { get; set; }
         [NotMapped]
-        public UnitResponse ReportSupportingUnit { get; set; }
+        public UnitResponse PrimarySupportUnit { get; set; }
 
         public DepartmentResponse() {}
 
@@ -21,14 +21,14 @@ namespace Models
             Id = department.Id;
             Name = department.Name;
             Description = department.Description;
-            ReportSupportingUnit = department.ReportSupportingUnit == null
+            PrimarySupportUnit = department.PrimarySupportUnit == null
                 ? null
-                : new UnitResponse(department.ReportSupportingUnit);
+                : new UnitResponse(department.PrimarySupportUnit);
         }
     }
 
     public class Department : DepartmentResponse
     {    
-        public new Unit ReportSupportingUnit { get; set; }
+        public new Unit PrimarySupportUnit { get; set; }
     }
 }

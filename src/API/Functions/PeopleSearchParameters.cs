@@ -184,24 +184,24 @@ namespace API.Functions
         }
     }
 
-    public class ValidReportSupportingUnitsParameters : BaseSearchParameters
+    public class ValidPrimarySupportUnitsParameters : BaseSearchParameters
     {
 		public int DepartmentId { get; set; }
         public int UnitId { get; set; }
 		
-        public ValidReportSupportingUnitsParameters(int departmentId, int unitId) : base(string.Empty)
+        public ValidPrimarySupportUnitsParameters(int departmentId, int unitId) : base(string.Empty)
 		{
             DepartmentId = departmentId;
             UnitId = unitId;
 		}
 
-        public static Result<ValidReportSupportingUnitsParameters, Error> Parse(HttpRequest req)
+        public static Result<ValidPrimarySupportUnitsParameters, Error> Parse(HttpRequest req)
         {
             var queryParms = req.GetQueryParameterDictionary();
             return Parse(queryParms);
         }
 
-        public static Result<ValidReportSupportingUnitsParameters, Error> Parse(IDictionary<string, string> queryParams)
+        public static Result<ValidPrimarySupportUnitsParameters, Error> Parse(IDictionary<string, string> queryParams)
         {
             queryParams.TryGetValue("departmentId", out string departmentIdStr);
             var departmentId = int.Parse(departmentIdStr);
@@ -209,7 +209,7 @@ namespace API.Functions
             queryParams.TryGetValue("unitId", out string unitIdStr);
             var unitId = int.Parse(unitIdStr);
 
-            return Pipeline.Success(new ValidReportSupportingUnitsParameters(departmentId, unitId));
+            return Pipeline.Success(new ValidPrimarySupportUnitsParameters(departmentId, unitId));
         }
     }
 

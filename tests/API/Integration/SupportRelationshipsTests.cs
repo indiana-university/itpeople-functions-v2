@@ -56,7 +56,7 @@ namespace Integration
 				UnitId = TestEntities.Units.Auditor.Id,
 				DepartmentId = TestEntities.Departments.Fire.Id,
 				SupportTypeId = TestEntities.SupportTypes.DesktopEndpoint.Id,
-				ReportSupportingUnitId = TestEntities.Units.Auditor.Id
+				PrimarySupportUnitId = TestEntities.Units.Auditor.Id
 			};
 
 			//201 
@@ -166,7 +166,7 @@ namespace Integration
 				{
 					UnitId = TestEntities.Units.ParksAndRecUnitId,
 					DepartmentId = TestEntities.Departments.AuditorId,
-					ReportSupportingUnitId = TestEntities.Units.ParksAndRecUnitId
+					PrimarySupportUnitId = TestEntities.Units.ParksAndRecUnitId
 				};
 				await PostReturnsCorrectEntityPermissions("supportRelationships", req, unitWithPermissions, providedPermission, expectedCode, expectedPermission);
 			}
@@ -367,9 +367,9 @@ namespace Integration
 			}
 		}
 
-		public class SupportRelationshipReportSupportingUnit : ApiTest
+		public class SupportRelationshipPrimarySupportUnit : ApiTest
 		{
-			private const string _InvalidUnit = "You may only set the Department Report Supporting Unit to your own unit or one of its parent units.";
+			private const string _InvalidUnit = "You may only set the Department Primary Support Unit to your own unit or one of its parent units.";
 			private Database.PeopleContext GetDb() => Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
 
 			private async Task<Department> CreateDepartment(string name = "Test Department", string description = "Test Dept. description")
@@ -387,14 +387,14 @@ namespace Integration
 				return dept;
 			}
 
-			private async Task<SupportRelationship> CreateSupportRelationship(int departmentId, int unitId, int supportTypeId, int reportSupportingUnitId, string jwt = ValidAdminJwt)
+			private async Task<SupportRelationship> CreateSupportRelationship(int departmentId, int unitId, int supportTypeId, int primarySupportUnitId, string jwt = ValidAdminJwt)
 			{
 				var req = new SupportRelationshipRequest
 				{
 					UnitId = unitId,
 					DepartmentId = departmentId,
 					SupportTypeId = supportTypeId,
-					ReportSupportingUnitId = reportSupportingUnitId
+					PrimarySupportUnitId = primarySupportUnitId
 				};
 
 				var createResponse = await PostAuthenticated("SupportRelationships", req, jwt);
@@ -403,13 +403,13 @@ namespace Integration
 				Assert.AreEqual(req.UnitId, createResult.Unit.Id);
 				Assert.AreEqual(req.DepartmentId, createResult.Department.Id);
 				Assert.AreEqual(req.SupportTypeId, createResult.SupportType.Id);
-				Assert.AreEqual(req.ReportSupportingUnitId, createResult.Department.ReportSupportingUnit.Id);
+				Assert.AreEqual(req.PrimarySupportUnitId, createResult.Department.PrimarySupportUnit.Id);
 				return createResult;
 			}
 
-			/// <summary>When a Department has SupportRelationship added for it, the Department.ReportSupportingUnit must not be null.</summary>
+			/// <summary>When a Department has SupportRelationship added for it, the Department.PrimarySupportUnit must not be null.</summary>
 			[Test]
-			public async Task CreatingSupportRelationshipMustSetAReportSupportingUnit()
+			public async Task CreatingSupportRelationshipMustSetAPrimarySupportUnit()
 			{
 				var req = new SupportRelationshipRequest
 				{
@@ -421,18 +421,18 @@ namespace Integration
 				
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var error = await resp.Content.ReadAsAsync<ApiError>();
-				Assert.Contains("The request body was malformed, the reportSupportingUnitId field was missing or invalid.", error.Errors);
+				Assert.Contains("The request body was malformed, the primarySupportUnitId field was missing or invalid.", error.Errors);
 			}
 
 			[TestCase(ValidAdminJwt, true)]
 			[TestCase(ValidRswansonJwt, false)]// Ron is the leader of the Parks & Rec unit, but not an admin.
-			public async Task OnlyAdminsChangeDepartmentReportSupportingUnitWhenMultipleSupportRelationshipsExist(string jwt, bool canSet)
+			public async Task OnlyAdminsChangeDepartmentPrimarySupportUnitWhenMultipleSupportRelationshipsExist(string jwt, bool canSet)
 			{
-				// Make a new department, and establish a SupportRelationship and ReportSupportingUnit to the "City of Pawneee" unit.
+				// Make a new department, and establish a SupportRelationship and PrimarySupportUnit to the "City of Pawneee" unit.
 				var testDepartment = await CreateDepartment();
 				var citySR = await CreateSupportRelationship(testDepartment.Id, TestEntities.Units.CityOfPawneeUnitId, TestEntities.SupportTypes.FullServiceId, TestEntities.Units.CityOfPawneeUnitId);
 				
-				// Make a request to create a new SupportRelationship for testDepartment to the "Parks & Rec" unit, and to also change the ReportSupportingUnit to "Parks & Rec".
+				// Make a request to create a new SupportRelationship for testDepartment to the "Parks & Rec" unit, and to also change the PrimarySupportUnit to "Parks & Rec".
 				// If they are an Admin this will work.
 				// If they are just a unit leader, it will simply make a request, because now there is more than one SupportRelationshp.
 				var req = new SupportRelationshipRequest
@@ -440,7 +440,7 @@ namespace Integration
 					UnitId = TestEntities.Units.ParksAndRecUnitId,
 					DepartmentId = testDepartment.Id,
 					SupportTypeId = TestEntities.SupportTypes.DesktopEndpoint.Id,
-					ReportSupportingUnitId = TestEntities.Units.ParksAndRecUnitId
+					PrimarySupportUnitId = TestEntities.Units.ParksAndRecUnitId
 				};
 
 				var resp = await PostAuthenticated("SupportRelationShips", req, jwt);
@@ -450,21 +450,21 @@ namespace Integration
 
 				if(canSet)
 				{
-					Assert.AreEqual(TestEntities.Units.ParksAndRecUnitId, actual.Department.ReportSupportingUnit.Id);
+					Assert.AreEqual(TestEntities.Units.ParksAndRecUnitId, actual.Department.PrimarySupportUnit.Id);
 				}
 				else
 				{
 					//It should not have changed, but a notification of Ron's request to change it should have been created.
-					Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Department.ReportSupportingUnit.Id);
+					Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Department.PrimarySupportUnit.Id);
 					var db = GetDb();
 					var notifications = await db.Notifications.ToListAsync();
 					Assert.AreEqual(1, notifications.Count);
-					Assert.AreEqual($"rswanso requests to change {testDepartment.Name} Report Supporting Unit to {TestEntities.Units.ParksAndRecUnit.Name}.", notifications.First().Message);
+					Assert.AreEqual($"rswanso requests to change {testDepartment.Name} Primary Support Unit to {TestEntities.Units.ParksAndRecUnit.Name}.", notifications.First().Message);
 				}
 			}
 
 			[Test]
-			public async Task OwnerCanLeaveDepartmentReportSupportingUnitAsExistingValueOutsideTheirUnitAncestry()
+			public async Task OwnerCanLeaveDepartmentPrimarySupportUnitAsExistingValueOutsideTheirUnitAncestry()
 			{
 				var db = GetDb();
 				var units = await GenerateUnitFamilyTrees(db);
@@ -486,13 +486,13 @@ namespace Integration
 				await db.UnitMembers.AddAsync(ronUnitMembership);
 				await db.SaveChangesAsync();
 
-				// Ron adds a SupportRelationship for his unit, but leaves Department.ReportSupportingUnit unchanged.
+				// Ron adds a SupportRelationship for his unit, but leaves Department.PrimarySupportUnit unchanged.
 				var req = new SupportRelationshipRequest
 				{
 					UnitId = units.UnitA_1.Id,
 					DepartmentId = testDept.Id,
 					SupportTypeId = TestEntities.SupportTypes.WebAppInfrastructureId,
-					ReportSupportingUnitId = units.UnitB_1.Id
+					PrimarySupportUnitId = units.UnitB_1.Id
 				};
 
 				var resp = await PostAuthenticated("SupportRelationships", req, ValidRswansonJwt);
@@ -505,12 +505,12 @@ namespace Integration
 			}
 
 			[Test]
-			public async Task ReportSupportingUnitMustBeNullWhenNoSupportRelationshipsExist()
+			public async Task PrimarySupportUnitMustBeNullWhenNoSupportRelationshipsExist()
 			{
 				// Create a new Department to test with.
 				var testDept = await CreateDepartment();
 
-				// Create a SupportRelationship and set the department's ReportSupportingUnit.
+				// Create a SupportRelationship and set the department's PrimarySupportUnit.
 				// Rswanson is the Parks & Rec unit leadter, should be able to create.
 				var createResult = await CreateSupportRelationship(testDept.Id, TestEntities.Units.ParksAndRecUnitId, TestEntities.SupportTypes.DesktopEndpointId, TestEntities.Units.ParksAndRecUnitId, ValidRswansonJwt);
 
@@ -519,33 +519,33 @@ namespace Integration
 				// We expect it to be deleted.
 				AssertStatusCode(resp, HttpStatusCode.NoContent);
 
-				// We also expect that after the update testDept will no longer have a ReportSupportingUnit
+				// We also expect that after the update testDept will no longer have a PrimarySupportUnit
 				var db = GetDb();
 				var updatedDept = db.Departments
-					.Include(d => d.ReportSupportingUnit)
+					.Include(d => d.PrimarySupportUnit)
 					.Single(d => d.Id == testDept.Id);
-				Assert.IsNull(updatedDept.ReportSupportingUnit);
+				Assert.IsNull(updatedDept.PrimarySupportUnit);
 
 				// Ensure a notification was created when removed by a non-Admin.
 				var notifications = await db.Notifications.ToListAsync();
 				Assert.AreEqual(1, notifications.Count);
-				var expectedMessage = $"rswanso has removed Support Relationship between the unit {createResult.Unit.Name} and department {testDept.Name}.  The department no longer has a Report Supporting Unit.";
+				var expectedMessage = $"rswanso has removed Support Relationship between the unit {createResult.Unit.Name} and department {testDept.Name}.  The department no longer has a Primary Support Unit.";
 				Assert.AreEqual(expectedMessage, notifications.First().Message);
 			}
 
 			///<summary>
 			/// When a SupportRelation ship for a department is deleted, and the
-			/// Department.ReportSupportingUnit is still related to one of the Department's
-			/// other SupportRelationships' Unit then Department.ReportSupportingUnit should not change.
+			/// Department.PrimarySupportUnit is still related to one of the Department's
+			/// other SupportRelationships' Unit then Department.PrimarySupportUnit should not change.
 			///</summary>
 			[Test]
-			public async Task ReportSupportingUnitDoesNotBecomeNullWhenSupportRelationshipsExist()
+			public async Task PrimarySupportUnitDoesNotBecomeNullWhenSupportRelationshipsExist()
 			{
 				// Create a new Department to test with.
 				var testDept = await CreateDepartment();
 
 				// Create two SupportRelationships for the department, one for Parks & Rec unit, and one for the Auditor unit.
-				// Set the ReportSupportingUnit to be City of Pawnee - the Parks & Rec and Auditor units mutal parent.. 
+				// Set the PrimarySupportUnit to be City of Pawnee - the Parks & Rec and Auditor units mutal parent.. 
 				var parksSR = await CreateSupportRelationship(testDept.Id, TestEntities.Units.ParksAndRecUnitId, TestEntities.SupportTypes.DesktopEndpointId, TestEntities.Units.CityOfPawneeUnitId);
 				var auditorSR = await CreateSupportRelationship(testDept.Id, TestEntities.Units.AuditorId, TestEntities.SupportTypes.ResearchInfrastructureId, TestEntities.Units.CityOfPawneeUnitId);
 
@@ -553,12 +553,12 @@ namespace Integration
 				var resp = await DeleteAuthenticated($"SupportRelationships/{parksSR.Id}", ValidRswansonJwt);// Ron is the leader of the unit, so he should be able to perform this delete.
 				AssertStatusCode(resp, HttpStatusCode.NoContent);
 
-				// Department.ReportSupportingUnit should have remained the City of Pawnee unit.
+				// Department.PrimarySupportUnit should have remained the City of Pawnee unit.
 				var db = GetDb();
 				var departmentResult = await db.Departments
-					.Include(d => d.ReportSupportingUnit)
+					.Include(d => d.PrimarySupportUnit)
 					.SingleOrDefaultAsync(d => d.Id == testDept.Id);
-				Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, departmentResult.ReportSupportingUnit?.Id);
+				Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, departmentResult.PrimarySupportUnit?.Id);
 
 				// No notification should have been made.
 				Assert.AreEqual(0, db.Notifications.Count());
@@ -567,17 +567,17 @@ namespace Integration
 			///<summary>
 			/// A variation on 
 			/// When a SupportRelation ship for a department is deleted, and the
-			/// Department.ReportSupportingUnit is no longer related to any of the Department's
-			/// other SupportRelationships then Department.ReportSupportingUnit should become null
+			/// Department.PrimarySupportUnit is no longer related to any of the Department's
+			/// other SupportRelationships then Department.PrimarySupportUnit should become null
 			///</summary>
 			[Test]
-			public async Task ReportSupportingUnitBecomesNullWhenRelatedSupportRelationshipsEnd()
+			public async Task PrimarySupportUnitBecomesNullWhenRelatedSupportRelationshipsEnd()
 			{
 				// Create a new Department to test with.
 				var testDept = await CreateDepartment();
 
 				// Create two SupportRelationships for the department, one for Parks & Rec unit, and one for the Auditor unit.
-				// Set the ReportSupportingUnit to be parks and rec. 
+				// Set the PrimarySupportUnit to be parks and rec. 
 				var parksSR = await CreateSupportRelationship(testDept.Id, TestEntities.Units.ParksAndRecUnitId, TestEntities.SupportTypes.DesktopEndpointId, TestEntities.Units.ParksAndRecUnitId);
 				var auditorSR = await CreateSupportRelationship(testDept.Id, TestEntities.Units.AuditorId, TestEntities.SupportTypes.ResearchInfrastructureId, TestEntities.Units.ParksAndRecUnitId);
 
@@ -585,15 +585,15 @@ namespace Integration
 				var resp = await DeleteAuthenticated($"SupportRelationships/{parksSR.Id}", ValidRswansonJwt);// Ron is the leader of the unit, so he should be able to perform this delete.
 				AssertStatusCode(resp, HttpStatusCode.NoContent);
 
-				// Department.ReportSupportingUnit should have defaulted to the auditor
+				// Department.PrimarySupportUnit should have defaulted to the auditor
 				var db = GetDb();
-				var departmentResult = await db.Departments.Include(d => d.ReportSupportingUnit).SingleOrDefaultAsync(d => d.Id == testDept.Id);
-				Assert.IsNull(departmentResult.ReportSupportingUnit);
+				var departmentResult = await db.Departments.Include(d => d.PrimarySupportUnit).SingleOrDefaultAsync(d => d.Id == testDept.Id);
+				Assert.IsNull(departmentResult.PrimarySupportUnit);
 
 				// Ensure a notification was created when removed by a non-Admin.
 				var notifications = await db.Notifications.ToListAsync();
 				Assert.AreEqual(1, notifications.Count);
-				var expectedMessage = $"rswanso has removed Support Relationship between the unit {parksSR.Unit.Name} and department {testDept.Name}.  The department no longer has a Report Supporting Unit.";
+				var expectedMessage = $"rswanso has removed Support Relationship between the unit {parksSR.Unit.Name} and department {testDept.Name}.  The department no longer has a Primary Support Unit.";
 				Assert.AreEqual(expectedMessage, notifications.First().Message);
 			}
 
@@ -601,7 +601,7 @@ namespace Integration
 			[TestCase(ValidAdminJwt, HttpStatusCode.BadRequest, _InvalidUnit, Description = "Admin Bad Assignment")]
 			[TestCase(ValidRswansonJwt, HttpStatusCode.BadRequest, _InvalidUnit, Description = "Other team's leader")]
 			[TestCase(ValidBwyattJwt, HttpStatusCode.Forbidden, "You are not authorized to make this request.", Description = "Non-Lead should get 403")]
-			public async Task ReportSupportingUnitMustBeInASupportRelationshipUnitAncestry(string jwt, HttpStatusCode expectedCode, string expectedError)
+			public async Task PrimarySupportUnitMustBeInASupportRelationshipUnitAncestry(string jwt, HttpStatusCode expectedCode, string expectedError)
 			{
 				var db = GetDb();
 
@@ -613,14 +613,14 @@ namespace Integration
 				await db.Units.AddAsync(indieUnit);
 				await db.SaveChangesAsync();
 
-				// Make a request that provides a ReportSupportingUnitId that is not in the ancestry of any units
+				// Make a request that provides a PrimarySupportUnitId that is not in the ancestry of any units
 				// testDept has a SupportRelationship with.
 				var req = new SupportRelationshipRequest
 				{
 					UnitId = TestEntities.Units.ParksAndRecUnitId,
 					DepartmentId = testDept.Id,
 					SupportTypeId = TestEntities.SupportTypes.WebAppInfrastructureId,
-					ReportSupportingUnitId = indieUnit.Id
+					PrimarySupportUnitId = indieUnit.Id
 				};
 
 				var resp = await PostAuthenticated("SupportRelationships", req, jwt);
@@ -668,8 +668,8 @@ namespace Integration
 				// Make a SupportRelationship between unitB_1 and testDept.
 				await CreateSupportRelationship(testDept.Id, units.UnitB_1.Id, TestEntities.SupportTypes.DesktopEndpointId, units.UnitB_1.Id);
 
-				// Make a GET request to find the valid ReportSupportingUnits for an Admin user as if they were going to make a new SupportRelationship between UnitA_1_1 and testDept.
-				var resp = await GetAuthenticated($"ValidReportSupportingUnits?departmentId={testDept.Id}&unitId={units.UnitA_1_1.Id}", ValidAdminJwt);
+				// Make a GET request to find the valid PrimarySupportUnits for an Admin user as if they were going to make a new SupportRelationship between UnitA_1_1 and testDept.
+				var resp = await GetAuthenticated($"ValidPrimarySupportUnits?departmentId={testDept.Id}&unitId={units.UnitA_1_1.Id}", ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.OK);
 
 				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
@@ -704,8 +704,8 @@ namespace Integration
 				await db.UnitMembers.AddAsync(ronUnitMembership);
 				await db.SaveChangesAsync();
 
-				// Make a GET request to find the valid ReportSupportingUnits for Ron as if he were going to make a new SupportRelationship between UnitA_1_1 and testDept.
-				var resp = await GetAuthenticated($"ValidReportSupportingUnits?departmentId={testDept.Id}&unitId={units.UnitA_1_1.Id}", ValidRswansonJwt);
+				// Make a GET request to find the valid PrimarySupportUnits for Ron as if he were going to make a new SupportRelationship between UnitA_1_1 and testDept.
+				var resp = await GetAuthenticated($"ValidPrimarySupportUnits?departmentId={testDept.Id}&unitId={units.UnitA_1_1.Id}", ValidRswansonJwt);
 				AssertStatusCode(resp, HttpStatusCode.OK);
 
 				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
@@ -727,7 +727,7 @@ namespace Integration
 				await CreateSupportRelationship(testDept.Id, units.UnitA_1.Id, TestEntities.SupportTypes.DesktopEndpointId, units.UnitA_1.Id);
 
 				// When we get recomendations for UnitA_2, UnitA_1's sibling, we should not get any duplicate recomendations.
-				var resp = await GetAuthenticated($"ValidReportSupportingUnits?departmentId={testDept.Id}&unitId={units.UnitA_2.Id}", ValidAdminJwt);
+				var resp = await GetAuthenticated($"ValidPrimarySupportUnits?departmentId={testDept.Id}&unitId={units.UnitA_2.Id}", ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.OK);
 
 				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
@@ -745,7 +745,7 @@ namespace Integration
 
 			// The following tests really belong in DepartmentsTests, but all the tooling is here.
 			[Test]
-			public async Task AdminCanSetValidReportSupportingUnit()
+			public async Task AdminCanSetValidPrimarySupportUnit()
 			{
 				var db = GetDb();
 				var dept = await CreateDepartment();
@@ -754,43 +754,43 @@ namespace Integration
 				// This means unitA and unitA_1 are valid options, and all other units are not.
 				await CreateSupportRelationship(dept.Id, units.UnitA_1.Id, TestEntities.SupportTypes.FullServiceId, units.UnitA_1.Id);
 
-				// Make a request to set dept.ReportSupportingUnit to UnitA.
-				var req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA };
-				var resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				// Make a request to set dept.PrimarySupportUnit to UnitA.
+				var req = new Department { Id = dept.Id, Name = dept.Name, PrimarySupportUnit = units.UnitA };
+				var resp = await PutAuthenticated("SetDepartmentPrimarySupportUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.OK);
 
 				var actual = await resp.Content.ReadAsAsync<Department>();
 				Assert.AreEqual(dept.Id, actual.Id);
 				Assert.AreEqual(dept.Name, actual.Name);
 				Assert.AreEqual(dept.Description, actual.Description);
-				Assert.AreEqual(units.UnitA.Id, actual.ReportSupportingUnit.Id);
+				Assert.AreEqual(units.UnitA.Id, actual.PrimarySupportUnit.Id);
 
-				// Make a request to set dept.ReportSupportingUnit to UnitA_1
-				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA_1 };
-				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				// Make a request to set dept.PrimarySupportUnit to UnitA_1
+				req = new Department { Id = dept.Id, Name = dept.Name, PrimarySupportUnit = units.UnitA_1 };
+				resp = await PutAuthenticated("SetDepartmentPrimarySupportUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.OK);
 
 				actual = await resp.Content.ReadAsAsync<Department>();
 				Assert.AreEqual(dept.Id, actual.Id);
 				Assert.AreEqual(dept.Name, actual.Name);
 				Assert.AreEqual(dept.Description, actual.Description);
-				Assert.AreEqual(units.UnitA_1.Id, actual.ReportSupportingUnit.Id);
+				Assert.AreEqual(units.UnitA_1.Id, actual.PrimarySupportUnit.Id);
 
 				// Ensure we cannot set to any of the invalid units.
-				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA_1_1 };
-				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				req = new Department { Id = dept.Id, Name = dept.Name, PrimarySupportUnit = units.UnitA_1_1 };
+				resp = await PutAuthenticated("SetDepartmentPrimarySupportUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 
-				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA_2 };
-				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				req = new Department { Id = dept.Id, Name = dept.Name, PrimarySupportUnit = units.UnitA_2 };
+				resp = await PutAuthenticated("SetDepartmentPrimarySupportUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 
-				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitB };
-				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				req = new Department { Id = dept.Id, Name = dept.Name, PrimarySupportUnit = units.UnitB };
+				resp = await PutAuthenticated("SetDepartmentPrimarySupportUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 
-				req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitB_1 };
-				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				req = new Department { Id = dept.Id, Name = dept.Name, PrimarySupportUnit = units.UnitB_1 };
+				resp = await PutAuthenticated("SetDepartmentPrimarySupportUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 			}
 
@@ -805,13 +805,13 @@ namespace Integration
 				await CreateSupportRelationship(dept.Id, units.UnitA_1.Id, TestEntities.SupportTypes.FullServiceId, units.UnitA_1.Id);
 
 				// Make a request to set with a bad unit value
-				var req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = new Unit { Id = 40000, Name = "Not Real" } };
-				var resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				var req = new Department { Id = dept.Id, Name = dept.Name, PrimarySupportUnit = new Unit { Id = 40000, Name = "Not Real" } };
+				var resp = await PutAuthenticated("SetDepartmentPrimarySupportUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.NotFound);
 
 				// Make a request to set with a bad department value
-				req = new Department { Id = 40000, Name = "Not Real", ReportSupportingUnit = units.UnitA_1 };
-				resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, ValidAdminJwt);
+				req = new Department { Id = 40000, Name = "Not Real", PrimarySupportUnit = units.UnitA_1 };
+				resp = await PutAuthenticated("SetDepartmentPrimarySupportUnit", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.NotFound);
 			}
 
@@ -819,7 +819,7 @@ namespace Integration
 			[TestCase(ValidLknopeJwt)]
 			[TestCase(ValidJgergichJwt)]
 			[TestCase(ValidBwyattJwt)]
-			public async Task NonAdminCannotSetValidReportSupportingUnit(string jwt)
+			public async Task NonAdminCannotSetValidPrimarySupportUnit(string jwt)
 			{
 				var db = GetDb();
 				var dept = await CreateDepartment();
@@ -828,9 +828,9 @@ namespace Integration
 				// This means unitA and unitA_1 are valid options, and all other units are not.
 				await CreateSupportRelationship(dept.Id, units.UnitA_1.Id, TestEntities.SupportTypes.FullServiceId, units.UnitA_1.Id);
 
-				// Make a request to set dept.ReportSupportingUnit to UnitA.
-				var req = new Department { Id = dept.Id, Name = dept.Name, ReportSupportingUnit = units.UnitA };
-				var resp = await PutAuthenticated("SetDepartmentReportSupportingUnit", req, jwt);
+				// Make a request to set dept.PrimarySupportUnit to UnitA.
+				var req = new Department { Id = dept.Id, Name = dept.Name, PrimarySupportUnit = units.UnitA };
+				var resp = await PutAuthenticated("SetDepartmentPrimarySupportUnit", req, jwt);
 				AssertStatusCode(resp, HttpStatusCode.Forbidden);
 			}
 		}

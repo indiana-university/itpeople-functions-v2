@@ -104,20 +104,20 @@ namespace API.Functions
 				.Bind(query => SupportRelationshipsRepository.GetSssp(query))
 				.Finally(results => Response.Ok(req, results));
 
-		[FunctionName(nameof(SupportRelationships.ValidReportSupportingUnits))]
-		[OpenApiOperation(nameof(SupportRelationships.ValidReportSupportingUnits), SupportRelationshipsTitle, Summary = "Lists the valid ReportSupportingUnit for the provided department and unit.")]
+		[FunctionName(nameof(SupportRelationships.ValidPrimarySupportUnits))]
+		[OpenApiOperation(nameof(SupportRelationships.ValidPrimarySupportUnits), SupportRelationshipsTitle, Summary = "Lists the valid PrimarySupportUnit for the provided department and unit.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitResponse>), Description = "A collection of UnitResponse records.")]
-		[OpenApiParameter("departmentId", In=ParameterLocation.Query, Required = true, Description="The department ID to determine valid ReportSupportingUnit values for.")]
+		[OpenApiParameter("departmentId", In=ParameterLocation.Query, Required = true, Description="The department ID to determine valid PrimarySupportUnit values for.")]
 		[OpenApiParameter("unitId", In=ParameterLocation.Query, Required = true, Description="The unit ID the user intends to create a SupportRelationship for.")]
-		public static Task<IActionResult> ValidReportSupportingUnits([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ValidReportSupportingUnits")] HttpRequest req)
+		public static Task<IActionResult> ValidPrimarySupportUnits([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ValidPrimarySupportUnits")] HttpRequest req)
 		{
 			string requestorNetId = string.Empty;
 
 			return Security.Authenticate(req)
 				.Tap(requestor => requestorNetId = requestor)
 				.Tap(_ => req.SetEntityPermissions(EntityPermissions.Get))
-				.Bind(_ => ValidReportSupportingUnitsParameters.Parse(req))
-				.Bind(queryParams => SupportRelationshipsRepository.GetValidReportSupportingUnits(requestorNetId, queryParams.DepartmentId, queryParams.UnitId))
+				.Bind(_ => ValidPrimarySupportUnitsParameters.Parse(req))
+				.Bind(queryParams => SupportRelationshipsRepository.GetValidPrimarySupportUnits(requestorNetId, queryParams.DepartmentId, queryParams.UnitId))
 				.Finally(results => Response.Ok(req, results));
 		}
 	}

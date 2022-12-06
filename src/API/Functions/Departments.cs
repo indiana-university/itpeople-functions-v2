@@ -67,14 +67,14 @@ namespace API.Functions
 						.Bind(sr => Pipeline.Success(SupportRelationshipResponse.ConvertList(sr)))
 						.Finally(result => Response.Ok(req, result));
 		
-		[FunctionName(nameof(Departments.SetDepartmentReportSupportingUnit))]
-		[OpenApiOperation(nameof(Departments.SetDepartmentReportSupportingUnit), nameof(Departments), Summary = "Set a department's Report Supporting Unit", Description="Placeholder")]
+		[FunctionName(nameof(Departments.SetDepartmentPrimarySupportUnit))]
+		[OpenApiOperation(nameof(Departments.SetDepartmentPrimarySupportUnit), nameof(Departments), Summary = "Set a department's Primary Support Unit", Description="Placeholder")]
 		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(DepartmentResponse))]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(DepartmentResponse), Description = "The updated department.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The requestor is not an admin.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No matching department or unit were found.")]
-		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit is not a valid Report Supporting Unit for the department based on its existing support relationships.")]
-		public static Task<IActionResult> SetDepartmentReportSupportingUnit([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "SetDepartmentReportSupportingUnit")] HttpRequest req)
+		[OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit is not a valid Primary Support Unit for the department based on its existing support relationships.")]
+		public static Task<IActionResult> SetDepartmentPrimarySupportUnit([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "SetDepartmentPrimarySupportUnit")] HttpRequest req)
 		{
 			string requestor = null;
 			return Security.Authenticate(req)
@@ -82,7 +82,7 @@ namespace API.Functions
 				.Bind(netId => AuthorizationRepository.DetermineServiceAdminPermissions(req, netId))
 				.Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
 				.Bind(_ => Request.DeserializeBody<DepartmentResponse>(req))
-				.Bind(body => DepartmentsRepository.SetDepartmentReportSupportingUnit(req, body, requestor))
+				.Bind(body => DepartmentsRepository.SetDepartmentPrimarySupportUnit(req, body, requestor))
 				.Finally(result => Response.Ok(req, result));
 		}
 	}

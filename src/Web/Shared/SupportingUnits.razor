@@ -11,50 +11,50 @@
 							<div class="rvt-grid__item rvt-bg-cream rvt-border-bottom rvt-p-all-xs rvt-p-left-md rvt-p-right-md rvt-ts-18 rvt-text-bold"
 								style="color: rgb(51, 51, 51);">Supporting Units</div>
 						</div>
-						@if(ReportSupportingUnit != null)
+						@if(PrimarySupportUnit != null)
 						{
 							<div class="rvt-grid">
 								<div class="rvt-grid__item rvt-p-all-md">
 									<ul class="rvt-list rvt-plain-list">
 										<li>
-											<a href="/units/@ReportSupportingUnit.Id">@ReportSupportingUnit.Name</a>
+											<a href="/units/@PrimarySupportUnit.Id">@PrimarySupportUnit.Name</a>
 											<span class="rvt-badge rvt-badge--secondary">
 												<rvt-icon name="flag" class="rvt-p-tb-xxs" />
-												<span style="vertical-align: middle;">Used for Reporting</span>
+												<span style="vertical-align: middle;">Primary Support</span>
 											</span>
 											@if(IsAdmin)
 											{
-												<a class="rvt-button rvt-button--small rvt-m-left-xs" href="/Departments/@DepartmentId/SetReportingUnit">
-													<rvt-icon name="pencil" title="Set Report Supporting Unit"></rvt-icon>
-													<span class="rvt-sr-only">Set Report Supporting Unit</span>
+												<a class="rvt-button rvt-button--small rvt-m-left-xs" href="/Departments/@DepartmentId/SetPrimarySupportUnit">
+													<rvt-icon name="pencil" title="Set Primary Support Unit"></rvt-icon>
+													<span class="rvt-sr-only">Set Primary Support Unit</span>
 												</a>
 											}
 										</li>
-										@if(ReportSupportingUnit.Description != null)
+										@if(PrimarySupportUnit.Description != null)
 										{
-											<div><span>@ReportSupportingUnit.Description</span></div>
+											<div><span>@PrimarySupportUnit.Description</span></div>
 										}
 									</ul>
 								</div>
 							</div>
 						}
 
-						@if(IsAdmin && ReportSupportingUnit == null && Units.Count() > 0)
+						@if(IsAdmin && PrimarySupportUnit == null && Units.Count() > 0)
 						{
 							<div class="rvt-alert rvt-alert--info rvt-m-bottom-md" role="alertdialog" aria-labelledby="information-alert-title">
-								<h1 class="rvt-alert__title" id="information-alert-title">No Report Supporting Unit Set.</h1>
+								<h1 class="rvt-alert__title" id="information-alert-title">No Primary Support Unit Set.</h1>
 								<p class="rvt-alert__message">
-									Without a Report Supporting Unit set the department may not appear correctly in some reports.
+									Without a Primary Support Unit set the department may not appear correctly in some reports.
 									<div class="rvt-m-top-sm">
-										<a class="rvt-button" href="/Departments/@DepartmentId/SetReportingUnit">
-											Set Report Supporting Unit
+										<a class="rvt-button" href="/Departments/@DepartmentId/SetPrimarySupportUnit">
+											Set Primary Support Unit
 										</a>
 									</div>
 								</p>
 							</div>
 						}
 
-						@foreach (var unit in Units.Where(u => u.Id != ReportSupportingUnit?.Id))
+						@foreach (var unit in Units.Where(u => u.Id != PrimarySupportUnit?.Id))
 						{
 							<div class="rvt-grid">
 								<div class="rvt-grid__item rvt-p-all-md">
@@ -80,7 +80,7 @@
 	public IEnumerable<UnitResponse> Units { get; set; }
 	
 	[Parameter]
-	public Unit ReportSupportingUnit { get; set; }
+	public Unit PrimarySupportUnit { get; set; }
 
 	[Parameter]
 	public string DepartmentId { get; set; }

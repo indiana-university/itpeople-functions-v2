@@ -129,7 +129,7 @@ namespace Integration
 			{
 				// Add a notification
 				var db = GetDb();
-				var notification = await AddNotificationToDb(db, "rswanso requested to change the Report Supporting Unit for the Parks Department to City of Pawnee.");
+				var notification = await AddNotificationToDb(db, "rswanso requested to change the Primary Support Unit for the Parks Department to City of Pawnee.");
 				Assert.IsNull(notification.Reviewed);
 				Assert.IsNull(notification.Netid);
 

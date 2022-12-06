@@ -8,8 +8,8 @@ namespace Models
         public int  UnitId { get; set; }
         /// The ID of the department in this relationship
         public int  DepartmentId { get; set; }
-        /// The ID of the Unit to use as the department's ReportSupportingUnitId
-        public int ReportSupportingUnitId { get; set; }
+        /// The ID of the Unit to use as the department's PrimarySupportUnitId
+        public int PrimarySupportUnitId { get; set; }
         /// The ID of the support type in this relationship
         public int? SupportTypeId { get; set; }
     }
@@ -49,15 +49,15 @@ namespace Models
 			}
 		}
 
-		private UnitResponse _ReportSupportingUnit;
+		private UnitResponse _PrimarySupportUnit;
 		[Required]
-		public UnitResponse ReportSupportingUnit
+		public UnitResponse PrimarySupportUnit
 		{
-			get => _ReportSupportingUnit;
+			get => _PrimarySupportUnit;
 			set
 			{
-				_ReportSupportingUnit = value;
-				ReportSupportingUnitId = _ReportSupportingUnit?.Id ?? 0;
+				_PrimarySupportUnit = value;
+				PrimarySupportUnitId = _PrimarySupportUnit?.Id ?? 0;
 			}
 		}
 	}

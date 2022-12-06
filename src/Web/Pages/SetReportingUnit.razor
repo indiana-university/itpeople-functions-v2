@@ -5,13 +5,13 @@
 @using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @implements IDisposable
 @inherits PageBase
-@page "/departments/{DepartmentId}/SetReportingUnit"
+@page "/departments/{DepartmentId}/SetPrimarySupportUnit"
 
 <Title Value="@GetPageTitle()" />
 <HeaderNavBar Page="Departments" CurrentPage=@_Department.Name />
 <div class="rvt-bg-white rvt-m-tb-xl rvt-p-tb-xl">
 	<div class="rvt-container" style="max-width: 1440px; margin: auto;">
-		<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">Set ReportSupportingUnit @_Department.Name</h1>
+		<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">Set PrimarySupportUnit @_Department.Name</h1>
 		<DisplayException Ex=@GeneralException />
 
 		<AuthenticatedView>
@@ -20,7 +20,7 @@
 					You must login to view this resource.
 				</p>
 				<p>
-					<a class="rvt-button" href="/SignIn?Destination=/departments/@DepartmentId/SetReportingUnit">Log In</a>
+					<a class="rvt-button" href="/SignIn?Destination=/departments/@DepartmentId/SetPrimarySupportUnit">Log In</a>
 				</p>
 			</NotAuthenticated>
 			<Authenticated>
@@ -32,15 +32,15 @@
 
 								<EditForm EditContext="@DepartmentEditContext">
 									<RivetInputSelect
-										@bind-Value="_Department.ReportSupportingUnit"
-										Label="Report as Supported By"
+										@bind-Value="_Department.PrimarySupportUnit"
+										Label="Primary Support Unit"
 										Description="The selected unit will be listed on reports as the primary support provider for this department."
-										Options=@ReportSupportingUnitOptions
+										Options=@PrimarySupportUnitOptions
 										DisplayLambda=@(r => r.Name)
 										disabled=@ShowLoader
 									/>
 									<p>
-										<button type="submit" class="rvt-button rvt-m-top-md" disabled=@(ShowLoader || _Department.ReportSupportingUnit == null) @onclick="UpdateSupportRelationship">
+										<button type="submit" class="rvt-button rvt-m-top-md" disabled=@(ShowLoader || _Department.PrimarySupportUnit == null) @onclick="UpdateSupportRelationship">
 											Set
 										</button>
 									</p>
@@ -60,7 +60,7 @@
 	public string DepartmentId { get; set; }
 	private EditContext DepartmentEditContext;
 	private Department _Department = new Department();
-	private List<Unit> ReportSupportingUnitOptions = new List<Unit>();
+	private List<Unit> PrimarySupportUnitOptions = new List<Unit>();
 	private bool ShowLoader = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 
@@ -94,7 +94,7 @@
 	private async Task SetValidReportSupportUnits()
 	{
 		Console.WriteLine("\tBegin valid");
-		ReportSupportingUnitOptions = new List<Unit>();
+		PrimarySupportUnitOptions = new List<Unit>();
 		int.TryParse(DepartmentId, out int id);
 
 		var result = await GetValidSupportUnits(0, id);
@@ -102,7 +102,7 @@
 		{
 			var stringResult = await result.RawResponse.Content.ReadAsStringAsync();
 			Console.WriteLine(stringResult);
-			ReportSupportingUnitOptions = result.Value.Select(ur => new Unit { Id = ur.Id, Name = ur.Name }).ToList();
+			PrimarySupportUnitOptions = result.Value.Select(ur => new Unit { Id = ur.Id, Name = ur.Name }).ToList();
 		}
 		Console.WriteLine("\tEnd valid");
 	}
@@ -112,7 +112,7 @@
 		GeneralException = null;
 		using(Loading())
 		{
-			var result = await Put<SupportRelationshipResponse>("SetDepartmentReportSupportingUnit", _Department);
+			var result = await Put<SupportRelationshipResponse>("SetDepartmentPrimarySupportUnit", _Department);
 		}
 	}
 

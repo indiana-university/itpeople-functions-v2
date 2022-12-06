@@ -18,7 +18,7 @@ namespace API.Data
 		internal static Task<Result<List<Department>, Error>> GetAll(DepartmentSearchParameters query)
             => ExecuteDbPipeline("search all departments", async db => {
                     IQueryable<Department> dbQuery = db.Departments
-                        .Include(d => d.ReportSupportingUnit)
+                        .Include(d => d.PrimarySupportUnit)
                         .Where(d =>
                             string.IsNullOrWhiteSpace(query.Q) 
                             || EF.Functions.ILike(d.Name, $"%{query.Q}%")
@@ -40,8 +40,8 @@ namespace API.Data
             => ExecuteDbPipeline("get a department by ID", db => 
                 TryFindDepartment(db, id));
 
-        public static Task<Result<Department, Error>> SetDepartmentReportSupportingUnit(HttpRequest req, DepartmentResponse input, string requestorNetId)
-            => ExecuteDbPipeline("Set Department Report Supporting Unit", async db => {
+        public static Task<Result<Department, Error>> SetDepartmentPrimarySupportUnit(HttpRequest req, DepartmentResponse input, string requestorNetId)
+            => ExecuteDbPipeline("Set Department Primary Support Unit", async db => {
                 // I tried doing this as a pipeline, but it was a disaster.
                 var department = await db.Departments.SingleOrDefaultAsync(d => d.Id == input.Id);
                 if(department == null)
@@ -49,19 +49,19 @@ namespace API.Data
                     return Pipeline.NotFound($"No department with id {input.Id} was found.");
                 }
                 
-                var unit = await db.Units.SingleOrDefaultAsync(u => u.Id == input.ReportSupportingUnit.Id);
+                var unit = await db.Units.SingleOrDefaultAsync(u => u.Id == input.PrimarySupportUnit.Id);
                 if(unit == null)
                 {
-                    return Pipeline.NotFound($"no unit with id {input.ReportSupportingUnit.Id} was found.");
+                    return Pipeline.NotFound($"no unit with id {input.PrimarySupportUnit.Id} was found.");
                 }
 
-                var canChange = await SupportRelationshipsRepository.CanUpdateDepartmentReportSupportingUnit(db, PermsGroups.All, requestorNetId, 0, department.Id, unit.Id);
-                if(canChange != SupportRelationshipsRepository.CanChangeReportSupportingUnit.Yes)
+                var canChange = await SupportRelationshipsRepository.CanUpdateDepartmentPrimarySupportUnit(db, PermsGroups.All, requestorNetId, 0, department.Id, unit.Id);
+                if(canChange != SupportRelationshipsRepository.CanChangePrimarySupportUnit.Yes)
                 {
-                    return Pipeline.BadRequest($"The unit {unit.Id} is not a valid Report Supporting Unit based on the department's existing support relationships.");
+                    return Pipeline.BadRequest($"The unit {unit.Id} is not a valid Primary Support Unit based on the department's existing support relationships.");
                 }
 
-                department.ReportSupportingUnit = unit;
+                department.PrimarySupportUnit = unit;
                 await db.SaveChangesAsync();
                 
                 return Pipeline.Success(department);
@@ -70,7 +70,7 @@ namespace API.Data
         private static async Task<Result<Department,Error>> TryFindDepartment (PeopleContext db, int id)
         {
             var result = await db.Departments
-                .Include(d => d.ReportSupportingUnit)
+                .Include(d => d.PrimarySupportUnit)
                 .SingleOrDefaultAsync(d => d.Id == id);
             return result == null
                 ? Pipeline.NotFound("No department was found with the ID provided.")
@@ -103,7 +103,7 @@ namespace API.Data
         {
             var result = await db.SupportRelationships
                 .Include(r => r.Department)
-                    .ThenInclude(r => r.ReportSupportingUnit)
+                    .ThenInclude(r => r.PrimarySupportUnit)
                 .Include(r => r.Unit.Parent)
                 .Include(r => r.SupportType)
                 .Where(r => r.DepartmentId == departmentId)
