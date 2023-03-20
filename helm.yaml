@@ -1,8 +1,8 @@
 namespace: ua-vpit--client-services-support--cssd
 
 image:
-  repository: registry.docker.iu.edu/cssd/itepeople-api #I fat-fingered this, we can fix it once we get out of the sandbox phase.
-  tag: 2022.0.4
+  repository: registry.docker.iu.edu/cssd/itpeople-api #I fat-fingered this as itepeopl-api before, but now it's corrected.
+  tag: 2023.0.0
   pullPolicy: Always
 
 # NOTE: If your Harbor image repository is private, add your
@@ -63,12 +63,12 @@ env:
 # ENV variables to pull from Kubernetes secrets
 secretEnv:
   - name: DatabaseConnectionString #the env variable name
-    secret: itpeople-api-20220630a #The name of the secret we'll store on kubernetes
+    secret: itpeople-api-202303171635 #The name of the secret we'll store on kubernetes
     key: DatabaseConnectionString #the name of the key in the kube secret
   - name: OAuthClientId
-    secret: itpeople-api-20220630a
+    secret: itpeople-api-202303171635
     key: OAuthClientId
   - name: OAuthClientSecret
-    secret: itpeople-api-20220630a
+    secret: itpeople-api-202303171635
     key: OAuthClientSecret
 
