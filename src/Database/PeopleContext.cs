@@ -1,7 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Models;
-using Npgsql.Logging;
 
 namespace Database
 {
