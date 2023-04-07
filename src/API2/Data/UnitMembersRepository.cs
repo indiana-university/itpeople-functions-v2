@@ -4,6 +4,7 @@ using API.Middleware;
 using CSharpFunctionalExtensions;
 using Database;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
@@ -36,7 +37,7 @@ namespace API.Data
 				.Bind(created => TryFindMembership(db, created.Id))
 			);
 
-		internal static async Task<Result<UnitMember, Error>> UpdateMembership(HttpRequest req, UnitMemberRequest body, int membershipId)
+		internal static async Task<Result<UnitMember, Error>> UpdateMembership(HttpRequestData req, UnitMemberRequest body, int membershipId)
 		{
 			Person person = null;
 			return await ExecuteDbPipeline($"update membership {membershipId}", db =>
@@ -49,7 +50,7 @@ namespace API.Data
 				.Bind(_ => TryFindMembership(db, membershipId))
 			);
 		}
-		internal static async Task<Result<bool, Error>> DeleteMembership(HttpRequest req, int membershipId)
+		internal static async Task<Result<bool, Error>> DeleteMembership(HttpRequestData req, int membershipId)
 		{
 			return await ExecuteDbPipeline($"delete membership {membershipId}", db =>
 				TryFindMembership(db, membershipId)
@@ -166,7 +167,7 @@ namespace API.Data
 			unitMember.Notes = body.Notes ?? "";
 			return unitMember;
 		}
-		private static async Task<Result<bool, Error>> TryDeleteMembership(PeopleContext db, HttpRequest req, UnitMember unitMember)
+		private static async Task<Result<bool, Error>> TryDeleteMembership(PeopleContext db, HttpRequestData req, UnitMember unitMember)
 		{
 			db.MemberTools.RemoveRange(unitMember.MemberTools);
 			db.UnitMembers.Remove(unitMember);
