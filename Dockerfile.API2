@@ -1,0 +1,34 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:6.0 AS installer-env
+
+# A reddit wizard says copy csproj filtes and do a restore first
+# https://www.reddit.com/r/docker/comments/i34thd/dotnet_core_slow_restore/g0azda1?utm_source=share&utm_medium=web2x&context=3
+# It does help, we went from 3m20s to build after changes to 1m20s
+
+COPY src/API/*.csproj ./app/src/API/
+COPY src/Database/*.csproj ./app/src/Database/
+COPY src/Models/*.csproj ./app/src/Models/
+WORKDIR  /app
+
+RUN dotnet restore src/API/API.csproj
+
+# then copy the rest and build/publish.
+COPY src ./src
+RUN mkdir -p home/site/wwwroot && \
+    dotnet publish -c Release src/API/API.csproj --output home/site/wwwroot
+
+FROM mcr.microsoft.com/azure-functions/dotnet:4-dotnet6-appservice
+WORKDIR /app
+ENV AzureWebJobsScriptRoot=/app/home/site/wwwroot
+ENV AzureFunctionsJobHost__Logging__Console__IsEnabled=true
+ENV AzureWebJobsDisableHomepage=true
+ENV DatabaseConnectionString=Server=integration-test-db;Database=ItPeople;User\ Id=SA;Password=abcd1234@;
+ENV IncludeStackTraceInError=true
+ENV JwtPublicKey=-----BEGIN\ PUBLIC\ KEY-----\\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1SU1LfVLPHCozMxH2Mo\\n4lgOEePzNm0tRgeLezV6ffAt0gunVTLw7onLRnrq0/IzW7yWR7QkrmBL7jTKEn5u\\n+qKhbwKfBstIs+bMY2Zkp18gnTxKLxoS2tFczGkPLPgizskuemMghRniWaoLcyeh\\nkd3qqGElvW/VDL5AaWTg0nLVkjRo9z+40RQzuVaE8AkAFmxZzow3x+VJYKdjykkJ\\n0iT9wCS0DRTXu269V264Vf/3jvredZiKRkgwlL9xNAwxXFg0x/XFw005UWVRIkdg\\ncKWTjpBP2dPwVZ4WWC+9aGVd+Gyn1o0CLelf4rEjGoXbAAEgAqeGUxrcIlbjXfbc\\nmwIDAQAB\\n-----END\ PUBLIC\ KEY-----
+ENV OAuthClientId="client id"
+ENV OAuthClientSecret="client secret"
+ENV OAuthTokenUrl="token url"
+ENV OAuthRedirectUrl="redirect url"
+COPY --from=installer-env ["/app/home/site/wwwroot", "/app/home/site/wwwroot"]
+
+HEALTHCHECK --interval=10s --timeout=1s --retries=60 \ 
+    CMD curl --fail http://localhost:80/ping || exit 1     
