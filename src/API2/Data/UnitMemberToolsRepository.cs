@@ -8,6 +8,7 @@ using Database;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Linq;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API.Data
 {
@@ -43,7 +44,7 @@ namespace API.Data
 				.Bind(created => TryFindUnitMemberTool(db, created.Id))
 			);
 
-		internal static async Task<Result<MemberTool, Error>> UpdateUnitMemberTool(HttpRequest req, MemberToolRequest memberToolRequest, int memberToolId)
+		internal static async Task<Result<MemberTool, Error>> UpdateUnitMemberTool(HttpRequestData req, MemberToolRequest memberToolRequest, int memberToolId)
 			=> await ExecuteDbPipeline("Update a unit member tool", db =>
 				ValidateRequest(db, memberToolRequest, memberToolId)
 				.Bind(_ => TryFindUnitMemberTool(db, memberToolId))
@@ -52,7 +53,7 @@ namespace API.Data
 				.Bind(updated => TryFindUnitMemberTool(db, updated.Id))
 			);
 
-		internal static async Task<Result<bool, Error>> DeleteUnitMemberTool(HttpRequest req, int memberToolId)
+		internal static async Task<Result<bool, Error>> DeleteUnitMemberTool(HttpRequestData req, int memberToolId)
 			=> await ExecuteDbPipeline("Delete a unit member tool", db =>
 				TryFindUnitMemberTool(db, memberToolId)
 				.Tap(existing => LogPrevious(req, existing))
@@ -131,7 +132,7 @@ namespace API.Data
 			return existing;
 		}
 
-		private static async Task<Result<bool, Error>> TryDeleteUnitMemberTool(PeopleContext db, HttpRequest req, MemberTool existing)
+		private static async Task<Result<bool, Error>> TryDeleteUnitMemberTool(PeopleContext db, HttpRequestData req, MemberTool existing)
 		{
 			db.MemberTools.Remove(existing);
 			await db.SaveChangesAsync();

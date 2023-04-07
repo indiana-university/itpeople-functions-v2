@@ -131,6 +131,12 @@ namespace API.Data
                 FetchPersonAndMembership(db, requestorNetId)
                 .Bind(person => ResolveMembershipToolPermissions(person, membershipId, db))
                 .Tap(perms => req.SetEntityPermissions(perms)));
+        
+        internal static Task<Result<EntityPermissions, Error>> DetermineUnitMemberToolPermissions(HttpRequestData req, string requestorNetId, int membershipId)
+            => ExecuteDbPipeline($"resolve unit {membershipId} member management permissions", db =>
+                FetchPersonAndMembership(db, requestorNetId)
+                .Bind(person => ResolveMembershipToolPermissions(person, membershipId, db))
+                .Tap(perms => req.SetEntityPermissions(perms)));
 
         private static async Task<Result<Person,Error>> FetchPersonAndMembership(PeopleContext db, string requestorNetid)
         {
