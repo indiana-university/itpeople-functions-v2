@@ -13,7 +13,7 @@ namespace API.Functions
 	{
 		[Function(nameof(Authorization.ExchangeOAuthCodeForToken))]
 		[OpenApiIgnore]
-		public static Task<IActionResult> ExchangeOAuthCodeForToken(
+		public static Task<HttpResponseData> ExchangeOAuthCodeForToken(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "auth")] HttpRequestData req)
 			=> Request.GetRequiredQueryParam(req, "oauth_code")
 				.Bind(code => Security.ExhangeOAuthCodeForToken(req, code))
@@ -21,7 +21,7 @@ namespace API.Functions
 
 		[Function(nameof(Authorization.Options))]
 		[OpenApiIgnore]
-		public static Task<IActionResult> Options(
+		public static Task<HttpResponseData> Options(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "options", Route = "{*url}")] HttpRequestData req)
 			=> Response.Ok(req, Pipeline.Success(string.Empty));
 

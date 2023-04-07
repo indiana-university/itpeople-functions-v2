@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Functions.Worker.Http;
 using Models;
 using Newtonsoft.Json;
 using System;
@@ -69,7 +70,7 @@ namespace API.Middleware
             return Response.ContentResponse(req, StatusCode, "application/json", json);
         }
 
-        public IActionResult ToResponse(Microsoft.Azure.Functions.Worker.Http.HttpRequestData req)
+        public async Task<HttpResponseData> ToResponse(HttpRequestData req)
         {
             var includeStackTrace = !string.IsNullOrWhiteSpace(Utils.Env("IncludeStackTraceInError"));
             var content = new ApiError()
@@ -79,7 +80,7 @@ namespace API.Middleware
                     Details = Exception == null ? "(none)" : includeStackTrace ? Exception.ToString() : Exception.Message
                 };
             var json = JsonConvert.SerializeObject(content, Json.JsonSerializerSettings);
-            return Response.ContentResponse(req, StatusCode, "application/json", json);
+            return await Response.ContentResponse(req, StatusCode, "application/json", json);
         }
     }
 }

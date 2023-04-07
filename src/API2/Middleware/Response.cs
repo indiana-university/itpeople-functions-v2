@@ -49,11 +49,11 @@ namespace API.Middleware
         }
 
 
-        private static async Task<IActionResult> Generate<T>(
+        private static async Task<HttpResponseData> Generate<T>(
             HttpRequestData req, 
             Result<T, Error> result, 
             HttpStatusCode statusCode, 
-            Func<T,IActionResult> resultGenerator)
+            Func<T,Task<HttpResponseData>> resultGenerator)
         {
             if (result.IsSuccess)
             {
@@ -61,12 +61,12 @@ namespace API.Middleware
                 {
                     await Logging.GetLogger(req).SuccessResult(req, statusCode);
                 }
-                return resultGenerator(result.Value);
+                return await resultGenerator(result.Value);
             }
             else 
             {
                 await Logging.GetLogger(req).FailureResult<T>(req, result.Error);
-                return result.Error.ToResponse(req);
+                return await result.Error.ToResponse(req);
             }
         }
 
@@ -74,8 +74,8 @@ namespace API.Middleware
         public static Task<IActionResult> Ok<T>(HttpRequest req, Result<T, Error> result)
             => Generate(req, result, HttpStatusCode.OK, val => JsonResponse(req, val, HttpStatusCode.OK));
         
-        public static Task<IActionResult> Ok<T>(HttpRequestData req, Result<T, Error> result)
-            => Generate(req, result, HttpStatusCode.OK, val => JsonResponse(req, val, HttpStatusCode.OK));
+        public static async Task<HttpResponseData> Ok<T>(HttpRequestData req, Result<T, Error> result)
+            => await Generate(req, result, HttpStatusCode.OK, async val => await JsonResponse(req, val, HttpStatusCode.OK));
 
         /// <summary>Return an HTTP 201 response with content, with the URL for the resource and the resource itself.</summary>
         public static Task<IActionResult> Created<T>(HttpRequest req, Result<T, Error> result) where T : Models.Entity
@@ -102,15 +102,15 @@ namespace API.Middleware
             }
         }
 
-        private static IActionResult JsonResponse<T>(HttpRequestData req, T value, HttpStatusCode status)
+        private static async Task<HttpResponseData> JsonResponse<T>(HttpRequestData req, T value, HttpStatusCode status)
         {
             try
             {
-                return ContentResponse(req, status, "application/json; charset=utf-8", JsonConvert.SerializeObject(value, Json.JsonSerializerSettings));
+                return await ContentResponse(req, status, "application/json; charset=utf-8", JsonConvert.SerializeObject(value, Json.JsonSerializerSettings));
             }
             catch (Exception ex)
             {
-                return Pipeline.InternalServerError($"Failed to serialize {typeof(T).Name} response body as JSON", ex).ToResponse(req);
+                return await Pipeline.InternalServerError($"Failed to serialize {typeof(T).Name} response body as JSON", ex).ToResponse(req);
             }
         }
 
@@ -146,17 +146,21 @@ namespace API.Middleware
             };
         }
 
-        public static IActionResult ContentResponse(HttpRequestData req, HttpStatusCode statusCode, string contentType, string content)
+        public static async Task<HttpResponseData> ContentResponse(HttpRequestData req, HttpStatusCode statusCode, string contentType, string content)
         {
             var resp = AddCorsHeaders(req);
             AddEntityPermissionsHeaders(req, resp);
             // TODO - This definately isn't going to work, it is ignorant of the response headers.
-            return new ContentResult()
+            var respContent = new ContentResult()
             {
                 StatusCode = (int)statusCode,
                 Content = content,
                 ContentType = contentType,
             };
+
+            await resp.WriteAsJsonAsync(respContent);
+
+            return resp;
         }
 
         public static IActionResult StatusCodeResponse(HttpRequest req, HttpStatusCode statusCode)
