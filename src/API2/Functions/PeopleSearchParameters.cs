@@ -151,11 +151,11 @@ namespace API.Functions
             DepartmentName = dept;
         }
 
-        public static Result<SsspSupportRelationshipParameters, Error> Parse(HttpRequest req) 
+        public static Result<SsspSupportRelationshipParameters, Error> Parse(HttpRequestData req) 
         {
             var queryParms = req.GetQueryParameterDictionary();
-            queryParms.TryGetValue("dept", out string dept);
-            return Pipeline.Success(new SsspSupportRelationshipParameters(dept));
+            queryParms.TryGetValue("dept", out string? dept);
+            return Pipeline.Success(new SsspSupportRelationshipParameters(dept ?? string.Empty));
         }
     }
 

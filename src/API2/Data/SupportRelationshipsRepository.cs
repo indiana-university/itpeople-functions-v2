@@ -8,6 +8,7 @@ using Database;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
 using API.Functions;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API.Data
 {
@@ -86,7 +87,7 @@ namespace API.Data
 				.Bind(created => TryFindSupportRelationship(db, created.Id))
 			);
 
-		internal static async Task<Result<bool, Error>> DeleteSupportRelationship(HttpRequest req, int relationshipId)
+		internal static async Task<Result<bool, Error>> DeleteSupportRelationship(HttpRequestData req, int relationshipId)
 		{
 			return await ExecuteDbPipeline($"delete support relationship {relationshipId}", db =>
 				TryFindSupportRelationship(db, relationshipId)
@@ -148,7 +149,7 @@ namespace API.Data
 			return Pipeline.Success(body);
 		}
 		
-		private static async Task<Result<bool, Error>> TryDeleteSupportRelationship(PeopleContext db, HttpRequest req, SupportRelationship supportRelationship)
+		private static async Task<Result<bool, Error>> TryDeleteSupportRelationship(PeopleContext db, HttpRequestData req, SupportRelationship supportRelationship)
 		{
 			db.SupportRelationships.Remove(supportRelationship);
 			await db.SaveChangesAsync();
