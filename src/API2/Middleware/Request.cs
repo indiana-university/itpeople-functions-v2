@@ -33,6 +33,24 @@ namespace API.Middleware
             }
         }
 
+        public static Task<Result<T,Error>> DeserializeBody<T>(HttpRequestData req)
+            => TryDeserializeBody<T>(req)
+                .Bind(body => ValidateBody<T>(body));
+
+        private static async Task<Result<T,Error>> TryDeserializeBody<T>(HttpRequestData req)
+        {
+            try
+            {
+                var json = await req.ReadAsStringAsync() ?? string.Empty;
+                var body = JsonConvert.DeserializeObject<T>(json);
+                return Pipeline.Success(body);
+            }
+            catch (Exception ex)
+            {
+                return Pipeline.BadRequest($"Failed to deserialize request body: {ex.Message}");
+            }
+        }
+        
         /// <summary>Deserialize the request body to an instance of specified type and validate all properties. If valid, the instance is returned.</summary>
         public static Result<T, Error> ValidateBody<T>(T body)
         {
@@ -78,6 +96,12 @@ namespace API.Middleware
 
     public static class HttpRequestDataExtensions
     {
+        // TODO - Make sure this still works.
+        public static void SetEntityPermissions(this HttpRequestData req, EntityPermissions permissions)
+        {
+            req.FunctionContext.Items[Response.Headers.XUserPermissions] = permissions;
+        }
+
         // TODO - Make sure this still works.
         public static bool HasEntityPermissions(this HttpRequestData req) 
             => req.FunctionContext.Items.ContainsKey(Response.Headers.XUserPermissions);

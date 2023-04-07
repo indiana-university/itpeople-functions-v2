@@ -29,6 +29,13 @@ namespace API.Middleware
                 .Bind(DecodeJWT)
                 .Bind(ValidateJWT)
                 .Bind(netid => SetPrincipal(request, netid));
+        
+        public static Result<string, Error> Authenticate(HttpRequestData request)
+            => SetStartTime(request)
+                .Bind(ExtractJWT)
+                .Bind(DecodeJWT)
+                .Bind(ValidateJWT)
+                .Bind(netid => SetPrincipal(request, netid));
 
         public static Task<Result<UaaJwtResponse, Error>> ExhangeOAuthCodeForToken(HttpRequest request, string code) 
         {
@@ -175,6 +182,28 @@ namespace API.Middleware
             
             return Pipeline.Success(bearerToken);
         }
+
+        private static Result<string,Error> ExtractJWT(HttpRequestData request)
+        {
+            var hasAuthorizationHeader = request.Headers.TryGetValues("Authorization", out var authorizationHeaders);
+            if (!hasAuthorizationHeader) 
+                return Pipeline.Unauthorized(ErrorRequestMissingAuthorizationHeader);
+            
+            var authHeaders = authorizationHeaders?.ToArray() ?? new string[] {};
+            if (!authHeaders.Any()) 
+                return Pipeline.Unauthorized(ErrorRequestEmptyAuthorizationHeader);
+            
+            var header = authHeaders.First();
+            if (!header.StartsWith("Bearer", ignoreCase: true, culture: CultureInfo.InvariantCulture)) 
+                return Pipeline.Unauthorized(ErrorRequestAuthorizationHeaderMissingBearerScheme);
+
+            var bearerToken = header.Replace("Bearer", "", ignoreCase: true, culture: CultureInfo.InvariantCulture).Trim();
+            if (string.IsNullOrWhiteSpace(bearerToken)) 
+                return Pipeline.Unauthorized(ErrorRequestAuthorizationHeaderMissingBearerToken);
+            
+            return Pipeline.Success(bearerToken);
+        }
+
         private static Result<UaaJwt,Error> DecodeJWT(string token)
         {
             //https://apps.iu.edu/uaa-prd/oauth/token_key

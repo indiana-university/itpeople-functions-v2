@@ -6,6 +6,7 @@ using System;
 using Microsoft.AspNetCore.Http;
 using Models;
 using Newtonsoft.Json;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API.Data
 {
@@ -29,6 +30,12 @@ namespace API.Data
         protected static void LogPrevious<T>(HttpRequest req, T value) where T : Models.Entity
         {
             req.HttpContext.Items[LogProps.RecordBody] = JsonConvert.SerializeObject(value, Json.JsonSerializerSettings);
+        }
+
+        protected static void LogPrevious<T>(HttpRequestData req, T value) where T : Models.Entity
+        {
+            // TODO - Ensure this still works.
+            req.FunctionContext.Items[LogProps.RecordBody] = JsonConvert.SerializeObject(value, Json.JsonSerializerSettings);
         }
     }
 }

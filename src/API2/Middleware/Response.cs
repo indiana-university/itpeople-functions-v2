@@ -80,11 +80,16 @@ namespace API.Middleware
         /// <summary>Return an HTTP 201 response with content, with the URL for the resource and the resource itself.</summary>
         public static Task<IActionResult> Created<T>(HttpRequest req, Result<T, Error> result) where T : Models.Entity
 		    => Generate(req, result, HttpStatusCode.Created, val => JsonResponse(req, val, HttpStatusCode.Created));
+        
+        public static async Task<HttpResponseData> Created<T>(HttpRequestData req, Result<T, Error> result) where T : Models.Entity
+		    => await Generate(req, result, HttpStatusCode.Created, async val => await JsonResponse(req, val, HttpStatusCode.Created));
 
         /// <summary>Return an HTTP 204 indicating success, but nothing to return.</summary>
         public static Task<IActionResult> NoContent<T>(HttpRequest req, Result<T, Error> result)
             => Generate(req, result, HttpStatusCode.NoContent, val => StatusCodeResponse(req, HttpStatusCode.NoContent));
 
+        public static async Task<HttpResponseData> NoContent<T>(HttpRequestData req, Result<T, Error> result)
+            => await Generate(req, result, HttpStatusCode.NoContent, async val => StatusCodeResponse(req, HttpStatusCode.NoContent));
 
         /// <summary>Return an HTTP 200 response with XML content, or an appropriate HTTP error response.</summary>
         public static Task<IActionResult> OkXml<T>(HttpRequest req, Result<T, Error> result)
@@ -165,6 +170,15 @@ namespace API.Middleware
             AddCorsHeaders(req);
             AddEntityPermissionsHeaders(req);
             return new StatusCodeResult((int)statusCode);
+        }
+
+        public static HttpResponseData StatusCodeResponse(HttpRequestData req, HttpStatusCode statusCode)
+        {
+            var resp = req.CreateResponse(statusCode);
+            AddCorsHeaders(req, resp);
+            AddEntityPermissionsHeaders(req, resp);
+
+            return resp;
         }
 
         private static void AddCorsHeaders(HttpRequest req)

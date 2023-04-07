@@ -1,5 +1,3 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 
@@ -14,6 +12,8 @@ using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
 using System.Linq;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API.Functions
 {
@@ -21,29 +21,29 @@ namespace API.Functions
 	{
 		public const string BuildingRelationshipsTitle = "Building Relationships";
 
-		[FunctionName(nameof(BuildingRelationships.BuildingRelationshipsGetAll))]
+		[Function(nameof(BuildingRelationships.BuildingRelationshipsGetAll))]
 		[OpenApiOperation(nameof(BuildingRelationships.BuildingRelationshipsGetAll), BuildingRelationshipsTitle, Summary = "List all unit-building support relationships")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<BuildingRelationshipResponse>), Description = "A collection of building support relationship records")]
-		public static Task<IActionResult> BuildingRelationshipsGetAll(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildingRelationships")] HttpRequest req)
+		public static Task<HttpResponseData> BuildingRelationshipsGetAll(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildingRelationships")] HttpRequestData req)
 			=> Security.Authenticate(req)
 				.Bind(_ => BuildingRelationshipsRepository.GetAll())
 				.Bind(br => Pipeline.Success(br.Select(brx => new BuildingRelationshipResponse(brx)).ToList()))
 				.Finally(r => Response.Ok(req, r));
 
-		[FunctionName(nameof(BuildingRelationships.BuildingRelationshipsGetOne))]
+		[Function(nameof(BuildingRelationships.BuildingRelationshipsGetOne))]
 		[OpenApiOperation(nameof(BuildingRelationships.BuildingRelationshipsGetOne), BuildingRelationshipsTitle, Summary = "Find a unit-building support relationships by ID")]
 		[OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building support relationship record.")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(BuildingRelationshipResponse), Description = "A building support relationship record")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No support relationship was found with the ID provided.")]
-		public static Task<IActionResult> BuildingRelationshipsGetOne(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildingRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
+		public static Task<HttpResponseData> BuildingRelationshipsGetOne(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "buildingRelationships/{relationshipId}")] HttpRequestData req, int relationshipId)
 			=> Security.Authenticate(req)
 				.Bind(_ => BuildingRelationshipsRepository.GetOne(relationshipId))
 				.Bind(br => Pipeline.Success(new BuildingRelationshipResponse(br)))
 				.Finally(result => Response.Ok(req, result));
 
-		[FunctionName(nameof(BuildingRelationships.CreateBuildingRelationship))]
+		[Function(nameof(BuildingRelationships.CreateBuildingRelationship))]
 		[OpenApiOperation(nameof(BuildingRelationships.CreateBuildingRelationship), BuildingRelationshipsTitle, Summary = "Create a unit-building support relationship", Description = "Authorization: Support relationships can be created by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
 		[OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(BuildingRelationshipRequest), Required = true)]
 		[OpenApiResponseWithBody(HttpStatusCode.Created, MediaTypeNames.Application.Json, typeof(BuildingRelationshipResponse), Description = "The newly created building support relationship record")]
@@ -52,8 +52,8 @@ namespace API.Functions
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The specified unit and/or building does not exist.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Conflict, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The provided unit already has a support relationship with the provided building.")]
 
-		public static Task<IActionResult> CreateBuildingRelationship(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "buildingRelationships")] HttpRequest req)
+		public static Task<HttpResponseData> CreateBuildingRelationship(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "buildingRelationships")] HttpRequestData req)
 		{
 			string requestorNetId = null;
 			BuildingRelationshipRequest buildingRelationshipRequest = null;
@@ -68,14 +68,14 @@ namespace API.Functions
 			.Finally(result => Response.Created(req, result));
 		}
 
-		[FunctionName(nameof(BuildingRelationships.DeleteBuildingRelationship))]
+		[Function(nameof(BuildingRelationships.DeleteBuildingRelationship))]
 		[OpenApiOperation(nameof(BuildingRelationships.DeleteBuildingRelationship), BuildingRelationshipsTitle, Summary = "Delete a unit-building support relationship", Description = "Authorization: Support relationships can be deleted by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
 		[OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building support relationship record.")]
 		[OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]
 		[OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You are not authorized to make this request.")]
 		[OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = "No building support relationship was found with the ID provided.")]
-		public static Task<IActionResult> DeleteBuildingRelationship(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "buildingRelationships/{relationshipId}")] HttpRequest req, int relationshipId)
+		public static Task<HttpResponseData> DeleteBuildingRelationship(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "buildingRelationships/{relationshipId}")] HttpRequestData req, int relationshipId)
 		{
 				string requestorNetId = null;
 				return Security.Authenticate(req)

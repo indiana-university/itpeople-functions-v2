@@ -5,6 +5,7 @@ using API.Middleware;
 using CSharpFunctionalExtensions;
 using Database;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
@@ -39,7 +40,16 @@ namespace API.Data
 		{
 			return await ExecuteDbPipeline($"delete building relationship {relationshipId}", db =>
 				TryFindBuildingRelationship(db, relationshipId)
-                .Tap(existing => LogPrevious(req, existing))
+				.Tap(existing => LogPrevious(req, existing))
+				.Bind(existing => TryDeleteBuildingRelationship(db, req, existing))
+			);
+		}
+
+		internal static async Task<Result<bool, Error>> DeleteBuildingRelationship(HttpRequestData req, int relationshipId)
+		{
+			return await ExecuteDbPipeline($"delete building relationship {relationshipId}", db =>
+				TryFindBuildingRelationship(db, relationshipId)
+				.Tap(existing => LogPrevious(req, existing))
 				.Bind(existing => TryDeleteBuildingRelationship(db, req, existing))
 			);
 		}
@@ -93,5 +103,11 @@ namespace API.Data
 			return Pipeline.Success(true);
 		}
 
+		private static async Task<Result<bool, Error>> TryDeleteBuildingRelationship(PeopleContext db, HttpRequestData req, BuildingRelationship buildingRelationship)
+		{
+			db.BuildingRelationships.Remove(buildingRelationship);
+			await db.SaveChangesAsync();
+			return Pipeline.Success(true);
+		}
 	}
 }
