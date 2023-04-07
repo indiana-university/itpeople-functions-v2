@@ -79,8 +79,8 @@ namespace API.Middleware
                     Errors = Messages?.ToList(),
                     Details = Exception == null ? "(none)" : includeStackTrace ? Exception.ToString() : Exception.Message
                 };
-            //var json = JsonConvert.SerializeObject(content, Json.JsonSerializerSettings);
-            return await Response.ContentResponse(req, StatusCode, "application/json", content);
+            var json = JsonConvert.SerializeObject(content, Json.JsonSerializerSettings);
+            return await Response.ContentResponse(req, StatusCode, "application/json", json);
         }
     }
 }

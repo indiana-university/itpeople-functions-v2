@@ -146,16 +146,16 @@ namespace API.Middleware
             };
         }
 
-        public static async Task<HttpResponseData> ContentResponse(HttpRequestData req, HttpStatusCode statusCode, string contentType, object content)
+        public static async Task<HttpResponseData> ContentResponse(HttpRequestData req, HttpStatusCode statusCode, string contentType, string content)
         {
             var resp = req.CreateResponse(statusCode);
             AddCorsHeaders(req, resp);
             AddEntityPermissionsHeaders(req, resp);
 
-            await resp.WriteAsJsonAsync(content);
+            resp.Headers.Add("content-type", "application/json");
             
-            // WriteAsJsonAsync flips the status code to OK so force it.
-            resp.StatusCode = statusCode;
+            var buffer = System.Text.Encoding.UTF8.GetBytes(content);
+            await resp.Body.WriteAsync(buffer);
             
             return resp;
         }
