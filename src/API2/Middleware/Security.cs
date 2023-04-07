@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using Jose;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker.Http;
 using Models;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -30,6 +31,19 @@ namespace API.Middleware
                 .Bind(netid => SetPrincipal(request, netid));
 
         public static Task<Result<UaaJwtResponse, Error>> ExhangeOAuthCodeForToken(HttpRequest request, string code) 
+        {
+            UaaJwtResponse stashedResp = null;
+            return SetStartTime(request)
+                .Bind(_ => CreateUaaTokenRequest(code))
+                .Bind(PostUaaTokenRequest)
+                .Bind(ParseUaaTokenResponse)
+                .Tap(resp => stashedResp = resp)
+                .Bind(jwt => DecodeJWT(jwt.access_token))
+                .Bind(jwt => SetPrincipal(request, jwt.user_name))
+                .Bind(_ => Pipeline.Success(stashedResp));
+        }
+
+        public static Task<Result<UaaJwtResponse, Error>> ExhangeOAuthCodeForToken(HttpRequestData request, string code) 
         {
             UaaJwtResponse stashedResp = null;
             return SetStartTime(request)
@@ -104,15 +118,36 @@ namespace API.Middleware
             return Pipeline.Success(request);
         }
 
+        private static Result<HttpRequestData, Error> SetStartTime(HttpRequestData request)
+        {
+            // TODO - Ensure this actually works.
+            request.FunctionContext.Items[LogProps.ElapsedTime] = System.DateTime.UtcNow;
+            return Pipeline.Success(request);
+        }
+
         internal static Result<UaaJwt,Error> SetPrincipal(HttpRequest request, UaaJwt uaaJwt)
         {
             request.HttpContext.Items[LogProps.RequestorNetid] = uaaJwt.user_name;
             return Pipeline.Success(uaaJwt);
         }
 
+        internal static Result<UaaJwt,Error> SetPrincipal(HttpRequestData request, UaaJwt uaaJwt)
+        {
+            // TODO - Ensure this actually works.
+            request.FunctionContext.Items[LogProps.RequestorNetid] = uaaJwt.user_name;
+            return Pipeline.Success(uaaJwt);
+        }
+
         internal static Result<string,Error> SetPrincipal(HttpRequest request, string netid)
         {
             request.HttpContext.Items[LogProps.RequestorNetid] = netid;
+            return Pipeline.Success(netid);
+        }
+
+        internal static Result<string,Error> SetPrincipal(HttpRequestData request, string netid)
+        {
+            // TODO - Ensure this actually works.
+            request.FunctionContext.Items[LogProps.RequestorNetid] = netid;
             return Pipeline.Success(netid);
         }
 

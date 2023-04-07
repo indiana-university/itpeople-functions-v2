@@ -52,6 +52,14 @@ namespace API.Middleware
                 ? Pipeline.Success(dict[key])
                 : Pipeline.BadRequest($"Missing required query parameter: {key}");
         }
+
+        internal static Result<string,Error> GetRequiredQueryParam(HttpRequestData req, string key)
+        {
+            var dict = req.GetQueryParameterDictionary();
+            return dict.ContainsKey(key)
+                ? Pipeline.Success(dict[key])
+                : Pipeline.BadRequest($"Missing required query parameter: {key}");
+        }
     }
 
     public static class HttpRequestExtensions
@@ -77,5 +85,26 @@ namespace API.Middleware
         //TO - Make sure this still works.
         public static EntityPermissions GetEntityPermissions(this HttpRequestData req) 
             => (EntityPermissions)req.FunctionContext.Items[Response.Headers.XUserPermissions];
+        
+        public static IDictionary<string, string> GetQueryParameterDictionary(this HttpRequestData req)
+        {
+            var result = new Dictionary<string, string>();
+
+            var queryCollection = req.Url.ParseQueryString();
+
+            var keys = queryCollection.AllKeys?
+                .Select(a => a == null ? string.Empty : a as string)
+                .Where(a => string.IsNullOrWhiteSpace(a) == false)
+                .ToArray()
+                ?? new string[] {};
+
+            foreach(string key in keys)
+            {
+                var value = queryCollection[key] ?? string.Empty;
+                result.Add(key, value);
+            }
+
+            return result;
+        }
     }
 }

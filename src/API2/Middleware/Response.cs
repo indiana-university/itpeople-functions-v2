@@ -255,10 +255,11 @@ namespace API.Middleware
         private static async Task FailureResult<T>(this Serilog.ILogger logger, HttpRequestData request, Error error) 
         {
             var requestBody = request.Body.Length > 0 ? await request.ReadAsStringAsync() : null;
+            request.FunctionContext.Items.TryGetValue(LogProps.RecordBody, out var recordBody);
             logger
                 .ForContext(LogProps.StatusCode, (int)error.StatusCode)
                 .ForContext(LogProps.RequestBody, requestBody)
-                .ForContext(LogProps.RecordBody, request.FunctionContext.Items[LogProps.RecordBody])// TODO verify this still works
+                .ForContext(LogProps.RecordBody, recordBody)// TODO verify this still works
                 .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(error.Messages, Json.JsonSerializerSettings))
                 .Error(error.Exception, $"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}:\nErrors: {{{LogProps.ErrorMessages}}}.");
         }

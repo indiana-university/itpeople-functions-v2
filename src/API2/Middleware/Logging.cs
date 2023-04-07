@@ -123,7 +123,8 @@ namespace API.Middleware
             var requestorIp = requestorIpHeaders?.FirstOrDefault() ?? string.Empty;
 
             // Again, without the HttpContext I expect this to fall flat on its face.
-            var requestorNetid = req.FunctionContext.Items[LogProps.RequestorNetid];
+            // var requestorNetid = req.FunctionContext.Items[LogProps.RequestorNetid];
+            req.FunctionContext.Items.TryGetValue(LogProps.RequestorNetid, out var requestorNetid);
 
             return Logger.Value
                 .ForContext(LogProps.ElapsedTime, elapsed)
