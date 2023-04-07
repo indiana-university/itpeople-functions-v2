@@ -1,22 +1,35 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API.Functions
 {
+    // TODO Revisit open API once the rest is working.
     public static class Documentation
     {
-        [FunctionName(nameof(Documentation.RenderOpenApiJson))]
-        public static IActionResult RenderOpenApiJson(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "openapi.json")] HttpRequest req) 
-                => new RedirectResult("/swagger.json");
+        [Function(nameof(Documentation.RenderOpenApiJson))]
+        public static HttpResponseData RenderOpenApiJson([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "openapi.json")] HttpRequestData req) 
+        {
+            var response = req.CreateResponse(System.Net.HttpStatusCode.MovedPermanently);
+            response.Headers.Add("Location", "/swagger.json");
+
+            return response;
+        }
         
 
-        [FunctionName(nameof(Documentation.RenderApiUI))]
-        public static IActionResult RenderApiUI(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "/")] HttpRequest req)
-                => new ContentResult(){ StatusCode=200, Content = ApiUIMarkup, ContentType="text/html" };
+        // TODO - Figure out why the "/" route doesn't work.
+        [Function(nameof(Documentation.RenderApiUI))]
+        public static HttpResponseData RenderApiUI([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "docs")] HttpRequestData req)
+         {
+            var response = req.CreateResponse(System.Net.HttpStatusCode.OK);
+            response.Headers.Add("content-type", "text/html");
+
+            var buffer = System.Text.Encoding.UTF8.GetBytes(ApiUIMarkup);
+            response.Body.Write(buffer);
+
+            return response;
+         }
 
         public static string ApiUIMarkup = @"
 <!DOCTYPE html>
