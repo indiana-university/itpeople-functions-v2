@@ -146,20 +146,17 @@ namespace API.Middleware
             };
         }
 
-        public static async Task<HttpResponseData> ContentResponse(HttpRequestData req, HttpStatusCode statusCode, string contentType, string content)
+        public static async Task<HttpResponseData> ContentResponse(HttpRequestData req, HttpStatusCode statusCode, string contentType, object content)
         {
-            var resp = AddCorsHeaders(req);
+            var resp = req.CreateResponse(statusCode);
+            AddCorsHeaders(req, resp);
             AddEntityPermissionsHeaders(req, resp);
-            // TODO - This definately isn't going to work, it is ignorant of the response headers.
-            var respContent = new ContentResult()
-            {
-                StatusCode = (int)statusCode,
-                Content = content,
-                ContentType = contentType,
-            };
 
-            await resp.WriteAsJsonAsync(respContent);
-
+            await resp.WriteAsJsonAsync(content);
+            
+            // WriteAsJsonAsync flips the status code to OK so force it.
+            resp.StatusCode = statusCode;
+            
             return resp;
         }
 
@@ -186,12 +183,10 @@ namespace API.Middleware
             }
         }
 
-        private static HttpResponseData AddCorsHeaders(HttpRequestData req)
+        private static HttpResponseData AddCorsHeaders(HttpRequestData req, HttpResponseData response)
         {
             // If CorsHosts are specified and the origin matches one of those hosts,
             // add the Cors Headers
-            var response = req.CreateResponse();
-
 
             req.Headers.TryGetValues("Origin", out var originHeaders);
             var origin = originHeaders?.FirstOrDefault() ?? "no origin";
