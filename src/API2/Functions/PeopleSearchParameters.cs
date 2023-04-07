@@ -7,6 +7,7 @@ using Models;
 using System;
 using System.Linq;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API.Functions
 {
@@ -64,6 +65,13 @@ namespace API.Functions
             var queryParms = req.GetQueryParameterDictionary();
             queryParms.TryGetValue("q", out string q);
             return Pipeline.Success(new BuildingSearchParameters(q));
+        }
+
+        public static Result<BuildingSearchParameters, Error> Parse(HttpRequestData req) 
+        {
+            var queryParms = req.GetQueryParameterDictionary();
+            queryParms.TryGetValue("q", out string? q);
+            return Pipeline.Success(new BuildingSearchParameters(q ?? string.Empty));
         }
     }
 
