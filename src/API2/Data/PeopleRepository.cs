@@ -11,6 +11,7 @@ using System;
 using Microsoft.AspNetCore.Http;
 using Novell.Directory.Ldap.Controls;
 using Novell.Directory.Ldap;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API.Data
 {
@@ -169,7 +170,7 @@ namespace API.Data
             => ExecuteDbPipeline("fetch unit memberships", db =>
                 TryFindPerson(db, username)
                 .Bind(person => GetActiveMemberships(person)));
-        public static Task<Result<Person, Error>> Update(HttpRequest req, int id, PersonUpdateRequest body)
+        public static Task<Result<Person, Error>> Update(HttpRequestData req, int id, PersonUpdateRequest body)
             => ExecuteDbPipeline("update person", db =>
                 TryFindPerson(db, id)
                 .Tap(person => LogPrevious(req, person))

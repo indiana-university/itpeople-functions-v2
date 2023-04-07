@@ -124,6 +124,9 @@ namespace API.Functions
 
         public static Result<HrPeopleSearchParameters, Error> Parse(HttpRequest req) 
             => Parse(req.GetQueryParameterDictionary());
+        public static Result<HrPeopleSearchParameters, Error> Parse(HttpRequestData req) 
+            => Parse(req.GetQueryParameterDictionary());
+
         public static Result<HrPeopleSearchParameters, Error> Parse(IDictionary<string, string> queryParms)
         {
             queryParms.TryGetValue("q", out string q);
@@ -178,6 +181,9 @@ namespace API.Functions
         public Area[] Areas { get; set; }
 
         public static Result<PeopleSearchParameters, Error> Parse(HttpRequest req) 
+            => Parse(req.GetQueryParameterDictionary());
+        
+        public static Result<PeopleSearchParameters, Error> Parse(HttpRequestData req) 
             => Parse(req.GetQueryParameterDictionary());
 
         public static Result<PeopleSearchParameters, Error> Parse(IDictionary<string, string> queryParms)

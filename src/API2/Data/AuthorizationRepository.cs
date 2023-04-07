@@ -41,6 +41,18 @@ namespace API.Data
                 .Bind(tup => ResolvePersonPermissions(tup.requestor, tup.target))
                 .Tap(perms => req.SetEntityPermissions(perms)));
 
+        internal static Task<Result<EntityPermissions, Error>> DeterminePersonPermissions(HttpRequestData req, string requestorNetid, int personId)
+            => ExecuteDbPipeline("resolve person permissions", db =>
+                FetchPeople(db, requestorNetid, personId)
+                .Bind(tup => ResolvePersonPermissions(tup.requestor, tup.target))
+                .Tap(perms => req.SetEntityPermissions(perms)));
+        
+        internal static Task<Result<EntityPermissions, Error>> DeterminePersonPermissions(HttpRequestData req, string requestorNetid, string netId)
+            => ExecuteDbPipeline("resolve person permissions", db =>
+                FetchPeople(db, requestorNetid, netId)
+                .Bind(tup => ResolvePersonPermissions(tup.requestor, tup.target))
+                .Tap(perms => req.SetEntityPermissions(perms)));
+
         private static async Task<Result<(Person requestor, Person target),Error>> FetchPeople(PeopleContext db, string requestorNetid, int personId)
         {
             var requestor = await FindRequestorOrDefault(db, requestorNetid);
