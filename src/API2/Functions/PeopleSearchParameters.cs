@@ -94,6 +94,17 @@ namespace API.Functions
 
             return Pipeline.Success(new DepartmentSearchParameters(q, limit));
         }
+
+        public static Result<DepartmentSearchParameters, Error> Parse(HttpRequestData req) 
+        {
+            var queryParms = req.GetQueryParameterDictionary();
+            queryParms.TryGetValue("q", out string? q);
+            
+            queryParms.TryGetValue("_limit", out string? limitString);
+            int.TryParse(limitString, out int limit);
+
+            return Pipeline.Success(new DepartmentSearchParameters(q ?? string.Empty, limit));
+        }
     }
 
     public class HrPeopleSearchParameters : BaseSearchParameters
