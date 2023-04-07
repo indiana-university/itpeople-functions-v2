@@ -101,7 +101,8 @@ namespace API.Data
             // return the entity permissions to the next step of the pipeline.
             return Pipeline.Success(result);
         }
-        internal static Task<Result<EntityPermissions, Error>> DetermineServiceAdminPermissions(HttpRequest req, string requestorNetId)
+        
+        internal static Task<Result<EntityPermissions, Error>> DetermineServiceAdminPermissions(HttpRequestData req, string requestorNetId)
             => ExecuteDbPipeline("resolve unit permissions", db =>
                 FetchPersonAndMembership(db, requestorNetId)
                 .Bind(person => ResolveServiceAdminPermissions(person))

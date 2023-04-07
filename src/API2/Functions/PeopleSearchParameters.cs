@@ -47,11 +47,11 @@ namespace API.Functions
         public UnitSearchParameters(string q) : base(q)
         {}
 
-        public static Result<UnitSearchParameters, Error> Parse(HttpRequest req) 
+        public static Result<UnitSearchParameters, Error> Parse(HttpRequestData req) 
         {
             var queryParms = req.GetQueryParameterDictionary();
-            queryParms.TryGetValue("q", out string q);
-            return Pipeline.Success(new UnitSearchParameters(q));
+            queryParms.TryGetValue("q", out string? q);
+            return Pipeline.Success(new UnitSearchParameters(q ?? string.Empty));
         }
     }
 

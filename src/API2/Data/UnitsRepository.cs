@@ -9,6 +9,7 @@ using Models;
 using API.Functions;
 using Microsoft.AspNetCore.Http;
 using System;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API.Data
 {
@@ -42,7 +43,7 @@ namespace API.Data
                 .Bind(created => TryFindUnit(db, created.Id))
             );
 
-        internal static async Task<Result<Unit, Error>> UpdateUnit(HttpRequest req, UnitRequest body, int unitId)
+        internal static async Task<Result<Unit, Error>> UpdateUnit(HttpRequestData req, UnitRequest body, int unitId)
         {
             return await ExecuteDbPipeline($"update unit {unitId}", db =>
                 TryValidateParentExists(db, body)
@@ -53,14 +54,14 @@ namespace API.Data
             );
         }
 
-        internal static async Task<Result<bool, Error>> DeleteUnit(HttpRequest req, int unitId)
+        internal static async Task<Result<bool, Error>> DeleteUnit(HttpRequestData req, int unitId)
         {
             return await ExecuteDbPipeline($"delete unit {unitId}", db =>
                 TryFindUnit(db, unitId)
                 .Bind(unit => TryDeleteUnit(db, req, unit)));
         }
 
-        internal static async Task<Result<Unit, Error>> ChangeActive(HttpRequest req, int unitId)
+        internal static async Task<Result<Unit, Error>> ChangeActive(HttpRequestData req, int unitId)
         {
             return await ExecuteDbPipeline($"Change active for unit {unitId}", db => TryFindUnit(db, unitId)
                 .Bind(unit => TryArchiveUnit(db, req, unit)));
@@ -125,7 +126,7 @@ namespace API.Data
                 .Single(u => u.Id == unitId);
         }
 
-        private static async Task<Result<bool,Error>> TryDeleteUnit (PeopleContext db, HttpRequest req, Unit unit)
+        private static async Task<Result<bool,Error>> TryDeleteUnit (PeopleContext db, HttpRequestData req, Unit unit)
         {
             // Check for child Units
             var childUnitIds = db.Units
@@ -161,7 +162,7 @@ namespace API.Data
             }
         }
 
-        private static async Task<Result<Unit,Error>> TryArchiveUnit (PeopleContext db, HttpRequest req, Unit unit)
+        private static async Task<Result<Unit,Error>> TryArchiveUnit (PeopleContext db, HttpRequestData req, Unit unit)
         {
             // Check for child Units
             var activeChildUnitIds = await db.Units
@@ -205,7 +206,7 @@ namespace API.Data
             return await ValidateActiveParents(db, fetchedParent);
         }
 
-        internal static Task<Result<List<Unit>, Error>> GetChildren(HttpRequest req, int unitId) =>
+        internal static Task<Result<List<Unit>, Error>> GetChildren(HttpRequestData req, int unitId) =>
             ExecuteDbPipeline($"get unit {unitId} children", db =>
                 TryFindUnit(db, unitId)
                 .Bind(u => TryGetChildren(db, u.Id)));
@@ -220,7 +221,7 @@ namespace API.Data
             return Pipeline.Success(children);
         }
 
-        internal static Task<Result<List<UnitMember>, Error>> GetMembers(HttpRequest req, int unitId) =>
+        internal static Task<Result<List<UnitMember>, Error>> GetMembers(HttpRequestData req, int unitId) =>
             ExecuteDbPipeline($"get unit {unitId} members", db =>
                 TryFindUnit(db, unitId)
                 .Bind(u => TryGetMembers(db, u.Id)));
@@ -239,7 +240,7 @@ namespace API.Data
             return Pipeline.Success(members);
         }
 
-        internal static Task<Result<List<BuildingRelationship>, Error>> GetSupportedBuildings(HttpRequest req, int unitId) =>
+        internal static Task<Result<List<BuildingRelationship>, Error>> GetSupportedBuildings(HttpRequestData req, int unitId) =>
             ExecuteDbPipeline($"get unit {unitId} supported buildings", db =>
                 TryFindUnit(db, unitId)
                 .Bind(u => TryGetSupportedBuildings(db, u.Id)));
@@ -256,7 +257,7 @@ namespace API.Data
             return Pipeline.Success(relationships);
         }
 
-        internal static Task<Result<List<SupportRelationship>, Error>> GetSupportedDepartments(HttpRequest req, int unitId) =>
+        internal static Task<Result<List<SupportRelationship>, Error>> GetSupportedDepartments(HttpRequestData req, int unitId) =>
             ExecuteDbPipeline($"get unit {unitId} supported departments", db =>
                 TryFindUnit(db, unitId)
                 .Bind(u => TryGetSupportedDepartments(db, u.Id)));
@@ -274,7 +275,7 @@ namespace API.Data
             return Pipeline.Success(relationships);
         }
 
-        internal static Task<Result<List<Tool>, Error>> GetTools(HttpRequest req, int unitId) =>
+        internal static Task<Result<List<Tool>, Error>> GetTools(HttpRequestData req, int unitId) =>
             ExecuteDbPipeline($"get unit {unitId} supported departments", db =>
                 TryFindUnit(db, unitId)
                 .Bind(u => TryGetTools(db, u.Id)));
