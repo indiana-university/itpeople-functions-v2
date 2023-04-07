@@ -1,5 +1,3 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 
@@ -13,17 +11,19 @@ using System.Collections.Generic;
 using Models;
 using Microsoft.OpenApi.Models;
 using System.Net.Mime;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API.Functions
 {
 	public static class SupportTypes
 	{
 
-		[FunctionName(nameof(SupportTypes.SupportTypesGetAll))]
+		[Function(nameof(SupportTypes.SupportTypesGetAll))]
 		[OpenApiOperation(nameof(SupportTypes.SupportTypesGetAll), "Support Types", Summary = "List all support types")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<SupportType>), Description = "A collection of support types")]
-		public static Task<IActionResult> SupportTypesGetAll(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "supportTypes")] HttpRequest req)
+		public static Task<HttpResponseData> SupportTypesGetAll(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "supportTypes")] HttpRequestData req)
 			=> Security.Authenticate(req)
 				.Bind(query => SupportTypesRepository.GetAll())
 				.Finally(results => Response.Ok(req, results));
