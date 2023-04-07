@@ -95,6 +95,9 @@ namespace API.Middleware
         public static Task<IActionResult> OkXml<T>(HttpRequest req, Result<T, Error> result)
             => Generate(req, result, HttpStatusCode.OK, val => XmlResponse(req, val, HttpStatusCode.OK));
 
+        public static async Task<HttpResponseData> OkXml<T>(HttpRequestData req, Result<T, Error> result)
+            => await Generate(req, result, HttpStatusCode.OK, async val => await XmlResponse(req, val, HttpStatusCode.OK));
+
         private static IActionResult JsonResponse<T>(HttpRequest req, T value, HttpStatusCode status)
         {
             try
@@ -139,6 +142,22 @@ namespace API.Middleware
             }
         }
 
+        private static async Task<HttpResponseData> XmlResponse<T>(HttpRequestData req, T value, HttpStatusCode status)
+        {
+            try
+            {
+                var serializer = new XmlSerializer(typeof(T));
+                var writer = new Utf8StringWriter();
+                serializer.Serialize(writer, value);
+
+                return await ContentResponse(req, status, "application/xml", writer.ToString());
+            }
+            catch (Exception ex)
+            {
+                return await Pipeline.InternalServerError($"Failed to serialize {typeof(T).Name} response body as XML", ex).ToResponse(req);
+            }
+        }
+
         public static IActionResult ContentResponse(HttpRequest req, HttpStatusCode statusCode, string contentType, string content)
         {
             AddCorsHeaders(req);
@@ -157,7 +176,7 @@ namespace API.Middleware
             AddCorsHeaders(req, resp);
             AddEntityPermissionsHeaders(req, resp);
 
-            resp.Headers.Add("content-type", "application/json");
+            resp.Headers.Add("content-type", contentType);
             
             var buffer = System.Text.Encoding.UTF8.GetBytes(content);
             await resp.Body.WriteAsync(buffer);

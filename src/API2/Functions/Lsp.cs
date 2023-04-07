@@ -1,5 +1,4 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using API.Middleware;
@@ -7,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using API.Data;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API.Functions
 {
@@ -15,35 +16,35 @@ namespace API.Functions
 	/// by API implementers, and so they are excluded from the OpenAPI docs.</Summary>
     public static class Lsp
 	{
-		[FunctionName(nameof(Lsp.LspList))]
+		[Function(nameof(Lsp.LspList))]
 		[OpenApiIgnore]
 		/// Fetch a list of all LSPs.
 		/// LSPs are defined as any member of a unit that has a support relationship with
         /// one or more departmens. An "LA" is a "local administrator" of LSPs. For IT 
 		/// People this corresponds to an LSP in the Leader or Sublead roles.</Summary>
-		public static Task<IActionResult> LspList(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "LspdbWebService.svc/LspList")] HttpRequest req)
+		public static Task<HttpResponseData> LspList(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "LspdbWebService.svc/LspList")] HttpRequestData req)
 			=> LspRepository.GetLspList()
 				.Finally(result => Response.OkXml(req, result));		
 
-		[FunctionName(nameof(Lsp.LspDepartments))]
+		[Function(nameof(Lsp.LspDepartments))]
 		[OpenApiIgnore]
 		/// Fetch all departments supported by a given LSP.
 		/// For the given netid, collect all the departments supported by all the units of  
 		/// which the person is a member.
-		public static Task<IActionResult> LspDepartments(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "LspdbWebService.svc/LspDepartments/{netid}")] HttpRequest req, 
+		public static Task<HttpResponseData> LspDepartments(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "LspdbWebService.svc/LspDepartments/{netid}")] HttpRequestData req, 
 			string netid)
 			=> LspRepository.GetLspDepartments(netid)
 				.Finally(result => Response.OkXml(req, result));		
 
-		[FunctionName(nameof(Lsp.DepartmentLsps))]
+		[Function(nameof(Lsp.DepartmentLsps))]
 		[OpenApiIgnore]
 		/// Fetch all LSPs supporting a given department.
 		/// For the given department name, collect all the LSPs in all the units supporting
 		/// this department. There is typically only one unit supporting a given department.
-		public static Task<IActionResult> DepartmentLsps(
-			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "LspdbWebService.svc/LspsInDept/{department}")] HttpRequest req, 
+		public static Task<HttpResponseData> DepartmentLsps(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "LspdbWebService.svc/LspsInDept/{department}")] HttpRequestData req, 
 			string department)
 			=> LspRepository.GetDepartmentLsps(department)
 				.Finally(result => Response.OkXml(req, result));		
