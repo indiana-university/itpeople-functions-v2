@@ -22,8 +22,8 @@
     <PackageReference Include="Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator" Version="4.0.1" />
     -->
 
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.4" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.15" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.8" />
     <PackageReference Include="Novell.Directory.Ldap.NETStandard" Version="2.3.8" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="jose-jwt" Version="4.1.0" />
