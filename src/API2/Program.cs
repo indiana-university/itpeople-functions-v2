@@ -1,4 +1,5 @@
 using Database;
+using Microsoft.Azure.Functions.Worker.Extensions.OpenApi.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 
@@ -9,7 +10,7 @@ namespace API2
         public static void Main()
         {
             var host = new HostBuilder()
-                .ConfigureFunctionsWorkerDefaults()
+                .ConfigureFunctionsWorkerDefaults(worker => worker.UseNewtonsoftJson(Models.Json.JsonSerializerSettings))
                 .Build();
 
             MigrateDatabaseToLatest();
