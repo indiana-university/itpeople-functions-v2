@@ -1,22 +1,22 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:6.0 AS installer-env
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS installer-env
 
 # A reddit wizard says copy csproj filtes and do a restore first
 # https://www.reddit.com/r/docker/comments/i34thd/dotnet_core_slow_restore/g0azda1?utm_source=share&utm_medium=web2x&context=3
 # It does help, we went from 3m20s to build after changes to 1m20s
 
-COPY src/API/*.csproj ./app/src/API/
+COPY src/API2/*.csproj ./app/src/API2/
 COPY src/Database/*.csproj ./app/src/Database/
 COPY src/Models/*.csproj ./app/src/Models/
 WORKDIR  /app
 
-RUN dotnet restore src/API/API.csproj
+RUN dotnet restore src/API2/API2.csproj
 
 # then copy the rest and build/publish.
 COPY src ./src
 RUN mkdir -p home/site/wwwroot && \
-    dotnet publish -c Release src/API/API.csproj --output home/site/wwwroot
+    dotnet publish -c Release src/API2/API2.csproj --output home/site/wwwroot
 
-FROM mcr.microsoft.com/azure-functions/dotnet:4-dotnet6-appservice
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated6.0-appservice
 WORKDIR /app
 ENV AzureWebJobsScriptRoot=/app/home/site/wwwroot
 ENV AzureFunctionsJobHost__Logging__Console__IsEnabled=true
