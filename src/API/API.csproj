@@ -6,7 +6,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.OpenApi" Version="1.5.1" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.2.0" /><!-- must be manually added or Extensions.OpenApi 1.5.1 breaks -->
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.1.1" /><!--  Deployment slot complained w/o this explicit reference. -->
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="4.0.4" /><!--  Deployment slot complained w/o this explicit reference. https://github.com/Azure/Azure-Functions/issues/1987#issuecomment-952420935 -->
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.1.1" />
 
     <!-- from old API -->
