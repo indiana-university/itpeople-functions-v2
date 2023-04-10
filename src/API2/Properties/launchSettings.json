@@ -1,9 +1,0 @@
-{
-  "profiles": {
-    "API2": {
-      "commandName": "Project",
-      "commandLineArgs": "--port 7104",
-      "launchBrowser": false
-    }
-  }
-}

@@ -12,6 +12,11 @@
       "OAuthTokenUrl": "https://apps-test.iu.edu/uaa-stg/oauth/token",
       "OAuthRedirectUrl": "https://itpeople.apps-test.iu.edu/signin",
       "AdQueryUser":"a username",
-      "AdQueryPassword":"password for AdUser"
+      "AdQueryPassword":"password for AdUser",
+      
+      "OpenApi__Version": "v2",
+      "OpenApi__DocTitle": "IT People API",
+      "OpenApi__DocDescription": "## Description\nIT People is the canonical source of information about people doing IT work at Indiana University, their responsibilities and interests, and the IT units to which they belong.\n\n## Need Help?\nIf you need help using this API, please contact the Client Service and Support Development team via email at [cssdev@iu.edu](mailto:cssdev@iu.edu). \nThe source code for this [API](https://github.com/indiana-university/itpeople-functions) and the [web front end](https://github.com/indiana-university/itpeople-app) are available on GitHub. We welcome pull requests! \nIf you find a bug or would like to request a feature, please [file an issue in GitHub](https://github.com/indiana-university/itpeople-functions/issues).\n\n## Request/Response Formats\nAll HTTP request and response bodies will be JSON formatted.\n\n## Authentication\nAll requests to this API require an HTTP authentication header in the form `Authorization: Bearer TOKEN`, where the `TOKEN` is any valid JWT issued by the <a href=\"https://github.iu.edu/iu-uits-es/uaa\">UITS UAA</a> service. \nThis API will infer the identity of the requestor from the *user_name* property of the UAA JWT.  \n\nAll data query endpoints (i.e. `GET` endpoints) are publicly accessible with valid authentication.\n\nAll data modification endpoints (i.e. `POST`, `PUT`, `DELETE`) are authorized against the identity of caller, as identified in the JWT *user_name* property. See individual endpoints for authorization details.\n",
+      "OpenApi__DocVersion": "v3"
     }
 }
