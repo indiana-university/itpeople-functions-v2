@@ -10,7 +10,7 @@ namespace API
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            // NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Debug, true, true);
+            //NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Debug, true, true);
             MigrateDatabaseToLatest();
         }
 
@@ -29,7 +29,9 @@ namespace API
             catch (Exception e)
             {
                 Console.Error.WriteLine($"Error when migrating database: {e.Message}");
-                throw new Exception($"Error when migrating database.", e);
+                Console.Error.WriteLine($"\tMOAR: {e.StackTrace}");
+                // throw new Exception($"Error when migrating database.", e);
+                throw;
             }
         }
     }

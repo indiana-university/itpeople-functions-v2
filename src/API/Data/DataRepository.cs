@@ -26,7 +26,7 @@ namespace API.Data
             }
         }
 
-        protected static void LogPrevious<T>(HttpRequest req, T value) where T : Entity
+        protected static void LogPrevious<T>(HttpRequest req, T value) where T : Models.Entity
         {
             req.HttpContext.Items[LogProps.RecordBody] = JsonConvert.SerializeObject(value, Json.JsonSerializerSettings);
         }
