@@ -16,7 +16,7 @@ namespace Integration
 		{
 			var notification = new Notification
 			{
-				Created = created ?? DateTime.Now,
+				Created = created ?? DateTime.UtcNow,
 				Message = message,
 				Reviewed = reviewed,
 				Netid = reviewedBy
@@ -35,8 +35,8 @@ namespace Integration
 		{
 			private async Task<(Notification NotReviewed, Notification Reviewed)> GenerateListOfNotifications(PeopleContext db)
 			{
-				var unreadNotification = await AddNotificationToDb(db, "This one has not been reviewed, yet.", DateTime.Now.AddHours(-1));
-				var reviewedNotification = await AddNotificationToDb(db, "This one has been reviewed.", DateTime.Now.AddDays(-1), DateTime.Now.AddHours(-12), "johndoe");
+				var unreadNotification = await AddNotificationToDb(db, "This one has not been reviewed, yet.", DateTime.UtcNow.AddHours(-1));
+				var reviewedNotification = await AddNotificationToDb(db, "This one has been reviewed.", DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddHours(-12), "johndoe");
 
 				return (unreadNotification, reviewedNotification);
 			}
@@ -70,7 +70,7 @@ namespace Integration
 				var db = GetDb();
 				var notifications = await GenerateListOfNotifications(db);
 				// Add one more, much older, reviewed notification.
-				var olderReviewedNotification = await AddNotificationToDb(db, "Old as dirt.", DateTime.Now.AddMonths(-5), DateTime.Now.AddMonths(-5).AddDays(1), "johndoe");
+				var olderReviewedNotification = await AddNotificationToDb(db, "Old as dirt.", DateTime.UtcNow.AddMonths(-5), DateTime.UtcNow.AddMonths(-5).AddDays(1), "johndoe");
 
 				var resp = await GetAuthenticated("Notifications?showReviewed=1", ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.OK);

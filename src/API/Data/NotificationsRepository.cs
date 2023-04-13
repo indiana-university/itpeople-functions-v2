@@ -48,7 +48,7 @@ namespace API.Data
 			{
 				LogPrevious(req, notification);
 
-				notification.Reviewed = System.DateTime.Now;
+				notification.Reviewed = System.DateTime.UtcNow;
 				notification.Netid = requestorNetId;
 				await db.SaveChangesAsync();
 			}
