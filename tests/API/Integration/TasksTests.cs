@@ -71,6 +71,7 @@ namespace Integration
 		public class MockDurableActivityContext : IDurableActivityContext
 		{
 			public string InstanceId => throw new NotImplementedException();
+			public string Name => throw new NotImplementedException();
 
 			public T GetInput<T>()
 			{
