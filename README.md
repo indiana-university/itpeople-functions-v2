@@ -5,7 +5,7 @@ IT People serverless APIs and Tasks (Version 2)
 ## Requirements
 
 * [.Net 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/3.1)
-* [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools) >= 3.0.3160
+* [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools) >= 4.0.0
 * [Docker Desktop](https://www.docker.com/products/docker-desktop)
 
 ## Getting Started
