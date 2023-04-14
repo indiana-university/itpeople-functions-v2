@@ -396,7 +396,7 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
                 Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains("Unit 1 has child units, with ids: 2, 4, 3. These must be reassigned prior to deletion.", actual.Errors);
+                Assert.Contains("Unit 1 has child units, with ids: 2, 3, 4. These must be reassigned prior to deletion.", actual.Errors);
                 Assert.AreEqual("(none)", actual.Details);
             }
 
