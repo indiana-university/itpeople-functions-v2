@@ -10,7 +10,8 @@
       "OAuthClientId": "a UAA client ID",
       "OAuthClientSecret": "a UAA client secret",
       "OAuthTokenUrl": "https://apps-test.iu.edu/uaa-stg/oauth/token",
-      "OAuthRedirectUrl": "https://itpeople.apps-test.iu.edu/signin",
+      "OAuthRedirectUrl": "https://localhost:5001/signin",
+      "CorsHosts": "*",
       "AdQueryUser":"a username",
       "AdQueryPassword":"password for AdUser",
       
