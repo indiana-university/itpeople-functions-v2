@@ -135,7 +135,7 @@ VALUES
 ```
 
 ### Configuring the Web Project
-Update the file `src/Web/wwwroot/appsettings.json` so that the `API_URL` field is set to the base bath of the functions listed when you started the API, in this case `http://localhost:7071`.  With the database container and the function app running you can run the Web project locally and login to it and test out the various views.
+Update the file `src/Web/wwwroot/appsettings.json` so that the `API_URL` field is set to the base path of the functions listed when you started the API, in this case `http://localhost:7071`.  With the database container and the function app running you can run the Web project locally and login to it and test out the various views.
 
 ## Caveats
 ### Contract Tests on Windows
