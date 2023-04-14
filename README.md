@@ -104,26 +104,34 @@ This ran the migration to create the `ItPeople` database in the Docker container
 
 Add an example Department
 ```pgsql
-INSERT INTO departments (id, name, description, display_units)
-VALUES (1, 'Local Department', 'Used for testing', TRUE)
+INSERT INTO departments (name, description, display_units)
+VALUES ('Local Department', 'Used for testing', TRUE)
 ```
 
 Add an example Unit
 ```pgsql
-INSERT INTO units (id, "name", "description", "url", email, active)
-VALUES(1, 'Top Level Test Unit', 'A unit with no parent unit', '', '', TRUE)
+INSERT INTO units ("name", "description", "url", email, active)
+VALUES('Top Level Test Unit', 'A unit with no parent unit', '', '', TRUE)
 ```
 
 Add yourself as a member of that Department, with `is_service_admin` set to true.  Just be sure to use your own username and contact information.
 ```pgsql
-INSERT INTO people (id, netid, "name", position, "location", campus, campus_phone, campus_email, "notes", photo_url, department_id, is_service_admin, name_first, name_last)
-VALUES(1, 'jkfranci', 'Jason Francis', 'Developer', 'somewhere', 'BL', '63260', 'jkfranci@iu.edu', '', '', 1, TRUE, 'Jason', 'Francis')
+INSERT INTO people (netid, "name", position, "location", campus, campus_phone, campus_email, "notes", photo_url, department_id, is_service_admin, name_first, name_last)
+VALUES('jkfranci', 'Jason Francis', 'Developer', 'somewhere', 'BL', '63260', 'jkfranci@iu.edu', '', '', 1, TRUE, 'Jason', 'Francis')
 ```
 
 Make yourself a member of the Unit you created.
 ```pgsql
 INSERT INTO unit_members (unit_id, person_id, title, "role", "percentage", permissions, notes)
 VALUES(1, 1, 'Head Honcho', 4, 100, 1, '')
+```
+
+Add some tools to the system so user management forms look correct.
+```pgsql
+INSERT INTO tools ("name", "description", department_scoped, ad_path)
+VALUES
+	('Test Tool A', 'Just here to prevent some list views from blowing up', FALSE, 'placeholder'),
+	('Test Tool B', 'Also just filling a list view', FALSE, 'placeholder')
 ```
 
 ### Configuring the Web Project
