@@ -67,8 +67,9 @@ In `src/API` perform a
 ```bash
 func start
 ```
+If the `func` command is not found or your get a version error, please ensure that you've installed the Azure Functions Core Tools, version 4.0.0 or later. Note: you may need to open a new command-prompt window after you've installed or updated the Azure Functions Core Tools.
 
-This will build the API app, and start the Function App.  You should see output like
+The command will build the API app, and start the Function App.  You should see output like
 ```
 Azure Functions Core Tools
 Core Tools Version:       4.0.5095 Commit hash: N/A  (64-bit)
