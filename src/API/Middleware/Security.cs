@@ -222,6 +222,12 @@ namespace API.Middleware
 
         static DateTime Epoch = new DateTime(1970,1,1,0,0,0,0,System.DateTimeKind.Utc);
 
+        public static Result<HttpRequest, Error>  ValidateIpAddress(HttpRequest request){
+            var ipAddress = request.HttpContext.Connection.RemoteIpAddress.ToString();
+            Console.WriteLine("Validate IpAddress {0}", ipAddress);
 
+            return Pipeline.Unauthorized($"Invalid IP Address {ipAddress}");
+            //return Pipeline.Success(request);
+        }
     }
 }
