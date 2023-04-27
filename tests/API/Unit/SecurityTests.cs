@@ -10,11 +10,13 @@ namespace Unit
     public class SecurityTests
     {
         // note: ranges contains spaces and ipv6 ranges, but still should work ok
-        private const string AddressRanges = "127.0.0.1/8, 149.159.0.0/16, 2001:4860:4860::8888/32";
+        private const string AddressRanges = "127.0.0.1/8, 149.159.0.0/16, 2001:4860:4860::8888/32, 145.78.27.254/32, 145.78.27.45/32";
 
         [TestCase("149.159.10.10")]
         [TestCase("127.0.0.1")]
         [TestCase("2001:4860:4860:0000:0000:0000:0000:8888")]
+        [TestCase("145.78.27.254")]
+        [TestCase("145.78.27.45")]
         public void WhenAddressIsInRange(string ipAddress)
         {
             var context = new DefaultHttpContext();
@@ -29,6 +31,8 @@ namespace Unit
         [TestCase("188.159.10.10")]
         [TestCase("10.0.10.10")]
         [TestCase("2002:4860:4860:0000:0000:0000:0000:8888")]
+        [TestCase("145.78.27.253")]
+        [TestCase("145.78.27.46")]
         public void WhenAddressIsNotInRange(string ipAddress)
         {
             var context = new DefaultHttpContext();
@@ -91,6 +95,7 @@ namespace Unit
 
             Assert.That(result.IsSuccess, Is.True);
         }
+
 
     }
 }
