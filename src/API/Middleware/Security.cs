@@ -247,13 +247,14 @@ namespace API.Middleware
 
         private static List<IPNetwork> GetAllowedAddressRanges()
         {
-            var textList = Utils.Env("LspFuncsAllowedIpRanges");
-            if (string.IsNullOrWhiteSpace(textList))
+            var rangeList = Utils.Env("LspFuncsAllowedIpRanges");
+
+            if (string.IsNullOrWhiteSpace(rangeList))
             {
                 return new List<IPNetwork>();
             }
 
-            return textList.Split(",") // convert comma-delimited settings string to array
+            return rangeList.Split(",") // convert comma-delimited settings string to array
                 .Select(v => v.Trim()) // trim extra spaces
                 .Select(v => ToIpNetwork(v)) // convert to ip network values
                 .Where(v => v != null)
