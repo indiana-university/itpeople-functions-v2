@@ -2,6 +2,7 @@ using CSharpFunctionalExtensions;
 using Jose;
 using Microsoft.AspNetCore.Http;
 using Models;
+using Novell.Directory.Ldap;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
@@ -12,9 +13,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using YamlDotNet.Core.Tokens;
 
 namespace API.Middleware
 {
@@ -29,7 +33,7 @@ namespace API.Middleware
                 .Bind(ValidateJWT)
                 .Bind(netid => SetPrincipal(request, netid));
 
-        public static Task<Result<UaaJwtResponse, Error>> ExhangeOAuthCodeForToken(HttpRequest request, string code) 
+        public static Task<Result<UaaJwtResponse, Error>> ExhangeOAuthCodeForToken(HttpRequest request, string code)
         {
             UaaJwtResponse stashedResp = null;
             return SetStartTime(request)
@@ -104,13 +108,13 @@ namespace API.Middleware
             return Pipeline.Success(request);
         }
 
-        internal static Result<UaaJwt,Error> SetPrincipal(HttpRequest request, UaaJwt uaaJwt)
+        internal static Result<UaaJwt, Error> SetPrincipal(HttpRequest request, UaaJwt uaaJwt)
         {
             request.HttpContext.Items[LogProps.RequestorNetid] = uaaJwt.user_name;
             return Pipeline.Success(uaaJwt);
         }
 
-        internal static Result<string,Error> SetPrincipal(HttpRequest request, string netid)
+        internal static Result<string, Error> SetPrincipal(HttpRequest request, string netid)
         {
             request.HttpContext.Items[LogProps.RequestorNetid] = netid;
             return Pipeline.Success(netid);
@@ -121,30 +125,30 @@ namespace API.Middleware
         public const string ErrorRequestAuthorizationHeaderMissingBearerScheme = "Request Authorization header scheme must be \"Bearer\"";
         public const string ErrorRequestAuthorizationHeaderMissingBearerToken = "Request Authorization header contains empty \"Bearer\" token.";
 
-        private static Result<string,Error> ExtractJWT(HttpRequest request)
+        private static Result<string, Error> ExtractJWT(HttpRequest request)
         {
-            if (!request.Headers.ContainsKey("Authorization")) 
+            if (!request.Headers.ContainsKey("Authorization"))
                 return Pipeline.Unauthorized(ErrorRequestMissingAuthorizationHeader);
-            
+
             var authHeaders = request.Headers["Authorization"].ToArray();
-            if (!authHeaders.Any()) 
+            if (!authHeaders.Any())
                 return Pipeline.Unauthorized(ErrorRequestEmptyAuthorizationHeader);
-            
+
             var header = authHeaders.First();
-            if (!header.StartsWith("Bearer", ignoreCase: true, culture: CultureInfo.InvariantCulture)) 
+            if (!header.StartsWith("Bearer", ignoreCase: true, culture: CultureInfo.InvariantCulture))
                 return Pipeline.Unauthorized(ErrorRequestAuthorizationHeaderMissingBearerScheme);
 
             var bearerToken = header.Replace("Bearer", "", ignoreCase: true, culture: CultureInfo.InvariantCulture).Trim();
-            if (string.IsNullOrWhiteSpace(bearerToken)) 
+            if (string.IsNullOrWhiteSpace(bearerToken))
                 return Pipeline.Unauthorized(ErrorRequestAuthorizationHeaderMissingBearerToken);
-            
+
             return Pipeline.Success(bearerToken);
         }
-        private static Result<UaaJwt,Error> DecodeJWT(string token)
+        private static Result<UaaJwt, Error> DecodeJWT(string token)
         {
             //https://apps.iu.edu/uaa-prd/oauth/token_key
             // "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp+0OVVhuRqbXeRr9PO1Zo5Az/OCTTK6NKTSPfU87wHvFhl+6vO2h5b9YCdr74edubZ6grPvnHkWFK3SWMVnxB4EUatcnfwLsGwvZz+96QOSa5qEdkaYzCC5oQI6x6VnqT/yzNol9HUKQuT4b6faK8bj7Y86Ku0Bn3msYSYAI4aJxh6KIgO5kbVLMjYHDsABvmJVqG77e8qhJ5aHzHE7voNKAkVBKx3Bqofu9pwT9A5ejBylFrPnhCJK7vQu0SaBB/pHmDb9dD969oWGX6QdoGPbmXuW1FsSsph0bHxiOMLmOTZSFPs2/gFnpSMYwIinRPi3+saiI+GtPbwAf+ZliCQIDAQAB\n-----END PUBLIC KEY-----"
-            
+
             var publicKey = Utils.Env("JwtPublicKey", required: false);
             if (string.IsNullOrWhiteSpace(publicKey))
                 return Pipeline.InternalServerError($"Missing environment variable: 'JwtPublicKey'");
@@ -152,8 +156,8 @@ namespace API.Middleware
             RSACryptoServiceProvider csp = null;
             try
             {
-                csp = ImportPublicKey(publicKey.Replace("\\n", "\n"));				
-            } 
+                csp = ImportPublicKey(publicKey.Replace("\\n", "\n"));
+            }
             catch (Exception ex)
             {
                 return Pipeline.InternalServerError("Failed to import JWT public key", ex);
@@ -162,23 +166,23 @@ namespace API.Middleware
             try
             {
                 return Pipeline.Success(JWT.Decode<UaaJwt>(token, csp, JwsAlgorithm.RS256));
-            } 
+            }
             catch
             {
                 return Pipeline.Unauthorized("Failed to decode JWT");
             }
         }
 
-        private static Result<string,Error> ValidateJWT(UaaJwt jwt)
+        private static Result<string, Error> ValidateJWT(UaaJwt jwt)
         {
             var nowUnix = System.Math.Floor((DateTime.UtcNow - Epoch).TotalSeconds);
 
             // check for expired token
-            if(nowUnix > (double)jwt.exp)
+            if (nowUnix > (double)jwt.exp)
                 return Pipeline.Unauthorized("Access token has expired.");
 
             // check for unripe token
-            if(nowUnix < (double)jwt.nbf)
+            if (nowUnix < (double)jwt.nbf)
                 return Pipeline.Unauthorized("Access token is not yet valid.");
 
             return Pipeline.Success(jwt.user_name);
@@ -220,14 +224,48 @@ namespace API.Middleware
             return csp;
         }
 
-        static DateTime Epoch = new DateTime(1970,1,1,0,0,0,0,System.DateTimeKind.Utc);
+        static DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
 
-        public static Result<HttpRequest, Error>  ValidateIpAddress(HttpRequest request){
-            var ipAddress = request.HttpContext.Connection.RemoteIpAddress.ToString();
-            Console.WriteLine("Validate IpAddress {0}", ipAddress);
+        public static Result<HttpRequest, Error> ValidateIpAddress(HttpRequest request)
+        {
+            // get client ip address
+            var ipAddress = request.HttpContext.Connection.RemoteIpAddress;
+            
+            // get allowed ranges
+            var allowedRanges = GetAllowedAddressRanges();
+            
+            // if client ip address is in any of the allowed ranges,
+            // return success
+            if (allowedRanges.Any(r => r.Contains(ipAddress)))
+            {
+                return Pipeline.Success(request);
+            }
 
-            return Pipeline.Unauthorized($"Invalid IP Address {ipAddress}");
-            //return Pipeline.Success(request);
+            // otherwise return failure
+            return Pipeline.Unauthorized($"The ip address {ipAddress} is not allowed to access this resource.");
         }
+
+        private static List<IPNetwork> GetAllowedAddressRanges()
+        {
+            var textList = Utils.Env("LspFuncsAllowedIpRanges");
+            if (string.IsNullOrWhiteSpace(textList))
+            {
+                return new List<IPNetwork>();
+            }
+
+            return textList.Split(",") // convert comma-delimited settings string to array
+                .Select(v => v.Trim()) // trim extra spaces
+                .Select(v => ToIpNetwork(v)) // convert to ip network values
+                .Where(v => v != null)
+                .ToList();
+        }
+
+        private static IPNetwork ToIpNetwork(string value)
+        {
+            return IPNetwork.TryParse(value, out IPNetwork ipNetwork)
+                ? ipNetwork
+                : null;
+        }
+
     }
 }
