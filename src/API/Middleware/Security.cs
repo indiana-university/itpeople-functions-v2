@@ -238,10 +238,12 @@ namespace API.Middleware
             // return success
             if (allowedRanges.Any(r => r.Contains(ipAddress)))
             {
+                Logging.GetLogger(request).Information($"Validate IP address success: {request.Path} {ipAddress}");
                 return Pipeline.Success(request);
             }
 
             // otherwise return failure
+            Logging.GetLogger(request).Information($"Validate IP address failure: {request.Path} {ipAddress}");
             return Pipeline.Unauthorized($"The ip address {ipAddress} is not allowed to access this resource.");
         }
 

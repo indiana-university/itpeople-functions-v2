@@ -9,6 +9,14 @@ namespace Unit
 {
     public class SecurityTests
     {
+        
+        [SetUp]
+        public void BeforeEach(){
+            // the hard-coded logger wants a DB connection string
+            // set as an environment variable. This provides that.
+            Environment.SetEnvironmentVariable("DatabaseConnectionString", "invalid");
+        }
+
         // note: ranges contains spaces and ipv6 ranges, but still should work ok
         private const string AddressRanges = "127.0.0.1/8, 149.159.0.0/16, 2001:4860:4860::8888/32, 145.78.27.254/32, 145.78.27.45/32";
 
