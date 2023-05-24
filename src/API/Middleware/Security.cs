@@ -2,12 +2,10 @@ using CSharpFunctionalExtensions;
 using Jose;
 using Microsoft.AspNetCore.Http;
 using Models;
-using Novell.Directory.Ldap;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.OpenSsl;
-using Org.BouncyCastle.Security;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -16,9 +14,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using YamlDotNet.Core.Tokens;
 
 namespace API.Middleware
 {
@@ -224,7 +220,7 @@ namespace API.Middleware
             return csp;
         }
 
-        static DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+        static DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
         public static Result<HttpRequest, Error> ValidateIpAddress(HttpRequest request)
         {
@@ -238,13 +234,11 @@ namespace API.Middleware
             // return success
             if (allowedRanges.Any(r => r.Contains(ipAddress)))
             {
-                Logging.GetLogger(request).Information($"Validate IP address success: {request.Path} {ipAddress}");
                 return Pipeline.Success(request);
             }
 
             // otherwise return failure
-            Logging.GetLogger(request).Information($"Validate IP address failure: {request.Path} {ipAddress}");
-            return Pipeline.Unauthorized($"The ip address {ipAddress} is not allowed to access this resource.");
+            return Pipeline.Unauthorized($"The ip address {ipAddress} is not allowed to access this resource."); 
         }
 
         private static List<IPNetwork> GetAllowedAddressRanges()
@@ -270,5 +264,6 @@ namespace API.Middleware
                 : null;
         }
 
+        
     }
 }
