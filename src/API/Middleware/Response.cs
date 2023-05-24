@@ -23,27 +23,31 @@ namespace API.Middleware
             public const string XUserPermissions = "x-user-permissions";
             public const string AccessControlExposeHeaders = "Access-Control-Expose-Headers";
         }
-        
+
         private static async Task<IActionResult> Generate<T>(
-            HttpRequest req, 
-            Result<T, Error> result, 
-            HttpStatusCode statusCode, 
-            Func<T,IActionResult> resultGenerator)
+            HttpRequest req,
+            Result<T, Error> result,
+            HttpStatusCode statusCode,
+            Func<T, IActionResult> resultGenerator)
         {
             if (result.IsSuccess)
             {
-                if (req.Method.ToLower() != "get")
+                if (IsGetMethod(req) == false || IsLspFunction(req) == true)
                 {
                     await Logging.GetLogger(req).SuccessResult(req, statusCode);
                 }
                 return resultGenerator(result.Value);
             }
-            else 
+            else
             {
                 await Logging.GetLogger(req).FailureResult<T>(req, result.Error);
                 return result.Error.ToResponse(req);
             }
         }
+
+        private static bool IsGetMethod(HttpRequest req) => req.Method.ToLower() == "get";
+        private static bool IsLspFunction(HttpRequest req) => req.Path.HasValue &&
+            req.Path.Value.Contains("lspdbwebservice", StringComparison.InvariantCultureIgnoreCase);
 
         /// <summary>Return an HTTP 200 response with content, or an appropriate HTTP error response.</summary>
         public static Task<IActionResult> Ok<T>(HttpRequest req, Result<T, Error> result)
@@ -51,7 +55,7 @@ namespace API.Middleware
 
         /// <summary>Return an HTTP 201 response with content, with the URL for the resource and the resource itself.</summary>
         public static Task<IActionResult> Created<T>(HttpRequest req, Result<T, Error> result) where T : Models.Entity
-		    => Generate(req, result, HttpStatusCode.Created, val => JsonResponse(req, val, HttpStatusCode.Created));
+            => Generate(req, result, HttpStatusCode.Created, val => JsonResponse(req, val, HttpStatusCode.Created));
 
         /// <summary>Return an HTTP 204 indicating success, but nothing to return.</summary>
         public static Task<IActionResult> NoContent<T>(HttpRequest req, Result<T, Error> result)
@@ -117,7 +121,7 @@ namespace API.Middleware
         {
             // If CorsHosts are specified and the origin matches one of those hosts,
             // add the Cors Headers
-            
+
             var origin = req.Headers.ContainsKey("Origin") ? req.Headers["Origin"].First() : "no origin";
             var corsHosts = Utils.Env("CorsHosts", required: false) ?? "no cors hosts";
             if (corsHosts == "*" || corsHosts.Split(",").Contains(origin))
@@ -138,17 +142,17 @@ namespace API.Middleware
             }
         }
 
-        private static async Task SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode) 
-            {
-                var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
-                logger
-                    .ForContext(LogProps.StatusCode, (int)statusCode)
-                    .ForContext(LogProps.RequestBody, requestBody)
-                    .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
-                    .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
-            }
+        private static async Task SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode)
+        {
+            var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
+            logger
+                .ForContext(LogProps.StatusCode, (int)statusCode)
+                .ForContext(LogProps.RequestBody, requestBody)
+                .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
+                .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
+        }
 
-        private static async Task FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error) 
+        private static async Task FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error)
         {
             var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
             logger
