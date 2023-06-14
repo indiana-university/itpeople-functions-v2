@@ -48,6 +48,7 @@ stages:
       inputs:
         script: |
           docker image prune --filter "until=48h" --force
+          docker system prune --volumes --filter "until=48h" --force
           docker builder prune --force
 
 - stage: Package
