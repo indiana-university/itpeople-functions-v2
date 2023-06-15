@@ -402,7 +402,6 @@ namespace Integration
 
             }
 
-
             [Test]
             public async Task CannotDeleteUnitWithChildren()
             {
@@ -581,6 +580,20 @@ namespace Integration
 
                 // Make sure all BuildingRelationships are intact.
                 AssertEntityCollectionEqual(orig.BuildingRelationships, actual.BuildingRelationships, (o, a) => o.Id == a.Id && o.BuildingId == a.BuildingId, "Not all BuildingRelationships are intact.");
+            }
+
+            [Test]
+            public async Task ReturnsBadRequestWhenUnitIdInvalid()
+            {
+                var resp = await DeleteAuthenticated($"units/invalid");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected unitId to be an integer value"));
             }
 
             private static async Task<Unit> GetUnitAndRelated(Database.PeopleContext db, int unitId)
