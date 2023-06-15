@@ -1,4 +1,6 @@
+using CSharpFunctionalExtensions;
 using System;
+using System.Net;
 
 namespace API.Middleware
 {
@@ -12,6 +14,16 @@ namespace API.Middleware
                 throw new Exception($"Missing required environment setting: {key}");
             }
             return value;
+        }
+
+        public static Result<int, Error> ConvertParam(string value, string paramName)
+        {
+            if (!int.TryParse(value, out var result))
+            {
+                return new Error(HttpStatusCode.BadRequest, $"Expected {paramName} to be an integer value");
+            };
+
+            return Pipeline.Success(result);
         }
     }
 }
