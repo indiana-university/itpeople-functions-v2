@@ -89,7 +89,7 @@ namespace API.Middleware
         public static ILogger GetLogger(HttpRequest req)
         {
             var pathParts = req.Path.HasValue
-                ? req.Path.Value.Split("/", System.StringSplitOptions.RemoveEmptyEntries)
+                ? req.Path.Value.Split("/", StringSplitOptions.RemoveEmptyEntries)
                 : new[]{string.Empty};
 
             var elapsed = 
@@ -101,7 +101,7 @@ namespace API.Middleware
                 .ForContext(LogProps.ElapsedTime, elapsed)
                 .ForContext(LogProps.RequestIPAddress, req.HttpContext.Connection.RemoteIpAddress)
                 .ForContext(LogProps.RequestMethod, req.Method)
-                .ForContext(LogProps.Function, pathParts.First())
+                .ForContext(LogProps.Function, pathParts.FirstOrDefault())
                 .ForContext(LogProps.RequestParameters, string.Join('/', pathParts.Skip(1)))
                 .ForContext(LogProps.RequestQuery, req.QueryString)
                 .ForContext(LogProps.RequestorNetid, req.HttpContext.Items[LogProps.RequestorNetid]);
