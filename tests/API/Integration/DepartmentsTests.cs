@@ -88,7 +88,21 @@ namespace Integration
 				Assert.AreEqual(expected.Name, actual.Name);
 				Assert.AreEqual(expected.Description, actual.Description);
 			}
-		}
+
+            [Test]
+            public async Task ReturnsBadRequestWhenDepartmentIdInvalid()
+            {
+                var resp = await GetAuthenticated("departments/invalid");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected departmentId to be an integer value"));
+            }
+        }
 
 		public class GetMemberUnits : ApiTest
 		{
@@ -154,7 +168,21 @@ namespace Integration
 				Assert.AreEqual(1, actual.Count);
 				Assert.True(actual.Any(u => u.Id.Equals(TestEntities.Units.AuditorId)));
 			}
-		}
+
+            [Test]
+            public async Task ReturnsBadRequestWhenDepartmentIdInvalid()
+            {
+                var resp = await GetAuthenticated("departments/invalid/memberUnits");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected departmentId to be an integer value"));
+            }
+        }
 
 		public class GetSupportingUnits : ApiTest
 		{
@@ -179,6 +207,20 @@ namespace Integration
 				Assert.That(actual.First().SupportType.Id, Is.EqualTo(expected.First().SupportType.Id));
 				Assert.That(actual.First().Unit.Id, Is.EqualTo(expected.First().Unit.Id));
 			}
-		}
+
+            [Test]
+            public async Task ReturnsBadRequestWhenDepartmentIdInvalid()
+            {
+                var resp = await GetAuthenticated("departments/invalid/supportingUnits");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected departmentId to be an integer value"));
+            }
+        }
 	}
 }
