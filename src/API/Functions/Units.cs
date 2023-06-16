@@ -74,13 +74,16 @@ namespace API.Functions
         [OpenApiResponseWithBody(HttpStatusCode.Forbidden, MediaTypeNames.Application.Json, typeof(ApiError), Description = "You do not have permission to modify this unit.")]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, MediaTypeNames.Application.Json, typeof(ApiError), Description = NotFoundError)]
         public static Task<IActionResult> UpdateUnit(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "units/{unitId}")] HttpRequest req, int unitId)
-            => Security.Authenticate(req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "units/{unitId}")] HttpRequest req, string unitId)
+            => Utils.ConvertParam(unitId, nameof(unitId))
+                .Bind(id => UpdateUnitInternal(req, id))
+                .Finally(result => Response.Ok(req, result));
+
+        private static Task<Result<Unit, Error>> UpdateUnitInternal(HttpRequest req, int unitId) => Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
                 .Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
                 .Bind(_ => Request.DeserializeBody<UnitRequest>(req))
-                .Bind(body => UnitsRepository.UpdateUnit(req, body, unitId))
-                .Finally(result => Response.Ok(req, result));
+                .Bind(body => UnitsRepository.UpdateUnit(req, body, unitId));
 
         [FunctionName(nameof(Units.DeleteUnit))]
         [OpenApiOperation(nameof(Units.DeleteUnit), nameof(Units), Summary = "Delete a unit", Description = "_Authorization_: Unit deletion is restricted to service administrators.")]

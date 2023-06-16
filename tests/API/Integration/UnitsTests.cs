@@ -375,6 +375,22 @@ namespace Integration
                 Assert.AreEqual(existingParksAndRecUnitMembers.Count, resultParksAndRecUnitMembers.Count);
                 AssertIdsMatchContent(existingParksAndRecUnitMembers.Select(m => m.Id).ToArray(), resultParksAndRecUnitMembers);
             }
+
+            [Test]
+            public async Task ReturnsBadRequestWhenMembershipIdInvalid()
+            {
+                var req = new Unit("Eagleton", "Gated Community of Eagleton, Indiana", null, "hoa@eagleton.biz");
+                
+                var resp = await PutAuthenticated("units/invalid", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected unitId to be an integer value"));
+            }
         }
 
         public class UnitDelete : ApiTest
