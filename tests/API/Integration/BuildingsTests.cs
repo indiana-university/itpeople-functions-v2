@@ -91,7 +91,7 @@ namespace Integration
 			}
 
             [Test]
-            public async Task ReturnsBadRequestWhenRelationshipIdInvalid()
+            public async Task ReturnsBadRequestWhenBuildingIdInvalid()
             {
                 var resp = await GetAuthenticated("buildings/invalid");
                 AssertStatusCode(resp, HttpStatusCode.BadRequest);
@@ -127,7 +127,7 @@ namespace Integration
 			}
 
             [Test]
-            public async Task ReturnsBadRequestWhenRelationshipIdInvalid()
+            public async Task ReturnsBadRequestWhenBuildingIdInvalid()
             {
                 var resp = await GetAuthenticated("buildings/invalid/supportingunits");
                 AssertStatusCode(resp, HttpStatusCode.BadRequest);
