@@ -10,7 +10,7 @@ using NUnit.Framework;
 
 namespace Integration
 {
-	public class PeopleTests
+    public class PeopleTests
     {
         public class GetAll : ApiTest
         {
@@ -55,9 +55,9 @@ namespace Integration
                 Assert.AreEqual(4, actual.Count);
             }
 
-            [TestCase("rswanso", Description="Exact match of netid")]
-            [TestCase("RSWANSO", Description="Search is case-insensitive")]
-            [TestCase("rSwaN", Description="Partial netid match")]
+            [TestCase("rswanso", Description = "Exact match of netid")]
+            [TestCase("RSWANSO", Description = "Search is case-insensitive")]
+            [TestCase("rSwaN", Description = "Partial netid match")]
             public async Task CanSearchByNetid(string netid)
             {
                 var resp = await GetAuthenticated($"people?q={netid}");
@@ -67,15 +67,15 @@ namespace Integration
                 Assert.AreEqual(TestEntities.People.RSwanson.Id, actual.Single().Id);
             }
 
-            [TestCase("Ron", Description="Name match")]
-            [TestCase("Swanson,Ron", Description="Alternate format match")]
-            [TestCase("Swanson, Ron", Description="Alternate format with space match")]
-            [TestCase("Swanso, Ro", Description="Alternate format partial match")]
-            [TestCase(" Swanson  ,   Ron ", Description="Alternate format match with weird spacing")]
-            [TestCase("Ron Swanson", Description="Strict format match")]
-            [TestCase("Ro", Description="Partial name match")]
-            [TestCase(",   Ron ", Description="Alternate format match with weird spacing")]
-            [TestCase("Swanson  ,", Description="Alternate format match with weird spacing")]
+            [TestCase("Ron", Description = "Name match")]
+            [TestCase("Swanson,Ron", Description = "Alternate format match")]
+            [TestCase("Swanson, Ron", Description = "Alternate format with space match")]
+            [TestCase("Swanso, Ro", Description = "Alternate format partial match")]
+            [TestCase(" Swanson  ,   Ron ", Description = "Alternate format match with weird spacing")]
+            [TestCase("Ron Swanson", Description = "Strict format match")]
+            [TestCase("Ro", Description = "Partial name match")]
+            [TestCase(",   Ron ", Description = "Alternate format match with weird spacing")]
+            [TestCase("Swanson  ,", Description = "Alternate format match with weird spacing")]
             public async Task CanSearchByName(string name)
             {
                 var resp = await GetAuthenticated($"people?q={name}");
@@ -88,19 +88,19 @@ namespace Integration
 
             [TestCase(
                 Responsibilities.ItLeadership,
-                new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId })]
+                new int[] { TestEntities.People.RSwansonId, TestEntities.People.LKnopeId })]
             [TestCase(
                 Responsibilities.ItProjectMgt,
-                new int[]{ TestEntities.People.LKnopeId, TestEntities.People.BWyattId })]
+                new int[] { TestEntities.People.LKnopeId, TestEntities.People.BWyattId })]
             [TestCase(
                 Responsibilities.ItLeadership | Responsibilities.ItProjectMgt,
-                new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId })]
+                new int[] { TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId })]
             [TestCase(
                 Responsibilities.BizSysAnalysis,
                 new int[0])]
             [TestCase(
                 Responsibilities.BizSysAnalysis | Responsibilities.ItLeadership,
-                new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId })]
+                new int[] { TestEntities.People.RSwansonId, TestEntities.People.LKnopeId })]
             public async Task CanSearchByJobClass(Responsibilities jobClass, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?class={jobClass.ToString()}");
@@ -110,14 +110,14 @@ namespace Integration
             }
 
             [TestCase("programming", new int[0])]
-            [TestCase("Woodworking; Honor", new int[]{TestEntities.People.RSwansonId}, Description="exact match")]
-            [TestCase("woodworking; honor", new int[]{TestEntities.People.RSwansonId}, Description="exact match case-insensitive")]
-            [TestCase("woodworking", new int[]{TestEntities.People.RSwansonId})]
-            [TestCase("working", new int[]{TestEntities.People.RSwansonId})]
-            [TestCase("wood", new int[]{TestEntities.People.RSwansonId})]
-            [TestCase("programming, woodworking", new int[]{TestEntities.People.RSwansonId})]
-            [TestCase("woodworking, waffles", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId})]
-            [TestCase("woOdworKing, waFFlEs", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId})]
+            [TestCase("Woodworking; Honor", new int[] { TestEntities.People.RSwansonId }, Description = "exact match")]
+            [TestCase("woodworking; honor", new int[] { TestEntities.People.RSwansonId }, Description = "exact match case-insensitive")]
+            [TestCase("woodworking", new int[] { TestEntities.People.RSwansonId })]
+            [TestCase("working", new int[] { TestEntities.People.RSwansonId })]
+            [TestCase("wood", new int[] { TestEntities.People.RSwansonId })]
+            [TestCase("programming, woodworking", new int[] { TestEntities.People.RSwansonId })]
+            [TestCase("woodworking, waffles", new int[] { TestEntities.People.RSwansonId, TestEntities.People.LKnopeId })]
+            [TestCase("woOdworKing, waFFlEs", new int[] { TestEntities.People.RSwansonId, TestEntities.People.LKnopeId })]
             public async Task CanSearchByInterest(string interest, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?interest={interest}");
@@ -126,10 +126,10 @@ namespace Integration
                 AssertIdsMatchContent(expectedMatches, actual);
             }
 
-            [TestCase("Pawnee", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.ServiceAdminId}, Description="full match of Pawnee")]
-            [TestCase("Ind", new int[]{TestEntities.People.BWyattId}, Description="start of Indianapolis")]
-            [TestCase("Indianapolis", new int[]{TestEntities.People.BWyattId}, Description="full match of Indianapolis")]
-            [TestCase("Pawnee, Indian", new int[]{TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId}, Description="multiple campus")]
+            [TestCase("Pawnee", new int[] { TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.ServiceAdminId }, Description = "full match of Pawnee")]
+            [TestCase("Ind", new int[] { TestEntities.People.BWyattId }, Description = "start of Indianapolis")]
+            [TestCase("Indianapolis", new int[] { TestEntities.People.BWyattId }, Description = "full match of Indianapolis")]
+            [TestCase("Pawnee, Indian", new int[] { TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "multiple campus")]
             public async Task CanSearchCampus(string campusName, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?campus={campusName}");
@@ -138,11 +138,11 @@ namespace Integration
                 AssertIdsMatchContent(expectedMatches, actual);
             }
 
-            [TestCase("Leader", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.ServiceAdminId }, Description = "Return group Leader(s)")]
-            [TestCase("Sublead", new int[]{ TestEntities.People.LKnopeId }, Description = "Return group Subleader(s)")]
-            [TestCase("Member", new int[]{ TestEntities.People.BWyattId }, Description = "Return group Member(s)")]
-            [TestCase("member", new int[]{ TestEntities.People.BWyattId }, Description = "Return group Member(s) case-insensitive")]
-            [TestCase("leader, member", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "Support list of roles")]
+            [TestCase("Leader", new int[] { TestEntities.People.RSwansonId, TestEntities.People.ServiceAdminId }, Description = "Return group Leader(s)")]
+            [TestCase("Sublead", new int[] { TestEntities.People.LKnopeId }, Description = "Return group Subleader(s)")]
+            [TestCase("Member", new int[] { TestEntities.People.BWyattId }, Description = "Return group Member(s)")]
+            [TestCase("member", new int[] { TestEntities.People.BWyattId }, Description = "Return group Member(s) case-insensitive")]
+            [TestCase("leader, member", new int[] { TestEntities.People.RSwansonId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "Support list of roles")]
             public async Task CanSearchByRole(string roles, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?role={roles}");
@@ -151,12 +151,12 @@ namespace Integration
                 AssertIdsMatchContent(expectedMatches, actual);
             }
 
-            [TestCase("Owner", new int[]{ TestEntities.People.RSwansonId })]
-            [TestCase("Viewer", new int[]{ TestEntities.People.LKnopeId })]
-            [TestCase("ManageMembers", new int[]{ TestEntities.People.ServiceAdminId })]
-            [TestCase("managemembers", new int[]{ TestEntities.People.ServiceAdminId }, Description = "Case insensitive match for Permissions.")]
+            [TestCase("Owner", new int[] { TestEntities.People.RSwansonId })]
+            [TestCase("Viewer", new int[] { TestEntities.People.LKnopeId })]
+            [TestCase("ManageMembers", new int[] { TestEntities.People.ServiceAdminId })]
+            [TestCase("managemembers", new int[] { TestEntities.People.ServiceAdminId }, Description = "Case insensitive match for Permissions.")]
             [TestCase("ManageTools", new int[] { TestEntities.People.BWyattId })]
-            [TestCase("Viewer, ManageMembers", new int[]{ TestEntities.People.LKnopeId, TestEntities.People.ServiceAdminId }, Description = "Multiple Permissions provided.")]
+            [TestCase("Viewer, ManageMembers", new int[] { TestEntities.People.LKnopeId, TestEntities.People.ServiceAdminId }, Description = "Multiple Permissions provided.")]
             public async Task CanSearchByPermission(string permissions, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?permission={permissions}");
@@ -164,10 +164,10 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
                 AssertIdsMatchContent(expectedMatches, actual);
             }
-            [TestCase("UITS", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "All people in UITS area")]
-            [TestCase("uits", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId})]
+            [TestCase("UITS", new int[] { TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId }, Description = "All people in UITS area")]
+            [TestCase("uits", new int[] { TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId })]
             [TestCase("edge", new int[0])]
-            [TestCase("uits,edge", new int[]{ TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId})]
+            [TestCase("uits,edge", new int[] { TestEntities.People.RSwansonId, TestEntities.People.LKnopeId, TestEntities.People.BWyattId, TestEntities.People.ServiceAdminId })]
             public async Task CanSearchByArea(string areas, int[] expectedMatches)
             {
                 var resp = await GetAuthenticated($"people?area={areas}");
@@ -209,15 +209,15 @@ namespace Integration
                 Assert.AreEqual(expected.Name, actual.Department.Name);
             }
 
-            [TestCase(ValidRswansonJwt, TestEntities.People.RSwansonId, PermsGroups.GetPut, Description="As Ron I can update my own record")]
-            [TestCase(ValidRswansonJwt, TestEntities.People.LKnopeId, PermsGroups.GetPut, Description="As Ron I can update a person in a unit I manage")]
-            [TestCase(ValidRswansonJwt, TestEntities.People.BWyattId, EntityPermissions.Get, Description="As Ron I cannot update a person in a unit I don't manage")]
-            [TestCase(ValidRswansonJwt, TestEntities.People.ServiceAdminId, EntityPermissions.Get, Description="As Ron I cannot update a person in a unit I don't manage")]
-            [TestCase(ValidAdminJwt, TestEntities.People.RSwansonId, PermsGroups.GetPut, Description="As a service admin I can update anyone")]
-            [TestCase(ValidAdminJwt, TestEntities.People.LKnopeId, PermsGroups.GetPut, Description="As a service admin I can update anyone")]
-            [TestCase(ValidAdminJwt, TestEntities.People.BWyattId, PermsGroups.GetPut, Description="As a service admin I can update anyone")]
-            [TestCase(ValidAdminJwt, TestEntities.People.ServiceAdminId, PermsGroups.GetPut, Description="As a service admin I can update anyone")]
-            [TestCase(ValidServiceAcct, TestEntities.People.RSwansonId, EntityPermissions.Get, Description="As a service account I can get anyone")]
+            [TestCase(ValidRswansonJwt, TestEntities.People.RSwansonId, PermsGroups.GetPut, Description = "As Ron I can update my own record")]
+            [TestCase(ValidRswansonJwt, TestEntities.People.LKnopeId, PermsGroups.GetPut, Description = "As Ron I can update a person in a unit I manage")]
+            [TestCase(ValidRswansonJwt, TestEntities.People.BWyattId, EntityPermissions.Get, Description = "As Ron I cannot update a person in a unit I don't manage")]
+            [TestCase(ValidRswansonJwt, TestEntities.People.ServiceAdminId, EntityPermissions.Get, Description = "As Ron I cannot update a person in a unit I don't manage")]
+            [TestCase(ValidAdminJwt, TestEntities.People.RSwansonId, PermsGroups.GetPut, Description = "As a service admin I can update anyone")]
+            [TestCase(ValidAdminJwt, TestEntities.People.LKnopeId, PermsGroups.GetPut, Description = "As a service admin I can update anyone")]
+            [TestCase(ValidAdminJwt, TestEntities.People.BWyattId, PermsGroups.GetPut, Description = "As a service admin I can update anyone")]
+            [TestCase(ValidAdminJwt, TestEntities.People.ServiceAdminId, PermsGroups.GetPut, Description = "As a service admin I can update anyone")]
+            [TestCase(ValidServiceAcct, TestEntities.People.RSwansonId, EntityPermissions.Get, Description = "As a service account I can get anyone")]
             public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int personId, EntityPermissions expectedPermissions)
             {
                 var resp = await GetAuthenticated($"people/{personId}", jwt);
@@ -281,9 +281,9 @@ namespace Integration
                 Responsibilities = Responsibilities.ItLeadership & Responsibilities.ItProjectMgt,
             };
 
-            [TestCase(TestEntities.People.RSwansonId, ValidRswansonJwt, Description="I can update my own record")]
-            [TestCase(TestEntities.People.LKnopeId, ValidRswansonJwt, Description="I can update a person in a unit I manage")]
-            [TestCase(TestEntities.People.RSwansonId, ValidAdminJwt, Description="Service Admin can edit any person")]
+            [TestCase(TestEntities.People.RSwansonId, ValidRswansonJwt, Description = "I can update my own record")]
+            [TestCase(TestEntities.People.LKnopeId, ValidRswansonJwt, Description = "I can update a person in a unit I manage")]
+            [TestCase(TestEntities.People.RSwansonId, ValidAdminJwt, Description = "Service Admin can edit any person")]
             public async Task AuthorizedUserCanUpdatePerson(int personId, string jwt)
             {
                 //Make a request as a Unit Owner
@@ -307,6 +307,20 @@ namespace Integration
                 // Ben belongs to a unit that Ron doesn't manage. Ron shouln't be able to modify Ben's record.
                 var resp = await PutAuthenticated($"people/{TestEntities.People.BWyattId}", TestUpdateRequest);
                 AssertStatusCode(resp, HttpStatusCode.Forbidden);
+            }
+
+            [Test]
+            public async Task ReturnsBadRequestWhenPersonIdInvalid()
+            {
+                var resp = await PutAuthenticated("people/invalid", TestUpdateRequest, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected personId to be an integer value"));
             }
         }
 
@@ -390,13 +404,14 @@ namespace Integration
             {
                 var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
                 //Start by adding additional results to HrPeople.  So many records that we don't want to return them all at once.
-                for(var n = 1; n < 27; n++)
+                for (var n = 1; n < 27; n++)
                 {
                     db.HrPeople.Add(new HrPerson { Id = TestEntities.HrPeople.Tammy1Id + n, Netid = $"tammy{n}", Name = $"Swanson, Tammy{n}", Campus = "Pawnee", HrDepartment = "N/A" });
                 }
                 await db.SaveChangesAsync();
             }
         }
+
         public class WithHrGeOne : ApiTest
         {
 

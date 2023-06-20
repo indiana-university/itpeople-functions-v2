@@ -47,55 +47,55 @@ namespace Integration
 				Assert.NotNull(ron.Unit);
 				Assert.NotNull(ron.Unit.Parent);
 				Assert.NotNull(ron.MemberTools);
-			}
-		}
+            }
+        }
 
-		public class GetOne : ApiTest
-		{
-			[TestCase(TestEntities.UnitMembers.RSwansonLeaderId, HttpStatusCode.OK)]
-			[TestCase(TestEntities.UnitMembers.ArchivedRonId, HttpStatusCode.OK)]
-			[TestCase(9999, HttpStatusCode.NotFound)]
-			public async Task UnitMemberHasCorrectStatusCode(int id, HttpStatusCode expectedStatus)
-			{
-				var resp = await GetAuthenticated($"memberships/{id}");
-				AssertStatusCode(resp, expectedStatus);
-			}
+        public class GetOne : ApiTest
+        {
+            [TestCase(TestEntities.UnitMembers.RSwansonLeaderId, HttpStatusCode.OK)]
+            [TestCase(TestEntities.UnitMembers.ArchivedRonId, HttpStatusCode.OK)]
+            [TestCase(9999, HttpStatusCode.NotFound)]
+            public async Task UnitMemberHasCorrectStatusCode(int id, HttpStatusCode expectedStatus)
+            {
+                var resp = await GetAuthenticated($"memberships/{id}");
+                AssertStatusCode(resp, expectedStatus);
+            }
 
-			[Test]
-			public async Task UnitMemberResponseHasCorrectShape()
-			{
-				var resp = await GetAuthenticated($"memberships/{TestEntities.UnitMembers.LkNopeSubleadId}");
-				AssertStatusCode(resp, HttpStatusCode.OK);
-				var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
-				var expected = TestEntities.UnitMembers.LkNopeSublead;
-				Assert.AreEqual(expected.Id, actual.Id);
-				Assert.AreEqual(expected.UnitId, actual.UnitId);
-				Assert.AreEqual(expected.Role, actual.Role);
-				Assert.AreEqual(expected.Permissions, actual.Permissions);
-				Assert.AreEqual(expected.PersonId, actual.PersonId);
-				Assert.AreEqual(expected.Title, actual.Title);
-				Assert.AreEqual(expected.Percentage, actual.Percentage);
-				Assert.AreEqual(expected.Notes, actual.Notes); //Notes are stripped on membership getters
-				// relations
-				Assert.NotNull(actual.Person);
-				Assert.AreEqual(expected.Person.Id, actual.Person.Id);
-				Assert.NotNull(actual.Unit);
-				Assert.AreEqual(expected.Unit.Id, actual.Unit.Id);
-				Assert.NotNull(actual.MemberTools);
-			}
+            [Test]
+            public async Task UnitMemberResponseHasCorrectShape()
+            {
+                var resp = await GetAuthenticated($"memberships/{TestEntities.UnitMembers.LkNopeSubleadId}");
+                AssertStatusCode(resp, HttpStatusCode.OK);
+                var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
+                var expected = TestEntities.UnitMembers.LkNopeSublead;
+                Assert.AreEqual(expected.Id, actual.Id);
+                Assert.AreEqual(expected.UnitId, actual.UnitId);
+                Assert.AreEqual(expected.Role, actual.Role);
+                Assert.AreEqual(expected.Permissions, actual.Permissions);
+                Assert.AreEqual(expected.PersonId, actual.PersonId);
+                Assert.AreEqual(expected.Title, actual.Title);
+                Assert.AreEqual(expected.Percentage, actual.Percentage);
+                Assert.AreEqual(expected.Notes, actual.Notes); //Notes are stripped on membership getters
+                                                               // relations
+                Assert.NotNull(actual.Person);
+                Assert.AreEqual(expected.Person.Id, actual.Person.Id);
+                Assert.NotNull(actual.Unit);
+                Assert.AreEqual(expected.Unit.Id, actual.Unit.Id);
+                Assert.NotNull(actual.MemberTools);
+            }
 
-			[TestCase(ValidRswansonJwt, TestEntities.UnitMembers.RSwansonLeaderId, PermsGroups.All, TestName="Ron1", Description="As Ron (owner) I can manage Ron's membership")]
-			[TestCase(ValidRswansonJwt, TestEntities.UnitMembers.LkNopeSubleadId, PermsGroups.All, TestName="Ron2", Description="As Ron (owner) I can manage Leslie's membership")]
-			[TestCase(ValidRswansonJwt, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName="Ron3", Description="As Ron (owner) I can't manage Ben's membership (different unit)")]
-			[TestCase(ValidLknopeJwt, TestEntities.UnitMembers.RSwansonLeaderId, EntityPermissions.Get, TestName="Les1", Description="As Leslie (viewer) I can't manage Ron's membership")]
-			[TestCase(ValidLknopeJwt, TestEntities.UnitMembers.LkNopeSubleadId, EntityPermissions.Get, TestName="Les2", Description="As Leslie (viewer) I can't manage Leslies's membership")]
-            [TestCase(ValidLknopeJwt, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName="Les3", Description="As Leslie (viewer) I can't manage Ben's membership")]
-			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.RSwansonLeaderId, EntityPermissions.Get, TestName="Ben2", Description="As Ben (ManageMebers) I can't manage Ron's membership (different unit)")]
-			[TestCase(ValidBwyattJwt, TestEntities.UnitMembers.LkNopeSubleadId,  EntityPermissions.Get, TestName="Ben3", Description="As Ben (ManageMebers) I can't manage Leslie's membership (different unit)")]
-            [TestCase(ValidAdminJwt, TestEntities.UnitMembers.RSwansonLeaderId, PermsGroups.All, TestName="Adm1", Description="As a service admin I can do anything to any unit")]
-            [TestCase(ValidAdminJwt, TestEntities.UnitMembers.LkNopeSubleadId, PermsGroups.All, TestName="Adm2", Description="As a service admin I can do anything to any unit")]
-            [TestCase(ValidAdminJwt, TestEntities.UnitMembers.BWyattMemberId, PermsGroups.All, TestName="Adm3", Description="As a service admin I can do anything to any unit")]
-			[TestCase(ValidServiceAcct, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName="Svc1", Description="As a service account I can only get unit membership")]
+            [TestCase(ValidRswansonJwt, TestEntities.UnitMembers.RSwansonLeaderId, PermsGroups.All, TestName = "Ron1", Description = "As Ron (owner) I can manage Ron's membership")]
+            [TestCase(ValidRswansonJwt, TestEntities.UnitMembers.LkNopeSubleadId, PermsGroups.All, TestName = "Ron2", Description = "As Ron (owner) I can manage Leslie's membership")]
+            [TestCase(ValidRswansonJwt, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName = "Ron3", Description = "As Ron (owner) I can't manage Ben's membership (different unit)")]
+            [TestCase(ValidLknopeJwt, TestEntities.UnitMembers.RSwansonLeaderId, EntityPermissions.Get, TestName = "Les1", Description = "As Leslie (viewer) I can't manage Ron's membership")]
+            [TestCase(ValidLknopeJwt, TestEntities.UnitMembers.LkNopeSubleadId, EntityPermissions.Get, TestName = "Les2", Description = "As Leslie (viewer) I can't manage Leslies's membership")]
+            [TestCase(ValidLknopeJwt, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName = "Les3", Description = "As Leslie (viewer) I can't manage Ben's membership")]
+            [TestCase(ValidBwyattJwt, TestEntities.UnitMembers.RSwansonLeaderId, EntityPermissions.Get, TestName = "Ben2", Description = "As Ben (ManageMebers) I can't manage Ron's membership (different unit)")]
+            [TestCase(ValidBwyattJwt, TestEntities.UnitMembers.LkNopeSubleadId, EntityPermissions.Get, TestName = "Ben3", Description = "As Ben (ManageMebers) I can't manage Leslie's membership (different unit)")]
+            [TestCase(ValidAdminJwt, TestEntities.UnitMembers.RSwansonLeaderId, PermsGroups.All, TestName = "Adm1", Description = "As a service admin I can do anything to any unit")]
+            [TestCase(ValidAdminJwt, TestEntities.UnitMembers.LkNopeSubleadId, PermsGroups.All, TestName = "Adm2", Description = "As a service admin I can do anything to any unit")]
+            [TestCase(ValidAdminJwt, TestEntities.UnitMembers.BWyattMemberId, PermsGroups.All, TestName = "Adm3", Description = "As a service admin I can do anything to any unit")]
+            [TestCase(ValidServiceAcct, TestEntities.UnitMembers.BWyattMemberId, EntityPermissions.Get, TestName = "Svc1", Description = "As a service account I can only get unit membership")]
             public async Task ResponseHasCorrectXUserPermissionsHeader(string jwt, int membershipId, EntityPermissions expectedPermissions)
             {
                 var resp = await GetAuthenticated($"memberships/{membershipId}", jwt);
@@ -103,56 +103,69 @@ namespace Integration
                 AssertPermissions(resp, expectedPermissions);
             }
 
-			[Test]
-			public async Task ResponseInheritsXUserPermissionsFromParentUnit()
-			{
-				// Add a person to City of Pawnee that has All permissions on "City of Pawnee," but NO permissions directly on "Parks & Rec."
-				var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
-				var chris =  new Person()
-				{
-					Netid = "ctraeger",
-					Name = "Traeger, Chris",
-					NameFirst = "Chris",
-					NameLast = "Traeger",
-					Position = "Sr. Auditor",
-					Location = "",
-					Campus = "Indianapolis",
-					CampusPhone = "317.441.3333",
-					CampusEmail = "ctraeger@pawnee.in.us",
-					Expertise = "Fitness",
-					Notes = "",
-					PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg",
-					Responsibilities = Responsibilities.ItProjectMgt,
-					DepartmentId = TestEntities.Departments.Auditor.Id,
-					IsServiceAdmin = false
-				};
-				await db.People.AddAsync(chris);
+            [Test]
+            public async Task ResponseInheritsXUserPermissionsFromParentUnit()
+            {
+                // Add a person to City of Pawnee that has All permissions on "City of Pawnee," but NO permissions directly on "Parks & Rec."
+                var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
+                var chris = new Person()
+                {
+                    Netid = "ctraeger",
+                    Name = "Traeger, Chris",
+                    NameFirst = "Chris",
+                    NameLast = "Traeger",
+                    Position = "Sr. Auditor",
+                    Location = "",
+                    Campus = "Indianapolis",
+                    CampusPhone = "317.441.3333",
+                    CampusEmail = "ctraeger@pawnee.in.us",
+                    Expertise = "Fitness",
+                    Notes = "",
+                    PhotoUrl = "https://sasquatchbrewery.com/wp-content/uploads/2018/06/lil.jpg",
+                    Responsibilities = Responsibilities.ItProjectMgt,
+                    DepartmentId = TestEntities.Departments.Auditor.Id,
+                    IsServiceAdmin = false
+                };
+                await db.People.AddAsync(chris);
 
-				// Add chris to City of Pawnee with All permissions
-				var chrisCityMembership = new UnitMember()
-				{
-					Role = Role.Member,
-					Permissions = UnitPermissions.ManageMembers,
-					PersonId = chris.Id,
-					Title = "Auditor",
-					Percentage = 100,
-					Notes = "notes about Chris",
-					Person = chris,
-					UnitId = TestEntities.Units.CityOfPawneeUnitId,
-					MemberTools = null
-				};
-				await db.UnitMembers.AddAsync(chrisCityMembership);
-				await db.SaveChangesAsync();
+                // Add chris to City of Pawnee with All permissions
+                var chrisCityMembership = new UnitMember()
+                {
+                    Role = Role.Member,
+                    Permissions = UnitPermissions.ManageMembers,
+                    PersonId = chris.Id,
+                    Title = "Auditor",
+                    Percentage = 100,
+                    Notes = "notes about Chris",
+                    Person = chris,
+                    UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                    MemberTools = null
+                };
+                await db.UnitMembers.AddAsync(chrisCityMembership);
+                await db.SaveChangesAsync();
 
-				// Get "parks & rec", they should have PermsGroups.All because "City of Pawnee" is "Parks & Rec's" parent.
-				var resp = await GetAuthenticated($"memberships/{chrisCityMembership.Id}", ValidCtraegerJwt);
+                // Get "parks & rec", they should have PermsGroups.All because "City of Pawnee" is "Parks & Rec's" parent.
+                var resp = await GetAuthenticated($"memberships/{chrisCityMembership.Id}", ValidCtraegerJwt);
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, PermsGroups.All);
+            }
 
-			}
-		}
+            [Test]
+            public async Task ReturnsBadRequestWhenMembershipIdInvalid()
+            {
+                var resp = await GetAuthenticated("memberships/invalid");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
 
-		public class UnitMemberCreate : ApiTest
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected membershipId to be an integer value"));
+            }
+        }
+
+        public class UnitMemberCreate : ApiTest
 		{
 			[TestCase(null, Description = "Create UnitMember with vacancy")]
 			[TestCase(TestEntities.People.RSwansonId, Description = "Create UnitMember with existing person")]
@@ -336,7 +349,8 @@ namespace Integration
 					Percentage = 100,
 					Notes = ""
 				};
-				var resp = await PutAuthenticated($"memberships/{TestEntities.UnitMembers.RSwansonLeaderId}", req, ValidAdminJwt);
+
+				var resp = await PutAuthenticated($"memberships/{unitId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
 
@@ -461,7 +475,33 @@ namespace Integration
 				var resp = await PutAuthenticated($"memberships/{TestEntities.UnitMembers.LkNopeSubleadId}", req, ValidAdminJwt);
 				AssertStatusCode(resp, HttpStatusCode.Conflict);
 			}
-		}
+
+            [Test]
+            public async Task ReturnsBadRequestWhenMembershipIdInvalid()
+            {
+                var req = new UnitMemberRequest
+                {
+                    UnitId = TestEntities.Units.CityOfPawneeUnitId,
+                    Role = Role.Member,
+                    Permissions = UnitPermissions.Viewer,
+                    PersonId = TestEntities.UnitMembers.RSwansonDirector.PersonId,
+                    Title = "Title",
+                    Percentage = 100,
+                    Notes = ""
+                };
+
+                var resp = await PutAuthenticated("memberships/invalid", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected membershipId to be an integer value"));
+            }
+        }
+
 		public class UnitMembersDelete : ApiTest
 		{
 			[TestCase(TestEntities.UnitMembers.RSwansonLeaderId, ValidAdminJwt, HttpStatusCode.NoContent, Description = "Admin can delete a membership")]
@@ -486,6 +526,20 @@ namespace Integration
 				Assert.IsEmpty(db.MemberTools.Where(mt => mt.Tool == null));
 				Assert.IsEmpty(db.MemberTools.Where(mt => mt.UnitMember == null));
 			}
-		}
+
+            [Test]
+            public async Task ReturnsBadRequestWhenMembershipIdInvalid()
+            {
+                var resp = await DeleteAuthenticated("memberships/invalid");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected membershipId to be an integer value"));
+            }
+        }
 	}
 }

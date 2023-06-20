@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Models;
@@ -42,12 +43,26 @@ namespace Integration
 				Assert.AreEqual(expected.Building.Id, actual.Building.Id);
 				Assert.AreEqual(expected.Unit.Id, actual.Unit.Id);
 			}
-		}
+
+            [Test]
+            public async Task ReturnsBadRequestWhenRelationshipIdInvalid()
+            {
+                var resp = await GetAuthenticated("buildingRelationships/invalid");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected relationshipId to be an integer value"));
+            }
+        }
 
 		public class BuildingRelationshipCreate : ApiTest
 		{
-			private BuildingRelationshipRequest CityHallParksAndRec = new BuildingRelationshipRequest
-			{
+			private readonly BuildingRelationshipRequest CityHallParksAndRec = new()
+            {
 				UnitId = TestEntities.Units.ParksAndRecUnitId,
 				BuildingId = TestEntities.Buildings.CityHallId
 			};
@@ -167,9 +182,23 @@ namespace Integration
 
 				await DeleteReturnsCorrectEntityPermissions($"buildingRelationships/{relationship.Id}", unitWithPermissions, providedPermission, expectedCode, expectedPermission);
 			}
-		}
 
-		public static async Task<BuildingRelationship> GenerateParksAndRecCabinRelationship()
+            [Test]
+            public async Task ReturnsBadRequestWhenRelationshipIdInvalid()
+            {
+                var resp = await DeleteAuthenticated($"buildingRelationships/invalid");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected relationshipId to be an integer value"));
+            }
+        }
+
+        public static async Task<BuildingRelationship> GenerateParksAndRecCabinRelationship()
 		{
 			var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
 			var relationship = new BuildingRelationship
