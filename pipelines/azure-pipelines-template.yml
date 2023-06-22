@@ -40,7 +40,16 @@ stages:
     - task: DotNetCoreCLI@2
       inputs:
         command: test
-        projects: tests/API/Integration/Integration.csproj  
+        projects: tests/API/Integration/Integration.csproj
+    
+    - task: CmdLine@2
+      displayName: Prune old Docker images and cache
+      continueOnError: true # If this task fails keep on truckin'. It's just house keeping
+      inputs:
+        script: |
+          docker image prune --filter "until=48h" --force
+          docker system prune --volumes --force
+          docker builder prune --force
 
 - stage: Package
   displayName: Package  

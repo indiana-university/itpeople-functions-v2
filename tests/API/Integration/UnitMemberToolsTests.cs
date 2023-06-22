@@ -216,7 +216,21 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 AssertPermissions(resp, PermsGroups.All);
             }
-		}
+
+            [Test]
+            public async Task ReturnsBadRequestWhenMemberToolIdInvalid()
+            {
+                var resp = await GetAuthenticated("membertools/invalid");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected memberToolId to be an integer value"));
+            }
+        }
 
 		public class UnitMemberToolsCreate : ApiTest
 		{
@@ -428,7 +442,28 @@ namespace Integration
 				Assert.Contains(ArchivedUnitError, actual.Errors);
 				Assert.AreEqual("(none)", actual.Details);
 			}
-		}
+
+            [Test]
+            public async Task ReturnsBadRequestWhenMembershipIdInvalid()
+            {
+                var req = new MemberToolRequest
+                {
+                    Id = TestEntities.MemberTools.AdminHammerId,
+                    MembershipId = TestEntities.UnitMembers.LkNopeSubleadId,
+                    ToolId = TestEntities.Tools.HammerId
+                };
+
+                var resp = await PutAuthenticated("membertools/invalid", req, ValidAdminJwt);
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected memberToolId to be an integer value"));
+            }
+        }
 
 		public class UnitMemberToolsDelete : ApiTest
 		{
@@ -441,7 +476,22 @@ namespace Integration
 				var resp = await DeleteAuthenticated($"membertools/{memberToolId}", jwt);
 				AssertStatusCode(resp, expectedCode);
 			}
-			/*
+
+            [Test]
+            public async Task ReturnsBadRequestWhenMemberToolIdInvalid()
+            {
+                var resp = await DeleteAuthenticated("membertools/invalid");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected memberToolId to be an integer value"));
+            }
+
+            /*
 			[Test]
 			public async Task DeleteUnitMemberToolDoesNotCreateOrphans()
 			{
@@ -455,6 +505,6 @@ namespace Integration
 				Assert.IsEmpty(db.MemberTools.Where(mt => mt.UnitMember == null));
 			}
 			*/
-		}
+        }
 	}
 }

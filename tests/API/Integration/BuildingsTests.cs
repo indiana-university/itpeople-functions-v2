@@ -89,7 +89,21 @@ namespace Integration
 				Assert.AreEqual(expected.Name, actual.Name);
 				Assert.AreEqual(expected.Code, actual.Code);
 			}
-		}
+
+            [Test]
+            public async Task ReturnsBadRequestWhenBuildingIdInvalid()
+            {
+                var resp = await GetAuthenticated("buildings/invalid");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected buildingId to be an integer value"));
+            }
+        }
 		public class GetSupportingUnits : ApiTest
 		{
 			[TestCase(TestEntities.Buildings.CityHallId, HttpStatusCode.OK)]
@@ -111,7 +125,21 @@ namespace Integration
 				Assert.That(actual.First().Building.Id, Is.EqualTo(expected.First().Building.Id));
 				Assert.That(actual.First().Unit.Id, Is.EqualTo(expected.First().Unit.Id));
 			}
-		}
+
+            [Test]
+            public async Task ReturnsBadRequestWhenBuildingIdInvalid()
+            {
+                var resp = await GetAuthenticated("buildings/invalid/supportingunits");
+                AssertStatusCode(resp, HttpStatusCode.BadRequest);
+
+                var issue = await resp.Content.ReadAsAsync<ApiError>();
+
+                Assert.That(issue, Is.Not.Null);
+                Assert.That(issue.Details, Is.EqualTo("(none)"));
+                Assert.That(issue.StatusCode, Is.EqualTo((int)HttpStatusCode.BadRequest));
+                Assert.That(issue.Errors.FirstOrDefault(), Is.EqualTo("Expected buildingId to be an integer value"));
+            }
+        }
 
 	}
 }
