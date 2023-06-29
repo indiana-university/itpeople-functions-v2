@@ -6,6 +6,9 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Models;
 using NUnit.Framework;
 using Tasks;
+using Microsoft.EntityFrameworkCore;
+using System.Data.SqlClient;
+using Npgsql;
 
 namespace Integration
 {
@@ -65,6 +68,49 @@ namespace Integration
 					await db.Buildings.AddAsync(building);
 					await db.SaveChangesAsync();
 				}
+			}
+
+			[Test]
+			public async Task LoggingToPostgresSinkWorks()
+			{
+				// Set an environment variable so the Postgresql logging sink and be setup.
+				System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
+
+				var errorMessage = "This is a test error";
+				var logger = Logging.GetLogger(nameof(LoggingToPostgresSinkWorks));
+				logger.Error(errorMessage);
+
+				var logs = new List<string>();
+				
+				using var connection = new NpgsqlConnection(Database.PeopleContext.LocalDatabaseConnectionString);
+				await connection.OpenAsync();
+
+				/* Testing code for adding a row to logs_automation to ensure the SELECT query returns results
+				var addQuery = @"
+					INSERT INTO logs_automation (timestamp, level, invocation_id, function_name, message, properties, exception)
+					VALUES (NOW(), 'Debug', '1e237480-169b-11ee-be56-0242ac120002', 'Sample', 'Manually inserted test row.', '{}', 'N/A')";
+				using var addCommand = new NpgsqlCommand(addQuery, connection);
+				await addCommand.ExecuteNonQueryAsync();
+				*/
+				
+				var query = $"SELECT message FROM logs_automation";
+				
+				using var command = new NpgsqlCommand(query, connection);
+				using var reader = await command.ExecuteReaderAsync();
+				
+				while(await reader.ReadAsync())
+				{
+					try
+					{
+						var logMessage = await reader.GetFieldValueAsync<string>(0);
+						logs.Add(logMessage);
+					}
+					catch {}
+				}
+
+				
+				Assert.AreEqual(1, logs.Count);
+				Assert.Contains(errorMessage, logs);
 			}
 		}
 
