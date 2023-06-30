@@ -6,6 +6,9 @@ using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Models;
 using NUnit.Framework;
 using Tasks;
+using Microsoft.EntityFrameworkCore;
+using System.Data.SqlClient;
+using Npgsql;
 
 namespace Integration
 {
@@ -65,6 +68,50 @@ namespace Integration
 					await db.Buildings.AddAsync(building);
 					await db.SaveChangesAsync();
 				}
+			}
+
+			[Test]
+			public async Task LoggingToPostgresSinkWorks()
+			{
+				// Set an environment variable so the Postgresql logging sink and be setup.
+				System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
+
+				var errorMessage = "This is a test error";
+				var logger = Logging.GetLogger(nameof(LoggingToPostgresSinkWorks));
+				logger.Error(errorMessage);
+
+				var logs = new List<string>();
+				
+				using var connection = new NpgsqlConnection(Database.PeopleContext.LocalDatabaseConnectionString);
+				await connection.OpenAsync();
+				
+				var query = $"SELECT message FROM logs_automation";
+
+				// Due to our logging implementation we cannot manually "flush" the logger
+				// forcing it to write to its sinks. Instead we'll wait a reasonable
+				// amount of time for it to write to the DB.
+				
+				var cutoff = DateTimeOffset.Now.AddSeconds(20);
+
+				while(DateTimeOffset.Now < cutoff && logs.Count == 0)
+				{
+					await Task.Delay(250);
+					using var command = new NpgsqlCommand(query, connection);
+					using var reader = await command.ExecuteReaderAsync();
+					
+					while(await reader.ReadAsync())
+					{
+						try
+						{
+							var logMessage = await reader.GetFieldValueAsync<string>(0);
+							logs.Add(logMessage);
+						}
+						catch {}
+					}
+				}
+				
+				Assert.AreEqual(1, logs.Count);
+				Assert.Contains(errorMessage, logs);
 			}
 		}
 

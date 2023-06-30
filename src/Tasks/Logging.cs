@@ -23,13 +23,17 @@ namespace Tasks
     {
         private static LoggerConfiguration TryAddAzureAppInsightsSink(this LoggerConfiguration logger, LogEventLevel minLevel)
         {
-            var appInsightsKey = Utils.Env("APPINSIGHTS_INSTRUMENTATIONKEY");
-            if (!string.IsNullOrWhiteSpace(appInsightsKey))
+            try
             {
-                logger.WriteTo.ApplicationInsights(
-                    TelemetryConfiguration.CreateDefault(), TelemetryConverter.Traces, minLevel);
+                var appInsightsKey = Utils.Env("APPINSIGHTS_INSTRUMENTATIONKEY");
+                if (!string.IsNullOrWhiteSpace(appInsightsKey))
+                {
+                    logger.WriteTo.ApplicationInsights(
+                        TelemetryConfiguration.CreateDefault(), TelemetryConverter.Traces, minLevel);
+                }
             }
-
+            catch {}
+            
             return logger;
         }
         
@@ -46,14 +50,19 @@ namespace Tasks
 
         private static LoggerConfiguration TryAddPostgresqlDatabaseSink(this LoggerConfiguration logger, LogEventLevel minLevel)
         {
-            var tableName = "logs_automation";
-            var connectionString = Utils.Env("DatabaseConnectionString", required:true);
-
-            if (!string.IsNullOrWhiteSpace(connectionString))
+            try
             {
-                logger.WriteTo.PostgreSQL(
-                    connectionString, tableName, columnWriters, minLevel);
+                var tableName = "logs_automation";
+                var connectionString = Utils.Env("DatabaseConnectionString");
+
+                if (!string.IsNullOrWhiteSpace(connectionString))
+                {
+                    logger.WriteTo.PostgreSQL(
+                        connectionString, tableName, columnWriters, minLevel);
+                }
             }
+            catch {}
+            
             return logger;
         }
 
