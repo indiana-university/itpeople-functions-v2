@@ -95,7 +95,7 @@ namespace Integration
 
 				while(DateTimeOffset.Now < cutoff && logs.Count == 0)
 				{
-					await Task.Delay(2000);
+					await Task.Delay(250);
 					using var command = new NpgsqlCommand(query, connection);
 					using var reader = await command.ExecuteReaderAsync();
 					
