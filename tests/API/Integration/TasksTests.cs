@@ -84,30 +84,31 @@ namespace Integration
 				
 				using var connection = new NpgsqlConnection(Database.PeopleContext.LocalDatabaseConnectionString);
 				await connection.OpenAsync();
-
-				/* Testing code for adding a row to logs_automation to ensure the SELECT query returns results
-				var addQuery = @"
-					INSERT INTO logs_automation (timestamp, level, invocation_id, function_name, message, properties, exception)
-					VALUES (NOW(), 'Debug', '1e237480-169b-11ee-be56-0242ac120002', 'Sample', 'Manually inserted test row.', '{}', 'N/A')";
-				using var addCommand = new NpgsqlCommand(addQuery, connection);
-				await addCommand.ExecuteNonQueryAsync();
-				*/
 				
 				var query = $"SELECT message FROM logs_automation";
-				
-				using var command = new NpgsqlCommand(query, connection);
-				using var reader = await command.ExecuteReaderAsync();
-				
-				while(await reader.ReadAsync())
-				{
-					try
-					{
-						var logMessage = await reader.GetFieldValueAsync<string>(0);
-						logs.Add(logMessage);
-					}
-					catch {}
-				}
 
+				// Due to our logging implementation we cannot manually "flush" the logger
+				// forcing it to write to its sinks. Instead we'll wait a reasonable
+				// amount of time for it to write to the DB.
+				
+				var cutoff = DateTimeOffset.Now.AddSeconds(20);
+
+				while(DateTimeOffset.Now < cutoff && logs.Count == 0)
+				{
+					await Task.Delay(2000);
+					using var command = new NpgsqlCommand(query, connection);
+					using var reader = await command.ExecuteReaderAsync();
+					
+					while(await reader.ReadAsync())
+					{
+						try
+						{
+							var logMessage = await reader.GetFieldValueAsync<string>(0);
+							logs.Add(logMessage);
+						}
+						catch {}
+					}
+				}
 				
 				Assert.AreEqual(1, logs.Count);
 				Assert.Contains(errorMessage, logs);
