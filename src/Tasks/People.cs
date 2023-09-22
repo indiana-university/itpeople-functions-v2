@@ -197,13 +197,15 @@ namespace Tasks
                     SELECT DISTINCT hr_department, hr_department_desc
                     FROM hr_people
                     WHERE hr_department IS NOT NULL
+                    AND hr_department_desc IS NOT NULL
                     ON CONFLICT (name)
                     DO NOTHING;
                     -- 2. Update department descriptions 
                     UPDATE departments d
                     SET description = hr_department_desc
                     FROM hr_people hr
-                    WHERE d.name = hr.hr_department"));
+                    WHERE d.name = hr.hr_department
+                    AND hr_department_desc IS NOT NULL"));
 
         /// Update name, location, position of people in directory using new HR data
         /// This should be one *after* departments are updated.
