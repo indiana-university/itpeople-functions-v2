@@ -52,6 +52,8 @@ namespace API.Functions
     <a href=""#section/Description"" class=""skip"">Skip to main content</a>
     <redoc spec-url='openapi/v3.json'></redoc>
     <script src=""https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js""> </script>
+
+    <center><h6>Indiana University</h6></center>
 </body>
 </html>
 ";
