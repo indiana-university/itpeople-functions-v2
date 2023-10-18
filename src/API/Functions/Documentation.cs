@@ -31,9 +31,25 @@ namespace API.Functions
             margin: 0;
             padding: 0;
         }
+        
+        a.skip {
+            position: absolute;
+            left: -10000px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+
+        a.skip:focus {
+            position: static;
+            width: auto;
+            height: auto;
+        }
     </style>
 </head>
 <body>
+    <a href=""#section/Description"" class=""skip"">Skip to main content</a>
     <redoc spec-url='openapi/v3.json'></redoc>
     <script src=""https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js""> </script>
 </body>
