@@ -53,7 +53,7 @@ namespace API.Functions
     <redoc spec-url='openapi/v3.json'></redoc>
     <script src=""https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js""> </script>
 
-    <center><h6>Indiana University</h6></center>
+    <div style=""text-align: center""><h6>Indiana University</h6><p style=""line-height: 1.5"">Service Management Technologies</p></div>
 </body>
 </html>
 ";
