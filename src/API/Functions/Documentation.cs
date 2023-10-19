@@ -157,8 +157,7 @@ namespace API.Functions
 					if (window.SwaggerTranslator) {
 						window.SwaggerTranslator.translate();
 					}
-                    // Hacks to massage the DOM into compliance.
-                    console.log(""Ding!"");
+                    /* Hacks to massage the DOM into compliance. */
 
                     // Replace the errant <pre> tag for displaying the version
                     var preVersion = document.querySelector(""pre.version"");
@@ -170,7 +169,12 @@ namespace API.Functions
                     
                     preVersion.parentNode.replaceChild(divVersion, preVersion);
 
-                    // End of Hacks.
+                    // Fix the badly formed <label> tag for servers.
+                    var labelServer = document.querySelector('label[for=""servers""]');
+                    labelServer.removeAttribute(""for"");
+                    labelServer.innerHTML = ""PIck a Server\n"" + labelServer.innerHTML;
+
+                    /* End of Hacks. */
 				},
 				onFailure: function (data) {
 					log(""Unable to Load SwaggerUI"");
