@@ -98,6 +98,10 @@ namespace API.Functions
 			background-color: #eee;
 			padding: 3px 10px;
 		}
+
+		.swagger-ui p {
+			line-height: 1.5 !important;
+		}
 	</style>
 </head>
 
