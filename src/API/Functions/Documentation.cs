@@ -65,7 +65,7 @@ namespace API.Functions
 <html lang=""en"">
 <head>
 	<meta charset=""UTF-8"">
-	<title>Siteimprove API</title> <!-- SITEIMPROVE EDIT -->
+	<title>IT People API</title> <!-- SITEIMPROVE EDIT -->
 	<link rel=""stylesheet"" type=""text/css"" href=""https://itpeople-test.iu.edu/swagger-ui/swagger-ui.css"" />
 	<link rel=""stylesheet"" type=""text/css"" href=""https://itpeople-test.iu.edu/swagger-ui/index.css"" />
 	<link rel=""icon"" type=""image/png"" href=""https://itpeople-test.iu.edu/swagger-ui/favicon-32x32.png"" sizes=""32x32"" />
@@ -157,6 +157,20 @@ namespace API.Functions
 					if (window.SwaggerTranslator) {
 						window.SwaggerTranslator.translate();
 					}
+                    // Hacks to massage the DOM into compliance.
+                    console.log(""Ding!"");
+
+                    // Replace the errant <pre> tag for displaying the version
+                    var preVersion = document.querySelector(""pre.version"");
+                    
+                    var divVersion = document.createElement(""div"")
+                    divVersion.classList.add(""preformatted-text"");
+                    divVersion.classList.add(""version"");
+                    divVersion.innerHTML = preVersion.innerHTML;
+                    
+                    preVersion.parentNode.replaceChild(divVersion, preVersion);
+
+                    // End of Hacks.
 				},
 				onFailure: function (data) {
 					log(""Unable to Load SwaggerUI"");
