@@ -102,10 +102,26 @@ namespace API.Functions
 		.swagger-ui p {
 			line-height: 1.5 !important;
 		}
+
+		a.skip {
+			position: absolute;
+			left: -10000px;
+			top: auto;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+		}
+
+		a.skip:focus {
+			position: static;
+			width: auto;
+			height: auto;
+		}
 	</style>
 </head>
 
 <body>
+	<a href=""#swagger-ui"" class=""skip"">Skip to main content</a>
 	<div id=""swagger-ui""></div>
 
 	<script src=""https://itpeople-test.iu.edu/swagger-ui/swagger-ui-bundle.js"" charset=""UTF-8""></script>
