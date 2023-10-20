@@ -178,8 +178,8 @@ namespace API.Functions
 					}
 
 					// Fix Response JSON color contrast.
-					var preExamples = document.querySelectorAll(""pre.example"");
-					console.log(""\tFixing contrast on the "" + preExamples.length + "" visible PRE.example elements"");
+					var preExamples = document.querySelectorAll(""pre.example, pre.body-param__example"");
+					console.log(""\tFixing contrast on the "" + preExamples.length + "" visible PRE.example and PRE.body-param__example elements"");
 					for(let preExample of preExamples) {
 						// Make the background completely black.
 						preExample.style.backgroundColor = ""#000000"";
