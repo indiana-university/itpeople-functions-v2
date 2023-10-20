@@ -158,21 +158,10 @@ namespace API.Functions
 						window.SwaggerTranslator.translate();
 					}
                     /* Hacks to massage the DOM into compliance. */
+					fixDOM();
 
-                    // Replace the errant <pre> tag for displaying the version
-                    var preVersion = document.querySelector(""pre.version"");
-                    
-                    var divVersion = document.createElement(""div"")
-                    divVersion.classList.add(""preformatted-text"");
-                    divVersion.classList.add(""version"");
-                    divVersion.innerHTML = preVersion.innerHTML;
-                    
-                    preVersion.parentNode.replaceChild(divVersion, preVersion);
-
-                    // Fix the badly formed <label> tag for servers.
-                    var labelServer = document.querySelector('label[for=""servers""]');
-                    labelServer.removeAttribute(""for"");
-                    labelServer.innerHTML = ""PIck a Server\n"" + labelServer.innerHTML;
+					// Any time a button.opblock-summary-control is clicked run fix DOM to fix what was freshly rendered.
+					document.querySelectorAll(""div.opblock-tag-section"").forEach(e => e.addEventListener(""click"", function() { fixDOM() } ));
 
                     /* End of Hacks. */
 				},
@@ -189,6 +178,48 @@ namespace API.Functions
 
 			window.ui = ui;
 		};
+
+		function fixDOM()
+		{
+			console.log(""Greetings from fixDOM()!"");
+
+			// Since we don't have good event hooks, wait X seconds for the DOM to render.
+			setTimeout(function() {
+				if(window.ui) {
+					console.log(""\tInside."");
+					// Replace the errant <pre> tag for displaying the version
+					var preVersion = document.querySelector(""pre.version"");
+					
+					if(preVersion) {
+						console.log(""\tFixing bad PRE tag"");
+						var divVersion = document.createElement(""div"")
+						divVersion.classList.add(""preformatted-text"");
+						divVersion.classList.add(""version"");
+						divVersion.innerHTML = preVersion.innerHTML;
+						
+						preVersion.parentNode.replaceChild(divVersion, preVersion);
+					}
+
+					// Fix the badly formed <label> tag for servers.
+					var labelServer = document.querySelector('label[for=""servers""]');
+					if(labelServer) {
+						console.log(""\tFixing bad LABEL tag for server SELECT"");
+						labelServer.removeAttribute(""for"");
+						labelServer.innerHTML = ""PIck a Server\n"" + labelServer.innerHTML;
+					}
+
+					// Fix a mismatch between the visible description and the aria-label for buttons to expand each api endpoint.
+					// It's mad about a missing space.
+
+					var buttonSummaryMethods = document.querySelectorAll(""span.opblock-summary-method"");
+					console.log(""\tFixing the "" + buttonSummaryMethods.length + "" visible SPAN.opblock-summary-method elements"");
+					for(let buttonSummaryMethod of buttonSummaryMethods)
+					{
+						buttonSummaryMethod.innerHTML += "" "";
+					}
+				}
+			}, 1000);
+		}
 	</script>
 </body>
 </html>
