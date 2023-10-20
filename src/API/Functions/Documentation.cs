@@ -91,6 +91,13 @@ namespace API.Functions
 	<!-- <script src=""https://itpeople-test.iu.edu/swagger-ui/siteimprove.js"" type=""text/javascript""></script> -->
 
 	<script>
+		const observerOptions = { attributes: true, childList: true, subtree: true };
+		const mutationCallback = (mutationList, observer) => {
+			console.log(""mutationCallback"");
+			fixDOM()
+		};
+		const observer = new MutationObserver(mutationCallback);
+		
 		window.onload = function () {
 			var url = ""/openapi/v3.json"";
 
@@ -118,10 +125,11 @@ namespace API.Functions
 						window.SwaggerTranslator.translate();
 					}
                     /* Hacks to massage the DOM into compliance. */
+					// Fix the DOM when Swagger-UI has finished rendering.
 					fixDOM();
 
-					// Any time a button.opblock-summary-control is clicked run fix DOM to fix what was freshly rendered.
-					document.querySelectorAll(""div.opblock-tag-section"").forEach(e => e.addEventListener(""click"", function() { fixDOM() } ));
+					// When certain DOM elements change, run fixDOM() again.
+					document.querySelectorAll(""div.opblock-tag-section"").forEach(e => observer.observe(e, observerOptions));
 
                     /* End of Hacks. */
 				},
@@ -143,57 +151,58 @@ namespace API.Functions
 		{
 			console.log(""Greetings from fixDOM()!"");
 
-			// Since we don't have good event hooks, wait X seconds for the DOM to render.
-			setTimeout(function() {
-				if(window.ui) {
-					console.log(""\tInside."");
-					// Replace the errant <pre> tag for displaying the version
-					var preVersion = document.querySelector(""pre.version"");
+			if(window.ui) {
+				console.log(""\tInside."");
+				// Replace the errant <pre> tag for displaying the version
+				var preVersion = document.querySelector(""pre.version"");
+				
+				if(preVersion) {
+					console.log(""\tFixing bad PRE tag"");
+					var divVersion = document.createElement(""div"")
+					divVersion.classList.add(""preformatted-text"");
+					divVersion.classList.add(""version"");
+					divVersion.innerHTML = preVersion.innerHTML;
 					
-					if(preVersion) {
-						console.log(""\tFixing bad PRE tag"");
-						var divVersion = document.createElement(""div"")
-						divVersion.classList.add(""preformatted-text"");
-						divVersion.classList.add(""version"");
-						divVersion.innerHTML = preVersion.innerHTML;
-						
-						preVersion.parentNode.replaceChild(divVersion, preVersion);
-					}
+					preVersion.parentNode.replaceChild(divVersion, preVersion);
+				}
 
-					// Fix the badly formed <label> tag for servers.
-					var labelServer = document.querySelector('label[for=""servers""]');
-					if(labelServer) {
-						console.log(""\tFixing bad LABEL tag for server SELECT"");
-						labelServer.removeAttribute(""for"");
-						labelServer.innerHTML = ""PIck a Server\n"" + labelServer.innerHTML;
-					}
+				// Fix the badly formed <label> tag for servers.
+				var labelServer = document.querySelector('label[for=""servers""]');
+				if(labelServer) {
+					console.log(""\tFixing bad LABEL tag for server SELECT"");
+					labelServer.removeAttribute(""for"");
+					labelServer.innerHTML = ""PIck a Server\n"" + labelServer.innerHTML;
+				}
 
-					// Fix a mismatch between the visible description and the aria-label for buttons to expand each api endpoint.
-					// It's mad about a missing space.
+				// Fix a mismatch between the visible description and the aria-label for buttons to expand each api endpoint.
+				// It's mad about a missing space.
 
-					var buttonSummaryMethods = document.querySelectorAll(""span.opblock-summary-method"");
-					console.log(""\tFixing the "" + buttonSummaryMethods.length + "" visible SPAN.opblock-summary-method elements"");
-					for(let buttonSummaryMethod of buttonSummaryMethods)
-					{
+				var buttonSummaryMethods = document.querySelectorAll(""span.opblock-summary-method"");
+				console.log(""\tFixing the "" + buttonSummaryMethods.length + "" visible SPAN.opblock-summary-method elements"");
+				for(let buttonSummaryMethod of buttonSummaryMethods)
+				{
+					// Append a space at the end if it does not already end with a space.
+					if(buttonSummaryMethod.innerHTML.slice(-1) != "" "") {
+						console.log(""\t\tMore Spaces."");
 						buttonSummaryMethod.innerHTML += "" "";
 					}
+				}
 
-					// Fix Response JSON color contrast.
-					var preExamples = document.querySelectorAll(""pre.example, pre.body-param__example"");
-					console.log(""\tFixing contrast on the "" + preExamples.length + "" visible PRE.example and PRE.body-param__example elements"");
-					for(let preExample of preExamples) {
-						// Make the background completely black.
-						preExample.style.backgroundColor = ""#000000"";
+				// Fix Response JSON color contrast.
+				var preExamples = document.querySelectorAll(""pre.example, pre.body-param__example"");
+				console.log(""\tFixing contrast on the "" + preExamples.length + "" visible PRE.example and PRE.body-param__example elements"");
+				for(let preExample of preExamples) {
+					// Make the background completely black.
+					preExample.style.backgroundColor = ""#000000"";
 
-						// Make the highlight of an integer more contrasting
-						var salmonInts = preExample.querySelectorAll('span[style=""color: rgb(211, 99, 99);""]');
-						console.log(""\tFixing contrast on the "" + salmonInts.length + "" visible integer highlight color"");
-						for(let salmonInt of salmonInts) {
-							salmonInt.style.color = ""#DA7C7C"";
-						}
+					// Make the highlight of an integer more contrasting
+					var salmonInts = preExample.querySelectorAll('span[style=""color: rgb(211, 99, 99);""]');
+					console.log(""\tFixing contrast on the "" + salmonInts.length + "" visible integer highlight color"");
+					for(let salmonInt of salmonInts) {
+						salmonInt.style.color = ""#DA7C7C"";
 					}
 				}
-			}, 1000);
+			}
 		}
 	</script>
 </body>
