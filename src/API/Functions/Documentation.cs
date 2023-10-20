@@ -217,6 +217,21 @@ namespace API.Functions
 					{
 						buttonSummaryMethod.innerHTML += "" "";
 					}
+
+					// Fix Response JSON color contrast.
+					var preExamples = document.querySelectorAll(""pre.example"");
+					console.log(""\tFixing contrast on the "" + preExamples.length + "" visible PRE.example elements"");
+					for(let preExample of preExamples) {
+						// Make the background completely black.
+						preExample.style.backgroundColor = ""#000000"";
+
+						// Make the highlight of an integer more contrasting
+						var salmonInts = preExample.querySelectorAll('span[style=""color: rgb(211, 99, 99);""]');
+						console.log(""\tFixing contrast on the "" + salmonInts.length + "" visible integer highlight color"");
+						for(let salmonInt of salmonInts) {
+							salmonInt.style.color = ""#DA7C7C"";
+						}
+					}
 				}
 			}, 1000);
 		}
