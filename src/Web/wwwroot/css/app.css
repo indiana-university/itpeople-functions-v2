@@ -55,3 +55,13 @@ button.rvt-button {
     background-color: #005D8F !important;
     color: #ffffff !important;
 }
+
+/* Contrast */
+a {
+    color: #005D8F !important;
+}
+
+/* Contrast */
+.rvt-footer a {
+    color: #005A8A !important;
+}
