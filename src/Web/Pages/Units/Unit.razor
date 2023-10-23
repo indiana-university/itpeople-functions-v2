@@ -144,7 +144,7 @@
 										@if (EditMode || UnitMembers.Count(m => m.Role == role) > 0)
 										{
 											<section class="rvt-m-bottom-lg">
-												<h3 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h3>
+												<h2 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h2>
 												@if (EditMode)
 												{
 													<p>@roleDescription.Description</p>
