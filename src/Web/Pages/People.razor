@@ -35,6 +35,13 @@
 				</div>
 			</div>
 
+			<style>
+				fieldset legend.rvt-ts-xs {
+					font-size: 1.4375rem !important;
+					font-weight: 700;
+				}
+			</style>
+
 			<DisplayException Ex=@GeneralException />
 			<Loader Loading=ShowLoader>
 				<div class="rvt-grid rvt-m-top-md">
@@ -42,17 +49,13 @@
 						<EditForm EditContext="@EditContext" OnValidSubmit="SubmitForm">
 							<DataAnnotationsValidator />
 
-							<h2 class="rvt-ts-23 rvt-text-bold">Unit Role</h2>
-							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Roles" />
+							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Roles" Legend="Unit Role" />
 
-							<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Campus</h2>
-							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Campuses" />
+							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Campuses" Legend="Campus" />
 
-							<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Area</h2>
-							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Areas" />
+							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Areas" Legend="Area" />
 
-							<h2 class="rvt-ts-23 rvt-text-bold rvt-m-top-md">Responsibilities</h2>
-							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Responsibilities" />
+							<RivetInputEnumCheckbox @bind-Value="PeopleSearchValues.Responsibilities" Legend="Responsibilities" />
 
 							<p>
 								<button id="apply-filter" class="rvt-button" disabled="@(GetQueryParams().Count == 0)"
