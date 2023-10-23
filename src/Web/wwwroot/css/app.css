@@ -76,3 +76,9 @@ a:not(.rvt-button) {
 .rvt-breadcrumbs li:last-child {
     color: #595959 !important;
 }
+
+/* Contrast */
+.rvt-alert--info, .rvt-inline-alert--info {
+    background-color: #EDF1F6 !important;
+    color: #005380 !important;
+}
