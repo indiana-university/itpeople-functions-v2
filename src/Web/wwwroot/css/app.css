@@ -56,6 +56,12 @@ button.rvt-button, a.rvt-button {
     color: #ffffff !important;
 }
 
+/* Don't make Danger buttons blue because of our override */
+/* Also, contrast issues */
+button.rvt-button--danger, a.rvt-button--danger {
+    background-color: #A62903 !important;
+}
+
 /* Contrast */
 a:not(.rvt-button) {
     color: #005D8F !important;
