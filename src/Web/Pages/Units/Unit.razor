@@ -282,7 +282,7 @@
 										{
 											<div class="rvt-grid rvt-p-top-sm">
 												<div class="rvt-grid__item ">
-													<h5 class="rvt-border-top rvt-p-top-sm">Add New Child Unit</h5>
+													<h3 class="rvt-border-top rvt-p-top-sm">Add New Child Unit</h3>
 													<EditForm EditContext="@ChildUnitAddContext">
 														<SuggestionButtons T="@UnitResponse" Label="Child Unit" Placeholder="Enter a search term" Description="Search by unit name." ButtonClickedAction="@AddChildUnit" AsyncSuggestionGetter="@GetChildUnitSuggestions" DisplayLambda=@(s => s.Name) />
 													</EditForm>
@@ -297,44 +297,47 @@
 								<Collapse>
 									<Title>Supported Departments</Title>
 									<Content>
-										<ul class="rvt-list rvt-plain-list">
-											@foreach (var supportRelationship in SupportRelationships)
-											{
-												<li>
-													<div class="rvt-grid">
-														<div class="rvt-grid__item">
-															<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
-														</div>
-														@if (CanEditSupportRelationships && EditMode)
-														{
-															<div class="rvt-grid__item rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
-																<button class="rvt-button rvt-button--plain" title="Remove @supportRelationship.Department.Name" @onclick="@(async () => await RemoveSupportRelationship(supportRelationship))">
-																	<rvt-icon name="trash"></rvt-icon>
-																	<span class="rvt-sr-only">Remove @supportRelationship.Department.Name</span>
-																</button>
+										@if(SupportRelationships.Count > 0)
+										{
+											<ul class="rvt-list rvt-plain-list">
+												@foreach (var supportRelationship in SupportRelationships)
+												{
+													<li>
+														<div class="rvt-grid">
+															<div class="rvt-grid__item">
+																<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
 															</div>
-														}
-													</div>
-													<div class="rvt-grid">
-														<div class="rvt-grid__item">
-															@if (supportRelationship.SupportType != null)
+															@if (CanEditSupportRelationships && EditMode)
 															{
-																<div style="font-size:smaller;">@supportRelationship.SupportType.Name</div>
-															}
-															@if (supportRelationship.Department.Description != null)
-															{
-																<div style="font-size:smaller;">@supportRelationship.Department.Description</div>
+																<div class="rvt-grid__item rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
+																	<button class="rvt-button rvt-button--plain" title="Remove @supportRelationship.Department.Name" @onclick="@(async () => await RemoveSupportRelationship(supportRelationship))">
+																		<rvt-icon name="trash"></rvt-icon>
+																		<span class="rvt-sr-only">Remove @supportRelationship.Department.Name</span>
+																	</button>
+																</div>
 															}
 														</div>
-													</div>
-												</li>
-											}
-										</ul>
+														<div class="rvt-grid">
+															<div class="rvt-grid__item">
+																@if (supportRelationship.SupportType != null)
+																{
+																	<div style="font-size:smaller;">@supportRelationship.SupportType.Name</div>
+																}
+																@if (supportRelationship.Department.Description != null)
+																{
+																	<div style="font-size:smaller;">@supportRelationship.Department.Description</div>
+																}
+															</div>
+														</div>
+													</li>
+												}
+											</ul>
+										}
 										@if (CanEditSupportRelationships && EditMode)
 										{
 											<div class="rvt-grid rvt-p-top-sm">
 												<div class="rvt-grid__item ">
-													<h5 class="rvt-border-top rvt-p-top-sm">Add New Supported Department</h5>
+													<h3 class="rvt-border-top rvt-p-top-sm">Add New Supported Department</h3>
 													<EditForm EditContext="@SupportRelationshipAddContext">
 														<RivetInputSelect @bind-Value="SupportRelationshipToAdd.SupportType" Label="Support Type" Description="" Options=SupportTypes DisplayLambda=@(r => r.Name) />
 														@if(SupportRelationshipToAdd.DepartmentId == 0) {
@@ -365,40 +368,43 @@
 								<Collapse>
 									<Title>Supported Buildings</Title>
 									<Content>
-										<ul class="rvt-list rvt-plain-list">
-											@foreach (var buildingRelationship in BuildingRelationships)
-											{
-												<li>
-													<div class="rvt-grid">
-														<div class="rvt-grid__item">
-															<a href="/buildings/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
-														</div>
-														@if (CanEditBuildingRelationships && EditMode)
-														{
-															<div class="rvt-grid__item rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
-																<button class="rvt-button rvt-button--plain" title="Remove @buildingRelationship.Building.Name (@buildingRelationship.Building.Code" @onclick="@(async () => await RemoveBuildingRelationship(buildingRelationship))">
-																	<rvt-icon name="trash"></rvt-icon>
-																	<span class="rvt-sr-only">Remove @buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</span>
-																</button>
-															</div>
-														}
-													</div>
-													@if (string.IsNullOrWhiteSpace(buildingRelationship.Building.Address) == false || string.IsNullOrWhiteSpace(buildingRelationship.Building.City) == false)
-													{
+										@if(BuildingRelationships.Count > 0)
+										{
+											<ul class="rvt-list rvt-plain-list">
+												@foreach (var buildingRelationship in BuildingRelationships)
+												{
+													<li>
 														<div class="rvt-grid">
 															<div class="rvt-grid__item">
-																<span style="font-size:smaller;">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
+																<a href="/buildings/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
 															</div>
+															@if (CanEditBuildingRelationships && EditMode)
+															{
+																<div class="rvt-grid__item rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
+																	<button class="rvt-button rvt-button--plain" title="Remove @buildingRelationship.Building.Name (@buildingRelationship.Building.Code" @onclick="@(async () => await RemoveBuildingRelationship(buildingRelationship))">
+																		<rvt-icon name="trash"></rvt-icon>
+																		<span class="rvt-sr-only">Remove @buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</span>
+																	</button>
+																</div>
+															}
 														</div>
-													}
-												</li>
-											}
-										</ul>
+														@if (string.IsNullOrWhiteSpace(buildingRelationship.Building.Address) == false || string.IsNullOrWhiteSpace(buildingRelationship.Building.City) == false)
+														{
+															<div class="rvt-grid">
+																<div class="rvt-grid__item">
+																	<span style="font-size:smaller;">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
+																</div>
+															</div>
+														}
+													</li>
+												}
+											</ul>
+										}
 										@if (CanEditBuildingRelationships && EditMode)
 										{
 											<div class="rvt-grid rvt-p-top-sm">
 												<div class="rvt-grid__item ">
-													<h5 class="rvt-border-top rvt-p-top-sm">Add New Supported Building</h5>
+													<h3 class="rvt-border-top rvt-p-top-sm">Add New Supported Building</h3>
 													<EditForm EditContext="@BuildingRelationshipAddContext">
 														<SuggestionButtons T="@Building" Label="Search" Placeholder="Enter a search term" Description="Search by building name, code, or address." ButtonClickedAction="@AddBuildingRelationship" AsyncSuggestionGetter="@GetBuildingRelationshipSuggestions" DisplayLambda=@BuildingRelationshipDisplayLamba />
 													</EditForm>
