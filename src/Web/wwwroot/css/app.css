@@ -48,3 +48,10 @@ body {
 button {
     overflow: visible;
 }
+
+/* Styles overriding Rivet for SiteImprove issues */
+/* enhanced contrast */
+button.rvt-button {
+    background-color: #005D8F !important;
+    color: #ffffff !important;
+}
