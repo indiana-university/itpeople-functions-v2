@@ -65,3 +65,8 @@ a {
 .rvt-footer a {
     color: #005A8A !important;
 }
+
+/* Contrast */
+.rvt-breadcrumbs li:last-child {
+    color: #595959 !important;
+}
