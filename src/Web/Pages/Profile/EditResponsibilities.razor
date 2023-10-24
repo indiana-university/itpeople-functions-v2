@@ -46,7 +46,7 @@
 					<EditForm EditContext="@FormContext" OnValidSubmit="SaveChanges">
 						<DataAnnotationsValidator />
 						<ValidationSummary />
-						<RivetInputFlag @bind-Value="ResponsibilitiesInput"
+						<RivetInputFlag @bind-Value="ResponsibilitiesInput" DisabledOptions="DisabledResponsibilities" Legend="Responsibilities"
 							Description="Check all the relevant responsibilities performed" Inline=false />
 						<p>
 							<button type="submit" class="rvt-button"
@@ -70,6 +70,8 @@
 	protected IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 	public Person UpdatedPerson = new Person();
 	private Responsibilities ResponsibilitiesInput;
+
+	private Responsibilities DisabledResponsibilities = Responsibilities.None;
 
 	protected override async Task OnInitializedAsync()
 	{
