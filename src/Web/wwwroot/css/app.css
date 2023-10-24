@@ -94,3 +94,11 @@ a:not(.rvt-button) {
 	border-color: #005D8F !important;
     color: #ffffff !important;
 }
+
+.dropdown__menu a:hover,
+.dropdown__menu button:hover,
+.rvt-dropdown__menu a:hover,
+.rvt-dropdown__menu button:hover {
+    background-color: #005D8F !important;
+    color: #ffffff !important;
+}
