@@ -62,6 +62,14 @@ button.rvt-button--danger, a.rvt-button--danger {
     background-color: #A62903 !important;
 }
 
+.button--plain,
+button.rvt-button--plain,
+a.rvt-button--plain {
+	border-color: transparent !important;
+	background-color: transparent !important;
+	color: #005D8F !important;
+}
+
 /* Contrast */
 a:not(.rvt-button) {
     color: #005D8F !important;
