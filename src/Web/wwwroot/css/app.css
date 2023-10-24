@@ -76,6 +76,11 @@ a:not(.rvt-button) {
 }
 
 /* Contrast */
+.rvt-header__title a {
+    color: #333333 !important;
+}
+
+/* Contrast */
 .rvt-footer a {
     color: #005A8A !important;
 }
