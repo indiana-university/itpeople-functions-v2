@@ -82,3 +82,15 @@ a:not(.rvt-button) {
     background-color: #EDF1F6 !important;
     color: #134a71 !important;
 }
+
+/* Contrast */
+.rvt-tabs__tab {
+    background-color: #eee;
+    color: #4F4F4F !important;
+}
+
+.rvt-tabs__tab[aria-selected="true"] {
+	background-color: #005D8F !important;
+	border-color: #005D8F !important;
+    color: #ffffff !important;
+}
