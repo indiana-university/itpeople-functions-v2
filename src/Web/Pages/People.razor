@@ -205,7 +205,7 @@
 			builder.AppendLine(person.AsCsvRow);
 		}
 		await JSRuntime.InvokeVoidAsync("saveAsFile", Person.CsvFileName,
-		System.Text.Encoding.UTF8.GetBytes(builder.ToString()));
+		Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(builder.ToString())));
 	}
 
 	public void Dispose() { }
