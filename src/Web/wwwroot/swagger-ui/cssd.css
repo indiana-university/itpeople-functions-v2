@@ -1,0 +1,43 @@
+html {
+	box-sizing: border-box;
+	overflow: -moz-scrollbars-vertical;
+	overflow-y: scroll;
+}
+
+*,
+*:before,
+*:after {
+	box-sizing: inherit;
+}
+
+body {
+	margin: 0;
+	background: #fafafa;
+}
+
+.top-fixed {
+	position: fixed;
+	top: 0;
+	left: 0;
+	background-color: #eee;
+	padding: 3px 10px;
+}
+
+.swagger-ui p {
+	line-height: 1.5 !important;
+}
+
+a.skip {
+	position: absolute;
+	left: -10000px;
+	top: auto;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+a.skip:focus {
+	position: static;
+	width: auto;
+	height: auto;
+}

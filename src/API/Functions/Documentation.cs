@@ -19,20 +19,29 @@ namespace API.Functions
                 => new ContentResult(){ StatusCode=200, Content = ApiUIMarkup, ContentType="text/html" };
 
         public static string ApiUIMarkup = @"
+<!-- HTML for static distribution bundle build -->
 <!DOCTYPE html>
-<html>
+<html lang=""en"">
 <head>
-    <title>IT People API</title>
-    <meta charset=""utf-8"" />
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1"">
-    <link href=""https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700"" rel=""stylesheet"">
-    <style> body { margin: 0; padding: 0; }</style>
+	<meta charset=""UTF-8"">
+	<title>IT People API</title> <!-- SITEIMPROVE EDIT -->
+	<link rel=""stylesheet"" type=""text/css"" href=""https://itpeople-test.iu.edu/swagger-ui/swagger-ui.css"" />
+	<link rel=""stylesheet"" type=""text/css"" href=""https://itpeople-test.iu.edu/swagger-ui/index.css"" />
+	<link rel=""stylesheet"" type=""text/css"" href=""https://itpeople-test.iu.edu/swagger-ui/cssd.css"" />
+	<link rel=""icon"" type=""image/png"" href=""https://itpeople-test.iu.edu/swagger-ui/favicon-32x32.png"" sizes=""32x32"" />
+	<link rel=""icon"" type=""image/png"" href=""https://itpeople-test.iu.edu/swagger-ui/favicon-16x16.png"" sizes=""16x16"" />
 </head>
+
 <body>
-    <redoc spec-url='openapi/v3.json'></redoc>
-    <script src=""https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js""> </script>
+	<a href=""#swagger-ui"" class=""skip"">Skip to main content</a>
+	<div id=""swagger-ui""></div>
+
+	<script src=""https://itpeople-test.iu.edu/swagger-ui/swagger-ui-bundle.js"" charset=""UTF-8""></script>
+	<script src=""https://itpeople-test.iu.edu/swagger-ui/swagger-ui-standalone-preset.js"" charset=""UTF-8""></script>
+	<script src=""https://itpeople-test.iu.edu/swagger-ui/swagger-initializer.js"" charset=""UTF-8""> </script>
+	<script src=""https://itpeople-test.iu.edu/swagger-ui/cssd.js"" charset=""UTF-8""></script><!-- This is where the swagger-ui is run to populate div#swagger-ui -->
 </body>
 </html>
-";
+        ";
     }
 }
