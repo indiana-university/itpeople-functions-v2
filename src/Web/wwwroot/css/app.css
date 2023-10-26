@@ -48,3 +48,70 @@ body {
 button {
     overflow: visible;
 }
+
+/* Styles overriding Rivet for SiteImprove issues */
+/* enhanced contrast */
+button.rvt-button, a.rvt-button {
+    background-color: #005D8F !important;
+    color: #ffffff !important;
+}
+
+/* Don't make Danger buttons blue because of our override */
+/* Also, contrast issues */
+button.rvt-button--danger, a.rvt-button--danger {
+    background-color: #A62903 !important;
+}
+
+.button--plain,
+button.rvt-button--plain,
+a.rvt-button--plain {
+	border-color: transparent !important;
+	background-color: transparent !important;
+	color: #005D8F !important;
+}
+
+/* Contrast */
+a:not(.rvt-button) {
+    color: #005D8F !important;
+}
+
+/* Contrast */
+.rvt-header__title a {
+    color: #333333 !important;
+}
+
+/* Contrast */
+.rvt-footer a {
+    color: #005A8A !important;
+}
+
+/* Contrast */
+.rvt-breadcrumbs li:last-child {
+    color: #595959 !important;
+}
+
+/* Contrast */
+.rvt-alert--info, .rvt-inline-alert--info {
+    background-color: #EDF1F6 !important;
+    color: #134a71 !important;
+}
+
+/* Contrast */
+.rvt-tabs__tab {
+    background-color: #eee;
+    color: #4F4F4F !important;
+}
+
+.rvt-tabs__tab[aria-selected="true"] {
+	background-color: #005D8F !important;
+	border-color: #005D8F !important;
+    color: #ffffff !important;
+}
+
+.dropdown__menu a:hover,
+.dropdown__menu button:hover,
+.rvt-dropdown__menu a:hover,
+.rvt-dropdown__menu button:hover {
+    background-color: #005D8F !important;
+    color: #ffffff !important;
+}
