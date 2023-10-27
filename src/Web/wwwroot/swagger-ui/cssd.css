@@ -41,3 +41,12 @@ a.skip:focus {
 	width: auto;
 	height: auto;
 }
+
+.swagger-ui .info .title small.version-stamp {
+	background-color: #595959 !important;
+}
+
+.swagger-ui .markdown code, .swagger-ui .renderedMarkdown code {
+	background-color: #242424 !important;
+	color: #FDB55E !important;
+}
