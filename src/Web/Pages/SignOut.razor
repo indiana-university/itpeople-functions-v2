@@ -11,7 +11,7 @@
 	<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">Sign Out</h1>
 	<DisplayException Ex=@GeneralException />
 	<Loader Loading=ShowLoader>
-		@if (User != null)
+		@if (LoggedInUser != null)
 		{
 			<p>
 				Logging you out...
@@ -29,7 +29,6 @@
 
 @code
 {
-	private AuthenticatedUser User;
 	private bool ShowLoader = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 
