@@ -98,7 +98,7 @@ namespace Unit
             context.Connection.RemoteIpAddress = IPAddress.Parse("127.0.0.1");
 
             // note: second entry is invalid
-            Environment.SetEnvironmentVariable("LspFuncsAllowedIpRanges", "127.0.0.1/8");
+            Environment.SetEnvironmentVariable("LspFuncsAllowedIpRanges", "127.0.0.0/8");
 
             var result = Security.ValidateIpAddress(context.Request);
 
