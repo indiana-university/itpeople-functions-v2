@@ -4,7 +4,6 @@
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="IPNetwork2" Version="2.6.560" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.OpenApi" Version="1.5.1" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.2.0" /><!-- must be manually added or Extensions.OpenApi 1.5.1 breaks -->
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="4.0.4" /><!--  Deployment slot complained w/o this explicit reference. https://github.com/Azure/Azure-Functions/issues/1987#issuecomment-952420935 -->
