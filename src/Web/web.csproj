@@ -10,7 +10,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.12" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
     <PackageReference Include="RivetBlazor" Version="2023.10.24" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.28.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.4.1" />
     <PackageReference Include="System.Net.Http.Json" Version="6.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
