@@ -18,7 +18,8 @@ namespace Unit
         }
 
         // note: ranges contains spaces and ipv6 ranges, but still should work ok
-        private const string AddressRanges = "127.0.0.1/8, 149.159.0.0/16, 2001:4860:4860::8888/32, 145.78.27.254/32, 145.78.27.45/32";
+        // NB: IPNetwork.TryParse now requires STRICT CIDR notation - "[The] BaseAddress is always the first usable address of the network."
+        private const string AddressRanges = "127.0.0.0/8, 149.159.0.0/16, 2001:4860::0000/32, 145.78.27.254/32, 145.78.27.45/32";
 
         [TestCase("149.159.10.10")]
         [TestCase("127.0.0.1")]

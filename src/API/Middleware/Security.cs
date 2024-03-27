@@ -270,9 +270,8 @@ namespace API.Middleware
 
         private static IPNetwork? ToIpNetwork(string value)
         {
-            return IPNetwork.TryParse(value, out IPNetwork ipNetwork)
-                ? ipNetwork
-                : null;
+            var success = IPNetwork.TryParse(value, out IPNetwork ipNetwork);
+            return success ? ipNetwork : null;
         }
 
         
