@@ -2,12 +2,30 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <!-- old includes from before Isolation -->
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.OpenApi" Version="1.5.1" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.2.0" /><!-- must be manually added or Extensions.OpenApi 1.5.1 breaks -->
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.2.2" /><!--  Deployment slot complained w/o this explicit reference. https://github.com/Azure/Azure-Functions/issues/1987#issuecomment-952420935 -->
-    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.3.0" />
+    <!-- following must be manually added or Extensions.OpenApi 1.5.1 breaks -->
+    <!-- <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.2.0" /> -->
+    <!--  Deployment slot complained w/o this explicit reference. https://github.com/Azure/Azure-Functions/issues/1987#issuecomment-952420935 -->
+    <!-- <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.2.2" /> -->
+    <!-- <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.3.0" /> -->
+
+    <!-- for Isolation -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.21.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.16.4" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="1.2.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.2.0" />
+
+    <!-- for isolation replaces Microsoft.Azure.WebJobs.Extensions.Storage -->
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Blobs" Version="6.3.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.3.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Tables" Version="1.3.0" />
+  
 
     <!-- from old API -->
     <PackageReference Include="CSharpFunctionalExtensions" Version="2.38.1" />
@@ -21,8 +39,14 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="4.1.0" />
     <PackageReference Include="Serilog.Sinks.PostgreSQL" Version="2.3.0" />
 
-    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
+    <!-- not used in Isolation -->
+    <!-- <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" /> -->
   </ItemGroup>
+  <!-- more isolation -->
+  <ItemGroup>
+    <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext"/>
+  </ItemGroup>
+    
   <ItemGroup>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
