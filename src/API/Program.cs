@@ -1,17 +1,29 @@
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using System;
 using Database;
+using System.Threading.Tasks;
 
-[assembly: FunctionsStartup(typeof(API.Startup))]
 namespace API
 {
-    class Startup : FunctionsStartup
+    class Program
     {
-        public override void Configure(IFunctionsHostBuilder builder)
+        public static async Task Main(string[] args)
         {
-            //NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Debug, true, true);
+            var host = new HostBuilder()
+                .ConfigureFunctionsWorkerDefaults()
+                .ConfigureServices(services => {
+                    services.AddApplicationInsightsTelemetryWorkerService();
+                    services.ConfigureFunctionsApplicationInsights();
+                })
+                .Build();
+
             MigrateDatabaseToLatest();
+
+            host.Run();
+            await Task.CompletedTask;
         }
 
         private static void MigrateDatabaseToLatest()
