@@ -47,9 +47,9 @@ namespace API.Middleware
 
         internal static Result<string,Error> GetRequiredQueryParam(HttpRequest req, string key)
         {
-            var dict = req.GetQueryParameterDictionary();
-            return dict.ContainsKey(key)
-                ? Pipeline.Success(dict[key])
+            var success = req.Query.TryGetValue(key, out var val);
+            return success
+                ? Pipeline.Success(val.ToString())
                 : Pipeline.BadRequest($"Missing required query parameter: {key}");
         }
     }
