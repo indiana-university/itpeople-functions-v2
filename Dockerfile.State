@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS installer-env
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS installer-env
 
 # A reddit wizard says copy csproj filtes and do a restore first
 # https://www.reddit.com/r/docker/comments/i34thd/dotnet_core_slow_restore/g0azda1?utm_source=share&utm_medium=web2x&context=3
