@@ -1,4 +1,4 @@
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -14,12 +14,12 @@ namespace Tasks
     public static class Buildings
     {
         // Runs at 30 minutes past every hour (00:30 AM, 01:30 AM, 02:30 AM, ...)
-        [FunctionName(nameof(ScheduledBuildingsUpdate))]
+        [Function(nameof(ScheduledBuildingsUpdate))]
         public static Task ScheduledBuildingsUpdate([TimerTrigger("0 30 * * * *")]TimerInfo timer, 
             [DurableClient] IDurableOrchestrationClient starter)
             => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(BuildingsUpdateOrchestrator));
 
-        [FunctionName(nameof(BuildingsUpdateOrchestrator))]
+        [Function(nameof(BuildingsUpdateOrchestrator))]
         public static async Task BuildingsUpdateOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
         {
             try
@@ -36,7 +36,7 @@ namespace Tasks
             }
         }
 
-        [FunctionName(nameof(BuildingsUpdateActivity))]
+        [Function(nameof(BuildingsUpdateActivity))]
         public static async Task BuildingsUpdateActivity([ActivityTrigger] IDurableActivityContext context)
         {   
             var buildings = await FetchBuildingsFromDenodo();

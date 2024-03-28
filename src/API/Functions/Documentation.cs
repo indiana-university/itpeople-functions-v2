@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,13 +7,13 @@ namespace API.Functions
 {
     public static class Documentation
     {
-        [FunctionName(nameof(Documentation.RenderOpenApiJson))]
+        [Function(nameof(Documentation.RenderOpenApiJson))]
         public static IActionResult RenderOpenApiJson(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "openapi.json")] HttpRequest req) 
                 => new RedirectResult("/swagger.json");
         
 
-        [FunctionName(nameof(Documentation.RenderApiUI))]
+        [Function(nameof(Documentation.RenderApiUI))]
         public static IActionResult RenderApiUI(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "/")] HttpRequest req)
                 => new ContentResult(){ StatusCode=200, Content = ApiUIMarkup, ContentType="text/html" };

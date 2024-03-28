@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 
@@ -22,7 +22,7 @@ namespace API.Functions
 
         public const string CombinedCreateUpdateError = "The request body was malformed, the unitId, departmentId, and/or supportTypeId field was missing or invalid.\\\n**or**\\\nThe request body was malformed, the provided unit has been archived and is not available for new Support Relationships.";
 
-        [FunctionName(nameof(SupportRelationships.SupportRelationshipsGetAll))]
+        [Function(nameof(SupportRelationships.SupportRelationshipsGetAll))]
         [OpenApiOperation(nameof(SupportRelationships.SupportRelationshipsGetAll), SupportRelationshipsTitle, Summary = "List all unit-department support relationships")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<SupportRelationshipResponse>), Description = "A collection of department support relationship records")]
         public static Task<IActionResult> SupportRelationshipsGetAll(
@@ -32,7 +32,7 @@ namespace API.Functions
                 .Bind(sr => Pipeline.Success(SupportRelationshipResponse.ConvertList(sr)))
                 .Finally(results => Response.Ok(req, results));
 
-        [FunctionName(nameof(SupportRelationships.SupportRelationshipsGetOne))]
+        [Function(nameof(SupportRelationships.SupportRelationshipsGetOne))]
         [OpenApiOperation(nameof(SupportRelationships.SupportRelationshipsGetOne), SupportRelationshipsTitle, Summary = "Find a unit-department support relationships by ID")]
         [OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department support relationship record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(SupportRelationshipResponse), Description = "A department support relationship record")]
@@ -48,7 +48,7 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(_ => SupportRelationshipsRepository.GetOne(relationshipId));
 
-        [FunctionName(nameof(SupportRelationships.CreateSupportRelationship))]
+        [Function(nameof(SupportRelationships.CreateSupportRelationship))]
         [OpenApiOperation(nameof(SupportRelationships.CreateSupportRelationship), SupportRelationshipsTitle, Summary = "Create a unit-department support relationship", Description = "Authorization: Support relationships can be created by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
         [OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(SupportRelationshipRequest), Required = true)]
         [OpenApiResponseWithBody(HttpStatusCode.Created, MediaTypeNames.Application.Json, typeof(SupportRelationshipResponse), Description = "The newly created department support relationship record")]
@@ -73,7 +73,7 @@ namespace API.Functions
             .Finally(result => Response.Created(req, result));
         }
 
-        [FunctionName(nameof(SupportRelationships.DeleteSupportRelationship))]
+        [Function(nameof(SupportRelationships.DeleteSupportRelationship))]
         [OpenApiOperation(nameof(SupportRelationships.DeleteSupportRelationship), SupportRelationshipsTitle, Summary = "Delete a unit-department support relationship", Description = "Authorization: Support relationships can be deleted by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
         [OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department support relationship record.")]
         [OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]
@@ -96,7 +96,7 @@ namespace API.Functions
                 .Bind(_ => SupportRelationshipsRepository.DeleteSupportRelationship(req, relationshipId));
         }
 
-        [FunctionName(nameof(SupportRelationships.SsspSupportRelationships))]
+        [Function(nameof(SupportRelationships.SsspSupportRelationships))]
         [OpenApiOperation(nameof(SupportRelationships.SsspSupportRelationships), SupportRelationshipsTitle, Summary = "Lists Support Relationships using a query specifically for SSSP's use.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<SsspSupportRelationshipResponse>), Description = "A collection of department support relationship records")]
         [OpenApiParameter("dept", In = ParameterLocation.Query, Description = "Filter results by the department's name. The provided value must exactly match the department's name.")]

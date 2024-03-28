@@ -1,5 +1,6 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+
+using Microsoft.Azure.Functions.Worker;
+
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 
@@ -21,7 +22,7 @@ namespace API.Functions
     {
         public const string BuildingRelationshipsTitle = "Building Relationships";
 
-        [FunctionName(nameof(BuildingRelationships.BuildingRelationshipsGetAll))]
+        [Function(nameof(BuildingRelationships.BuildingRelationshipsGetAll))]
         [OpenApiOperation(nameof(BuildingRelationships.BuildingRelationshipsGetAll), BuildingRelationshipsTitle, Summary = "List all unit-building support relationships")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<BuildingRelationshipResponse>), Description = "A collection of building support relationship records")]
         public static Task<IActionResult> BuildingRelationshipsGetAll(
@@ -31,7 +32,7 @@ namespace API.Functions
                 .Bind(br => Pipeline.Success(br.Select(brx => new BuildingRelationshipResponse(brx)).ToList()))
                 .Finally(r => Response.Ok(req, r));
 
-        [FunctionName(nameof(BuildingRelationships.BuildingRelationshipsGetOne))]
+        [Function(nameof(BuildingRelationships.BuildingRelationshipsGetOne))]
         [OpenApiOperation(nameof(BuildingRelationships.BuildingRelationshipsGetOne), BuildingRelationshipsTitle, Summary = "Find a unit-building support relationships by ID")]
         [OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building support relationship record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(BuildingRelationshipResponse), Description = "A building support relationship record")]
@@ -47,7 +48,7 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(_ => BuildingRelationshipsRepository.GetOne(relationshipId));
 
-        [FunctionName(nameof(BuildingRelationships.CreateBuildingRelationship))]
+        [Function(nameof(BuildingRelationships.CreateBuildingRelationship))]
         [OpenApiOperation(nameof(BuildingRelationships.CreateBuildingRelationship), BuildingRelationshipsTitle, Summary = "Create a unit-building support relationship", Description = "Authorization: Support relationships can be created by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
         [OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(BuildingRelationshipRequest), Required = true)]
         [OpenApiResponseWithBody(HttpStatusCode.Created, MediaTypeNames.Application.Json, typeof(BuildingRelationshipResponse), Description = "The newly created building support relationship record")]
@@ -73,7 +74,7 @@ namespace API.Functions
             .Finally(result => Response.Created(req, result));
         }
 
-        [FunctionName(nameof(BuildingRelationships.DeleteBuildingRelationship))]
+        [Function(nameof(BuildingRelationships.DeleteBuildingRelationship))]
         [OpenApiOperation(nameof(BuildingRelationships.DeleteBuildingRelationship), BuildingRelationshipsTitle, Summary = "Delete a unit-building support relationship", Description = "Authorization: Support relationships can be deleted by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
         [OpenApiParameter("relationshipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the building support relationship record.")]
         [OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]

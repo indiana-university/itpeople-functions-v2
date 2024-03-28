@@ -1,4 +1,4 @@
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using System.Threading.Tasks;
 using System;
@@ -14,12 +14,12 @@ namespace Tasks
     public class Tools
     {
         // Runs every 5 minutes)
-        [FunctionName(nameof(ScheduledToolsUpdate))]
+        [Function(nameof(ScheduledToolsUpdate))]
         public static Task ScheduledToolsUpdate([TimerTrigger("0 */5 * * * *")]TimerInfo timer, 
             [DurableClient] IDurableOrchestrationClient starter)
             => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(ToolsUpdateOrchestrator));
 
-        [FunctionName(nameof(ToolsUpdateOrchestrator))]
+        [Function(nameof(ToolsUpdateOrchestrator))]
         public static async Task ToolsUpdateOrchestrator(
             [OrchestrationTrigger] IDurableOrchestrationContext context)
         {
@@ -44,12 +44,12 @@ namespace Tasks
             }
         }
 
-        [FunctionName(nameof(FetchAllTools))]
+        [Function(nameof(FetchAllTools))]
         public static Task<List<Tool>> FetchAllTools([ActivityTrigger] IDurableActivityContext context) 
             => Utils.DatabaseQuery(nameof(FetchAllTools), "fetch all tools", db => db.Tools.ToListAsync());
 
         // Aggregate all HR records of a certain type from the IMS Profile API
-        [FunctionName(nameof(SynchronizeToolGroupMembership))]
+        [Function(nameof(SynchronizeToolGroupMembership))]
         public static async Task SynchronizeToolGroupMembership([ActivityTrigger] IDurableActivityContext context)
         {
             var tool = context.GetInput<Tool>();

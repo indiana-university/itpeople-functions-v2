@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using API.Middleware;
@@ -11,7 +11,7 @@ namespace API.Functions
 {
     public static class Authorization
 	{
-		[FunctionName(nameof(Authorization.ExchangeOAuthCodeForToken))]
+		[Function(nameof(Authorization.ExchangeOAuthCodeForToken))]
 		[OpenApiIgnore]
 		public static Task<IActionResult> ExchangeOAuthCodeForToken(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "auth")] HttpRequest req)
@@ -19,7 +19,7 @@ namespace API.Functions
 				.Bind(code => Security.ExhangeOAuthCodeForToken(req, code))
 				.Finally(jwt => Response.Ok(req, jwt));
 
-		[FunctionName(nameof(Authorization.Options))]
+		[Function(nameof(Authorization.Options))]
 		[OpenApiIgnore]
 		public static Task<IActionResult> Options(
 			[HttpTrigger(AuthorizationLevel.Anonymous, "options", Route = "{*url}")] HttpRequest req)

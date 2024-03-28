@@ -5,7 +5,7 @@ using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Models;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+
 using System;
 using System.Xml.Serialization;
 using System.IO;

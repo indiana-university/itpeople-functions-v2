@@ -1,4 +1,4 @@
-using Microsoft.Azure.WebJobs.Extensions.Http;
+
 using CSharpFunctionalExtensions;
 using API.Middleware;
 using Microsoft.AspNetCore.Http;

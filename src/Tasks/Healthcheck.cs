@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using Microsoft.AspNetCore.Http;
 using System.Linq;
 using System;
@@ -15,7 +15,7 @@ namespace Tasks
 {
     public static class Healthcheck
     {
-        [FunctionName(nameof(Ping))]
+        [Function(nameof(Ping))]
         public static string Ping(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequest req) 
                 => "Pong!";
@@ -34,7 +34,7 @@ namespace Tasks
             }
         }
 
-        [FunctionName(nameof(SmokeTest))]
+        [Function(nameof(SmokeTest))]
         public static async Task<string> SmokeTest(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "smokeTest")] HttpRequest req)
         {
