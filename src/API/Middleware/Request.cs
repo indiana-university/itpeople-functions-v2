@@ -8,6 +8,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 using System.Linq;
 using Models.Enums;
+using System.IO;
 
 namespace API.Middleware
 {
@@ -65,5 +66,13 @@ namespace API.Middleware
 
         public static bool HasEntityPermissions(this HttpRequest req) 
             => req.HttpContext.Items.ContainsKey(Response.Headers.XUserPermissions);
+        
+        public static async Task<string> ReadAsStringAsync(this HttpRequest req)
+        {
+            using (var sr = new StreamReader(req.Body))
+            {
+                return await sr.ReadToEndAsync();
+            }
+        }
     }
 }
