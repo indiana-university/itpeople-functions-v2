@@ -17,7 +17,7 @@ namespace Unit
         [TestCase("foo,,bar", new[]{"foo","bar"})]
         public void CanParseInterests(string query, string[] expected)
         {
-            var dict = new Dictionary<string,string> {{"interest", query}};
+            var dict = new Dictionary<string,Microsoft.Extensions.Primitives.StringValues> {{"interest", query}};
             var result = PeopleSearchParameters.Parse(dict);
             Assert.True(result.IsSuccess);
             Assert.AreEqual(expected, result.Value.Expertise);
