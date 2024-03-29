@@ -30,5 +30,7 @@ ENV OAuthTokenUrl="token url"
 ENV OAuthRedirectUrl="redirect url"
 COPY --from=installer-env ["/app/home/site/wwwroot", "/app/home/site/wwwroot"]
 
+EXPOSE 80
+
 HEALTHCHECK --interval=10s --timeout=1s --retries=60 \ 
     CMD curl --fail http://localhost:80/ping || exit 1     

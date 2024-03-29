@@ -18,13 +18,15 @@ COPY pact ./pact/
 RUN mkdir -p home/site/wwwroot && \
     dotnet publish -c Release pact/StateServer/StateServer.csproj --output home/site/wwwroot
 
-FROM mcr.microsoft.com/azure-functions/dotnet:4-dotnet6-appservice
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0
 WORKDIR /app
 ENV AzureWebJobsScriptRoot=/app/home/site/wwwroot
 ENV AzureFunctionsJobHost__Logging__Console__IsEnabled=true
 ENV AzureWebJobsDisableHomepage=true
 ENV DatabaseConnectionString=Server=integration-test-db;Database=ItPeople;User\ Id=SA;Password=abcd1234@;
 COPY --from=installer-env ["/app/home/site/wwwroot", "/app/home/site/wwwroot"]
+
+EXPOSE 80
 
 HEALTHCHECK --interval=10s --timeout=1s --retries=60 \ 
     CMD curl --fail http://localhost:80/ping || exit 1     
