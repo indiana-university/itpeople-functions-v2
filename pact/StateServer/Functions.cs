@@ -19,10 +19,8 @@ namespace StateServer
        
        [Function(nameof(Functions.State))]
         public static IActionResult State(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "state")] HttpRequest req,
-            ILogger log)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "state")] HttpRequest req)
         {
-            log.LogInformation("Resetting Postgres DB with test data...");
             var connStr = System.Environment.GetEnvironmentVariable("DatabaseConnectionString");
             using (var peopleContext = PeopleContext.Create(connStr))
             {
