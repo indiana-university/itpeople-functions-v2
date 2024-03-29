@@ -12,6 +12,9 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
+    <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext"/>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../../src/Models/Models.csproj" />
     <ProjectReference Include="../../src/Database/Database.csproj" />
   </ItemGroup>
