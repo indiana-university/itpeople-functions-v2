@@ -3,10 +3,10 @@ using Microsoft.ApplicationInsights.Extensibility;
 using System.Collections.Generic;
 using Serilog.Sinks.PostgreSQL;
 using NpgsqlTypes;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Newtonsoft.Json;
 using Serilog.Events;
 using System;
+using Microsoft.DurableTask;
 
 namespace Tasks
 {
@@ -66,7 +66,7 @@ namespace Tasks
             return logger;
         }
 
-        public static ILogger GetLogger(IDurableOrchestrationContext ctx, object properties = null) 
+        public static ILogger GetLogger(TaskOrchestrationContext ctx, object properties = null) 
             => GetLogger(ctx.Name, properties);
 
         private static Lazy<ILogger> Logger = new Lazy<ILogger>(() => 
