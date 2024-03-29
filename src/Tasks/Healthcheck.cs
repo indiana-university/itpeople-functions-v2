@@ -1,6 +1,4 @@
 using Microsoft.Azure.Functions.Worker;
-
-using Microsoft.AspNetCore.Http;
 using System.Linq;
 using System;
 using System.Collections.Generic;
@@ -10,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Tasks
 {
@@ -17,7 +16,7 @@ namespace Tasks
     {
         [Function(nameof(Ping))]
         public static string Ping(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequest req) 
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequestData req) 
                 => "Pong!";
 
         private static async Task<string> TryGetIP(string hostName)
@@ -36,7 +35,7 @@ namespace Tasks
 
         [Function(nameof(SmokeTest))]
         public static async Task<string> SmokeTest(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "smokeTest")] HttpRequest req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "smokeTest")] HttpRequestData req)
         {
 
             var dnsDb = TryGetIP("esdbp57p.uits.iu.edu");
