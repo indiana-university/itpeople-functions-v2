@@ -1,5 +1,4 @@
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using System.Threading.Tasks;
 using System;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +7,8 @@ using Models;
 using System.Linq;
 using Novell.Directory.Ldap.Controls;
 using Novell.Directory.Ldap;
+using Microsoft.DurableTask.Client;
+using Microsoft.DurableTask;
 
 namespace Tasks
 {
@@ -16,23 +17,23 @@ namespace Tasks
         // Runs every 5 minutes)
         [Function(nameof(ScheduledToolsUpdate))]
         public static Task ScheduledToolsUpdate([TimerTrigger("0 */5 * * * *")]TimerInfo timer, 
-            [DurableClient] IDurableOrchestrationClient starter)
+            [DurableClient] DurableTaskClient starter)
             => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(ToolsUpdateOrchestrator));
 
         [Function(nameof(ToolsUpdateOrchestrator))]
         public static async Task ToolsUpdateOrchestrator(
-            [OrchestrationTrigger] IDurableOrchestrationContext context)
+            [OrchestrationTrigger] TaskOrchestrationContext context)
         {
             try
             {
                 Logging.GetLogger(context).Information("Starting tools update.");
                 // Fetch all tools.
-                var tools = await context.CallActivityWithRetryAsync<IEnumerable<Tool>>(
+                var tools = await context.CallActivityAsync<IEnumerable<Tool>>(
                     nameof(FetchAllTools), RetryOptions, null);
                 
                 // Compare current tool grants with IT People grants and add/remove grants as necessary.
                 var toolTasks = tools.Select(t => 
-                    context.CallActivityWithRetryAsync(nameof(SynchronizeToolGroupMembership), RetryOptions, t));
+                    context.CallActivityAsync(nameof(SynchronizeToolGroupMembership), t, RetryOptions));
                 await Task.WhenAll(toolTasks);
 
                 Logging.GetLogger(context).Debug("Finished tools update.");
@@ -45,12 +46,12 @@ namespace Tasks
         }
 
         [Function(nameof(FetchAllTools))]
-        public static Task<List<Tool>> FetchAllTools([ActivityTrigger] IDurableActivityContext context) 
+        public static Task<List<Tool>> FetchAllTools([ActivityTrigger] TaskOrchestrationContext context) 
             => Utils.DatabaseQuery(nameof(FetchAllTools), "fetch all tools", db => db.Tools.ToListAsync());
 
         // Aggregate all HR records of a certain type from the IMS Profile API
         [Function(nameof(SynchronizeToolGroupMembership))]
-        public static async Task SynchronizeToolGroupMembership([ActivityTrigger] IDurableActivityContext context)
+        public static async Task SynchronizeToolGroupMembership([ActivityTrigger] TaskOrchestrationContext context)
         {
             var tool = context.GetInput<Tool>();
             // get grantee netids from IT People DB
@@ -64,7 +65,7 @@ namespace Tasks
             await Task.WhenAll(addTasks.Concat(removeTasks));
         }
 
-        public static Task<List<string>> GetToolGrantees(IDurableActivityContext context, Tool tool) 
+        public static Task<List<string>> GetToolGrantees(TaskOrchestrationContext context, Tool tool) 
             => Utils.DatabaseQuery<List<string>>(nameof(GetToolGrantees), $"fetch grantees for tool '{tool.Name}'", db =>
                 db.Tools
                     .Where(t => t.Id == tool.Id)
@@ -82,7 +83,7 @@ namespace Tasks
         private const string LdapSearchBase = "ou=Accounts,dc=ads,dc=iu,dc=edu";
         private const int LdapPageSize = 500;
 
-        public static List<string> GetToolGroupMembers(IDurableActivityContext context, Tool tool)
+        public static List<string> GetToolGroupMembers(TaskOrchestrationContext context, Tool tool)
         {
             var members = new List<string>();
             try
@@ -133,19 +134,19 @@ namespace Tasks
             }
         }
 
-        public static Task AddToolGroupMember(IDurableActivityContext context, Tool tool, string netid)
+        public static Task AddToolGroupMember(TaskOrchestrationContext context, Tool tool, string netid)
         {
             Logging.GetLogger(nameof(AddToolGroupMember),new {tool=tool, netid=netid}).Information($"Add {netid} to group {tool.Name}.");
             return Task.Run(()=>ModifyToolGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.ADD));
         }
 
-        public static Task RemoveToolGroupMember(IDurableActivityContext context, Tool tool, string netid)
+        public static Task RemoveToolGroupMember(TaskOrchestrationContext context, Tool tool, string netid)
         {
             Logging.GetLogger(nameof(RemoveToolGroupMember),new {tool=tool, netid=netid}).Information($"Remove {netid} from group {tool.Name}.");
             return Task.Run(()=>ModifyToolGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.DELETE));
         }
 
-        private static void ModifyToolGroupMembership(IDurableActivityContext context, string netid, string name, string adPath, int action)
+        private static void ModifyToolGroupMembership(TaskOrchestrationContext context, string netid, string name, string adPath, int action)
         {
             try
             {
@@ -166,9 +167,11 @@ namespace Tasks
             }    
         }
 
-        private static RetryOptions RetryOptions = new RetryOptions(
-            firstRetryInterval: TimeSpan.FromSeconds(5),
-            maxNumberOfAttempts: 3);
+        private static TaskOptions RetryOptions = new TaskOptions(
+            new TaskRetryOptions(
+                new RetryPolicy(3, TimeSpan.FromSeconds(5))
+            )
+        );
 
         public static LdapConnection GetLdapConnection()
         {
