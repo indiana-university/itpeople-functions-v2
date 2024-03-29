@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Database;
 using Microsoft.Azure.Functions.Worker;
@@ -34,7 +35,7 @@ namespace Tasks
             
             try
             {
-                return await resp.Content.ReadAsAsync<T>();
+                return await resp.Content.ReadFromJsonAsync<T>();
             }
             catch (Exception ex)
             {
