@@ -2,11 +2,14 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.0.2" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.9.3" />
-    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.1.1" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.21.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.16.4" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.DurableTask" Version="1.1.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.15" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.8" />
     <PackageReference Include="Novell.Directory.Ldap.NETStandard" Version="2.3.8" />
@@ -15,6 +18,9 @@
     <PackageReference Include="Serilog.Sinks.PostgreSQL" Version="2.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
+  <ItemGroup>
+    <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext"/>
+  </ItemGroup>  
   <ItemGroup>
     <ProjectReference Include="..\Models\Models.csproj" />
     <ProjectReference Include="..\Database\Database.csproj" />
