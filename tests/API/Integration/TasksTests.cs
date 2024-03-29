@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Models;
 using NUnit.Framework;
 using Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Data.SqlClient;
 using Npgsql;
+using Microsoft.DurableTask;
+using Microsoft.Extensions.Logging;
+using System.Threading;
 
 namespace Integration
 {
@@ -23,7 +23,7 @@ namespace Integration
 			[Test]
 			public async Task GetToolGranteesHonorsInactiveUnits()
 			{
-				var testContext = new MockDurableActivityContext();
+				var testContext = new MockTaskOrchestrationContext();
 				System.Environment.SetEnvironmentVariable("DatabaseConnectionString", Database.PeopleContext.LocalDatabaseConnectionString);
 
 				// Generate a member tool of April and Hammer on the inactive Unit.
@@ -115,15 +115,64 @@ namespace Integration
 			}
 		}
 
-		public class MockDurableActivityContext : IDurableActivityContext
+		public class MockTaskOrchestrationContext : TaskOrchestrationContext
 		{
-			public string InstanceId => throw new NotImplementedException();
-			public string Name => throw new NotImplementedException();
+            public override string InstanceId => throw new NotImplementedException();
 
-			public T GetInput<T>()
-			{
-				throw new NotImplementedException();
-			}
-		}
+            public override TaskName Name => throw new NotImplementedException();
+
+            public override ParentOrchestrationInstance Parent => throw new NotImplementedException();
+
+            public override DateTime CurrentUtcDateTime => throw new NotImplementedException();
+
+            public override bool IsReplaying => throw new NotImplementedException();
+
+            protected override ILoggerFactory LoggerFactory => throw new NotImplementedException();
+
+            public override Task<TResult> CallActivityAsync<TResult>(TaskName name, object input = null, TaskOptions options = null)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override Task<TResult> CallSubOrchestratorAsync<TResult>(TaskName orchestratorName, object input = null, TaskOptions options = null)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void ContinueAsNew(object newInput = null, bool preserveUnprocessedEvents = true)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override Task CreateTimer(DateTime fireAt, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override T GetInput<T>() where T : default
+            {
+                throw new NotImplementedException();
+            }
+
+            public override Guid NewGuid()
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void SendEvent(string instanceId, string eventName, object payload)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void SetCustomStatus(object customStatus)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override Task<T> WaitForExternalEvent<T>(string eventName, CancellationToken cancellationToken = default)
+            {
+                throw new NotImplementedException();
+            }
+        }
 	}
 }
