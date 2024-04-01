@@ -12,7 +12,7 @@ namespace Integration
         public async Task CanGenerateApiDocs()
         {
             var resp = await Http.GetAsync("openapi.json");
-            AssertStatusCode(resp, HttpStatusCode.OK);            
+            AssertStatusCode(resp, HttpStatusCode.OK);
         }
     }
 }

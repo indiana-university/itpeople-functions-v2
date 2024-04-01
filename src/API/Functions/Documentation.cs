@@ -7,7 +7,7 @@ namespace API.Functions
 {
     public static class Documentation
     {
-        // [Function(nameof(Documentation.RenderOpenApiJson))]
+        [Function(nameof(Documentation.RenderOpenApiJson))]
         public static IActionResult RenderOpenApiJson(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "openapi.json")] HttpRequest req) 
                 => new RedirectResult("/swagger.json");

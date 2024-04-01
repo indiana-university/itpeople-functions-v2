@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- old includes from before Isolation -->
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.OpenApi" Version="1.5.1" />
+    <!-- <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.OpenApi" Version="1.5.1" /> -->
     <!-- following must be manually added or Extensions.OpenApi 1.5.1 breaks -->
     <!-- <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.2.0" /> -->
     <!--  Deployment slot complained w/o this explicit reference. https://github.com/Azure/Azure-Functions/issues/1987#issuecomment-952420935 -->
@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.21.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.16.4" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="1.2.1" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.OpenApi" Version="1.5.1" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.2.0" />
 
