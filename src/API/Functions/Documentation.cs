@@ -7,13 +7,13 @@ namespace API.Functions
 {
     public static class Documentation
     {
-        [Function(nameof(Documentation.RenderOpenApiJson))]
+        // [Function(nameof(Documentation.RenderOpenApiJson))]
         public static IActionResult RenderOpenApiJson(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "openapi.json")] HttpRequest req) 
                 => new RedirectResult("/swagger.json");
         
 
-        [Function(nameof(Documentation.RenderApiUI))]
+        // [Function(nameof(Documentation.RenderApiUI))]
         public static IActionResult RenderApiUI(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "/")] HttpRequest req)
                 => new ContentResult(){ StatusCode=200, Content = ApiUIMarkup, ContentType="text/html" };
