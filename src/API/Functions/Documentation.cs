@@ -1,24 +1,34 @@
 using Microsoft.Azure.Functions.Worker;
-
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Functions
 {
-    public static class Documentation
-    {
-        [Function(nameof(Documentation.RenderOpenApiJson))]
-        public static IActionResult RenderOpenApiJson(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "openapi.json")] HttpRequest req) 
-                => new RedirectResult("/swagger.json");
-        
+	public static class Documentation
+	{
+		[Function(nameof(Documentation.RenderOpenApiJson))]
+		public static IActionResult RenderOpenApiJson(
+			[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "openapi.json")] HttpRequest req) 
+				=> new RedirectResult("/swagger.json");
 
-        // [Function(nameof(Documentation.RenderApiUI))]
-        public static IActionResult RenderApiUI(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "/")] HttpRequest req)
-                => new ContentResult(){ StatusCode=200, Content = ApiUIMarkup, ContentType="text/html" };
+		[Function(nameof(Documentation.RenderApiUI))]
+		public static IActionResult RenderApiUI([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "openapi")] HttpRequest req)
+			=> new ContentResult() { StatusCode = 200, Content = ApiUIMarkup, ContentType = "text/html" };
+		
+		[Function(nameof(Documentation.R1))]
+		public static IActionResult R1([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "swagger")] HttpRequest req)
+			=> new RedirectResult("/openapi");
+		
+		[Function(nameof(Documentation.R2))]
+		public static IActionResult R2([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "documentation")] HttpRequest req)
+			=> new RedirectResult("/openapi");
 
-        public static string ApiUIMarkup = @"
+		[Function(nameof(Documentation.R3))]
+		public static IActionResult R3([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "docs")] HttpRequest req)
+			=> new RedirectResult("/openapi");
+
+
+		public static string ApiUIMarkup = @"
 <!-- HTML for static distribution bundle build -->
 <!DOCTYPE html>
 <html lang=""en"">
