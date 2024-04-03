@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using Models.Enums;
+using Newtonsoft.Json.Converters;
 
 namespace Models
 {
@@ -11,10 +12,10 @@ namespace Models
         /// The ID of the unit class.
         public int UnitId { get; set; }
         /// The role of the person in this membership as part of the unit.
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonConverter(typeof(StringEnumConverter))]
         public Role Role { get; set; }
         /// The permissions of the person in this membership as part of the unit. Defaults to 'viewer'.
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonConverter(typeof(StringEnumConverter))]
         public UnitPermissions Permissions { get; set; }
         /// The ID of the person class. This can be null if the position is vacant.
         public int? PersonId { get; set; }    

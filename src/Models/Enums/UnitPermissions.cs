@@ -1,8 +1,9 @@
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Models
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum UnitPermissions
     {
         /// This person has read/write permissions on this entity

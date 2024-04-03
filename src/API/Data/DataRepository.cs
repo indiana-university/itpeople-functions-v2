@@ -5,7 +5,7 @@ using Database;
 using System;
 using Microsoft.AspNetCore.Http;
 using Models;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace API.Data
 {
@@ -28,7 +28,7 @@ namespace API.Data
 
         protected static void LogPrevious<T>(HttpRequest req, T value) where T : Models.Entity
         {
-            req.HttpContext.Items[LogProps.RecordBody] = JsonSerializer.Serialize(value, Json.SerializerOptions);
+            req.HttpContext.Items[LogProps.RecordBody] = JsonConvert.SerializeObject(value, Json.JsonSerializerSettings);
         }
     }
 }

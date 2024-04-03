@@ -1,10 +1,11 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Models
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum Campus
     { 
         [Display(Name="Bloomington")]

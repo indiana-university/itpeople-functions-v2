@@ -1,6 +1,9 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace Models
 {
@@ -45,7 +48,7 @@ namespace Models
     }
 
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum ResponsibilitiesPropDoc
     {
         None                  = Responsibilities.None,
