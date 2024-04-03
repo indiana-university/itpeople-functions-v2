@@ -1,7 +1,5 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
-
-using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
@@ -9,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Models.Enums;
 using System.IO;
+using System.Text.Json;
 
 namespace API.Middleware
 {
@@ -24,7 +23,7 @@ namespace API.Middleware
             try
             {
                 var json = await req.ReadAsStringAsync();
-                var body = JsonConvert.DeserializeObject<T>(json);
+                var body = JsonSerializer.Deserialize<T>(json);
                 return Pipeline.Success(body);
             }
             catch (Exception ex)

@@ -1,9 +1,8 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 
 namespace Models
 {
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum Role
     {
         /// This person has an ancillary relationship to this unit. This can apply to administrative assistants or self-supporting faculty.
