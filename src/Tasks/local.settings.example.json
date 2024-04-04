@@ -2,7 +2,7 @@
     "IsEncrypted": false,
     "Values": {
         "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-        "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
         "WEBSITE_TIME_ZONE":"Eastern Standard Time",
         "DenodoBuildingsViewUrl":"https://ebidvt.uits.iu.edu/server/iu_vpcpf_spaceinfo/building_summary/views/building_summary_i?$filter=building_function_code ne 'E'",
         "DenodoBuildingsViewUser":"denodo username",
