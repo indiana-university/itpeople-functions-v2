@@ -9,11 +9,10 @@
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
-@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @implements IDisposable
 @inherits PageBase
 @page "/SignIn"
-<Title Value="Sign In - IT People - Indiana University" />
+<PageTitle>Sign In - IT People - Indiana University</PageTitle>
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">Sign In</h1>
 	<DisplayException Ex=@GeneralException />

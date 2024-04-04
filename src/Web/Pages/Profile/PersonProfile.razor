@@ -4,13 +4,12 @@
 @using web.Shared
 @using System.Linq
 @using System;
-@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @inherits PageBase
 @inject IJSRuntime JSRuntime;
 @implements IDisposable
 @page "/People/{NetId}"
 
-<Title Value="@GetPageTitle()" />
+<PageTitle>@GetPageTitle()</PageTitle>
 <HeaderNavBar Page="Profiles" CurrentPage=@ProfileName />
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<ProfileHeader>

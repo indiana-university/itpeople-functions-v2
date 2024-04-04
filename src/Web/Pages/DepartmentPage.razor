@@ -2,12 +2,11 @@
 @using Models
 @using web.Shared
 @using RivetBlazor.Components
-@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @implements IDisposable
 @inherits PageBase
 @page "/departments/{DepartmentId}"
 
-<Title Value="@GetPageTitle()" />
+<PageTitle>@GetPageTitle()</PageTitle>
 <HeaderNavBar Page="Departments" CurrentPage=@_Department.Name />
 <div class="rvt-bg-white rvt-m-tb-xl rvt-p-tb-xl">
 	<div class="rvt-container" style="max-width: 1440px; margin: auto;">

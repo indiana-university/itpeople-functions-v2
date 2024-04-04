@@ -14,9 +14,6 @@
     <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.3" />
-    
-    <!-- TODO This package is depricated https://www.nuget.org/packages/Microsoft.AspNetCore.Components.Web.Extensions/ -->
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web.Extensions" Version="5.0.0-preview9.20513.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Models\Models.csproj" />
