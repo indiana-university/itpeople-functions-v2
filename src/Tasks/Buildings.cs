@@ -39,7 +39,7 @@ namespace Tasks
         }
 
         [Function(nameof(BuildingsUpdateActivity))]
-        public static async Task BuildingsUpdateActivity()
+        public static async Task BuildingsUpdateActivity([ActivityTrigger] TaskOrchestrationContext context)
         {   
             var buildings = await FetchBuildingsFromDenodo();
             foreach (var batch in buildings.Partition(50))
