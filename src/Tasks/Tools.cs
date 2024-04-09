@@ -50,9 +50,8 @@ namespace Tasks
 
         // Aggregate all HR records of a certain type from the IMS Profile API
         [Function(nameof(SynchronizeToolGroupMembership))]
-        public static async Task SynchronizeToolGroupMembership([ActivityTrigger] TaskOrchestrationContext context)
+        public static async Task SynchronizeToolGroupMembership([ActivityTrigger] Tool tool, TaskOrchestrationContext context)
         {
-            var tool = context.GetInput<Tool>();
             // get grantee netids from IT People DB
             var grantees = await GetToolGrantees(context, tool);
             // get current group members
