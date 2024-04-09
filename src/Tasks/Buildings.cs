@@ -26,8 +26,7 @@ namespace Tasks
         {
             try
             {
-                await context.CallActivityAsync(
-                    nameof(BuildingsUpdateActivity), RetryOptions, null);
+                await context.CallActivityAsync(nameof(BuildingsUpdateActivity), null, RetryOptions);
 
                 Logging.GetLogger(context).Debug("Finished buildings update.");
             }

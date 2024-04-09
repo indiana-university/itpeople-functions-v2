@@ -28,19 +28,15 @@ namespace Tasks
             try
             {
                 // Get a UAA JWT to authenticate calls to the IMS Profile API
-                var uaaJwt = await context.CallActivityAsync<string>(
-                    nameof(FetchUAAToken), RetryOptions, null);
+                var uaaJwt = await context.CallActivityAsync<string>(nameof(FetchUAAToken), null, RetryOptions);
 
                 // Add/update HR records of various different types
-                await context.CallSubOrchestratorAsync(
-                    nameof(UpdateHrPeopleRecords), uaaJwt);                
+                await context.CallSubOrchestratorAsync(nameof(UpdateHrPeopleRecords), uaaJwt);
                         
                 // Add/update Departments from new HR data
-                await context.CallActivityAsync(
-                        nameof(UpdateDepartmentRecords), RetryOptions, null);
+                await context.CallActivityAsync(nameof(UpdateDepartmentRecords), null, RetryOptions);
                 // Update People name/position/contact info from new HR data
-                await context.CallActivityAsync(
-                        nameof(UpdatePeopleRecords), RetryOptions, null);
+                await context.CallActivityAsync(nameof(UpdatePeopleRecords), null, RetryOptions);
 
                 Logging.GetLogger(context).Debug("Finished people update.");
             }
@@ -75,7 +71,7 @@ namespace Tasks
             var jwt = context.GetInput<string>();
 
             // Mark all HrPeople records for deletion
-            await context.CallActivityAsync(nameof(MarkHrPeopleForDeletion), RetryOptions, null);
+            await context.CallActivityAsync(nameof(MarkHrPeopleForDeletion), null, RetryOptions);
 
             foreach(var type in new[]{"employee", "affiliate", "foundation"})
             {
@@ -85,13 +81,12 @@ namespace Tasks
                 {
                     // hasMore = await context.CallActivityWithRetryAsync<bool>(
                     //     nameof(UpdateHrPeoplePage), RetryOptions, (jwt, type, page));
-                    hasMore = await context.CallActivityAsync<bool>(
-                        nameof(UpdateHrPeoplePage), (jwt, type, page), RetryOptions);
+                    hasMore = await context.CallActivityAsync<bool>(nameof(UpdateHrPeoplePage), (jwt, type, page), RetryOptions);
                     page += 1;
                 } while (hasMore);
             }
             // Delete HRpeople still marked for deletion
-            await context.CallActivityAsync(nameof(DeleteMarkedHrPeople), RetryOptions, null);
+            await context.CallActivityAsync(nameof(DeleteMarkedHrPeople), null, RetryOptions);
         }
         
         [Function(nameof(MarkHrPeopleForDeletion))]

@@ -28,8 +28,7 @@ namespace Tasks
             {
                 Logging.GetLogger(context).Information("Starting tools update.");
                 // Fetch all tools.
-                var tools = await context.CallActivityAsync<IEnumerable<Tool>>(
-                    nameof(FetchAllTools), RetryOptions, null);
+                var tools = await context.CallActivityAsync<IEnumerable<Tool>>(nameof(FetchAllTools), null, RetryOptions);
                 
                 // Compare current tool grants with IT People grants and add/remove grants as necessary.
                 var toolTasks = tools.Select(t => 
