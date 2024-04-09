@@ -79,9 +79,8 @@ namespace Tasks
                 var hasMore = true;
                 do 
                 {
-                    // hasMore = await context.CallActivityWithRetryAsync<bool>(
-                    //     nameof(UpdateHrPeoplePage), RetryOptions, (jwt, type, page));
-                    hasMore = await context.CallActivityAsync<bool>(nameof(UpdateHrPeoplePage), (jwt, type, page), RetryOptions);
+                    var pageArgs = new PeoplePageArguments(jwt, type, page);
+                    hasMore = await context.CallActivityAsync<bool>(nameof(UpdateHrPeoplePage), pageArgs, RetryOptions);
                     page += 1;
                 } while (hasMore);
             }
@@ -110,9 +109,12 @@ namespace Tasks
         }
 
         [Function(nameof(UpdateHrPeoplePage))]
-        public static async Task<bool> UpdateHrPeoplePage([ActivityTrigger]TaskOrchestrationContext context)
+        public static async Task<bool> UpdateHrPeoplePage([ActivityTrigger] PeoplePageArguments args, TaskOrchestrationContext context)
         {
-            var (jwt, type, page) = context.GetInput<(string, string, int)>();
+            var jwt = args.JWT;
+            var type = args.Type;
+            var page = args.Page;
+            
             var body = await FetchProfileApiPage(jwt, type, page);
             var hrRecords = new List<ProfileEmployee>();
             hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
@@ -228,5 +230,19 @@ namespace Tasks
                 new RetryPolicy(3, TimeSpan.FromSeconds(5))
             )
         );
+    }
+
+    public class PeoplePageArguments
+    {
+        public string JWT { get; private set; }
+        public string Type { get; private set; }
+        public int Page { get; private set; }
+
+        public PeoplePageArguments(string jwt, string type, int page)
+        {
+            JWT = jwt;
+            Type = type;
+            Page = page;
+        }
     }
 }
