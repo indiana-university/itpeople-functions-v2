@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 
@@ -19,7 +19,7 @@ namespace API.Functions
 	public static class SupportTypes
 	{
 
-		[FunctionName(nameof(SupportTypes.SupportTypesGetAll))]
+		[Function(nameof(SupportTypes.SupportTypesGetAll))]
 		[OpenApiOperation(nameof(SupportTypes.SupportTypesGetAll), "Support Types", Summary = "List all support types")]
 		[OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<SupportType>), Description = "A collection of support types")]
 		public static Task<IActionResult> SupportTypesGetAll(

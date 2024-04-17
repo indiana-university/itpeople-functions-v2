@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 
@@ -18,7 +18,7 @@ namespace API.Functions
 {
     public static class Departments
     {
-        [FunctionName(nameof(Departments.DepartmentsGetAll))]
+        [Function(nameof(Departments.DepartmentsGetAll))]
         [OpenApiOperation(nameof(Departments.DepartmentsGetAll), nameof(Departments), Summary = "List all Departments", Description = @"Get a list of university Departments.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<Department>), Description = "A collection of department records")]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "application/json", typeof(ApiError), Description = "The search query was malformed or incorrect. See response content for additional information.")]
@@ -31,7 +31,7 @@ namespace API.Functions
                 .Bind(query => DepartmentsRepository.GetAll(query))
                 .Finally(Departments => Response.Ok(req, Departments));
 
-        [FunctionName(nameof(Departments.DepartmentsGetOne))]
+        [Function(nameof(Departments.DepartmentsGetOne))]
         [OpenApiOperation(nameof(Departments.DepartmentsGetOne), nameof(Departments), Summary = "Find a department by ID")]
         [OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Department), Description = "A department record")]
@@ -46,7 +46,7 @@ namespace API.Functions
             => Security.Authenticate(req)
                 .Bind(_ => DepartmentsRepository.GetOne(departmentId));
 
-        [FunctionName(nameof(Departments.DepartmentsGetMemberUnits))]
+        [Function(nameof(Departments.DepartmentsGetMemberUnits))]
         [OpenApiOperation(nameof(Departments.DepartmentsGetMemberUnits), nameof(Departments), Summary = "List a department's member units", Description = "A member unit contains people that have an HR relationship with the department.")]
         [OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<UnitResponse>), Description = "A collection of unit records")]
@@ -62,7 +62,7 @@ namespace API.Functions
                 .Bind(_ => DepartmentsRepository.GetOne(departmentId))
                 .Bind(_ => DepartmentsRepository.GetMemberUnits(departmentId));
 
-        [FunctionName(nameof(Departments.DepartmentsGetSupportingUnits))]
+        [Function(nameof(Departments.DepartmentsGetSupportingUnits))]
         [OpenApiOperation(nameof(Departments.DepartmentsGetSupportingUnits), nameof(Departments), Summary = "List a department's supporting units", Description = "A supporting unit provides IT services for the department.")]
         [OpenApiParameter("departmentId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the department record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(List<SupportRelationshipResponse>), Description = "A collection of support relationship records")]

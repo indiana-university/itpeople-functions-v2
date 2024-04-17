@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 
@@ -25,7 +25,7 @@ namespace API.Functions
         public const string PostPutBadResponseDescription = "The request body was malformed or the unitId field was missing.\\\n**or**\\\nThe field Percentage must be between 0 and 100.\\\n**or**\\\nThe provided unit has been archived and is not available for new Unit Members.";
 
 
-        [FunctionName(nameof(UnitMembers.UnitMembersGetAll))]
+        [Function(nameof(UnitMembers.UnitMembersGetAll))]
         [OpenApiOperation(nameof(UnitMembers.UnitMembersGetAll), UnitMembersTitle, Summary = "List all unit memberships")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>), Description = "A collection of unit membership record")]
         public static Task<IActionResult> UnitMembersGetAll(
@@ -35,7 +35,7 @@ namespace API.Functions
                 .Bind(res => Pipeline.Success(res.Where(e => e.Unit.Active).Select(e => e.ToUnitMemberResponse(EntityPermissions.Get))))
                 .Finally(dtos => Response.Ok(req, dtos));
 
-        [FunctionName(nameof(UnitMembers.UnitMembersGetOne))]
+        [Function(nameof(UnitMembers.UnitMembersGetOne))]
         [OpenApiOperation(nameof(UnitMembers.UnitMembersGetOne), UnitMembersTitle, Summary = "Find a unit membership by ID")]
         [OpenApiParameter("membershipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit membership record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(UnitMemberResponse), Description = "A unit membership record")]
@@ -59,7 +59,7 @@ namespace API.Functions
                 .Bind(perms => Pipeline.Success(unitMember.ToUnitMemberResponse(perms)));
         }
 
-        [FunctionName(nameof(UnitMembers.CreateUnitMembers))]
+        [Function(nameof(UnitMembers.CreateUnitMembers))]
         [OpenApiOperation(nameof(UnitMembers.CreateUnitMembers), UnitMembersTitle, Summary = "Create a unit membership", Description = "Authorization: Unit memberships can be created by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
         [OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(UnitMemberRequest), Required = true)]
         [OpenApiResponseWithBody(HttpStatusCode.Created, MediaTypeNames.Application.Json, typeof(UnitMemberResponse), Description = "The newly created unit membership record")]
@@ -83,7 +83,7 @@ namespace API.Functions
             .Finally(result => Response.Created(req, result));
         }
 
-        [FunctionName(nameof(UnitMembers.UpdateUnitMember))]
+        [Function(nameof(UnitMembers.UpdateUnitMember))]
         [OpenApiOperation(nameof(UnitMembers.UpdateUnitMember), UnitMembersTitle, Summary = "Update a unit membership.", Description = "Authorization: Unit memberships can be modified by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
         [OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(UnitMemberRequest), Required = true)]
         [OpenApiParameter("membershipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit membership record")]
@@ -112,7 +112,7 @@ namespace API.Functions
                 .Bind(um => Pipeline.Success(um.ToUnitMemberResponse(EntityPermissions.Put)));
         }
 
-        [FunctionName(nameof(UnitMembers.DeleteUnitMembership))]
+        [Function(nameof(UnitMembers.DeleteUnitMembership))]
         [OpenApiOperation(nameof(UnitMembers.DeleteUnitMembership), UnitMembersTitle, Summary = "Delete a unit membership", Description = "Authorization: Unit memberships can be deleted by any unit member that has either the `Owner` or `ManageMembers` permission on their unit membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
         [OpenApiParameter("membershipId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit membership record.")]
         [OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]

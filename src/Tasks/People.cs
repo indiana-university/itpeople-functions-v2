@@ -1,5 +1,4 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Models;
@@ -9,37 +8,35 @@ using System.Net.Http.Headers;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Net;
+using Microsoft.DurableTask.Client;
+using Microsoft.DurableTask;
 
 namespace Tasks
 {
     public static class People
     {
         // Runs at the top of the hour (00:00 AM, 01:00 AM, 02:00 AM, ...)
-        [FunctionName(nameof(ScheduledPeopleUpdate))]
+        [Function(nameof(ScheduledPeopleUpdate))]
         public static Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *")] TimerInfo timer,
-            [DurableClient] IDurableOrchestrationClient starter) 
+            [DurableClient] DurableTaskClient starter) 
             => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(PeopleUpdateOrchestrator));
 
 
-        [FunctionName(nameof(PeopleUpdateOrchestrator))]
-        public static async Task PeopleUpdateOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
+        [Function(nameof(PeopleUpdateOrchestrator))]
+        public static async Task PeopleUpdateOrchestrator([OrchestrationTrigger] TaskOrchestrationContext context)
         {
             try
             {
                 // Get a UAA JWT to authenticate calls to the IMS Profile API
-                var uaaJwt = await context.CallActivityWithRetryAsync<string>(
-                    nameof(FetchUAAToken), RetryOptions, null);
+                var uaaJwt = await context.CallActivityAsync<string>(nameof(FetchUAAToken), null, RetryOptions);
 
                 // Add/update HR records of various different types
-                await context.CallSubOrchestratorAsync(
-                    nameof(UpdateHrPeopleRecords), uaaJwt);                
+                await context.CallSubOrchestratorAsync(nameof(UpdateHrPeopleRecords), uaaJwt);
                         
                 // Add/update Departments from new HR data
-                await context.CallActivityWithRetryAsync(
-                        nameof(UpdateDepartmentRecords), RetryOptions, null);
+                await context.CallActivityAsync(nameof(UpdateDepartmentRecords), null, RetryOptions);
                 // Update People name/position/contact info from new HR data
-                await context.CallActivityWithRetryAsync(
-                        nameof(UpdatePeopleRecords), RetryOptions, null);
+                await context.CallActivityAsync(nameof(UpdatePeopleRecords), null, RetryOptions);
 
                 Logging.GetLogger(context).Debug("Finished people update.");
             }
@@ -51,8 +48,8 @@ namespace Tasks
         }       
 
         // Fetch a UAA Jwt using the client credentials (username/password) grant type.
-        [FunctionName(nameof(FetchUAAToken))]
-        public static async Task<string> FetchUAAToken([ActivityTrigger] IDurableActivityContext context)
+        [Function(nameof(FetchUAAToken))]
+        public static async Task<string> FetchUAAToken([ActivityTrigger] TaskOrchestrationContext context)
         {
             var content = new FormUrlEncodedContent(new Dictionary<string,string>{
                 {"grant_type", "client_credentials"},
@@ -68,13 +65,13 @@ namespace Tasks
 
 
         // Aggregate all HR records of a certain type from the IMS Profile API
-        [FunctionName(nameof(UpdateHrPeopleRecords))]
-        public static async Task UpdateHrPeopleRecords([OrchestrationTrigger] IDurableOrchestrationContext context)
+        [Function(nameof(UpdateHrPeopleRecords))]
+        public static async Task UpdateHrPeopleRecords([OrchestrationTrigger] TaskOrchestrationContext context)
         {            
             var jwt = context.GetInput<string>();
 
             // Mark all HrPeople records for deletion
-            await context.CallActivityWithRetryAsync(nameof(MarkHrPeopleForDeletion), RetryOptions, null);
+            await context.CallActivityAsync(nameof(MarkHrPeopleForDeletion), null, RetryOptions);
 
             foreach(var type in new[]{"employee", "affiliate", "foundation"})
             {
@@ -82,17 +79,17 @@ namespace Tasks
                 var hasMore = true;
                 do 
                 {
-                    hasMore = await context.CallActivityWithRetryAsync<bool>(
-                        nameof(UpdateHrPeoplePage), RetryOptions, (jwt, type, page));
+                    var pageArgs = new PeoplePageArguments(jwt, type, page);
+                    hasMore = await context.CallActivityAsync<bool>(nameof(UpdateHrPeoplePage), pageArgs, RetryOptions);
                     page += 1;
                 } while (hasMore);
             }
             // Delete HRpeople still marked for deletion
-            await context.CallActivityWithRetryAsync(nameof(DeleteMarkedHrPeople), RetryOptions, null);
+            await context.CallActivityAsync(nameof(DeleteMarkedHrPeople), null, RetryOptions);
         }
         
-        [FunctionName(nameof(MarkHrPeopleForDeletion))]
-        public static async Task MarkHrPeopleForDeletion([ActivityTrigger]IDurableActivityContext context)
+        [Function(nameof(MarkHrPeopleForDeletion))]
+        public static async Task MarkHrPeopleForDeletion([ActivityTrigger]TaskOrchestrationContext context)
         {
             await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Mark all HrPeople for deletion", async db => {
                 await db.Database.ExecuteSqlRawAsync(@"
@@ -101,8 +98,8 @@ namespace Tasks
             });
         }
 
-        [FunctionName(nameof(DeleteMarkedHrPeople))]
-        public static async Task DeleteMarkedHrPeople([ActivityTrigger]IDurableActivityContext context)
+        [Function(nameof(DeleteMarkedHrPeople))]
+        public static async Task DeleteMarkedHrPeople([ActivityTrigger]TaskOrchestrationContext context)
         {           
             await Utils.DatabaseCommand(nameof(UpdateHrPeopleRecords), "Delete all HrPeople with MarkedForDelete == true", async db => {
                 var hrPeopleToDelete = db.HrPeople.Where(h => h.MarkedForDelete);
@@ -111,10 +108,13 @@ namespace Tasks
             });
         }
 
-        [FunctionName(nameof(UpdateHrPeoplePage))]
-        public static async Task<bool> UpdateHrPeoplePage([ActivityTrigger]IDurableActivityContext context)
+        [Function(nameof(UpdateHrPeoplePage))]
+        public static async Task<bool> UpdateHrPeoplePage([ActivityTrigger] PeoplePageArguments args, TaskOrchestrationContext context)
         {
-            var (jwt, type, page) = context.GetInput<(string, string, int)>();
+            var jwt = args.JWT;
+            var type = args.Type;
+            var page = args.Page;
+            
             var body = await FetchProfileApiPage(jwt, type, page);
             var hrRecords = new List<ProfileEmployee>();
             hrRecords.AddRange(body.affiliates == null ? new List<ProfileEmployee>() : body.affiliates);
@@ -188,8 +188,8 @@ namespace Tasks
 
         // Add new Departmnet records to the IT People database.
         // If a departments with the same name already exists then update its description..
-        [FunctionName(nameof(UpdateDepartmentRecords))]
-        public static Task UpdateDepartmentRecords([ActivityTrigger] IDurableActivityContext context) 
+        [Function(nameof(UpdateDepartmentRecords))]
+        public static Task UpdateDepartmentRecords([ActivityTrigger] TaskOrchestrationContext context) 
             => Utils.DatabaseCommand(nameof(UpdateDepartmentRecords), "Upsert department records from new HR data", db =>
                 db.Database.ExecuteSqlRawAsync(@"
                     -- 1. Add any new hr departments
@@ -209,8 +209,8 @@ namespace Tasks
 
         /// Update name, location, position of people in directory using new HR data
         /// This should be one *after* departments are updated.
-        [FunctionName(nameof(UpdatePeopleRecords))]
-        public static Task UpdatePeopleRecords([ActivityTrigger] IDurableActivityContext context)
+        [Function(nameof(UpdatePeopleRecords))]
+        public static Task UpdatePeopleRecords([ActivityTrigger] TaskOrchestrationContext context)
             => Utils.DatabaseCommand(nameof(UpdatePeopleRecords), "Upsert department records from new HR data", db =>
                 db.Database.ExecuteSqlRawAsync(@"
                     UPDATE people p
@@ -225,8 +225,24 @@ namespace Tasks
                     FROM hr_people hr
                     WHERE p.netid = hr.netid"));
 
-        private static RetryOptions RetryOptions = new RetryOptions(
-            firstRetryInterval: TimeSpan.FromSeconds(5),
-            maxNumberOfAttempts: 3);
+        private static TaskOptions RetryOptions = new TaskOptions(
+            new TaskRetryOptions(
+                new RetryPolicy(3, TimeSpan.FromSeconds(5))
+            )
+        );
+    }
+
+    public class PeoplePageArguments
+    {
+        public string JWT { get; private set; }
+        public string Type { get; private set; }
+        public int Page { get; private set; }
+
+        public PeoplePageArguments(string jwt, string type, int page)
+        {
+            JWT = jwt;
+            Type = type;
+            Page = page;
+        }
     }
 }

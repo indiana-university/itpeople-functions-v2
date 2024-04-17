@@ -249,19 +249,29 @@ namespace API.Middleware
             {
                 return new List<IPNetwork>();
             }
-
-            return rangeList.Split(",") // convert comma-delimited settings string to array
+            
+            var results = new List<IPNetwork>();
+            
+            var raw = rangeList.Split(",") // convert comma-delimited settings string to array
                 .Select(v => v.Trim()) // trim extra spaces
                 .Select(v => ToIpNetwork(v)) // convert to ip network values
-                .Where(v => v != null)
-                .ToList();
+                .Where(v => v != null);
+            
+            foreach(var net in raw)
+            {
+                if(net != null)
+                {
+                    results.Add((IPNetwork) net);
+                }
+            }
+
+            return results;
         }
 
-        private static IPNetwork ToIpNetwork(string value)
+        private static IPNetwork? ToIpNetwork(string value)
         {
-            return IPNetwork.TryParse(value, out IPNetwork ipNetwork)
-                ? ipNetwork
-                : null;
+            var success = IPNetwork.TryParse(value, out IPNetwork ipNetwork);
+            return success ? ipNetwork : null;
         }
 
         

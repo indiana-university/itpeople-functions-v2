@@ -1,4 +1,4 @@
-using Microsoft.Azure.WebJobs.Extensions.Http;
+
 using CSharpFunctionalExtensions;
 using API.Middleware;
 using Microsoft.AspNetCore.Http;
@@ -48,8 +48,7 @@ namespace API.Functions
 
         public static Result<UnitSearchParameters, Error> Parse(HttpRequest req) 
         {
-            var queryParms = req.GetQueryParameterDictionary();
-            queryParms.TryGetValue("q", out string q);
+            req.Query.TryGetValue("q", out var q);
             return Pipeline.Success(new UnitSearchParameters(q));
         }
     }
@@ -61,8 +60,7 @@ namespace API.Functions
 
         public static Result<BuildingSearchParameters, Error> Parse(HttpRequest req) 
         {
-            var queryParms = req.GetQueryParameterDictionary();
-            queryParms.TryGetValue("q", out string q);
+            req.Query.TryGetValue("q", out var q);
             return Pipeline.Success(new BuildingSearchParameters(q));
         }
     }
@@ -78,10 +76,9 @@ namespace API.Functions
 
         public static Result<DepartmentSearchParameters, Error> Parse(HttpRequest req) 
         {
-            var queryParms = req.GetQueryParameterDictionary();
-            queryParms.TryGetValue("q", out string q);
+            req.Query.TryGetValue("q", out var q);
             
-            queryParms.TryGetValue("_limit", out string limitString);
+            req.Query.TryGetValue("_limit", out var limitString);
             int.TryParse(limitString, out int limit);
 
             return Pipeline.Success(new DepartmentSearchParameters(q, limit));
@@ -104,11 +101,11 @@ namespace API.Functions
         }
 
         public static Result<HrPeopleSearchParameters, Error> Parse(HttpRequest req) 
-            => Parse(req.GetQueryParameterDictionary());
-        public static Result<HrPeopleSearchParameters, Error> Parse(IDictionary<string, string> queryParms)
+            => Parse(req.Query.ToDictionary());
+        public static Result<HrPeopleSearchParameters, Error> Parse(IDictionary<string, Microsoft.Extensions.Primitives.StringValues> queryParms)
         {
-            queryParms.TryGetValue("q", out string q);
-            queryParms.TryGetValue("_limit", out string limitString);
+            queryParms.TryGetValue("q", out var q);
+            queryParms.TryGetValue("_limit", out var limitString);
             
             int limit = 15;
             if(string.IsNullOrWhiteSpace(limitString) == false){
@@ -131,8 +128,7 @@ namespace API.Functions
 
         public static Result<SsspSupportRelationshipParameters, Error> Parse(HttpRequest req) 
         {
-            var queryParms = req.GetQueryParameterDictionary();
-            queryParms.TryGetValue("dept", out string dept);
+            req.Query.TryGetValue("dept", out var dept);
             return Pipeline.Success(new SsspSupportRelationshipParameters(dept));
         }
     }
@@ -159,17 +155,17 @@ namespace API.Functions
         public Area[] Areas { get; set; }
 
         public static Result<PeopleSearchParameters, Error> Parse(HttpRequest req) 
-            => Parse(req.GetQueryParameterDictionary());
+            => Parse(req.Query.ToDictionary());
 
-        public static Result<PeopleSearchParameters, Error> Parse(IDictionary<string, string> queryParms)
+        public static Result<PeopleSearchParameters, Error> Parse(IDictionary<string, Microsoft.Extensions.Primitives.StringValues> queryParms)
         {
-            queryParms.TryGetValue("q", out string q);
-            queryParms.TryGetValue("class", out string jobClass);
-            queryParms.TryGetValue("role", out string role);
-            queryParms.TryGetValue("interest", out string interests);
-            queryParms.TryGetValue("campus", out string campus);
-            queryParms.TryGetValue("permission", out string permission);
-            queryParms.TryGetValue("area", out string area);
+            queryParms.TryGetValue("q", out var q);
+            queryParms.TryGetValue("class", out var jobClass);
+            queryParms.TryGetValue("role", out var role);
+            queryParms.TryGetValue("interest", out var interests);
+            queryParms.TryGetValue("campus", out var campus);
+            queryParms.TryGetValue("permission", out var permission);
+            queryParms.TryGetValue("area", out var area);
             var responsibilities = string.IsNullOrWhiteSpace(jobClass)
                 ? Responsibilities.None
                 : (Responsibilities)Enum.Parse(typeof(Responsibilities), jobClass); 

@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 
@@ -18,7 +18,7 @@ namespace API.Functions
 {
     public static class People
     {
-        [FunctionName(nameof(People.PeopleGetAll))]
+        [Function(nameof(People.PeopleGetAll))]
         [OpenApiOperation(nameof(People.PeopleGetAll), nameof(People), Summary = "Search all people", Description = @"Search results are unioned within a filter and intersected across filters. For example, `interest=node, lambda` will return people with an interest in either `node` OR `lambda`, whereas `role=ItLeadership&interest=node` will only return people who are both in `ItLeadership AND have an interest in `node`.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<Person>))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The search query was malformed or incorrect. See response content for additional information.")]
@@ -36,7 +36,7 @@ namespace API.Functions
                 .Bind(query => PeopleRepository.GetAll(query))
                 .Finally(people => Response.Ok(req, people));
 
-        [FunctionName(nameof(People.PeopleGetOne))]
+        [Function(nameof(People.PeopleGetOne))]
         [OpenApiOperation(nameof(People.PeopleGetOne), nameof(People), Summary = "Get a person by ID")]
         [OpenApiParameter("id", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the person record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(Person))]
@@ -55,7 +55,7 @@ namespace API.Functions
                 .Finally(result => Response.Ok(req, result));
 
 
-        [FunctionName(nameof(People.PeopleGetMemberships))]
+        [Function(nameof(People.PeopleGetMemberships))]
         [OpenApiOperation(nameof(People.PeopleGetMemberships), nameof(People), Summary = "List unit memberships", Description = "List all units for which this person does IT work.")]
         [OpenApiParameter("id", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the person record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>))]
@@ -69,7 +69,7 @@ namespace API.Functions
                     : PeopleRepository.GetMemberships(id))
                 .Finally(result => Response.Ok(req, result));
 
-        [FunctionName(nameof(People.PeopleUpdate))]
+        [Function(nameof(People.PeopleUpdate))]
         [OpenApiOperation(nameof(People.PeopleUpdate), nameof(People), Summary = "Update person information", Description = "Update a person's location, expertise, and responsibilities/job classes.\n\n_Authorization_: The JWT must represent either the person whose record is being modified (i.e., a person can modify their own record), or someone who has permissions to manage a unit of which this person is a member (i.e., typically that person's manager/supervisor.)")]
         [OpenApiParameter("personId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the person record.")]
         [OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(PersonUpdateRequest))]
@@ -92,7 +92,7 @@ namespace API.Functions
 
 
         //Check people table first, if no records check HR people
-        [FunctionName(nameof(People.PeopleLookup))]
+        [Function(nameof(People.PeopleLookup))]
         [OpenApiOperation(nameof(People.PeopleLookup), nameof(People), Summary = "Search all staff", Description = @"Search for staff, including IT People, by name or username (netid).")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<PeopleLookupItem>))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The search query was malformed or incorrect. See response content for additional information.")]
@@ -106,7 +106,7 @@ namespace API.Functions
                 .Bind(query => PeopleRepository.GetAllWithHr(query))
                 .Finally(people => Response.Ok(req, people));
 
-        [FunctionName(nameof(People.PeopleWithHRGetOne))]
+        [Function(nameof(People.PeopleWithHRGetOne))]
         [OpenApiOperation(nameof(People.PeopleWithHRGetOne), nameof(People), Summary = "Get a person by NetId", Description = "Finds a user by their NetId (username).  Searches both People and HR-People.")]
         [OpenApiParameter("netId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The NetId of the person record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(PeopleLookupItem))]

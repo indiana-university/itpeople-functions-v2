@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using API.Middleware;
@@ -15,7 +15,7 @@ namespace API.Functions
     /// by API implementers, and so they are excluded from the OpenAPI docs.</Summary>
     public static class Lsp
     {
-        [FunctionName(nameof(Lsp.LspList))]
+        [Function(nameof(Lsp.LspList))]
         [OpenApiIgnore]
         /// Fetch a list of all LSPs.
         /// LSPs are defined as any member of a unit that has a support relationship with
@@ -27,7 +27,7 @@ namespace API.Functions
                 .Bind(_ => LspRepository.GetLspList())
                 .Finally(result => Response.OkXml(req, result));
 
-        [FunctionName(nameof(Lsp.LspDepartments))]
+        [Function(nameof(Lsp.LspDepartments))]
         [OpenApiIgnore]
         /// Fetch all departments supported by a given LSP.
         /// For the given netid, collect all the departments supported by all the units of  
@@ -39,7 +39,7 @@ namespace API.Functions
                 .Bind(_ => LspRepository.GetLspDepartments(netid))
                 .Finally(result => Response.OkXml(req, result));
 
-        [FunctionName(nameof(Lsp.DepartmentLsps))]
+        [Function(nameof(Lsp.DepartmentLsps))]
         [OpenApiIgnore]
         /// Fetch all LSPs supporting a given department.
         /// For the given department name, collect all the LSPs in all the units supporting

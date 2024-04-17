@@ -37,7 +37,7 @@ else
 	public RenderFragment NotAuthenticated { get; set; }
 
 	private AuthenticatedUser User;
-	private DateTimeOffset InitializedAt;
+	private DateTimeOffset? InitializedAt;
 	// A user Is authenticated only if:
 	// They are logged in
 	// AND their JWT did not expire before this component was loaded

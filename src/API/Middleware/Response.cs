@@ -5,7 +5,7 @@ using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Models;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+
 using System;
 using System.Xml.Serialization;
 using System.IO;
@@ -126,10 +126,10 @@ namespace API.Middleware
             var corsHosts = Utils.Env("CorsHosts", required: false) ?? "no cors hosts";
             if (corsHosts == "*" || corsHosts.Split(",").Contains(origin))
             {
-                req.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", origin);
-                req.HttpContext.Response.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
-                req.HttpContext.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-                req.HttpContext.Response.Headers.Add("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, HEAD");
+                req.HttpContext.Response.Headers.Append("Access-Control-Allow-Origin", origin);
+                req.HttpContext.Response.Headers.Append("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
+                req.HttpContext.Response.Headers.Append("Access-Control-Allow-Credentials", "true");
+                req.HttpContext.Response.Headers.Append("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, HEAD");
             }
         }
 
@@ -137,8 +137,8 @@ namespace API.Middleware
         {
             if (req.HasEntityPermissions())
             {
-                req.HttpContext.Response.Headers.Add(Headers.AccessControlExposeHeaders, Headers.XUserPermissions);
-                req.HttpContext.Response.Headers.Add(Headers.XUserPermissions, req.GetEntityPermissions().ToString());
+                req.HttpContext.Response.Headers.Append(Headers.AccessControlExposeHeaders, Headers.XUserPermissions);
+                req.HttpContext.Response.Headers.Append(Headers.XUserPermissions, req.GetEntityPermissions().ToString());
             }
         }
 

@@ -1,6 +1,4 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker;
 using System.Linq;
 using System;
 using System.Collections.Generic;
@@ -10,14 +8,15 @@ using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Tasks
 {
     public static class Healthcheck
     {
-        [FunctionName(nameof(Ping))]
+        [Function(nameof(Ping))]
         public static string Ping(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequest req) 
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequestData req) 
                 => "Pong!";
 
         private static async Task<string> TryGetIP(string hostName)
@@ -34,9 +33,9 @@ namespace Tasks
             }
         }
 
-        [FunctionName(nameof(SmokeTest))]
+        [Function(nameof(SmokeTest))]
         public static async Task<string> SmokeTest(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "smokeTest")] HttpRequest req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "smokeTest")] HttpRequestData req)
         {
 
             var dnsDb = TryGetIP("esdbp57p.uits.iu.edu");

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Database;
@@ -12,17 +12,15 @@ namespace StateServer
 {
     public static class Functions
     {
-        [FunctionName(nameof(Functions.Ping))]
+        [Function(nameof(Functions.Ping))]
         public static IActionResult Ping(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequest req) 
                 => new OkObjectResult("Pong!");
        
-       [FunctionName(nameof(Functions.State))]
+       [Function(nameof(Functions.State))]
         public static IActionResult State(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "state")] HttpRequest req,
-            ILogger log)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "state")] HttpRequest req)
         {
-            log.LogInformation("Resetting Postgres DB with test data...");
             var connStr = System.Environment.GetEnvironmentVariable("DatabaseConnectionString");
             using (var peopleContext = PeopleContext.Create(connStr))
             {

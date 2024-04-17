@@ -3,13 +3,12 @@
 @using Newtonsoft.Json
 @using web.Shared
 @using RivetBlazor.Components
-@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @implements IDisposable
 @inherits PageBase
 @inject NavigationManager Navigation
 @page "/Units/{unitId}/EditMember/{username}"
 
-<Title Value="@GetPageTitle()" />
+<PageTitle>@GetPageTitle()</PageTitle>
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<nav role="navigation" aria-label="Breadcrumbs">
 		<ol class="rvt-breadcrumbs rvt-m-bottom-lg">

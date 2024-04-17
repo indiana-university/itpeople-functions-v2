@@ -1,17 +1,16 @@
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @using web.Shared
 @using RivetBlazor.Components
-@using Microsoft.AspNetCore.Components.Web.Extensions.Head
 @inject NavigationManager Navigation
 @implements IDisposable
 @inherits PageBase
 @page "/SignOut"
-<Title Value="Sign Out - IT People - Indiana University" />
+<PageTitle>Sign Out - IT People - Indiana University</PageTitle>
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
 	<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">Sign Out</h1>
 	<DisplayException Ex=@GeneralException />
 	<Loader Loading=ShowLoader>
-		@if (User != null)
+		@if (LoggedInUser != null)
 		{
 			<p>
 				Logging you out...
@@ -29,7 +28,6 @@
 
 @code
 {
-	private AuthenticatedUser User;
 	private bool ShowLoader = false;
 	private IDisposable Loading() => new DisposableLoader(s => ShowLoader = s, StateHasChanged);
 

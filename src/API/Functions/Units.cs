@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using API.Data;
@@ -21,7 +21,7 @@ namespace API.Functions
     {
         private const string NotFoundError = "No unit found with ID (`unitId`).\\\n **or**\\\n No parent unit found with ID (`parentId`).";
 
-        [FunctionName(nameof(Units.UnitsGetAll))]
+        [Function(nameof(Units.UnitsGetAll))]
         [OpenApiOperation(nameof(Units.UnitsGetAll), nameof(Units), Summary = "List all IT units", Description = @"Search for IT units by name and/or description. If no search term is provided, lists all top-level IT units.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitResponse>))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ApiError), Description = "The search query was malformed or incorrect. See response content for additional information.")]
@@ -34,7 +34,7 @@ namespace API.Functions
                 .Bind(query => UnitsRepository.GetAll(query))
                 .Finally(units => Response.Ok(req, units));
 
-        [FunctionName(nameof(Units.UnitsGetOne))]
+        [Function(nameof(Units.UnitsGetOne))]
         [OpenApiOperation(nameof(Units.UnitsGetOne), nameof(Units), Summary = "Find a unit by ID")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(UnitResponse))]
@@ -50,7 +50,7 @@ namespace API.Functions
                 .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId, UnitPermissions.Owner, PermsGroups.GetPut))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetOne(unitId));
 
-        [FunctionName(nameof(Units.CreateUnit))]
+        [Function(nameof(Units.CreateUnit))]
         [OpenApiOperation(nameof(Units.CreateUnit), nameof(Units), Summary = "Create a unit", Description = "_Authorization_: Unit creation is restricted to service administrators.")]
         [OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(UnitRequest), Required = true)]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(UnitResponse))]
@@ -66,7 +66,7 @@ namespace API.Functions
                 .Bind(body => UnitsRepository.CreateUnit(body))
                 .Finally(result => Response.Created(req, result));
 
-        [FunctionName(nameof(Units.UpdateUnit))]
+        [Function(nameof(Units.UpdateUnit))]
         [OpenApiOperation(nameof(Units.UpdateUnit), nameof(Units), Summary = "Update a unit", Description = "_Authorization_: Units can be modified by any unit member that has either the `Owner` or `ManageMembers` permission on their membership. See also: [Units - List all unit members](#operation/UnitsGetAll).")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
         [OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(UnitRequest), Required = true)]
@@ -86,7 +86,7 @@ namespace API.Functions
                 .Bind(_ => Request.DeserializeBody<UnitRequest>(req))
                 .Bind(body => UnitsRepository.UpdateUnit(req, body, unitId));
 
-        [FunctionName(nameof(Units.DeleteUnit))]
+        [Function(nameof(Units.DeleteUnit))]
         [OpenApiOperation(nameof(Units.DeleteUnit), nameof(Units), Summary = "Delete a unit", Description = "_Authorization_: Unit deletion is restricted to service administrators.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
         [OpenApiResponseWithoutBody(HttpStatusCode.NoContent, Description = "Success.")]
@@ -105,7 +105,7 @@ namespace API.Functions
                 .Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
                 .Bind(_ => UnitsRepository.DeleteUnit(req, unitId));
 
-        [FunctionName(nameof(Units.ArchiveUnit))]
+        [Function(nameof(Units.ArchiveUnit))]
         [OpenApiOperation(nameof(Units.ArchiveUnit), nameof(Units), Summary = "Archive a unit", Description = "_Authorization_: Unit archival is restricted to service administrators.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(UnitResponse))]
@@ -123,7 +123,7 @@ namespace API.Functions
                 .Bind(perms => AuthorizationRepository.AuthorizeDeletion(perms))
                 .Bind(_ => UnitsRepository.ChangeActive(req, unitId));
 
-        [FunctionName(nameof(Units.GetUnitChildren))]
+        [Function(nameof(Units.GetUnitChildren))]
         [OpenApiOperation(nameof(Units.GetUnitChildren), nameof(Units), Summary = "List all unit children ", Description = "List all units that fall below this unit in an organizational hierarchy.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitResponse>))]
@@ -139,7 +139,7 @@ namespace API.Functions
                 .Bind(requestor => AuthorizationRepository.DetermineServiceAdminPermissions(req, requestor))
                 .Bind(_ => UnitsRepository.GetChildren(req, unitId));
 
-        [FunctionName(nameof(Units.GetUnitMembers))]
+        [Function(nameof(Units.GetUnitMembers))]
         [OpenApiOperation(nameof(Units.GetUnitMembers), nameof(Units), Summary = "List all unit members", Description = "List all people who do IT work for this unit along with any vacant positions.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<UnitMemberResponse>))]
@@ -156,7 +156,7 @@ namespace API.Functions
                 .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetMembers(req, unitId));
 
-        [FunctionName(nameof(Units.GetUnitSupportedBuildings))]
+        [Function(nameof(Units.GetUnitSupportedBuildings))]
         [OpenApiOperation(nameof(Units.GetUnitSupportedBuildings), nameof(Units), Summary = "List all supported buildings", Description = "List all buildings that receive IT support from this unit.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<BuildingRelationshipResponse>))]
@@ -173,7 +173,7 @@ namespace API.Functions
                 .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetSupportedBuildings(req, unitId));
 
-        [FunctionName(nameof(Units.GetUnitSupportedDepartments))]
+        [Function(nameof(Units.GetUnitSupportedDepartments))]
         [OpenApiOperation(nameof(Units.GetUnitSupportedDepartments), nameof(Units), Summary = "List all supported departments", Description = "List all departments that receive IT support from this unit.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<SupportRelationshipResponse>))]
@@ -190,7 +190,7 @@ namespace API.Functions
                 .Bind(requestor => AuthorizationRepository.DetermineUnitManagementPermissions(req, requestor, unitId, UnitPermissions.Owner))// Set headers saying what the requestor can do to this unit
                 .Bind(_ => UnitsRepository.GetSupportedDepartments(req, unitId));
 
-        [FunctionName(nameof(Units.GetUnitTools))]
+        [Function(nameof(Units.GetUnitTools))]
         [OpenApiOperation(nameof(Units.GetUnitTools), nameof(Units), Summary = "List all unit tools", Description = "List all tools that are available to this unit.")]
         [OpenApiParameter("unitId", Type = typeof(int), In = ParameterLocation.Path, Required = true, Description = "The ID of the unit record.")]
         [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(List<ToolResponse>))]

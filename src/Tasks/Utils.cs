@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Database;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.DurableTask.Client;
 
 namespace Tasks
 {
@@ -34,7 +35,7 @@ namespace Tasks
             
             try
             {
-                return await resp.Content.ReadAsAsync<T>();
+                return await resp.Content.ReadFromJsonAsync<T>();
             }
             catch (Exception ex)
             {
@@ -85,17 +86,17 @@ namespace Tasks
             }
         );
 
-        public static async Task StartOrchestratorAsSingleton(TimerInfo timer, IDurableOrchestrationClient starter, string orchestratorName)
+        public static async Task StartOrchestratorAsSingleton(TimerInfo timer, DurableTaskClient starter, string orchestratorName)
         {
             // Check if an instance with the specified ID already exists or an existing one stopped running(completed/failed/terminated).
-            var existingInstance = await starter.GetStatusAsync(orchestratorName);
+            var existingInstance = await starter.GetInstanceAsync(orchestratorName);
             if (existingInstance == null 
                 || existingInstance.RuntimeStatus == OrchestrationRuntimeStatus.Completed 
                 || existingInstance.RuntimeStatus == OrchestrationRuntimeStatus.Failed 
                 || existingInstance.RuntimeStatus == OrchestrationRuntimeStatus.Terminated)
             {
                 // An instance with the specified ID doesn't exist or an existing one stopped running, create one.
-                await starter.StartNewAsync(orchestratorName, orchestratorName);
+                await starter.ScheduleNewOrchestrationInstanceAsync(orchestratorName);
                 Logging.GetLogger(orchestratorName, timer)
                     .Debug($"Started orchestration '{orchestratorName}'.");
             }

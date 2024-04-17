@@ -4,7 +4,7 @@
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
 variables:
-  agentPool: 'CSSD-Linux-ELA'
+  agentPool: 'Azure Pipelines'
   NUGET_PACKAGES: '/opt/cssd/nuget'
 
 resources:
@@ -24,7 +24,7 @@ stages:
     steps:
     - task: UseDotNet@2
       inputs:
-        version: 3.1.x
+        version: 8.0.x
 
     - task: DotNetCoreCLI@2
       inputs:
@@ -35,7 +35,7 @@ stages:
     steps:
     - task: UseDotNet@2
       inputs:
-        version: 3.1.x
+        version: 8.0.x
 
     - task: DotNetCoreCLI@2
       inputs:
@@ -62,7 +62,7 @@ stages:
     steps:
     - task: UseDotNet@2
       inputs:
-        version: 5.0.x
+        version: 8.0.x
 
     - task: PowerShell@2
       displayName: 'Use Specific Environment Appsettings'
@@ -88,7 +88,7 @@ stages:
     steps:
     - task: UseDotNet@2
       inputs:
-        version: 3.1.x
+        version: 8.0.x
       
     - task: DotNetCoreCLI@2
       displayName: Build API
@@ -115,7 +115,7 @@ stages:
     steps:
     - task: UseDotNet@2
       inputs:
-        version: 3.1.x
+        version: 8.0.x
 
     - task: DotNetCoreCLI@2
       displayName: Build Tasks

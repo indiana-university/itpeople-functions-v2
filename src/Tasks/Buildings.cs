@@ -1,5 +1,5 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Extensions.DurableTask;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -8,24 +8,25 @@ using System.Net.Http.Headers;
 using Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Microsoft.DurableTask.Client;
+using Microsoft.DurableTask;
 
 namespace Tasks
 {
     public static class Buildings
     {
         // Runs at 30 minutes past every hour (00:30 AM, 01:30 AM, 02:30 AM, ...)
-        [FunctionName(nameof(ScheduledBuildingsUpdate))]
+        [Function(nameof(ScheduledBuildingsUpdate))]
         public static Task ScheduledBuildingsUpdate([TimerTrigger("0 30 * * * *")]TimerInfo timer, 
-            [DurableClient] IDurableOrchestrationClient starter)
+            [DurableClient] DurableTaskClient starter)
             => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(BuildingsUpdateOrchestrator));
 
-        [FunctionName(nameof(BuildingsUpdateOrchestrator))]
-        public static async Task BuildingsUpdateOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
+        [Function(nameof(BuildingsUpdateOrchestrator))]
+        public static async Task BuildingsUpdateOrchestrator([OrchestrationTrigger] TaskOrchestrationContext context)
         {
             try
             {
-                await context.CallActivityWithRetryAsync(
-                    nameof(BuildingsUpdateActivity), RetryOptions, null);
+                await context.CallActivityAsync(nameof(BuildingsUpdateActivity), null, RetryOptions);
 
                 Logging.GetLogger(context).Debug("Finished buildings update.");
             }
@@ -36,8 +37,8 @@ namespace Tasks
             }
         }
 
-        [FunctionName(nameof(BuildingsUpdateActivity))]
-        public static async Task BuildingsUpdateActivity([ActivityTrigger] IDurableActivityContext context)
+        [Function(nameof(BuildingsUpdateActivity))]
+        public static async Task BuildingsUpdateActivity([ActivityTrigger] TaskOrchestrationContext context)
         {   
             var buildings = await FetchBuildingsFromDenodo();
             foreach (var batch in buildings.Partition(50))
@@ -93,10 +94,11 @@ namespace Tasks
 
         private static HttpClient HttpClient = new HttpClient();
 
-        private static RetryOptions RetryOptions = new RetryOptions(
-            firstRetryInterval: TimeSpan.FromSeconds(5),
-            maxNumberOfAttempts: 3);
-
+        private static TaskOptions RetryOptions = new TaskOptions(
+            new TaskRetryOptions(
+                new RetryPolicy(3, TimeSpan.FromSeconds(5))
+            )
+        );
         
     }
 }
