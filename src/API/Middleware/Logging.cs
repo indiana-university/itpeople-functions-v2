@@ -99,23 +99,14 @@ namespace API.Middleware
                 ? (DateTime.UtcNow - (DateTime)req.HttpContext.Items[LogProps.ElapsedTime]).TotalMilliseconds
                 : -1;
 
-            // return Logger
-            //     .ForContext(LogProps.ElapsedTime, elapsed)
-            //     .ForContext(LogProps.RequestIPAddress, req.HttpContext.Connection.RemoteIpAddress)
-            //     .ForContext(LogProps.RequestMethod, req.Method)
-            //     .ForContext(LogProps.Function, pathParts.FirstOrDefault())
-            //     .ForContext(LogProps.RequestParameters, string.Join('/', pathParts.Skip(1)))
-            //     .ForContext(LogProps.RequestQuery, req.QueryString)
-            //     .ForContext(LogProps.RequestorNetid, req.HttpContext.Items[LogProps.RequestorNetid]);
-
             return Logger
-                .ForContext(LogProps.ElapsedTime, 69)
-                .ForContext(LogProps.RequestIPAddress, "66.170.44.10")
-                .ForContext(LogProps.RequestMethod, "PUT")
-                .ForContext(LogProps.Function, "bullshit")
-                .ForContext(LogProps.RequestParameters, string.Empty)
-                .ForContext(LogProps.RequestQuery, string.Empty)
-                .ForContext(LogProps.RequestorNetid, "billy");
+                .ForContext(LogProps.ElapsedTime, elapsed)
+                .ForContext(LogProps.RequestIPAddress, req.HttpContext.Connection.RemoteIpAddress)
+                .ForContext(LogProps.RequestMethod, req.Method)
+                .ForContext(LogProps.Function, pathParts.FirstOrDefault())
+                .ForContext(LogProps.RequestParameters, string.Join('/', pathParts.Skip(1)))
+                .ForContext(LogProps.RequestQuery, req.QueryString)
+                .ForContext(LogProps.RequestorNetid, req.HttpContext.Items[LogProps.RequestorNetid]);
         }
     }
 }

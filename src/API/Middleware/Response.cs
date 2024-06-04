@@ -36,9 +36,8 @@ namespace API.Middleware
             {
                 if (IsGetMethod(req) == false || IsLspFunction(req) == true)
                 {
-                    // await Logging.GetLogger(req).SuccessResult<T>(req, statusCode);
-                    // await Logging.GetLogger(req).FailureResult<T>(req, new Error(HttpStatusCode.Conflict, "WTF?", new Exception("FAKE EXCEPTION")));
-                    await logger.FailureResult<T>(req, new Error(HttpStatusCode.Conflict, "WTF?", new Exception("FAKE EXCEPTION")));
+                    await Logging.GetLogger(req).SuccessResult<T>(req, statusCode);
+                    // await logger.FailureResult<T>(req, new Error(HttpStatusCode.Conflict, "WTF?", new Exception("FAKE EXCEPTION")));
                 }
                 return resultGenerator(result.Value);
             }
@@ -151,14 +150,18 @@ namespace API.Middleware
         {
             var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
             var recordBody = request.HttpContext.Items[LogProps.RecordBody];
+            var errorsString = JsonConvert.SerializeObject(new List<string>(), Json.JsonSerializerSettings);
+
+            requestBody = null;
+            recordBody = null;
+
             try
             {
                 logger
                     .ForContext(LogProps.StatusCode, (int)statusCode)
                     .ForContext(LogProps.RequestBody, requestBody)
-                    // .ForContext(LogProps.RecordBody, recordBody)
-                    .ForContext(LogProps.RecordBody, string.Empty)
-                    .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(new List<string>(), Json.JsonSerializerSettings))
+                    .ForContext(LogProps.RecordBody, recordBody)
+                    .ForContext(LogProps.ErrorMessages, errorsString)
                     .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
             }
             catch(Exception ex)
