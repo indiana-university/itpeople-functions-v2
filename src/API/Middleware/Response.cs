@@ -31,17 +31,21 @@ namespace API.Middleware
             HttpStatusCode statusCode,
             Func<T, IActionResult> resultGenerator)
         {
+            var logger = Logging.GetLogger(req);
             if (result.IsSuccess)
             {
                 if (IsGetMethod(req) == false || IsLspFunction(req) == true)
                 {
-                    await Logging.GetLogger(req).SuccessResult<T>(req, statusCode);
+                    // await Logging.GetLogger(req).SuccessResult<T>(req, statusCode);
+                    // await Logging.GetLogger(req).FailureResult<T>(req, new Error(HttpStatusCode.Conflict, "WTF?", new Exception("FAKE EXCEPTION")));
+                    await logger.FailureResult<T>(req, new Error(HttpStatusCode.Conflict, "WTF?", new Exception("FAKE EXCEPTION")));
                 }
                 return resultGenerator(result.Value);
             }
             else
             {
-                await Logging.GetLogger(req).FailureResult<T>(req, result.Error);
+                // await Logging.GetLogger(req).FailureResult<T>(req, result.Error);
+                await logger.FailureResult<T>(req, result.Error);
                 return result.Error.ToResponse(req);
             }
         }
@@ -152,7 +156,8 @@ namespace API.Middleware
                 logger
                     .ForContext(LogProps.StatusCode, (int)statusCode)
                     .ForContext(LogProps.RequestBody, requestBody)
-                    .ForContext(LogProps.RecordBody, recordBody)
+                    // .ForContext(LogProps.RecordBody, recordBody)
+                    .ForContext(LogProps.RecordBody, string.Empty)
                     .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(new List<string>(), Json.JsonSerializerSettings))
                     .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
             }
@@ -166,11 +171,17 @@ namespace API.Middleware
         private static async Task FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error)
         {
             var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
+            var recBody = request.HttpContext.Items[LogProps.RecordBody];
+            var errorsString = JsonConvert.SerializeObject(error.Messages, Json.JsonSerializerSettings);
+            
+            requestBody = null;
+            recBody = null;
+            
             logger
                 .ForContext(LogProps.StatusCode, (int)error.StatusCode)
                 .ForContext(LogProps.RequestBody, requestBody)
-                .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
-                .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(error.Messages, Json.JsonSerializerSettings))
+                .ForContext(LogProps.RecordBody, recBody)
+                .ForContext(LogProps.ErrorMessages, errorsString)
                 .Error(error.Exception, $"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}:\nErrors: {{{LogProps.ErrorMessages}}}.");
         }
     }
