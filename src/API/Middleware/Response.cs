@@ -153,7 +153,6 @@ namespace API.Middleware
             var errorsString = JsonConvert.SerializeObject(new List<string>(), Json.JsonSerializerSettings);
 
             requestBody = null;
-            recordBody = null;
 
             try
             {
@@ -178,7 +177,6 @@ namespace API.Middleware
             var errorsString = JsonConvert.SerializeObject(error.Messages, Json.JsonSerializerSettings);
             
             requestBody = null;
-            recBody = null;
             
             logger
                 .ForContext(LogProps.StatusCode, (int)error.StatusCode)
