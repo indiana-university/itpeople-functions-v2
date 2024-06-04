@@ -23,7 +23,7 @@ namespace API
                     var loggerConfig = Logging.LoggerConfig;
                     var logger = loggerConfig.CreateLogger();
 
-                    services.AddLogging(l => l.AddSerilog(logger));
+                    // services.AddLogging(l => l.AddSerilog(logger));
                 })
                 .Build();
 

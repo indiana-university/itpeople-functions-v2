@@ -13,6 +13,7 @@ using System.Text;
 using System.Net.Http.Headers;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace API.Middleware
 {
@@ -34,7 +35,7 @@ namespace API.Middleware
             {
                 if (IsGetMethod(req) == false || IsLspFunction(req) == true)
                 {
-                    await Logging.GetLogger(req).SuccessResult(req, statusCode);
+                    await Logging.GetLogger(req).SuccessResult<T>(req, statusCode);
                 }
                 return resultGenerator(result.Value);
             }
@@ -142,14 +143,24 @@ namespace API.Middleware
             }
         }
 
-        private static async Task SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode)
+        private static async Task SuccessResult<T>(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode)
         {
             var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
-            logger
-                .ForContext(LogProps.StatusCode, (int)statusCode)
-                .ForContext(LogProps.RequestBody, requestBody)
-                .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
-                .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
+            var recordBody = request.HttpContext.Items[LogProps.RecordBody];
+            try
+            {
+                logger
+                    .ForContext(LogProps.StatusCode, (int)statusCode)
+                    .ForContext(LogProps.RequestBody, requestBody)
+                    .ForContext(LogProps.RecordBody, recordBody)
+                    .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(new List<string>(), Json.JsonSerializerSettings))
+                    .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Failed with: {ex.Message}");
+            }
+            
         }
 
         private static async Task FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error)
