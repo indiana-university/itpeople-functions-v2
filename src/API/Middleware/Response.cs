@@ -146,13 +146,40 @@ namespace API.Middleware
             }
         }
 
+        
+        
+        /// <summary>
+        /// Extracts the RequestBody that is stashed in Request.TryDeserializeBody()
+        /// <para>
+        ///     It also ensures the value is valid JSON or null so it can be written to the logs table.
+        /// </para>
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        private static string? GetRequestBody(HttpRequest request)
+        {
+            var requestBody = request.HttpContext.Items[LogProps.RequestBody]?.ToString();
+            // Ensure this is valid json, if it isn't return null.
+            if(string.IsNullOrWhiteSpace(requestBody) == false)
+            {
+                try
+                {
+                    JsonConvert.DeserializeObject(requestBody);
+                }
+                catch
+                {
+                    requestBody = null;
+                }
+            }
+
+            return requestBody;
+        }
+
         private static async Task SuccessResult<T>(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode)
         {
-            var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
+            var requestBody = GetRequestBody(request);
             var recordBody = request.HttpContext.Items[LogProps.RecordBody];
             var errorsString = JsonConvert.SerializeObject(new List<string>(), Json.JsonSerializerSettings);
-
-            requestBody = null;
 
             try
             {
@@ -167,16 +194,15 @@ namespace API.Middleware
             {
                 Console.WriteLine($"Failed with: {ex.Message}");
             }
-            
+
+            await Task.CompletedTask;
         }
 
         private static async Task FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error)
         {
-            var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
+            var requestBody = GetRequestBody(request);
             var recBody = request.HttpContext.Items[LogProps.RecordBody];
             var errorsString = JsonConvert.SerializeObject(error.Messages, Json.JsonSerializerSettings);
-            
-            requestBody = null;
             
             logger
                 .ForContext(LogProps.StatusCode, (int)error.StatusCode)
@@ -184,6 +210,8 @@ namespace API.Middleware
                 .ForContext(LogProps.RecordBody, recBody)
                 .ForContext(LogProps.ErrorMessages, errorsString)
                 .Error(error.Exception, $"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}:\nErrors: {{{LogProps.ErrorMessages}}}.");
+            
+            await Task.CompletedTask;
         }
     }
 }
