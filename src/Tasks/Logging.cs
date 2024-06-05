@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Serilog.Events;
 using System;
 using Microsoft.DurableTask;
+using Serilog.Sinks.PostgreSQL.ColumnWriters;
 
 namespace Tasks
 {
