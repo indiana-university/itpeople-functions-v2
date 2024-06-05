@@ -29,8 +29,8 @@ namespace Integration
         {           
             Progress.WriteLine($"⏳ Fetching Docker image '{ImageName}'. This can take a long time -- hang in there!");
 
-            await client.Images.CreateImageAsync(
-                new ImagesCreateParameters { FromImage = ImageName }, null, new ConsoleProgress(Progress));        
+            // await client.Images.CreateImageAsync(
+            //     new ImagesCreateParameters { FromImage = ImageName }, null, new ConsoleProgress(Progress));
 
             var list = await client.Containers.ListContainersAsync(new ContainersListParameters
             {
@@ -118,7 +118,7 @@ namespace Integration
             return $"{nameof(ImageName)}: {ImageName}, {nameof(ContainerName)}: {ContainerName}";
         }
 
-        protected void DockerExec(string arguments, string workingDirectory)
+        protected async Task DockerExec(string arguments, string workingDirectory)
         {
             var p = new Process()
             {

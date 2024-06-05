@@ -41,14 +41,14 @@ namespace Integration
 
             try { AppContainer.Remove(_client).Wait(60*1000); } catch {}
             // Build and start API Function app container
-            AppContainer.BuildImage();
+            AppContainer.BuildImage().Wait();
             AppContainer.Start(_client).Wait();
             // Wait for API container to finish starting
             AppContainer.WaitUntilReady().Wait();
 
             try { StateContainer.Remove(_client).Wait(60*1000); } catch {}
             // Build and start API Function app container
-            StateContainer.BuildImage();
+            StateContainer.BuildImage().Wait();
             StateContainer.Start(_client).Wait();
             // Wait for API container to finish starting
             StateContainer.WaitUntilReady().Wait();

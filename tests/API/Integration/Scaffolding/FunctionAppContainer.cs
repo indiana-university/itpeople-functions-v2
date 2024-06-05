@@ -18,10 +18,10 @@ namespace Integration
             Port = port;
         }
 
-        public void BuildImage()
+        public async Task BuildImage()
         {
             Progress.WriteLine($"⏳ Building Function App image '{ImageName}'. This can take some time -- hang in there!");
-            DockerExec($"build --pull --rm --file {DockerFile} --tag {ImageName} .", "../../../../../../");
+            await DockerExec($"build --pull --rm --file {DockerFile} --tag {ImageName} .", "../../../../../../");
         }
 
 
