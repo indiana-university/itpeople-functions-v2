@@ -124,8 +124,10 @@ namespace Integration
 		[Test]
 		public async Task ExceptoinsAreLogged()
 		{
-			var resp = await PostAuthenticated("units", "this isn't JSON, it's gibberish.", ValidAdminJwt);
-			AssertStatusCode(resp, HttpStatusCode.BadRequest);
+			// Try to induce an error that should record an exception
+			var badUnit = DeepCopy(TestEntities.Units.ParksAndRecUnit);
+			badUnit.Id = 999;
+			var resp = await GetAuthenticated("ExerciseLogger", ValidAdminJwt);
 
 			// Confirm the logs were generated.
 			var logs = await GetAllLogs();
