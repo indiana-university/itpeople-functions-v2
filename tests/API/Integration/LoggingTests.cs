@@ -125,8 +125,6 @@ namespace Integration
 		public async Task ExceptoinsAreLogged()
 		{
 			// Try to induce an error that should record an exception
-			var badUnit = DeepCopy(TestEntities.Units.ParksAndRecUnit);
-			badUnit.Id = 999;
 			var resp = await GetAuthenticated("ExerciseLogger", ValidAdminJwt);
 
 			// Confirm the logs were generated.
