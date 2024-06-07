@@ -122,7 +122,7 @@ namespace Integration
 		}
 
 		[Test]
-		public async Task ExceptoinsAreLogged()
+		public async Task ExceptionsAreLogged()
 		{
 			// Try to induce an error that should record an exception
 			var resp = await GetAuthenticated("ExerciseLogger", ValidAdminJwt);
