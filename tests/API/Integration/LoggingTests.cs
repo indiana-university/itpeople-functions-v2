@@ -96,7 +96,7 @@ namespace Integration
 		public async Task ErrorsAreWellLogged()
 		{
 			// Make a request to POST a unit hat fails.
-			var malformedUnit = TestEntities.Units.CityOfPawnee;
+			var malformedUnit = DeepCopy(TestEntities.Units.CityOfPawnee);
 			malformedUnit.Name = null;
 			var resp = await PostAuthenticated("units", malformedUnit, ValidAdminJwt);
 			AssertStatusCode(resp, HttpStatusCode.BadRequest);
