@@ -36,7 +36,7 @@ namespace API.Middleware
             {
                 if (IsGetMethod(req) == false || IsLspFunction(req) == true)
                 {
-                    await logger.SuccessResult<T>(req, statusCode);
+                    await logger.SuccessResult(req, statusCode);
                 }
                 return resultGenerator(result.Value);
             }
@@ -173,7 +173,7 @@ namespace API.Middleware
             return requestBody;
         }
 
-        private static async Task SuccessResult<T>(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode)
+        private static async Task SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode)
         {
             var requestBody = GetRequestBody(request);
             var recordBody = request.HttpContext.Items[LogProps.RecordBody];
