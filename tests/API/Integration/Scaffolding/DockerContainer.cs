@@ -29,9 +29,6 @@ namespace Integration
         {           
             Progress.WriteLine($"⏳ Fetching Docker image '{ImageName}'. This can take a long time -- hang in there!");
 
-            // await client.Images.CreateImageAsync(
-            //     new ImagesCreateParameters { FromImage = ImageName }, null, new ConsoleProgress(Progress));
-
             var list = await client.Containers.ListContainersAsync(new ContainersListParameters
             {
                 All = true
@@ -155,6 +152,8 @@ namespace Integration
             {
                 Error.WriteLine($"🤮 Failed to run 'docker {arguments}'.");
             }
+
+            await Task.CompletedTask;
         }
     }
 

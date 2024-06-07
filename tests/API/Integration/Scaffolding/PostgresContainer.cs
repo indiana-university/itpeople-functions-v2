@@ -16,7 +16,7 @@ namespace Integration
 
         public void Pull()
         {
-            DockerExec($"pull {ImageName}", ".");
+            DockerExec($"pull {ImageName}", ".").Wait();
         }
 
         public override Config ToConfig() 

@@ -21,7 +21,6 @@ namespace API.Functions
                 .Bind(requestor => AuthorizationRepository.DetermineServiceAdminPermissions(req, requestor))
                 .Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
                 .Bind(_ => InduceException())
-                // .Finally(error => Response.StatusCodeResponse(req, System.Net.HttpStatusCode.InternalServerError));
                 .Finally(error => Response.NoContent(req, error));
         
         private static Result<string, Error> InduceException() => Pipeline.InternalServerError($"From {nameof(ExerciseLogger)}", new System.Exception($"A manually created exception for the ExercixeLogger function."));

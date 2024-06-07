@@ -36,14 +36,12 @@ namespace API.Middleware
             {
                 if (IsGetMethod(req) == false || IsLspFunction(req) == true)
                 {
-                    await Logging.GetLogger(req).SuccessResult<T>(req, statusCode);
-                    // await logger.FailureResult<T>(req, new Error(HttpStatusCode.Conflict, "WTF?", new Exception("FAKE EXCEPTION")));
+                    await logger.SuccessResult<T>(req, statusCode);
                 }
                 return resultGenerator(result.Value);
             }
             else
             {
-                // await Logging.GetLogger(req).FailureResult<T>(req, result.Error);
                 await logger.FailureResult<T>(req, result.Error);
                 return result.Error.ToResponse(req);
             }
@@ -156,7 +154,7 @@ namespace API.Middleware
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        private static string? GetRequestBody(HttpRequest request)
+        private static string GetRequestBody(HttpRequest request)
         {
             var requestBody = request.HttpContext.Items[LogProps.RequestBody]?.ToString();
             // Ensure this is valid json, if it isn't return null.

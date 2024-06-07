@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using Database;
 using System.Threading.Tasks;
-using API.Middleware;
-using Serilog;
 
 namespace API
 {
@@ -19,11 +17,6 @@ namespace API
                 .ConfigureServices(services => {
                     services.AddApplicationInsightsTelemetryWorkerService();
                     services.ConfigureFunctionsApplicationInsights();
-
-                    var loggerConfig = Logging.LoggerConfig;
-                    var logger = loggerConfig.CreateLogger();
-
-                    // services.AddLogging(l => l.AddSerilog(logger));
                 })
                 .Build();
 
