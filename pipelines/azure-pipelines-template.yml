@@ -17,7 +17,6 @@ resources:
 stages:
 - stage: Test
   displayName: Test
-  continueOnError: false
   pool: $(agentPool)
 
   jobs: 
@@ -45,7 +44,6 @@ stages:
     
     - task: CmdLine@2
       displayName: Prune old Docker images and cache
-      continueOnError: true # If this task fails keep on truckin'. It's just house keeping
       inputs:
         script: |
           docker image prune --filter "until=48h" --force
@@ -55,7 +53,6 @@ stages:
 - stage: Package
   displayName: Package  
   dependsOn: []    # this removes the implicit dependency on Test stage and causes this to run in parallel
-  continueOnError: false
   pool: $(agentPool)
 
   jobs:
@@ -142,8 +139,6 @@ stages:
 - stage: Deploy
   displayName: Deploy
   pool: $(agentPool)
-  # Deploy if this is not a feature branch, or if the commit message contains '/deploy'
-  condition: or( not( contains( variables['Build.SourceBranch'], 'feature/' )), contains( variables['Build.SourceVersionMessage'], '/deploy' ) )
   dependsOn: 
     - Test
     - Package
