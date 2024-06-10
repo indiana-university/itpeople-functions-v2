@@ -4,7 +4,7 @@
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
 variables:
-  agentPool: 'Default'
+  agentPool: 'Azure Pipelines'
   NUGET_PACKAGES: '/opt/cssd/nuget'
 
 resources:
