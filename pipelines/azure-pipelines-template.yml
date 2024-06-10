@@ -17,6 +17,7 @@ resources:
 stages:
 - stage: Test
   displayName: Test
+  continueOnError: false
   pool: $(agentPool)
 
   jobs: 
@@ -54,6 +55,7 @@ stages:
 - stage: Package
   displayName: Package  
   dependsOn: []    # this removes the implicit dependency on Test stage and causes this to run in parallel
+  continueOnError: false
   pool: $(agentPool)
 
   jobs:
