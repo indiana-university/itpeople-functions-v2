@@ -5,6 +5,7 @@ using API.Middleware;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using API.Data;
+using System.Threading;
 
 namespace API.Functions
 {
@@ -12,8 +13,12 @@ namespace API.Functions
     {
         [Function(nameof(HealthCheck.Ping))]
         public static Task<IActionResult> Ping(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequest req) 
-                => Response.Ok(req, Pipeline.Success("Pong!"));
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequest req, CancellationToken hostCancellationToken) 
+		{
+			using var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(hostCancellationToken, req.HttpContext.RequestAborted);
+			cancellationSource.Token.ThrowIfCancellationRequested();
+			return Response.Ok(req, Pipeline.Success("Pong!"));
+		}
         
         [Function(nameof(HealthCheck.ExerciseLogger))]
         public static Task<IActionResult> ExerciseLogger([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ExerciseLogger")] HttpRequest req)
