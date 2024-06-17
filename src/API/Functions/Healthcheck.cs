@@ -12,17 +12,17 @@ namespace API.Functions
     public static class HealthCheck
     {
         [Function(nameof(HealthCheck.Ping))]
-        public static Task<IActionResult> Ping(
+        public static async Task<IActionResult> Ping(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ping")] HttpRequest req, CancellationToken hostCancellationToken) 
 		{
 			using var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(hostCancellationToken, req.HttpContext.RequestAborted);
 			cancellationSource.Token.ThrowIfCancellationRequested();
-			return Response.Ok(req, Pipeline.Success("Pong!"));
+			return await Response.Ok(req, Pipeline.Success("Pong!"));
 		}
         
         [Function(nameof(HealthCheck.ExerciseLogger))]
-        public static Task<IActionResult> ExerciseLogger([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ExerciseLogger")] HttpRequest req)
-            => Security.Authenticate(req)
+        public static async Task<IActionResult> ExerciseLogger([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ExerciseLogger")] HttpRequest req)
+            => await Security.Authenticate(req)
                 .Bind(requestor => AuthorizationRepository.DetermineServiceAdminPermissions(req, requestor))
                 .Bind(perms => AuthorizationRepository.AuthorizeModification(perms))
                 .Bind(_ => InduceException())
