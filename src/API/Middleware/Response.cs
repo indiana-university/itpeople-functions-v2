@@ -1,7 +1,6 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
 using System.Net;
-using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Models;
@@ -10,7 +9,6 @@ using System;
 using System.Xml.Serialization;
 using System.IO;
 using System.Text;
-using System.Net.Http.Headers;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -31,20 +29,32 @@ namespace API.Middleware
             HttpStatusCode statusCode,
             Func<T, IActionResult> resultGenerator)
         {
-            var logger = Logging.GetLogger(req);
-            if (result.IsSuccess)
-            {
-                if (IsGetMethod(req) == false || IsLspFunction(req) == true)
-                {
-                    await logger.SuccessResult(req, statusCode);
-                }
-                return resultGenerator(result.Value);
-            }
-            else
-            {
-                await logger.FailureResult<T>(req, result.Error);
-                return result.Error.ToResponse(req);
-            }
+			try
+			{
+				if(req.HttpContext.RequestAborted.IsCancellationRequested)
+				{
+					throw new Exception($"Unable to Generate response because the HTTP Request has been aborted.");
+				}
+
+				var logger = Logging.GetLogger(req);
+				if (result.IsSuccess)
+				{
+					if (IsGetMethod(req) == false || IsLspFunction(req) == true)
+					{
+						await logger.SuccessResult(req, statusCode);
+					}
+					return resultGenerator(result.Value);
+				}
+				else
+				{
+					await logger.FailureResult<T>(req, result.Error);
+					return result.Error.ToResponse(req);
+				}
+			}
+			catch
+			{
+				throw;
+			}
         }
 
         private static bool IsGetMethod(HttpRequest req) => req.Method.ToLower() == "get";
