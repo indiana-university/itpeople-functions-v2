@@ -13,6 +13,7 @@ using System.Text;
 using System.Net.Http.Headers;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace API.Middleware
 {
@@ -142,25 +143,72 @@ namespace API.Middleware
             }
         }
 
+        
+        
+        /// <summary>
+        /// Extracts the RequestBody that is stashed in Request.TryDeserializeBody()
+        /// <para>
+        ///     It also ensures the value is valid JSON or null so it can be written to the logs table.
+        /// </para>
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        private static string GetRequestBody(HttpRequest request)
+        {
+            var requestBody = request.HttpContext.Items[LogProps.RequestBody]?.ToString();
+            // Ensure this is valid json, if it isn't return null.
+            if(string.IsNullOrWhiteSpace(requestBody) == false)
+            {
+                try
+                {
+                    JsonConvert.DeserializeObject(requestBody);
+                }
+                catch
+                {
+                    requestBody = null;
+                }
+            }
+
+            return requestBody;
+        }
+
         private static async Task SuccessResult(this Serilog.ILogger logger, HttpRequest request, HttpStatusCode statusCode)
         {
-            var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
+            var requestBody = GetRequestBody(request);
+            var recordBody = request.HttpContext.Items[LogProps.RecordBody];
+            var errorsString = JsonConvert.SerializeObject(new List<string>(), Json.JsonSerializerSettings);
+
+            try
+            {
             logger
                 .ForContext(LogProps.StatusCode, (int)statusCode)
                 .ForContext(LogProps.RequestBody, requestBody)
-                .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
+                    .ForContext(LogProps.RecordBody, recordBody)
+                    .ForContext(LogProps.ErrorMessages, errorsString)
                 .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Failed with: {ex.Message}");
+            }
+
+            await Task.CompletedTask;
         }
 
         private static async Task FailureResult<T>(this Serilog.ILogger logger, HttpRequest request, Error error)
         {
-            var requestBody = request.ContentLength > 0 ? await request.ReadAsStringAsync() : null;
+            var requestBody = GetRequestBody(request);
+            var recBody = request.HttpContext.Items[LogProps.RecordBody];
+            var errorsString = JsonConvert.SerializeObject(error.Messages, Json.JsonSerializerSettings);
+            
             logger
                 .ForContext(LogProps.StatusCode, (int)error.StatusCode)
                 .ForContext(LogProps.RequestBody, requestBody)
-                .ForContext(LogProps.RecordBody, request.HttpContext.Items[LogProps.RecordBody])
-                .ForContext(LogProps.ErrorMessages, JsonConvert.SerializeObject(error.Messages, Json.JsonSerializerSettings))
+                .ForContext(LogProps.RecordBody, recBody)
+                .ForContext(LogProps.ErrorMessages, errorsString)
                 .Error(error.Exception, $"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}:\nErrors: {{{LogProps.ErrorMessages}}}.");
+            
+            await Task.CompletedTask;
         }
     }
 }
