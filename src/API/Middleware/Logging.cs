@@ -75,16 +75,17 @@ namespace API.Middleware
                 logger.WriteTo.PostgreSQL(
                     connectionString, tableName, columnWriters);
             }
+
             return logger;
         }
 
-        private static Lazy<ILogger> Logger = new Lazy<ILogger>(() => 
+        public static LoggerConfiguration LoggerConfig =>
             new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .WriteTo.Console()
                 .TryAddAzureAppInsightsSink()
-                .TryAddPostgresqlDatabaseSink()
-                .CreateLogger());
+                .TryAddPostgresqlDatabaseSink();
+        private static ILogger Logger => LoggerConfig.CreateLogger();
 
         public static ILogger GetLogger(HttpRequest req)
         {
@@ -97,7 +98,7 @@ namespace API.Middleware
                 ? (DateTime.UtcNow - (DateTime)req.HttpContext.Items[LogProps.ElapsedTime]).TotalMilliseconds
                 : -1;
 
-            return Logger.Value
+            return Logger
                 .ForContext(LogProps.ElapsedTime, elapsed)
                 .ForContext(LogProps.RequestIPAddress, req.HttpContext.Connection.RemoteIpAddress)
                 .ForContext(LogProps.RequestMethod, req.Method)
