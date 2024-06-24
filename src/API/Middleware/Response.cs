@@ -183,8 +183,8 @@ namespace API.Middleware
             logger
                 .ForContext(LogProps.StatusCode, (int)statusCode)
                 .ForContext(LogProps.RequestBody, requestBody)
-                    .ForContext(LogProps.RecordBody, recordBody)
-                    .ForContext(LogProps.ErrorMessages, errorsString)
+                .ForContext(LogProps.RecordBody, recordBody)
+                .ForContext(LogProps.ErrorMessages, errorsString)
                 .Information($"[{{{LogProps.StatusCode}}}] {{{LogProps.RequestorNetid}}} - {{{LogProps.RequestMethod}}} {{{LogProps.Function}}}{{{LogProps.RequestParameters}}}{{{LogProps.RequestQuery}}}");
             }
             catch(Exception ex)
