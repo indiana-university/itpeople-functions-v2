@@ -4,7 +4,7 @@
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
 variables:
-  agentPool: 'Azure Pipelines'
+  agentPool: 'CSSD-Linux-ELA'
   NUGET_PACKAGES: '/opt/cssd/nuget'
 
 resources:
@@ -44,7 +44,6 @@ stages:
     
     - task: CmdLine@2
       displayName: Prune old Docker images and cache
-      continueOnError: true # If this task fails keep on truckin'. It's just house keeping
       inputs:
         script: |
           docker image prune --filter "until=48h" --force
@@ -140,8 +139,6 @@ stages:
 - stage: Deploy
   displayName: Deploy
   pool: $(agentPool)
-  # Deploy if this is not a feature branch, or if the commit message contains '/deploy'
-  condition: or( not( contains( variables['Build.SourceBranch'], 'feature/' )), contains( variables['Build.SourceVersionMessage'], '/deploy' ) )
   dependsOn: 
     - Test
     - Package

@@ -24,6 +24,9 @@ namespace API.Middleware
             {
                 var json = await req.ReadAsStringAsync();
                 var body = JsonConvert.DeserializeObject<T>(json);
+                
+                // Stash the json for use later in the pipeline.
+                req.HttpContext.Items[LogProps.RequestBody] = json;
                 return Pipeline.Success(body);
             }
             catch (Exception ex)
