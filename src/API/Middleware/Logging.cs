@@ -37,7 +37,7 @@ namespace API.Middleware
     {
         private static LoggerConfiguration TryAddAzureAppInsightsSink(this LoggerConfiguration logger)
         {
-            var appInsightsKey = Utils.Env("APPINSIGHTS_INSTRUMENTATIONKEY");
+            var appInsightsKey = Utils.Env("APPLICATIONINSIGHTS_CONNECTION_STRING");
             if (!string.IsNullOrWhiteSpace(appInsightsKey))
             {
                 logger.WriteTo.ApplicationInsights(
