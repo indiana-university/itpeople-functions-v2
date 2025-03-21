@@ -14,6 +14,6 @@
         "AdToolsGroupManagerUser":"a username",
         "AdToolsGroupManagerPassword":"password for AdUser",
         "DatabaseConnectionString":"Server=localhost;Database=ItPeople;User Id=SA;Password=abcd1234@;",
-        "APPINSIGHTS_INSTRUMENTATIONKEY": "an App Insights instrumentation key (guid)"
+        "APPLICATIONINSIGHTS_CONNECTION_STRING": "an App Insights connection string"
     }
 }
