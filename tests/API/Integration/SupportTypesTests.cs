@@ -17,7 +17,7 @@ namespace Integration
 				var resp = await GetAuthenticated("supportTypes");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<SupportType>>();
-				Assert.AreEqual(4, actual.Count);
+				Assert3.AreEqual(4, actual.Count);
 			}
 		}
 	}

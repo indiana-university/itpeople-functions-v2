@@ -20,7 +20,7 @@ namespace Integration
                 var resp = await GetAuthenticated("people");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(4, actual.Count);
+                Assert3.AreEqual(4, actual.Count);
             }
 
             [Test]
@@ -46,13 +46,13 @@ namespace Integration
                 var resp = await GetAuthenticated($"people?q={TestEntities.People.BWyatt.Netid}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(1, actual.Count);
+                Assert3.AreEqual(1, actual.Count);
 
                 //Listing all users should still return 4 records
                 resp = await GetAuthenticated($"people");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(4, actual.Count);
+                Assert3.AreEqual(4, actual.Count);
             }
 
             [TestCase("rswanso", Description = "Exact match of netid")]
@@ -63,8 +63,8 @@ namespace Integration
                 var resp = await GetAuthenticated($"people?q={netid}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(1, actual.Count);
-                Assert.AreEqual(TestEntities.People.RSwanson.Id, actual.Single().Id);
+                Assert3.AreEqual(1, actual.Count);
+                Assert3.AreEqual(TestEntities.People.RSwanson.Id, actual.Single().Id);
             }
 
             [TestCase("Ron", Description = "Name match")]
@@ -81,9 +81,9 @@ namespace Integration
                 var resp = await GetAuthenticated($"people?q={name}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Person>>();
-                Assert.AreEqual(1, actual.Count);
-                Assert.AreEqual(TestEntities.People.RSwanson.Id, actual.Single().Id);
-                Assert.AreEqual(TestEntities.People.RSwanson.Name, actual.Single().Name);
+                Assert3.AreEqual(1, actual.Count);
+                Assert3.AreEqual(TestEntities.People.RSwanson.Id, actual.Single().Id);
+                Assert3.AreEqual(TestEntities.People.RSwanson.Name, actual.Single().Name);
             }
 
             [TestCase(
@@ -193,9 +193,9 @@ namespace Integration
                 var resp = await GetAuthenticated($"people/{TestEntities.People.RSwansonId}");
                 var actual = await resp.Content.ReadAsAsync<Person>();
                 var expected = TestEntities.People.RSwanson;
-                Assert.AreEqual(expected.Id, actual.Id);
-                Assert.AreEqual(expected.Netid, actual.Netid);
-                Assert.AreEqual(expected.DepartmentId, actual.DepartmentId);
+                Assert3.AreEqual(expected.Id, actual.Id);
+                Assert3.AreEqual(expected.Netid, actual.Netid);
+                Assert3.AreEqual(expected.DepartmentId, actual.DepartmentId);
             }
 
             [Test]
@@ -204,9 +204,9 @@ namespace Integration
                 var resp = await GetAuthenticated($"people/{TestEntities.People.RSwansonId}");
                 var actual = await resp.Content.ReadAsAsync<Person>();
                 var expected = TestEntities.People.RSwanson.Department;
-                Assert.IsNotNull(actual.Department);
-                Assert.AreEqual(expected.Id, actual.Department.Id);
-                Assert.AreEqual(expected.Name, actual.Department.Name);
+                Assert3.NotNull(actual.Department);
+                Assert3.AreEqual(expected.Id, actual.Department.Id);
+                Assert3.AreEqual(expected.Name, actual.Department.Name);
             }
 
             [TestCase(ValidRswansonJwt, TestEntities.People.RSwansonId, PermsGroups.GetPut, Description = "As Ron I can update my own record")]
@@ -242,7 +242,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people/{TestEntities.People.RSwanson.Netid}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<Person>();
-                Assert.AreEqual(TestEntities.People.RSwanson.Id, actual.Id);
+                Assert3.AreEqual(TestEntities.People.RSwanson.Id, actual.Id);
             }
         }
 
@@ -332,7 +332,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people-lookup");
                 AssertStatusCode(resp, HttpStatusCode.BadRequest);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
-                Assert.Contains("The query parameter 'q' is required.", actual.Errors);
+                Assert3.Contains("The query parameter 'q' is required.", actual.Errors);
             }
             [Test]
             public async Task HonorsMinimumQueryStringLength()
@@ -341,7 +341,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people-lookup?q={q}");
                 AssertStatusCode(resp, HttpStatusCode.BadRequest);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
-                Assert.Contains("The query parameter 'q' must be at least 3 characters long.", actual.Errors);
+                Assert3.Contains("The query parameter 'q' must be at least 3 characters long.", actual.Errors);
             }
 
             [Test]
@@ -351,7 +351,7 @@ namespace Integration
                 var resp = await GetAuthenticated("people-lookup?q=Swan");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
-                Assert.AreEqual(2, actual.Count);
+                Assert3.AreEqual(2, actual.Count);
             }
 
             [TestCase("Swanson, Ron", 1)]
@@ -370,7 +370,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people-lookup?q={q}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
-                Assert.AreEqual(results, actual.Count);
+                Assert3.AreEqual(results, actual.Count);
             }
 
             [TestCase(1)]
@@ -385,7 +385,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people-lookup?q=Swan&_limit={maxRecords}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
-                Assert.LessOrEqual(actual.Count, maxRecords);
+                Assert3.LessOrEqual(actual.Count, maxRecords);
             }
 
             [Test]
@@ -397,7 +397,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people-lookup?q=Swan");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<PeopleLookupItem>>();
-                Assert.LessOrEqual(actual.Count, 15);
+                Assert3.LessOrEqual(actual.Count, 15);
             }
 
             private async Task SpamTammies()
@@ -428,7 +428,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people/withHR/{TestEntities.HrPeople.Tammy1.Netid}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<PeopleLookupItem>();
-                Assert.AreEqual(actual.NetId, TestEntities.HrPeople.Tammy1.Netid);
+                Assert3.AreEqual(actual.NetId, TestEntities.HrPeople.Tammy1.Netid);
             }
             [Test]
             public async Task GetPerson()
@@ -436,7 +436,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"people/withHR/{TestEntities.People.BWyatt.Netid}");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<PeopleLookupItem>();
-                Assert.AreEqual(actual.NetId, TestEntities.People.BWyatt.Netid);
+                Assert3.AreEqual(actual.NetId, TestEntities.People.BWyatt.Netid);
             }
         }
     }

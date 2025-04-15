@@ -14,7 +14,7 @@ namespace Integration
             var resp = await Http.GetAsync("ping");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var actual = await resp.Content.ReadAsAsync<string>();
-            Assert.AreEqual(actual, "Pong!");
+            Assert3.AreEqual(actual, "Pong!");
         }
     }
 }

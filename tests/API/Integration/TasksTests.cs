@@ -39,7 +39,7 @@ namespace Integration
 				var result = await Tasks.Tools.GetToolGrantees(testContext, TestEntities.Tools.Hammer);
 				
 				var expected = new List<string> { TestEntities.People.ServiceAdmin.Netid, TestEntities.People.RSwanson.Netid };
-				CollectionAssert.AreEquivalent(expected, result);
+				Assert3.AreEqual(expected, result);
 			}
 			
 			[Test]
@@ -56,7 +56,7 @@ namespace Integration
 				resp.StatusCode = System.Net.HttpStatusCode.OK;
 
 				var results = await Tasks.Utils.DeserializeResponse<DenodoResponse<DenodoBuilding>>(nameof(MapToBuildingBlankDescription), resp, "Testing what the heck is going on.");
-				Assert.AreEqual(4, results.Elements.Count());
+				Assert3.AreEqual(4, results.Elements.Count());
 
 				// Validate mapping works, and records are successfully stored in the database.
 				// This ensures the mapped building passes valdiation.
@@ -110,8 +110,8 @@ namespace Integration
 					}
 				}
 				
-				Assert.AreEqual(1, logs.Count);
-				Assert.Contains(errorMessage, logs);
+				Assert3.AreEqual(1, logs.Count);
+				Assert3.Contains(errorMessage, logs);
 			}
 		}
 

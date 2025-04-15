@@ -43,10 +43,10 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<UnitMemberResponse>>();
 				var ron = actual.SingleOrDefault(a => a.Id == TestEntities.UnitMembers.RSwansonLeaderId);
-				Assert.NotNull(ron.Person);
-				Assert.NotNull(ron.Unit);
-				Assert.NotNull(ron.Unit.Parent);
-				Assert.NotNull(ron.MemberTools);
+				Assert3.NotNull(ron.Person);
+				Assert3.NotNull(ron.Unit);
+				Assert3.NotNull(ron.Unit.Parent);
+				Assert3.NotNull(ron.MemberTools);
             }
         }
 
@@ -68,20 +68,20 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
                 var expected = TestEntities.UnitMembers.LkNopeSublead;
-                Assert.AreEqual(expected.Id, actual.Id);
-                Assert.AreEqual(expected.UnitId, actual.UnitId);
-                Assert.AreEqual(expected.Role, actual.Role);
-                Assert.AreEqual(expected.Permissions, actual.Permissions);
-                Assert.AreEqual(expected.PersonId, actual.PersonId);
-                Assert.AreEqual(expected.Title, actual.Title);
-                Assert.AreEqual(expected.Percentage, actual.Percentage);
-                Assert.AreEqual(expected.Notes, actual.Notes); //Notes are stripped on membership getters
+                Assert3.AreEqual(expected.Id, actual.Id);
+                Assert3.AreEqual(expected.UnitId, actual.UnitId);
+                Assert3.AreEqual(expected.Role, actual.Role);
+                Assert3.AreEqual(expected.Permissions, actual.Permissions);
+                Assert3.AreEqual(expected.PersonId, actual.PersonId);
+                Assert3.AreEqual(expected.Title, actual.Title);
+                Assert3.AreEqual(expected.Percentage, actual.Percentage);
+                Assert3.AreEqual(expected.Notes, actual.Notes); //Notes are stripped on membership getters
                                                                // relations
-                Assert.NotNull(actual.Person);
-                Assert.AreEqual(expected.Person.Id, actual.Person.Id);
-                Assert.NotNull(actual.Unit);
-                Assert.AreEqual(expected.Unit.Id, actual.Unit.Id);
-                Assert.NotNull(actual.MemberTools);
+                Assert3.NotNull(actual.Person);
+                Assert3.AreEqual(expected.Person.Id, actual.Person.Id);
+                Assert3.NotNull(actual.Unit);
+                Assert3.AreEqual(expected.Unit.Id, actual.Unit.Id);
+                Assert3.NotNull(actual.MemberTools);
             }
 
             [TestCase(ValidRswansonJwt, TestEntities.UnitMembers.RSwansonLeaderId, PermsGroups.All, TestName = "Ron1", Description = "As Ron (owner) I can manage Ron's membership")]
@@ -186,13 +186,13 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.Created);
 				var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
 
-				Assert.NotZero(actual.Id);
-				Assert.AreEqual(req.UnitId, actual.Unit.Id);
-				Assert.AreEqual(req.Role, actual.Role);
-				Assert.AreEqual(req.Permissions, actual.Permissions);
-				Assert.AreEqual(req.PersonId, actual.PersonId);
-				Assert.AreEqual(req.Title, actual.Title);
-				Assert.AreEqual(req.Percentage, actual.Percentage);
+				Assert3.NotZero(actual.Id);
+				Assert3.AreEqual(req.UnitId, actual.Unit.Id);
+				Assert3.AreEqual(req.Role, actual.Role);
+				Assert3.AreEqual(req.Permissions, actual.Permissions);
+				Assert3.AreEqual(req.PersonId, actual.PersonId);
+				Assert3.AreEqual(req.Title, actual.Title);
+				Assert3.AreEqual(req.Percentage, actual.Percentage);
 			}
 
 			[Test]
@@ -209,9 +209,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains(ValidationPercentageError, actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains(ValidationPercentageError, actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 
 			[Test]
@@ -231,9 +231,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains(ValidationRoleError, actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains(ValidationRoleError, actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 
 			[Test]
@@ -255,9 +255,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains(ArchivedUnitError, actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains(ArchivedUnitError, actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 
 			[Test]
@@ -287,7 +287,7 @@ namespace Integration
 				var resp = await PostAuthenticated($"memberships", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+				Assert3.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
 			}
 
 			[Test]
@@ -306,9 +306,9 @@ namespace Integration
 				var resp = await PostAuthenticated("memberships", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains("The provided person is already a member of the provided unit.", actual.Errors);
+				Assert3.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains("The provided person is already a member of the provided unit.", actual.Errors);
 			}
 
 			[Test]
@@ -354,13 +354,13 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<UnitMemberResponse>();
 
-				Assert.NotZero(actual.Id);
-				Assert.AreEqual(req.UnitId, actual.Unit.Id);
-				Assert.AreEqual(req.Role, actual.Role);
-				Assert.AreEqual(req.Permissions, actual.Permissions);
-				Assert.AreEqual(req.PersonId, actual.PersonId);
-				Assert.AreEqual(req.Title, actual.Title);
-				Assert.AreEqual(req.Percentage, actual.Percentage);
+				Assert3.NotZero(actual.Id);
+				Assert3.AreEqual(req.UnitId, actual.Unit.Id);
+				Assert3.AreEqual(req.Role, actual.Role);
+				Assert3.AreEqual(req.Permissions, actual.Permissions);
+				Assert3.AreEqual(req.PersonId, actual.PersonId);
+				Assert3.AreEqual(req.Title, actual.Title);
+				Assert3.AreEqual(req.Percentage, actual.Percentage);
 			}
 
 			[Test]
@@ -378,10 +378,10 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains(ValidationPercentageError, actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains(ValidationPercentageError, actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 
 			[Test]
@@ -401,10 +401,10 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains(ValidationRoleError, actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains(ValidationRoleError, actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 
 			[Test]
@@ -425,9 +425,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains(ArchivedUnitError, actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains(ArchivedUnitError, actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 
 			[Test]
@@ -458,7 +458,7 @@ namespace Integration
 				var resp = await PutAuthenticated($"memberships/{membershipId}", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+				Assert3.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
 			}
 
 			[Test]
@@ -522,9 +522,9 @@ namespace Integration
 
 				var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
 
-				Assert.IsEmpty(db.MemberTools.Where(mt => mt.MembershipId == TestEntities.UnitMembers.RSwansonLeaderId));
-				Assert.IsEmpty(db.MemberTools.Where(mt => mt.Tool == null));
-				Assert.IsEmpty(db.MemberTools.Where(mt => mt.UnitMember == null));
+				Assert3.IsEmpty(db.MemberTools.Where(mt => mt.MembershipId == TestEntities.UnitMembers.RSwansonLeaderId));
+				Assert3.IsEmpty(db.MemberTools.Where(mt => mt.Tool == null));
+				Assert3.IsEmpty(db.MemberTools.Where(mt => mt.UnitMember == null));
 			}
 
             [Test]

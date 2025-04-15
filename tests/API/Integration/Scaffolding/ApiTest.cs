@@ -88,21 +88,21 @@ namespace Integration
                     content = "Failed to parse response content.";
                 }
             }
-            Assert.AreEqual(expected, resp.StatusCode, content);
+            Assert3.AreEqual(expected, resp.StatusCode, content);
         }
 
         protected static void AssertPermissions(HttpResponseMessage resp, EntityPermissions expectedPermissions)
         {
             var actualHeader = resp.Headers.SingleOrDefault(h => h.Key == "x-user-permissions");
-            Assert.NotNull(actualHeader, "Permissions header is not present");
-            Assert.NotNull(actualHeader.Value, "Permissions header was present but is null");
-            Assert.AreEqual(1, actualHeader.Value.Count(), "Permissions header should have one value");
-            Assert.AreEqual(expectedPermissions.ToString(), actualHeader.Value.Single());
+            Assert3.NotNull(actualHeader, "Permissions header is not present");
+            Assert3.NotNull(actualHeader.Value, "Permissions header was present but is null");
+            Assert3.AreEqual(1, actualHeader.Value.Count(), "Permissions header should have one value");
+            Assert3.AreEqual(expectedPermissions.ToString(), actualHeader.Value.Single());
         }
 
         protected static void AssertIdsMatchContent<T>(int[] expectedIds, IEnumerable<T> content) where T: Entity
         {
-            CollectionAssert.AreEquivalent(expectedIds, content.Select(c => c.Id));
+            Assert3.AreEqual(expectedIds, content.Select(c => c.Id));
         }
 
         public static void AssertEntityCollectionEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual, Func<T, T, bool> areEqual, string errorMessage) where T : Entity

@@ -19,7 +19,7 @@ namespace Integration
 				var resp = await GetAuthenticated("buildings");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Building>>();
-				Assert.AreEqual(3, actual.Count);
+				Assert3.AreEqual(3, actual.Count);
 			}
 
 			[TestCase("Pawnee City hall", Description = "Name match")]
@@ -29,9 +29,9 @@ namespace Integration
 				var resp = await GetAuthenticated($"buildings?q={name}");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Building>>();
-				Assert.AreEqual(1, actual.Count);
-				Assert.AreEqual(TestEntities.Buildings.CityHall.Id, actual.Single().Id);
-				Assert.AreEqual(TestEntities.Buildings.CityHall.Name, actual.Single().Name);
+				Assert3.AreEqual(1, actual.Count);
+				Assert3.AreEqual(TestEntities.Buildings.CityHall.Id, actual.Single().Id);
+				Assert3.AreEqual(TestEntities.Buildings.CityHall.Name, actual.Single().Name);
 			}
 
 			[TestCase("RC123", Description = "Code match")]
@@ -42,9 +42,9 @@ namespace Integration
 				var resp = await GetAuthenticated($"buildings?q={code}");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Building>>();
-				Assert.AreEqual(1, actual.Count);
-				Assert.AreEqual(TestEntities.Buildings.RonsCabin.Id, actual.Single().Id);
-				Assert.AreEqual(TestEntities.Buildings.RonsCabin.Code, actual.Single().Code);
+				Assert3.AreEqual(1, actual.Count);
+				Assert3.AreEqual(TestEntities.Buildings.RonsCabin.Id, actual.Single().Id);
+				Assert3.AreEqual(TestEntities.Buildings.RonsCabin.Code, actual.Single().Code);
 			}
 
 			[TestCase("321 main st", Description = "Address match")]
@@ -54,9 +54,9 @@ namespace Integration
 				var resp = await GetAuthenticated($"buildings?q={address}");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Building>>();
-				Assert.AreEqual(1, actual.Count);
-				Assert.AreEqual(TestEntities.Buildings.SmallPark.Id, actual.Single().Id);
-				Assert.AreEqual(TestEntities.Buildings.SmallPark.Address, actual.Single().Address);
+				Assert3.AreEqual(1, actual.Count);
+				Assert3.AreEqual(TestEntities.Buildings.SmallPark.Id, actual.Single().Id);
+				Assert3.AreEqual(TestEntities.Buildings.SmallPark.Address, actual.Single().Address);
 			}
 
 			[Test]
@@ -65,7 +65,7 @@ namespace Integration
 				var resp = await GetAuthenticated("buildings?q=foo");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Building>>();
-				Assert.AreEqual(0, actual.Count);
+				Assert3.AreEqual(0, actual.Count);
 			}
 		}
 
@@ -85,9 +85,9 @@ namespace Integration
 				var resp = await GetAuthenticated($"buildings/{TestEntities.Buildings.CityHallId}");
 				var actual = await resp.Content.ReadAsAsync<Building>();
 				var expected = TestEntities.Buildings.CityHall;
-				Assert.AreEqual(expected.Id, actual.Id);
-				Assert.AreEqual(expected.Name, actual.Name);
-				Assert.AreEqual(expected.Code, actual.Code);
+				Assert3.AreEqual(expected.Id, actual.Id);
+				Assert3.AreEqual(expected.Name, actual.Name);
+				Assert3.AreEqual(expected.Code, actual.Code);
 			}
 
             [Test]

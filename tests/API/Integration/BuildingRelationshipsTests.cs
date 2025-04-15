@@ -19,7 +19,7 @@ namespace Integration
 				var resp = await GetAuthenticated("buildingRelationships");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<BuildingRelationshipResponse>>();
-				Assert.AreEqual(3, actual.Count);
+				Assert3.AreEqual(3, actual.Count);
 			}
 		}
 
@@ -39,9 +39,9 @@ namespace Integration
 				var resp = await GetAuthenticated($"buildingRelationships/{TestEntities.BuildingRelationships.CityHallCityOfPawneeId}");
 				var actual = await resp.Content.ReadAsAsync<BuildingRelationshipResponse>();
 				var expected = TestEntities.BuildingRelationships.CityHallCityOfPawnee;
-				Assert.AreEqual(expected.Id, actual.Id);
-				Assert.AreEqual(expected.Building.Id, actual.Building.Id);
-				Assert.AreEqual(expected.Unit.Id, actual.Unit.Id);
+				Assert3.AreEqual(expected.Id, actual.Id);
+				Assert3.AreEqual(expected.Building.Id, actual.Building.Id);
+				Assert3.AreEqual(expected.Unit.Id, actual.Unit.Id);
 			}
 
             [Test]
@@ -75,9 +75,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.Created);
 				var actual = await resp.Content.ReadAsAsync<BuildingRelationshipResponse>();
 
-				Assert.NotZero(actual.Id);
-				Assert.AreEqual(CityHallParksAndRec.UnitId, actual.Unit.Id);
-				Assert.AreEqual(CityHallParksAndRec.BuildingId, actual.Building.Id);
+				Assert3.NotZero(actual.Id);
+				Assert3.AreEqual(CityHallParksAndRec.UnitId, actual.Unit.Id);
+				Assert3.AreEqual(CityHallParksAndRec.BuildingId, actual.Building.Id);
 			}
 
 			//201
@@ -99,10 +99,10 @@ namespace Integration
 				var resp = await PostAuthenticated("buildingRelationships", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains("The request body was malformed, the unitId and/or buildingId field was missing.", actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains("The request body was malformed, the unitId and/or buildingId field was missing.", actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 
 			[TestCase(99999, TestEntities.Buildings.RonsCabinId, Description = "Unit Id not found")]
@@ -117,7 +117,7 @@ namespace Integration
 				var resp = await PostAuthenticated($"buildingRelationships", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+				Assert3.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
 			}
 
 			//409
@@ -132,9 +132,9 @@ namespace Integration
 				var resp = await PostAuthenticated("buildingRelationships", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains("The provided unit already has a support relationship with the provided building.", actual.Errors);
+				Assert3.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains("The provided unit already has a support relationship with the provided building.", actual.Errors);
 			}
 
 			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]

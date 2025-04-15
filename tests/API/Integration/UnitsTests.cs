@@ -19,10 +19,10 @@ namespace Integration
                 var resp = await GetAuthenticated("units");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Unit>>();
-                Assert.AreEqual(1, actual.Count);
+                Assert3.AreEqual(1, actual.Count);
                 var expected = TestEntities.Units.CityOfPawnee;
-                Assert.AreEqual(expected.Id, actual.Single().Id);
-                Assert.AreEqual(expected.Name, actual.Single().Name);
+                Assert3.AreEqual(expected.Id, actual.Single().Id);
+                Assert3.AreEqual(expected.Name, actual.Single().Name);
             }
 
             [Test]
@@ -31,15 +31,15 @@ namespace Integration
                 var resp = await GetAuthenticated("units?q=parks");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Unit>>();
-                Assert.AreEqual(1, actual.Count);
+                Assert3.AreEqual(1, actual.Count);
                 var expected = TestEntities.Units.ParksAndRecUnit;
                 var actualUnit = actual.Single();
-                Assert.AreEqual(expected.Id, actualUnit.Id);
-                Assert.AreEqual(expected.Name, actualUnit.Name);
-                Assert.AreEqual(expected.ParentId, actualUnit.ParentId);
-                Assert.NotNull(actualUnit.Parent);
-                Assert.AreEqual(expected.Parent.Id, actualUnit.Parent.Id);
-                Assert.AreEqual(expected.Parent.Name, actualUnit.Parent.Name);
+                Assert3.AreEqual(expected.Id, actualUnit.Id);
+                Assert3.AreEqual(expected.Name, actualUnit.Name);
+                Assert3.AreEqual(expected.ParentId, actualUnit.ParentId);
+                Assert3.NotNull(actualUnit.Parent);
+                Assert3.AreEqual(expected.Parent.Id, actualUnit.Parent.Id);
+                Assert3.AreEqual(expected.Parent.Name, actualUnit.Parent.Name);
             }
 
             [Test]
@@ -48,7 +48,7 @@ namespace Integration
                 var resp = await GetAuthenticated("units?q=foo");
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<Unit>>();
-                Assert.AreEqual(0, actual.Count);
+                Assert3.AreEqual(0, actual.Count);
             }
 
             [TestCase(ValidRswansonJwt, EntityPermissions.Get, Description = "As non-admin I can't create/delete units")]
@@ -78,9 +78,9 @@ namespace Integration
 
                 var actual = await resp.Content.ReadAsAsync<Unit>();
                 var expected = TestEntities.Units.ParksAndRecUnit;
-                Assert.AreEqual(expected.Id, actual.Id);
-                Assert.AreEqual(expected.Name, actual.Name);
-                Assert.AreEqual(expected.Parent?.Id, actual.Parent?.Id);
+                Assert3.AreEqual(expected.Id, actual.Id);
+                Assert3.AreEqual(expected.Name, actual.Name);
+                Assert3.AreEqual(expected.Parent?.Id, actual.Parent?.Id);
             }
 
 
@@ -186,13 +186,13 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.Created);
                 var actual = await resp.Content.ReadAsAsync<Unit>();
 
-                Assert.NotZero(actual.Id);
-                Assert.AreEqual(req.Name, actual.Name);
-                Assert.AreEqual(req.Description, actual.Description);
-                Assert.AreEqual(req.Url, actual.Url);
-                Assert.AreEqual(req.Email, actual.Email);
-                Assert.NotNull(actual.Parent);
-                Assert.AreEqual(req.ParentId, actual.Parent.Id);
+                Assert3.NotZero(actual.Id);
+                Assert3.AreEqual(req.Name, actual.Name);
+                Assert3.AreEqual(req.Description, actual.Description);
+                Assert3.AreEqual(req.Url, actual.Url);
+                Assert3.AreEqual(req.Email, actual.Email);
+                Assert3.NotNull(actual.Parent);
+                Assert3.AreEqual(req.ParentId, actual.Parent.Id);
             }
 
             [Test]
@@ -221,10 +221,10 @@ namespace Integration
                 var resp = await PostAuthenticated("units", req, ValidAdminJwt);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-                Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
-                Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains(UnitRequest.MalformedRequest, actual.Errors);
-                Assert.AreEqual("(none)", actual.Details);
+                Assert3.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+                Assert3.AreEqual(1, actual.Errors.Count);
+                Assert3.Contains(UnitRequest.MalformedRequest, actual.Errors);
+                Assert3.AreEqual("(none)", actual.Details);
             }
 
             //404 The specified unit parent does not exist
@@ -238,10 +238,10 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.NotFound);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-                Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
-                Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains($"No parent unit found with ID ({req.ParentId}).", actual.Errors);
-                Assert.AreEqual("(none)", actual.Details);
+                Assert3.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+                Assert3.AreEqual(1, actual.Errors.Count);
+                Assert3.Contains($"No parent unit found with ID ({req.ParentId}).", actual.Errors);
+                Assert3.AreEqual("(none)", actual.Details);
             }
         }
 
@@ -258,12 +258,12 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<Unit>();
 
-                Assert.AreEqual(TestEntities.Units.CityOfPawnee.Id, actual.Id);
-                Assert.AreEqual(req.Name, actual.Name);
-                Assert.AreEqual(req.Description, actual.Description);
-                Assert.AreEqual(req.Url, actual.Url);
-                Assert.AreEqual(req.Email, actual.Email);
-                Assert.IsNull(actual.Parent);
+                Assert3.AreEqual(TestEntities.Units.CityOfPawnee.Id, actual.Id);
+                Assert3.AreEqual(req.Name, actual.Name);
+                Assert3.AreEqual(req.Description, actual.Description);
+                Assert3.AreEqual(req.Url, actual.Url);
+                Assert3.AreEqual(req.Email, actual.Email);
+                Assert3.IsNull(actual.Parent);
             }
             // 400 The request body is malformed, or the unit name is missing.
             [Test]
@@ -276,10 +276,10 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.BadRequest);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-                Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
-                Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains(UnitRequest.MalformedRequest, actual.Errors);
-                Assert.AreEqual("(none)", actual.Details);
+                Assert3.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+                Assert3.AreEqual(1, actual.Errors.Count);
+                Assert3.Contains(UnitRequest.MalformedRequest, actual.Errors);
+                Assert3.AreEqual("(none)", actual.Details);
             }
 
             // 403 You do not have permission to modify this unit.
@@ -305,10 +305,10 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.NotFound);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-                Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
-                Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains($"No parent unit found with ID ({req.ParentId}).", actual.Errors);
-                Assert.AreEqual("(none)", actual.Details);
+                Assert3.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+                Assert3.AreEqual(1, actual.Errors.Count);
+                Assert3.Contains($"No parent unit found with ID ({req.ParentId}).", actual.Errors);
+                Assert3.AreEqual("(none)", actual.Details);
             }
 
             [Test]
@@ -322,14 +322,14 @@ namespace Integration
                 var actual = await resp.Content.ReadAsAsync<Unit>();
 
                 //The Active value should not have changed
-                Assert.IsTrue(actual.Active);
+                Assert3.IsTrue(actual.Active);
                 //The other values should have.
-                Assert.AreEqual(TestEntities.Units.CityOfPawnee.Id, actual.Id);
-                Assert.AreEqual(req.Name, actual.Name);
-                Assert.AreEqual(req.Description, actual.Description);
-                Assert.AreEqual(req.Url, actual.Url);
-                Assert.AreEqual(req.Email, actual.Email);
-                Assert.IsNull(actual.Parent);
+                Assert3.AreEqual(TestEntities.Units.CityOfPawnee.Id, actual.Id);
+                Assert3.AreEqual(req.Name, actual.Name);
+                Assert3.AreEqual(req.Description, actual.Description);
+                Assert3.AreEqual(req.Url, actual.Url);
+                Assert3.AreEqual(req.Email, actual.Email);
+                Assert3.IsNull(actual.Parent);
             }
 
             [Test]
@@ -347,8 +347,8 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<Unit>();
 
-                Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.ParentId);
-                Assert.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Parent.Id);
+                Assert3.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.ParentId);
+                Assert3.AreEqual(TestEntities.Units.CityOfPawneeUnitId, actual.Parent.Id);
             }
 
             [Test]
@@ -372,7 +372,7 @@ namespace Integration
                     .AsNoTracking()
                     .ToList();
 
-                Assert.AreEqual(existingParksAndRecUnitMembers.Count, resultParksAndRecUnitMembers.Count);
+                Assert3.AreEqual(existingParksAndRecUnitMembers.Count, resultParksAndRecUnitMembers.Count);
                 AssertIdsMatchContent(existingParksAndRecUnitMembers.Select(m => m.Id).ToArray(), resultParksAndRecUnitMembers);
             }
 
@@ -409,11 +409,11 @@ namespace Integration
                 var actual = await db.Units.SingleOrDefaultAsync(u => u.Id == unitId);
                 if (expectedCode == HttpStatusCode.NoContent || expectedCode == HttpStatusCode.NotFound)
                 {
-                    Assert.Null(actual);
+                    Assert3.IsNull(actual);
                 }
                 else
                 {
-                    Assert.NotNull(actual);
+                    Assert3.NotNull(actual);
                 }
 
             }
@@ -425,9 +425,9 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.Conflict);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-                Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains("Unit 1 has child units, with ids: 2, 3, 4. These must be reassigned prior to deletion.", actual.Errors);
-                Assert.AreEqual("(none)", actual.Details);
+                Assert3.AreEqual(1, actual.Errors.Count);
+                Assert3.Contains("Unit 1 has child units, with ids: 2, 3, 4. These must be reassigned prior to deletion.", actual.Errors);
+                Assert3.AreEqual("(none)", actual.Details);
             }
 
             [Test]
@@ -457,29 +457,29 @@ namespace Integration
                     .Include(mt => mt.UnitMember)
                     .Include(mt => mt.Tool);
 
-                Assert.IsEmpty(memberTools.Where(mt => mt.UnitMember == null));
-                Assert.IsEmpty(memberTools.Where(mt => mt.Tool == null));
+                Assert3.IsEmpty(memberTools.Where(mt => mt.UnitMember == null));
+                Assert3.IsEmpty(memberTools.Where(mt => mt.Tool == null));
 
                 var unitMembers = db.UnitMembers
                     .Include(um => um.Unit)
                     .Include(um => um.Person);
 
-                Assert.IsEmpty(unitMembers.Where(um => um.Unit == null));
-                Assert.IsEmpty(unitMembers.Where(um => um.Person == null));
+                Assert3.IsEmpty(unitMembers.Where(um => um.Unit == null));
+                Assert3.IsEmpty(unitMembers.Where(um => um.Person == null));
 
                 var supportRelationships = db.SupportRelationships
                     .Include(sr => sr.Unit)
                     .Include(sr => sr.Department);
 
-                Assert.IsEmpty(supportRelationships.Where(um => um.Unit == null));
-                Assert.IsEmpty(supportRelationships.Where(um => um.Department == null));
+                Assert3.IsEmpty(supportRelationships.Where(um => um.Unit == null));
+                Assert3.IsEmpty(supportRelationships.Where(um => um.Department == null));
 
                 var buildingRelationships = db.BuildingRelationships
                     .Include(sr => sr.Unit)
                     .Include(sr => sr.Building);
 
-                Assert.IsEmpty(buildingRelationships.Where(um => um.Unit == null));
-                Assert.IsEmpty(buildingRelationships.Where(um => um.Building == null));
+                Assert3.IsEmpty(buildingRelationships.Where(um => um.Unit == null));
+                Assert3.IsEmpty(buildingRelationships.Where(um => um.Building == null));
             }
 
             [TestCase(ValidAdminJwt, HttpStatusCode.OK, Description = "Admin can archive a unit.")]
@@ -497,8 +497,8 @@ namespace Integration
                 var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
                 var actual = await db.Units.SingleOrDefaultAsync(u => u.Id == unitId);
 
-                Assert.NotNull(actual);
-                Assert.AreEqual(expectedActive, actual.Active);
+                Assert3.NotNull(actual);
+                Assert3.AreEqual(expectedActive, actual.Active);
             }
 
             [TestCase(ValidAdminJwt, HttpStatusCode.OK, Description = "Admin can unarchive a unit.")]
@@ -524,8 +524,8 @@ namespace Integration
 
                 var actual = await db.Units.SingleOrDefaultAsync(u => u.Id == unitId);
 
-                Assert.NotNull(actual);
-                Assert.AreEqual(expectedActive, actual.Active);
+                Assert3.NotNull(actual);
+                Assert3.AreEqual(expectedActive, actual.Active);
             }
 
             [Test]
@@ -535,9 +535,9 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.Conflict);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-                Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains("Unit 1 has child units, with ids: 2, 3. These must be reassigned, deleted, or archived before this request can be completed.", actual.Errors);
-                Assert.AreEqual("(none)", actual.Details);
+                Assert3.AreEqual(1, actual.Errors.Count);
+                Assert3.Contains("Unit 1 has child units, with ids: 2, 3. These must be reassigned, deleted, or archived before this request can be completed.", actual.Errors);
+                Assert3.AreEqual("(none)", actual.Details);
             }
 
             [Test]
@@ -557,9 +557,9 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.Conflict);
                 var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-                Assert.AreEqual(1, actual.Errors.Count);
-                Assert.Contains("Unit 2 has a parent unit 1 that is archived. This parent unit must be unarchived before this request can be completed.", actual.Errors);
-                Assert.AreEqual("(none)", actual.Details);
+                Assert3.AreEqual(1, actual.Errors.Count);
+                Assert3.Contains("Unit 2 has a parent unit 1 that is archived. This parent unit must be unarchived before this request can be completed.", actual.Errors);
+                Assert3.AreEqual("(none)", actual.Details);
             }
 
             [Test]
@@ -573,13 +573,13 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 Unit actual = await GetUnitAndRelated(db, TestEntities.Units.ParksAndRecUnitId);
 
-                Assert.AreNotEqual(orig.Active, actual.Active);
+                Assert3.AreNotEqual(orig.Active, actual.Active);
 
-                Assert.AreEqual(orig.ParentId, actual.ParentId);
+                Assert3.AreEqual(orig.ParentId, actual.ParentId);
 
                 var am = actual.UnitMembers.Select(um => um.Id);
                 var om = orig.UnitMembers.Select(um => um.Id);
-                CollectionAssert.AreEqual(om, am, "Not all UnitMember relationshps are intact.");
+                Assert3.AreEqual(om, am, "Not all UnitMember relationshps are intact.");
 
                 // Person relationships are complex, so use a lambda to compare the items in the expected and actual collections.
                 // Make sure the UnitMember.Id and the person, their permission, and role have not changed.
@@ -652,9 +652,9 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<UnitResponse>>();
                 AssertIdsMatchContent(expectedChildIds, actual);
-                Assert.True(actual.All(a => a.ParentId == unitId));
-                Assert.True(actual.All(a => a.Parent != null));
-                Assert.True(actual.All(a => a.Parent.Id == unitId));
+                Assert3.IsTrue(actual.All(a => a.ParentId == unitId));
+                Assert3.IsTrue(actual.All(a => a.Parent != null));
+                Assert3.IsTrue(actual.All(a => a.Parent.Id == unitId));
             }
 
             [TestCase(ValidRswansonJwt, EntityPermissions.Get, Description = "As non-admin I can't create/delete units")]
@@ -747,7 +747,7 @@ namespace Integration
                 var resp = await GetAuthenticated($"units/{unitId}/members", requestor);
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<UnitMemberResponse>>();
-                Assert.AreEqual(expectNotesHidden, actual.All(a => string.IsNullOrWhiteSpace(a.Notes)));
+                Assert3.AreEqual(expectNotesHidden, actual.All(a => string.IsNullOrWhiteSpace(a.Notes)));
             }
 
             [TestCase(UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
@@ -808,10 +808,10 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<BuildingRelationshipResponse>>();
                 AssertIdsMatchContent(expectedRelationIds, actual);
-                Assert.True(actual.All(a => a.UnitId == unitId));
-                Assert.True(actual.All(a => a.Unit != null));
-                Assert.True(actual.All(a => a.Unit.Id == unitId));
-                Assert.True(actual.All(a => a.Building != null));
+                Assert3.IsTrue(actual.All(a => a.UnitId == unitId));
+                Assert3.IsTrue(actual.All(a => a.Unit != null));
+                Assert3.IsTrue(actual.All(a => a.Unit.Id == unitId));
+                Assert3.IsTrue(actual.All(a => a.Building != null));
             }
 
             [TestCase(UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]
@@ -884,11 +884,11 @@ namespace Integration
                 AssertStatusCode(resp, HttpStatusCode.OK);
                 var actual = await resp.Content.ReadAsAsync<List<SupportRelationshipResponse>>();
                 AssertIdsMatchContent(expectedRelationIds, actual);
-                Assert.True(actual.All(a => a.UnitId == unitId));
-                Assert.True(actual.All(a => a.Unit != null));
-                Assert.True(actual.All(a => a.Unit.Id == unitId));
-                Assert.True(actual.All(a => a.Department != null));
-                Assert.True(actual.All(a => a.SupportType != null));
+                Assert3.IsTrue(actual.All(a => a.UnitId == unitId));
+                Assert3.IsTrue(actual.All(a => a.Unit != null));
+                Assert3.IsTrue(actual.All(a => a.Unit.Id == unitId));
+                Assert3.IsTrue(actual.All(a => a.Department != null));
+                Assert3.IsTrue(actual.All(a => a.SupportType != null));
             }
 
             [TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, EntityPermissions.Get, Description = "Viewer")]

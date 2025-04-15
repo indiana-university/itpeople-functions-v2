@@ -25,7 +25,7 @@ namespace Integration
             var resp = await Http.GetAsync("people");
             AssertStatusCode(resp, HttpStatusCode.Unauthorized);
             var actual = await resp.Content.ReadAsAsync<ApiError>();
-            Assert.AreEqual(actual.Errors.First(), "Request is missing an Authorization header.");
+            Assert3.AreEqual(actual.Errors.First(), "Request is missing an Authorization header.");
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace Integration
             var resp = await Http.SendAsync(request);
             AssertStatusCode(resp, HttpStatusCode.Unauthorized);
             var actual = await resp.Content.ReadAsAsync<ApiError>();
-            Assert.AreEqual(actual.Errors.First(), "Request Authorization header scheme must be \"Bearer\"");
+            Assert3.AreEqual(actual.Errors.First(), "Request Authorization header scheme must be \"Bearer\"");
         }
 
         [TestCase("bearer", Description="scheme should be case-insensitive (lowercase)")]
@@ -48,7 +48,7 @@ namespace Integration
             var resp = await Http.SendAsync(request);
             AssertStatusCode(resp, HttpStatusCode.Unauthorized);
             var actual = await resp.Content.ReadAsAsync<ApiError>();
-            Assert.AreEqual(actual.Errors.First(), "Request Authorization header contains empty \"Bearer\" token.");
+            Assert3.AreEqual(actual.Errors.First(), "Request Authorization header contains empty \"Bearer\" token.");
         }
 
         [Test]
