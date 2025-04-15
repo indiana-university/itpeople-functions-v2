@@ -89,7 +89,7 @@ namespace Integration
     public class FunctionAppContainer : FunctionAppContainerBase
     {
         public FunctionAppContainer(TextWriter progress, TextWriter error) 
-            : base(progress, error, "integration-test-api:dev", $"integration-test-api", "Dockerfile.API", 8080)
+            : base(progress, error, "localhost/integration-test-api:dev", $"integration-test-api", "Dockerfile.API", 8080)
         {
         }
     }

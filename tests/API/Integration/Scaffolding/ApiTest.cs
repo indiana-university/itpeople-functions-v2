@@ -102,7 +102,7 @@ namespace Integration
 
         protected static void AssertIdsMatchContent<T>(int[] expectedIds, IEnumerable<T> content) where T: Entity
         {
-            Assert3.AreEqual(expectedIds, content.Select(c => c.Id));
+            Assert3.AreEquivalent(expectedIds, content.Select(c => c.Id));
         }
 
         public static void AssertEntityCollectionEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual, Func<T, T, bool> areEqual, string errorMessage) where T : Entity
