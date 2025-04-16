@@ -1,20 +1,21 @@
 ﻿@using RivetBlazor.Classes
 @using RivetBlazor.Components
+@using web.Shared
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject NavigationManager Navigation
 
 <Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
 	<Found Context="routeData">
-		<CascadingValue Value="@HeaderTitle">
+		<CascadingValue Value="@HeaderTitle" Name="HeaderTitle">
 			<CascadingValue Value="@NavLinks">
-				<RouteView RouteData="@routeData" DefaultLayout="@typeof(RivetMainLayout)" />
+				<RouteView RouteData="@routeData" DefaultLayout="@typeof(ItpMainLayout)" />
 			</CascadingValue>
 		</CascadingValue>
 	</Found>
 	<NotFound>
 		<CascadingValue Value="@HeaderTitle">
 			<CascadingValue Value="@NavLinks">
-				<LayoutView Layout="@typeof(RivetMainLayout)">
+				<LayoutView Layout="@typeof(ItpMainLayout)">
 					<p>Sorry, there's nothing at this address.</p>
 				</LayoutView>
 			</CascadingValue>
