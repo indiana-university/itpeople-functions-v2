@@ -45,8 +45,13 @@
 			NavLinks.Add(new HeaderLink("/Units", "Units"));
 			NavLinks.Add(new HeaderLink("/Search", "Search"));
 			ProfileLinks.Insert(0, new HeaderLink($"/People/{loggedInUser}", "Profile", "Manage your profile information"));
+			ProfileLinks.Add(new HeaderLink("/SignOut", "Log Out"));
+			NavLinks.Add(new HeaderProfile(loggedInUser, signInUrl, "/SignOut", ProfileLinks, null, isLoggedIn));
+		}
+		else
+		{
+			NavLinks.Add(new HeaderLink(signInUrl, "Log In"));
 		}
 
-		NavLinks.Add(new HeaderProfile(loggedInUser, signInUrl, "/SignOut", ProfileLinks, null, isLoggedIn));
 	}
 }
