@@ -8,16 +8,12 @@ namespace RivetBlazor.Classes
     // Preserved from an old release of RivetBlazor
     public class HeaderProfile : HeaderDropdown
     {
-        public HeaderProfile(string username, string loginUri, string logoutUri, IEnumerable<HeaderLink> links, string title = "", bool isLoggedIn = false, RenderFragment decoration = null) : base(username, links, title, "", decoration)
+        public HeaderProfile(string username, IEnumerable<HeaderLink> links, string title = "", bool isLoggedIn = false, RenderFragment decoration = null) : base(username, links, title, "", decoration)
         {
-            LoginUri = loginUri;
-            LogoutUri = logoutUri;
             IsLoggedIn = isLoggedIn;
         }
 
         public bool IsLoggedIn { get; set; }
-        public string LoginUri { get; set; }
-        public string LogoutUri { get; set; }
         public string Username { get; set; }
         public string Title { get; set; }
 
