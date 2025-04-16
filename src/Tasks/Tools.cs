@@ -98,15 +98,15 @@ namespace Tasks
                             new LdapSortControl(new LdapSortKey(LdapSortKey), true) // sorter
                         };
                         var constraints = new LdapSearchConstraints();
-                        constraints.setControls(controls);
+                        constraints.SetControls(controls);
                         // query the LDAP group membrship
-                        var search = ldap.Search(LdapSearchBase, LdapConnection.SCOPE_SUB, $"(memberOf={tool.ADPath})", new[]{LdapAttributeName}, false, constraints);
+                        var search = ldap.Search(LdapSearchBase, LdapConnection.ScopeSub, $"(memberOf={tool.ADPath})", new[]{LdapAttributeName}, false, constraints);
                         // Pull member netids from the results list. But LDAP is weird: it sends
                         // a linked list of results that wraps around on itself. We know we've
                         // reached the end of the list when we encounter a netid we've already seen.
-                        while (search.hasMore())
+                        while (search.HasMore())
                         {
-                            var netid = search.next().getAttribute(LdapAttributeName).StringValue;
+                            var netid = search.Next().GetAttribute(LdapAttributeName).StringValue;
                             if (members.Contains(netid))
                             {
                                 groupHasMoreMembers = false;
@@ -135,13 +135,13 @@ namespace Tasks
         public static Task AddToolGroupMember(TaskOrchestrationContext context, Tool tool, string netid)
         {
             Logging.GetLogger(nameof(AddToolGroupMember),new {tool=tool, netid=netid}).Information($"Add {netid} to group {tool.Name}.");
-            return Task.Run(()=>ModifyToolGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.ADD));
+            return Task.Run(()=>ModifyToolGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.Add));
         }
 
         public static Task RemoveToolGroupMember(TaskOrchestrationContext context, Tool tool, string netid)
         {
             Logging.GetLogger(nameof(RemoveToolGroupMember),new {tool=tool, netid=netid}).Information($"Remove {netid} from group {tool.Name}.");
-            return Task.Run(()=>ModifyToolGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.DELETE));
+            return Task.Run(()=>ModifyToolGroupMembership(context, netid, tool.Name, tool.ADPath, LdapModification.Delete));
         }
 
         private static void ModifyToolGroupMembership(TaskOrchestrationContext context, string netid, string name, string adPath, int action)

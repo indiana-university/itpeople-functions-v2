@@ -229,9 +229,9 @@ namespace API.Data
                 {
                     var userDn = $"cn={netId},ou=Accounts,dc=ads,dc=iu,dc=edu";
                     var result = ldap.Read(userDn);
-                    var attributes = result.getAttributeSet();
+                    var attributes = result.GetAttributeSet();
 
-                    if (attributes.getAttribute("title")?.StringValue == "group")
+                    if (attributes.GetAttribute("title")?.StringValue == "group")
                     {
                         return Pipeline.BadRequest($"\"{netId}\" is a group account. Group accounts should not be added to IT People.");
                     }
@@ -245,15 +245,15 @@ namespace API.Data
                     var adPerson = new HrPerson
                     {
                         Netid = netId,
-                        Name = $"{attributes.getAttribute("givenName")?.StringValue} {attributes.getAttribute("sn")?.StringValue}",
-                        NameFirst = $"{attributes.getAttribute("givenName")?.StringValue}",
-                        NameLast = $"{attributes.getAttribute("sn")?.StringValue}",
-                        Position = $"{attributes.getAttribute("title")?.StringValue}",
-                        Campus = $"{attributes.getAttribute("l")?.StringValue}",
-                        CampusPhone = $"{attributes.getAttribute("telephoneNumber")?.StringValue}",
-                        CampusEmail = $"{attributes.getAttribute("mail")?.StringValue}",
-                        HrDepartment = $"{attributes.getAttribute("division")?.StringValue}",
-                        HrDepartmentDescription = $"{attributes.getAttribute("department")?.StringValue}"
+                        Name = $"{attributes.GetAttribute("givenName")?.StringValue} {attributes.GetAttribute("sn")?.StringValue}",
+                        NameFirst = $"{attributes.GetAttribute("givenName")?.StringValue}",
+                        NameLast = $"{attributes.GetAttribute("sn")?.StringValue}",
+                        Position = $"{attributes.GetAttribute("title")?.StringValue}",
+                        Campus = $"{attributes.GetAttribute("l")?.StringValue}",
+                        CampusPhone = $"{attributes.GetAttribute("telephoneNumber")?.StringValue}",
+                        CampusEmail = $"{attributes.GetAttribute("mail")?.StringValue}",
+                        HrDepartment = $"{attributes.GetAttribute("division")?.StringValue}",
+                        HrDepartmentDescription = $"{attributes.GetAttribute("department")?.StringValue}"
                     };
 
                     return Pipeline.Success(adPerson);
