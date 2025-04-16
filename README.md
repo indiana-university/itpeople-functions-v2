@@ -50,7 +50,7 @@ If you want to work on the Web project, or just test an API endpoint directly, y
 
 Next you will need to create a local database container for the API to use. Run
 ```bash
-docker run -d -p 5434:5432 -e POSTGRES_USER=SA -e POSTGRES_PASSWORD=abcd1234@ --name itpeople-db-local postgres:11.7-alpine
+docker run -d -p 5434:5432 -e POSTGRES_USER=SA -e POSTGRES_PASSWORD=abcd1234@ --name itpeople-db-local postgres:14.9-alpine
 ```
 Breaking down the command
 * `docker run -d` - Create a new container that runs in the background
