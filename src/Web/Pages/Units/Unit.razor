@@ -201,43 +201,46 @@
 										@if (CurrentUnit.Parent != null)
 										{
 											<div class="rvt-m-bottom-xl">
-												<div class="rvt-grid">
-													<div class="rvt-grid__item-2-sm-up">
-														<svg width="100%" height="35" viewBox="0 0 41 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<g clip-path="url(#clip0)">
-																<rect width="41" height="35"></rect>
-																<rect x="15.3528" y="0.5" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
-																<rect x="15.3528" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
-																<rect x="30.2056" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
-																<rect x="0.5" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
-																<line x1="20.0001" y1="23.71" x2="20.0001" y2="11.2905" stroke="black"></line>
-																<path d="M35.585 24.1118V16.334H5.4151V24.1118" stroke="black"></path>
-															</g>
-															<defs>
-																<clipPath id="clip0">
-																	<rect width="41" height="35" fill="white"></rect>
-																</clipPath>
-															</defs>
-														</svg>
-													</div>
-													<div class="rvt-grid__item">
-														<a href="/units/@CurrentUnit.Parent.Id" class="rvt-m-bottom-remove rvt-text-bold">@CurrentUnit.Parent.Name</a>
-														@if (CurrentUnit.Parent.Active == false)
-														{
-															<span class="rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-left-xs rvt-ts-xs">Archived</span>
-														}
-														@if (string.IsNullOrWhiteSpace(CurrentUnit.Parent.Description) == false)
-														{
-															<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">@CurrentUnit.Parent.Description</p>
-														}
+												<div class="rvt-container">
+													<div class="rvt-row">
+														<div class="rvt-cols-2-md">
+															<svg width="100%" height="35" viewBox="0 0 41 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+																<g clip-path="url(#clip0)">
+																	<rect width="41" height="35"></rect>
+																	<rect x="15.3528" y="0.5" width="10.2944" height="10.2904" fill="#DF3603" stroke="black"></rect>
+																	<rect x="15.3528" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+																	<rect x="30.2056" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+																	<rect x="0.5" y="24.21" width="10.2944" height="10.2904" fill="#C4C4C4" stroke="black"></rect>
+																	<line x1="20.0001" y1="23.71" x2="20.0001" y2="11.2905" stroke="black"></line>
+																	<path d="M35.585 24.1118V16.334H5.4151V24.1118" stroke="black"></path>
+																</g>
+																<defs>
+																	<clipPath id="clip0">
+																		<rect width="41" height="35" fill="white"></rect>
+																	</clipPath>
+																</defs>
+															</svg>
+														</div>
+														<div class="rvt-cols">
+															<a href="/units/@CurrentUnit.Parent.Id" class="rvt-m-bottom-remove rvt-text-bold">@CurrentUnit.Parent.Name</a>
+															@if (CurrentUnit.Parent.Active == false)
+															{
+																<span class="rvt-inline-alert--standalone rvt-inline-alert--info rvt-m-left-xs rvt-ts-xs">Archived</span>
+															}
+															@if (string.IsNullOrWhiteSpace(CurrentUnit.Parent.Description) == false)
+															{
+																<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">@CurrentUnit.Parent.Description</p>
+															}
+														</div>
 													</div>
 												</div>
 											</div>
 										}
 										@foreach (var child in UnitChildren)
 										{
-											<div class="rvt-grid">
-												<div class="rvt-grid__item-2-sm-up">
+											<div class="rvt-container">
+												<div class="rvt-row">
+												<div class="rvt-cols-2-md">
 													<svg width="100%" height="35" viewBox="0 0 41 35" fill="none" xmlns="http://www.w3.org/2000/svg">
 														<g clip-path="url(#clip0)">
 															<rect width="41" height="35"></rect>
@@ -253,7 +256,7 @@
 														</defs>
 													</svg>
 												</div>
-												<div class="rvt-grid__item">
+												<div class="rvt-cols">
 													<div class="rvt-m-bottom-md">
 														<a href="/units/@child.Id" class="rvt-m-bottom-remove rvt-text-bold">@child.Name</a>
 														@if (child.Active == false)
@@ -268,13 +271,14 @@
 												</div>
 												@if (CanEditUnitChildren && EditMode)
 												{
-													<div class="rvt-grid__item rvt-text-right">
+													<div class="rvt-cols rvt-text-right">
 														<button class="rvt-button rvt-button--plain" title="Remove @child.Name" @onclick="@(async () => await RemoveChildUnit(child))">
 															<rvt-icon name="trash"></rvt-icon>
 															<span class="rvt-sr-only">Remove @child.Name</span>
 														</button>
 													</div>
 												}
+												</div>
 											</div>
 										}
 										@if (CanEditUnitChildren && EditMode)
@@ -302,30 +306,32 @@
 												@foreach (var supportRelationship in SupportRelationships)
 												{
 													<li>
-														<div class="rvt-grid">
-															<div class="rvt-grid__item">
-																<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
-															</div>
-															@if (CanEditSupportRelationships && EditMode)
-															{
-																<div class="rvt-grid__item rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
-																	<button class="rvt-button rvt-button--plain" title="Remove @supportRelationship.Department.Name" @onclick="@(async () => await RemoveSupportRelationship(supportRelationship))">
-																		<rvt-icon name="trash"></rvt-icon>
-																		<span class="rvt-sr-only">Remove @supportRelationship.Department.Name</span>
-																	</button>
+														<div class="rvt-container rvt-border-all rvt-border-radius-md rvt-p-all-xs">
+															<div class="rvt-row rvt-items-center">
+																<div class="rvt-cols">
+																	<a href="/departments/@supportRelationship.DepartmentId">@supportRelationship.Department.Name</a>
 																</div>
-															}
-														</div>
-														<div class="rvt-grid">
-															<div class="rvt-grid__item">
-																@if (supportRelationship.SupportType != null)
+																@if (CanEditSupportRelationships && EditMode)
 																{
-																	<div style="font-size:smaller;">@supportRelationship.SupportType.Name</div>
+																	<div class="rvt-cols rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
+																		<button class="rvt-button rvt-button--plain" title="Remove @supportRelationship.Department.Name" @onclick="@(async () => await RemoveSupportRelationship(supportRelationship))">
+																			<rvt-icon name="trash"></rvt-icon>
+																			<span class="rvt-sr-only">Remove @supportRelationship.Department.Name</span>
+																		</button>
+																	</div>
 																}
-																@if (supportRelationship.Department.Description != null)
-																{
-																	<div style="font-size:smaller;">@supportRelationship.Department.Description</div>
-																}
+															</div>
+															<div class="rvt-row">
+																<div class="rvt-cols">
+																	@if (supportRelationship.SupportType != null)
+																	{
+																		<div style="font-size:smaller;">@supportRelationship.SupportType.Name</div>
+																	}
+																	@if (supportRelationship.Department.Description != null)
+																	{
+																		<div style="font-size:smaller;">@supportRelationship.Department.Description</div>
+																	}
+																</div>
 															</div>
 														</div>
 													</li>
@@ -373,28 +379,30 @@
 												@foreach (var buildingRelationship in BuildingRelationships)
 												{
 													<li>
-														<div class="rvt-grid">
-															<div class="rvt-grid__item">
-																<a href="/buildings/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
+														<div class="rvt-container rvt-border-all rvt-border-radius-md rvt-p-all-xs">
+															<div class="rvt-row rvt-items-center">
+																<div class="rvt-cols">
+																	<a href="/buildings/@buildingRelationship.BuildingId">@buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</a>
+																</div>
+																@if (CanEditBuildingRelationships && EditMode)
+																{
+																	<div class="rvt-cols rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
+																		<button class="rvt-button rvt-button--plain" title="Remove @buildingRelationship.Building.Name (@buildingRelationship.Building.Code" @onclick="@(async () => await RemoveBuildingRelationship(buildingRelationship))">
+																			<rvt-icon name="trash"></rvt-icon>
+																			<span class="rvt-sr-only">Remove @buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</span>
+																		</button>
+																	</div>
+																}
 															</div>
-															@if (CanEditBuildingRelationships && EditMode)
+															@if (string.IsNullOrWhiteSpace(buildingRelationship.Building.Address) == false || string.IsNullOrWhiteSpace(buildingRelationship.Building.City) == false)
 															{
-																<div class="rvt-grid__item rvt-text-right" style="flex-grow: 0; min-width: 50px; text-align: right;">
-																	<button class="rvt-button rvt-button--plain" title="Remove @buildingRelationship.Building.Name (@buildingRelationship.Building.Code" @onclick="@(async () => await RemoveBuildingRelationship(buildingRelationship))">
-																		<rvt-icon name="trash"></rvt-icon>
-																		<span class="rvt-sr-only">Remove @buildingRelationship.Building.Name (@buildingRelationship.Building.Code)</span>
-																	</button>
+																<div class="rvt-row">
+																	<div class="rvt-cols">
+																		<span style="font-size:smaller;">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
+																	</div>
 																</div>
 															}
 														</div>
-														@if (string.IsNullOrWhiteSpace(buildingRelationship.Building.Address) == false || string.IsNullOrWhiteSpace(buildingRelationship.Building.City) == false)
-														{
-															<div class="rvt-grid">
-																<div class="rvt-grid__item">
-																	<span style="font-size:smaller;">@string.Join(", ", buildingRelationship.Building.Address, buildingRelationship.Building.City)</span>
-																</div>
-															</div>
-														}
 													</li>
 												}
 											</ul>
