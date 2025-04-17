@@ -124,8 +124,8 @@
 							</div>
 						}
 					</section>
-					<div class="rvt-grid">
-						<div class="rvt-grid__item-6-lg-up">
+					<div class="rvt-row">
+						<div class="rvt-cols-7-lg">
 							<div class="rvt-grid">
 								<div class="rvt-grid__item">
 									@if (CanEditUnitMembers && EditMode)
@@ -192,7 +192,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="rvt-grid__item--last rvt-grid__item-5-lg-up">
+						<div class="rvt-cols-5-lg">
 							@if (CurrentUnit.Parent != null || UnitChildren.Count > 0 || EditMode)
 							{
 								<Collapse>
@@ -298,7 +298,7 @@
 									<Content>
 										@if(SupportRelationships.Count > 0)
 										{
-											<ul class="rvt-list rvt-plain-list">
+											<ul class="rvt-list-plain">
 												@foreach (var supportRelationship in SupportRelationships)
 												{
 													<li>
@@ -369,7 +369,7 @@
 									<Content>
 										@if(BuildingRelationships.Count > 0)
 										{
-											<ul class="rvt-list rvt-plain-list">
+											<ul class="rvt-list-plain">
 												@foreach (var buildingRelationship in BuildingRelationships)
 												{
 													<li>
