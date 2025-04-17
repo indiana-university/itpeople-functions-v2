@@ -112,7 +112,7 @@
 							{
 								<div class="rvt-m-top-sm">@CurrentUnit.Description</div>
 							}
-							<div class="rvt-grid">
+							<div class="rvt-row">
 								@if (string.IsNullOrWhiteSpace(CurrentUnit.Url) == false)
 								{
 									<a href="@CurrentUnit.Url" class="rvt-button rvt-button--secondary rvt-m-left-xs rvt-m-top-md">Visit Website</a>
@@ -126,71 +126,67 @@
 					</section>
 					<div class="rvt-row">
 						<div class="rvt-cols-7-lg">
-							<div class="rvt-grid">
-								<div class="rvt-grid__item">
-									@if (CanEditUnitMembers && EditMode)
-									{
-										<section class="rvt-m-bottom-lg">
-											<a href=@($"/Units/{UnitId}/AddMember") class="rvt-button rvt-button--plain" title="Add Person">
-												<rvt-icon name="user-add"></rvt-icon>
-												<span>&nbsp; Add member</span>
-											</a>
-										</section>
-									}
-									@foreach (var roleDescription in RoleDescriptions)
-									{
-										var role = roleDescription.Role;
-										@if (EditMode || UnitMembers.Count(m => m.Role == role) > 0)
+							@if (CanEditUnitMembers && EditMode)
+							{
+								<section class="rvt-m-bottom-lg">
+									<a href=@($"/Units/{UnitId}/AddMember") class="rvt-button rvt-button--plain" title="Add Person">
+										<rvt-icon name="user-add"></rvt-icon>
+										<span>&nbsp; Add member</span>
+									</a>
+								</section>
+							}
+							@foreach (var roleDescription in RoleDescriptions)
+							{
+								var role = roleDescription.Role;
+								@if (EditMode || UnitMembers.Count(m => m.Role == role) > 0)
+								{
+									<section class="rvt-m-bottom-lg">
+										<h2 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h2>
+										@if (EditMode)
 										{
-											<section class="rvt-m-bottom-lg">
-												<h2 class="rvt-ts-20 rvt-ts-26-lg-up rvt-text-bold">@role.ToString() (@UnitMembers.Count(m => m.Role == role))</h2>
-												@if (EditMode)
-												{
-													<p>@roleDescription.Description</p>
-												}
-												@foreach (var member in UnitMembers.Where(m => m.Role == role))
-												{
-													<div class="rvt-p-all-sm">
-														<div class="rvt-border-bottom rvt-p-bottom-sm">
-															<div class="rvt-grid ">
-																<div class="rvt-grid__item" style="align-self: center;">
-																	<a href="/people/@member.Netid" class="rvt-m-bottom-remove rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
-																		<span>@member.Person.Name</span>
-																	</a>
-																	<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
-																		@member.Title
-																		@if (member.Percentage != 100)
-																		{
-																			<span style="padding-left:0.25rem">@member.Percentage% </span>
-																		}
-																	</p>
-																</div>
+											<p>@roleDescription.Description</p>
+										}
+										@foreach (var member in UnitMembers.Where(m => m.Role == role))
+										{
+											<div class="rvt-p-all-sm">
+												<div class="rvt-container rvt-border-bottom rvt-p-bottom-sm">
+													<div class="rvt-row">
+														<div class="rvt-cols" style="align-self: center;">
+															<a href="/people/@member.Netid" class="rvt-m-bottom-remove rvt-text-bold rvt-m-bottom-sm rvt-ts-18">
+																<span>@member.Person.Name</span>
+															</a>
+															<p class="rvt-ts-14 rvt-m-top-remove rvt-m-bottom-remove">
+																@member.Title
+																@if (member.Percentage != 100)
+																{
+																	<span style="padding-left:0.25rem">@member.Percentage% </span>
+																}
+															</p>
+														</div>
 
-																<div class="rvt-grid__item rvt-text-right">
-																	@if (CanEditMemberTools && EditMode)
-																	{
-																		<a href=@($"/Units/{UnitId}/EditMember/{member.Person.Netid}") class="rvt-button rvt-button--plain" title="Edit tool permissions for @member.Person.Name">
-																			<rvt-icon name="pencil"></rvt-icon>
-																			<span class="rvt-sr-only">Edit tool permissions for @member.Person.Name</span>
-																		</a>
-																	}
-																	@if (CanEditUnitMembers && EditMode)
-																	{
-																		<button class="rvt-button rvt-button--plain" title="Remove @member.Person.Name" @onclick="@(async () => await RemoveMember(member))">
-																			<rvt-icon name="trash"></rvt-icon>
-																			<span class="rvt-sr-only">Remove @member.Person.Name</span>
-																		</button>
-																	}
-																</div>
-															</div>
+														<div class="rvt-cols rvt-text-right">
+															@if (CanEditMemberTools && EditMode)
+															{
+																<a href=@($"/Units/{UnitId}/EditMember/{member.Person.Netid}") class="rvt-button rvt-button--plain" title="Edit tool permissions for @member.Person.Name">
+																	<rvt-icon name="pencil"></rvt-icon>
+																	<span class="rvt-sr-only">Edit tool permissions for @member.Person.Name</span>
+																</a>
+															}
+															@if (CanEditUnitMembers && EditMode)
+															{
+																<button class="rvt-button rvt-button--plain" title="Remove @member.Person.Name" @onclick="@(async () => await RemoveMember(member))">
+																	<rvt-icon name="trash"></rvt-icon>
+																	<span class="rvt-sr-only">Remove @member.Person.Name</span>
+																</button>
+															}
 														</div>
 													</div>
-												}
-											</section>
+												</div>
+											</div>
 										}
-									}
-								</div>
-							</div>
+									</section>
+								}
+							}
 						</div>
 						<div class="rvt-cols-5-lg">
 							@if (CurrentUnit.Parent != null || UnitChildren.Count > 0 || EditMode)
@@ -283,8 +279,8 @@
 										}
 										@if (CanEditUnitChildren && EditMode)
 										{
-											<div class="rvt-grid rvt-p-top-sm">
-												<div class="rvt-grid__item ">
+											<div class="rvt-row rvt-p-top-sm">
+												<div class="rvt-cols ">
 													<h3 class="rvt-border-top rvt-p-top-sm">Add New Child Unit</h3>
 													<EditForm EditContext="@ChildUnitAddContext">
 														<SuggestionButtons T="@UnitResponse" Label="Child Unit" Placeholder="Enter a search term" Description="Search by unit name." ButtonClickedAction="@AddChildUnit" AsyncSuggestionGetter="@GetChildUnitSuggestions" DisplayLambda=@(s => s.Name) />
@@ -340,8 +336,8 @@
 										}
 										@if (CanEditSupportRelationships && EditMode)
 										{
-											<div class="rvt-grid rvt-p-top-sm">
-												<div class="rvt-grid__item ">
+											<div class="rvt-row rvt-p-top-sm">
+												<div class="rvt-cols">
 													<h3 class="rvt-border-top rvt-p-top-sm">Add New Supported Department</h3>
 													<EditForm EditContext="@SupportRelationshipAddContext">
 														<RivetInputSelect @bind-Value="SupportRelationshipToAdd.SupportType" Label="Support Type" Description="" Options=SupportTypes DisplayLambda=@(r => r.Name) />
@@ -409,8 +405,8 @@
 										}
 										@if (CanEditBuildingRelationships && EditMode)
 										{
-											<div class="rvt-grid rvt-p-top-sm">
-												<div class="rvt-grid__item ">
+											<div class="rvt-row rvt-p-top-sm">
+												<div class="rvt-cols">
 													<h3 class="rvt-border-top rvt-p-top-sm">Add New Supported Building</h3>
 													<EditForm EditContext="@BuildingRelationshipAddContext">
 														<SuggestionButtons T="@Building" Label="Search" Placeholder="Enter a search term" Description="Search by building name, code, or address." ButtonClickedAction="@AddBuildingRelationship" AsyncSuggestionGetter="@GetBuildingRelationshipSuggestions" DisplayLambda=@BuildingRelationshipDisplayLamba />
