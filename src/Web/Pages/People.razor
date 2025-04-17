@@ -43,8 +43,8 @@
 
 			<DisplayException Ex=@GeneralException />
 			<Loader Loading=ShowLoader>
-				<div class="rvt-grid rvt-m-top-md">
-					<div class="rvt-grid__item-5-md-up">
+				<div class="rvt-row">
+					<div class="rvt-cols-4-md">
 						<EditForm EditContext="@EditContext" OnValidSubmit="SubmitForm">
 							<DataAnnotationsValidator />
 
@@ -65,7 +65,7 @@
 						</EditForm>
 					</div>
 
-					<div class="rvt-grid__item-7-md-up">
+					<div class="rvt-cols-7-md">
 						@if (PeopleList.Count() != 0)
 						{
 							<div class="rvt-grid rvt-p-bottom-lg">
@@ -90,11 +90,18 @@
 						}
 						else if (HasSearched && PeopleList.Count() == 0)
 						{
-							<div class="rvt-panel">
-								<p>
-									No people found matching those filters. You can make yourself easier to find by <a
-									href="/people/@LoggedInUser.Username">keeping your profile up to date.</a>
-								</p>
+							<div class="rvt-card">
+								<div class="rvt-card__body">
+									<h2 class="rvt-card__title">
+										No Matches
+									</h2>
+									<div class="rvt-card__content [ rvt-flow ]">
+									<p>
+										No people found matching those filters. You can make yourself easier to find by <a
+										href="/people/@LoggedInUser.Username">keeping your profile up to date.</a>
+									</p>
+									</div>
+								</div>
 							</div>
 						}
 					</div>
