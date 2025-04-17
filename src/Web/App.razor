@@ -8,7 +8,9 @@
 	<Found Context="routeData">
 		<CascadingValue Value="@HeaderTitle" Name="HeaderTitle">
 			<CascadingValue Value="@NavLinks">
-				<RouteView RouteData="@routeData" DefaultLayout="@typeof(ItpMainLayout)" />
+				<CascadingValue Value="@PrivacyNoticeUrl" Name="PrivacyNoticeUrl">
+					<RouteView RouteData="@routeData" DefaultLayout="@typeof(ItpMainLayout)" />
+				</CascadingValue>
 			</CascadingValue>
 		</CascadingValue>
 	</Found>
@@ -24,6 +26,7 @@
 </Router>
 @code{
 	public string HeaderTitle = "IT People";
+	public string PrivacyNoticeUrl = "/privacy";
 	public List<AbstractHeaderItem> NavLinks = new List<AbstractHeaderItem>();
 	private List<HeaderLink> ProfileLinks = new List<HeaderLink>();
 	private AuthenticatedUser User = null;
