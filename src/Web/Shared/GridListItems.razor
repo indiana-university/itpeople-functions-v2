@@ -1,7 +1,8 @@
 @typeparam T
 @implements IDisposable;
 
-<div class="rvt-grid">
+<div class="rvt-container-xl">
+	<div class="rvt-row">
 	@if(Collection == null || Collection.Count() == 0)
 	{
 		<p><em>No Results</em></p>
@@ -10,7 +11,7 @@
 	{
 		@foreach(var item in Collection)
 		{
-			<div class="rvt-grid__item-5-md-up rvt-p-bottom-lg">
+			<div class="rvt-cols-5-md rvt-p-bottom-lg">
 				<a class="rvt-link-bold" href=@LinkUri(item)>@LinkText(item)</a>
 				@if(Archived(item))
 				{
@@ -20,6 +21,7 @@
 			</div>
 		}
 	}
+	</div>
 </div>
 
 @code
