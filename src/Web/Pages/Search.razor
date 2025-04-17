@@ -24,11 +24,11 @@
 		<Authenticated>
 			<EditForm EditContext="@FormContext" OnValidSubmit="SubmitForm">
 				<DataAnnotationsValidator />
-				<div class="rvt-grid rvt-items-center rvt-justify-center">
-					<div class="rvt-grid__item">
+				<div class="rvt-row rvt-items-top rvt-justify-center">
+					<div class="rvt-cols">
 						<RivetInputText @bind-Value="Q" Label="Search Term" Description="Enter a search term it can match any Person, Unit, Department, or Building." Disabled=@(ShowLoader) />
 					</div>
-					<div class="rvt-grid__item-lg">
+					<div class="rvt-cols rvt-p-top-md">
 						<button type="submit" class="rvt-button rvt-m-top-md" disabled="@(FormInvalid || ShowLoader)">
 							<rvt-icon name="magnifying-glass" />
 							<span class="rvt-sr-only">magnifying-glass</span>

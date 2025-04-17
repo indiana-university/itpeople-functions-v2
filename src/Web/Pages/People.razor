@@ -26,8 +26,8 @@
 			</p>
 		</NotAuthenticated>
 		<Authenticated>
-			<div class="rvt-grid">
-				<div class="rvt-grid__item">
+			<div class="rvt-row">
+				<div class="rvt-cols">
 					<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">IT People</h1>
 					<p>Use the filters below to find IT People based on their role within a unit, their job
 						classification, and/or campus.</p>
@@ -68,7 +68,7 @@
 					<div class="rvt-cols-7-md">
 						@if (PeopleList.Count() != 0)
 						{
-							<div class="rvt-grid rvt-p-bottom-lg">
+							<div class="rvt-row rvt-p-bottom-lg">
 								<button type="button" class="rvt-button" @onclick="ExportResultsToCSV">
 									<rvt-icon name="download" />
 									<span class="rvt-m-left-xs">Export results to CSV</span>
@@ -77,7 +77,7 @@
 
 							@foreach (var person in PeopleList)
 							{
-								<div class="rvt-grid rvt-p-bottom-md">
+								<div class="rvt-row rvt-p-bottom-md">
 									<div>
 										<a href="/people/@person.Netid" class="rvt-link-bold">@person.Name</a> (<a
 									href="mailto:@person.CampusEmail">@person.Netid</a>)
