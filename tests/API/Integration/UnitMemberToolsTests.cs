@@ -49,9 +49,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<MemberToolResponse>();
 				var expected = TestEntities.MemberTools.AdminMemberTool;
-				Assert.AreEqual(expected.Id, actual.Id);
-				Assert.AreEqual(expected.MembershipId, actual.MembershipId);
-				Assert.AreEqual(expected.ToolId, actual.ToolId);
+				Assert3.AreEqual(expected.Id, actual.Id);
+				Assert3.AreEqual(expected.MembershipId, actual.MembershipId);
+				Assert3.AreEqual(expected.ToolId, actual.ToolId);
 			}
 
 			[TestCase(ValidRswansonJwt, TestEntities.MemberTools.RonHammerId, PermsGroups.All, TestName="Ron1", Description="As Ron (owner) I can manage Ron's tools")]
@@ -247,9 +247,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.Created);
 				var actual = await resp.Content.ReadAsAsync<MemberToolResponse>();
 
-				Assert.NotZero(actual.Id);
-				Assert.AreEqual(req.MembershipId, actual.MembershipId);
-				Assert.AreEqual(req.ToolId, actual.ToolId);
+				Assert3.NotZero(actual.Id);
+				Assert3.AreEqual(req.MembershipId, actual.MembershipId);
+				Assert3.AreEqual(req.ToolId, actual.ToolId);
 			}
 			
 			[Test]
@@ -288,7 +288,7 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.NotFound);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.Contains(expectedError, actual.Errors);
+				Assert3.Contains(expectedError, actual.Errors);
 			}
 			
 			[Test]
@@ -302,9 +302,9 @@ namespace Integration
 				var resp = await PostAuthenticated("membertools", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains("The provided member already has access to the provided tool.", actual.Errors);
+				Assert3.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains("The provided member already has access to the provided tool.", actual.Errors);
 			}
 
 			[Test]
@@ -320,9 +320,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains(ArchivedUnitError, actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains(ArchivedUnitError, actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 		}
 
@@ -343,9 +343,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<MemberToolResponse>();
 
-				Assert.AreEqual(req.Id, actual.Id);
-				Assert.AreEqual(req.MembershipId, actual.MembershipId);
-				Assert.AreEqual(req.ToolId, actual.ToolId);
+				Assert3.AreEqual(req.Id, actual.Id);
+				Assert3.AreEqual(req.MembershipId, actual.MembershipId);
+				Assert3.AreEqual(req.ToolId, actual.ToolId);
 			}
 
 			[Test(Description = "The MemberToolId in the URL does not match the Id in the body.")]
@@ -361,7 +361,7 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.Contains("The memberToolId in the URL does not match the id in the request body.", actual.Errors);
+				Assert3.Contains("The memberToolId in the URL does not match the id in the request body.", actual.Errors);
 			}
 			
 			[Test]
@@ -376,7 +376,7 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual(1, actual.Errors.Count);
+				Assert3.AreEqual(1, actual.Errors.Count);
 			}
 			
 			[Test]
@@ -406,7 +406,7 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.NotFound);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.Contains(expectedError, actual.Errors);
+				Assert3.Contains(expectedError, actual.Errors);
 			}
 			
 			[Test]
@@ -438,9 +438,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains(ArchivedUnitError, actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains(ArchivedUnitError, actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 
             [Test]
@@ -500,9 +500,9 @@ namespace Integration
 				
 				var db = Database.PeopleContext.Create(Database.PeopleContext.LocalDatabaseConnectionString);
 				
-				Assert.IsEmpty(db.MemberTools.Where(mt => mt.MembershipId == TestEntities.UnitMembers.RSwansonLeaderId));
-				Assert.IsEmpty(db.MemberTools.Where(mt => mt.Tool == null));
-				Assert.IsEmpty(db.MemberTools.Where(mt => mt.UnitMember == null));
+				Assert3.IsEmpty(db.MemberTools.Where(mt => mt.MembershipId == TestEntities.UnitMembers.RSwansonLeaderId));
+				Assert3.IsEmpty(db.MemberTools.Where(mt => mt.Tool == null));
+				Assert3.IsEmpty(db.MemberTools.Where(mt => mt.UnitMember == null));
 			}
 			*/
         }

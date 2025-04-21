@@ -71,7 +71,7 @@ a.rvt-button--plain {
 }
 
 /* Contrast */
-a:not(.rvt-button) {
+a:not(.rvt-button, .rvt-lockup, .rvt-footer-base__link) {
     color: #005D8F !important;
 }
 

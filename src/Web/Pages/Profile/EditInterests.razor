@@ -11,12 +11,12 @@
 <PageTitle>Edit Interests</PageTitle>
 <br/>
 <div class="rvt-container" style="max-width: 1440px; margin: auto;">
-	<div class="rvt-grid">
-		<div class="rvt-grid__item">
+	<div class="rvt-row">
+		<div class="rvt-cols">
 		   <nav class="">
 				<ol class="rvt-breadcrumbs">
 					<li aria-current="page">
-						<ul class="rvt-list rvt-plain-list rvt-inline-list">
+						<ul class="rvt-list-inline">
 							<li><a href="/">Home</a></li>
 							<li>Profiles</li>
 							<li><a href="/People/@NetId">@ProfileName</a></li>
@@ -48,7 +48,7 @@
 						<DataAnnotationsValidator />
 						<ValidationSummary />
 						<br />
-						<ul class="rvt-list rvt-plain-list rvt-inline-list">
+						<ul class="rvt-list-inline">
 							@foreach (var Interest in ExpertiseAsList)
 							{
 								<li>

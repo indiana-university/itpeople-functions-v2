@@ -19,7 +19,7 @@ namespace Integration
 				var resp = await GetAuthenticated("departments");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Department>>();
-				Assert.AreEqual(3, actual.Count);
+				Assert3.AreEqual(3, actual.Count);
 			}
 
 			[TestCase("Parks Department", Description = "Name match")]
@@ -29,9 +29,9 @@ namespace Integration
 				var resp = await GetAuthenticated($"departments?q={name}");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Department>>();
-				Assert.AreEqual(1, actual.Count);
-				Assert.AreEqual(TestEntities.Departments.Parks.Id, actual.Single().Id);
-				Assert.AreEqual(TestEntities.Departments.Parks.Name, actual.Single().Name);
+				Assert3.AreEqual(1, actual.Count);
+				Assert3.AreEqual(TestEntities.Departments.Parks.Id, actual.Single().Id);
+				Assert3.AreEqual(TestEntities.Departments.Parks.Name, actual.Single().Name);
 			}
 
 			[TestCase("Your local Parks department.", Description = "Description match")]
@@ -41,9 +41,9 @@ namespace Integration
 				var resp = await GetAuthenticated($"departments?q={code}");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Department>>();
-				Assert.AreEqual(1, actual.Count);
-				Assert.AreEqual(TestEntities.Departments.Parks.Id, actual.Single().Id);
-				Assert.AreEqual(TestEntities.Departments.Parks.Description, actual.Single().Description);
+				Assert3.AreEqual(1, actual.Count);
+				Assert3.AreEqual(TestEntities.Departments.Parks.Id, actual.Single().Id);
+				Assert3.AreEqual(TestEntities.Departments.Parks.Description, actual.Single().Description);
 			}
 
 			[Test]
@@ -52,7 +52,7 @@ namespace Integration
 				var resp = await GetAuthenticated("Departments?q=foo");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Department>>();
-				Assert.AreEqual(0, actual.Count);
+				Assert3.AreEqual(0, actual.Count);
 			}
 
 			[TestCase("0", 3)]
@@ -64,7 +64,7 @@ namespace Integration
 				var resp = await GetAuthenticated($"Departments?_limit={limit}");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Department>>();
-				Assert.AreEqual(expectedRecords, actual.Count);
+				Assert3.AreEqual(expectedRecords, actual.Count);
 			}
 		}
 		public class GetOne : ApiTest
@@ -84,9 +84,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<Department>();
 				var expected = TestEntities.Departments.Parks;
-				Assert.AreEqual(expected.Id, actual.Id);
-				Assert.AreEqual(expected.Name, actual.Name);
-				Assert.AreEqual(expected.Description, actual.Description);
+				Assert3.AreEqual(expected.Id, actual.Id);
+				Assert3.AreEqual(expected.Name, actual.Name);
+				Assert3.AreEqual(expected.Description, actual.Description);
 			}
 
             [Test]
@@ -165,8 +165,8 @@ namespace Integration
 				var resp = await GetAuthenticated($"departments/{TestEntities.Departments.Auditor.Id}/memberUnits");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<Unit>>();
-				Assert.AreEqual(1, actual.Count);
-				Assert.True(actual.Any(u => u.Id.Equals(TestEntities.Units.AuditorId)));
+				Assert3.AreEqual(1, actual.Count);
+				Assert3.IsTrue(actual.Any(u => u.Id.Equals(TestEntities.Units.AuditorId)));
 			}
 
             [Test]

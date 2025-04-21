@@ -1,20 +1,23 @@
 ﻿@using RivetBlazor.Classes
 @using RivetBlazor.Components
+@using web.Shared
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject NavigationManager Navigation
 
 <Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
 	<Found Context="routeData">
-		<CascadingValue Value="@HeaderTitle">
+		<CascadingValue Value="@HeaderTitle" Name="HeaderTitle">
 			<CascadingValue Value="@NavLinks">
-				<RouteView RouteData="@routeData" DefaultLayout="@typeof(RivetMainLayout)" />
+				<CascadingValue Value="@PrivacyNoticeUrl" Name="PrivacyNoticeUrl">
+					<RouteView RouteData="@routeData" DefaultLayout="@typeof(ItpMainLayout)" />
+				</CascadingValue>
 			</CascadingValue>
 		</CascadingValue>
 	</Found>
 	<NotFound>
 		<CascadingValue Value="@HeaderTitle">
 			<CascadingValue Value="@NavLinks">
-				<LayoutView Layout="@typeof(RivetMainLayout)">
+				<LayoutView Layout="@typeof(ItpMainLayout)">
 					<p>Sorry, there's nothing at this address.</p>
 				</LayoutView>
 			</CascadingValue>
@@ -23,7 +26,8 @@
 </Router>
 @code{
 	public string HeaderTitle = "IT People";
-	public List<IHeaderItem> NavLinks = new List<IHeaderItem>();
+	public string PrivacyNoticeUrl = "/privacy";
+	public List<AbstractHeaderItem> NavLinks = new List<AbstractHeaderItem>();
 	private List<HeaderLink> ProfileLinks = new List<HeaderLink>();
 	private AuthenticatedUser User = null;
 	private string AuthenticationDestination;
@@ -37,15 +41,20 @@
 		var signInUrl = $"/SignIn?Destination={System.Net.WebUtility.UrlEncode(AuthenticationDestination)}";
 		
 		// Build up NavLinks.
-		NavLinks = new List<IHeaderItem>();
+		NavLinks = new List<AbstractHeaderItem>();
 		if(isLoggedIn)
 		{
 			NavLinks.Add(new HeaderLink("/People", "People"));
 			NavLinks.Add(new HeaderLink("/Units", "Units"));
 			NavLinks.Add(new HeaderLink("/Search", "Search"));
 			ProfileLinks.Insert(0, new HeaderLink($"/People/{loggedInUser}", "Profile", "Manage your profile information"));
+			ProfileLinks.Add(new HeaderLink("/SignOut", "Log Out"));
+			NavLinks.Add(new HeaderProfile(loggedInUser, ProfileLinks, null, isLoggedIn));
+		}
+		else
+		{
+			NavLinks.Add(new HeaderLink(signInUrl, "Log In"));
 		}
 
-		NavLinks.Add(new HeaderProfile(loggedInUser, signInUrl, "/SignOut", ProfileLinks, null, isLoggedIn));
 	}
 }

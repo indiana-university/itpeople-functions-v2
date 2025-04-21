@@ -19,8 +19,8 @@ namespace Unit
         {
             var dict = new Dictionary<string,Microsoft.Extensions.Primitives.StringValues> {{"interest", query}};
             var result = PeopleSearchParameters.Parse(dict);
-            Assert.True(result.IsSuccess);
-            Assert.AreEqual(expected, result.Value.Expertise);
+            Assert3.IsTrue(result.IsSuccess);
+            Assert3.AreEqual(expected, result.Value.Expertise);
         }
     }
 }

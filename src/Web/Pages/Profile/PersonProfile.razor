@@ -33,7 +33,7 @@
 				{
 					<div class="rvt-bg-white">
 						<div class="rvt-container" style="max-width: 1440px; margin: auto;">
-							<div class="rvt-grid rvt-p-top-lg" data-testid="profile-page">
+							<div class="rvt-row rvt-p-top-lg" data-testid="profile-page">
 								<ProfileContactInformation Title="Contact Information">
 									<ChildContent>
 										<div class="rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg">
@@ -60,14 +60,14 @@
 											@foreach (var unit in ProfileUnits)
 											{
 												<div class="@((unit.Id != ProfileUnits.Last().Id) ? "rvt-border-bottom rvt-m-bottom-lg rvt-p-bottom-lg" : "")">
-													<div class="rvt-grid">
-														<div class="rvt-grid__item">
+													<div class="rvt-row">
+														<div class="rvt-cols">
 															<a href="/units/@unit.Id"><h2 class="rvt-ts-23 rvt-text-bold">@unit.Name</h2></a>
 															<div class="rvt-m-bottom-sm">@unit.Description</div>
 														</div>
 													</div>
-													<div class="rvt-grid">
-														<div class="rvt-grid__item">
+													<div class="rvt-row">
+														<div class="rvt-cols">
 															<DisplayUnitRole Unit=unit Memberships=Memberships />
 														</div>
 													</div>

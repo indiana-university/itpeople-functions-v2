@@ -20,7 +20,7 @@
 		<p>What kinds of work do you do on a day-to-day basis?</p>
 		@foreach (var item in Person.Responsibilities.ToString().Split(',').Select(r => r.Trim()))
 		{
-			<ul class="rvt-list rvt-plain-list">
+			<ul class="rvt-list-plain">
 				<li>@GetEnumDisplayName(item)</li>
 			</ul>
 		}

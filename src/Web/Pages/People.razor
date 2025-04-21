@@ -26,8 +26,8 @@
 			</p>
 		</NotAuthenticated>
 		<Authenticated>
-			<div class="rvt-grid">
-				<div class="rvt-grid__item">
+			<div class="rvt-row">
+				<div class="rvt-cols">
 					<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">IT People</h1>
 					<p>Use the filters below to find IT People based on their role within a unit, their job
 						classification, and/or campus.</p>
@@ -43,8 +43,8 @@
 
 			<DisplayException Ex=@GeneralException />
 			<Loader Loading=ShowLoader>
-				<div class="rvt-grid rvt-m-top-md">
-					<div class="rvt-grid__item-5-md-up">
+				<div class="rvt-row">
+					<div class="rvt-cols-4-md">
 						<EditForm EditContext="@EditContext" OnValidSubmit="SubmitForm">
 							<DataAnnotationsValidator />
 
@@ -65,10 +65,10 @@
 						</EditForm>
 					</div>
 
-					<div class="rvt-grid__item-7-md-up">
+					<div class="rvt-cols-7-md">
 						@if (PeopleList.Count() != 0)
 						{
-							<div class="rvt-grid rvt-p-bottom-lg">
+							<div class="rvt-row rvt-p-bottom-lg">
 								<button type="button" class="rvt-button" @onclick="ExportResultsToCSV">
 									<rvt-icon name="download" />
 									<span class="rvt-m-left-xs">Export results to CSV</span>
@@ -77,7 +77,7 @@
 
 							@foreach (var person in PeopleList)
 							{
-								<div class="rvt-grid rvt-p-bottom-md">
+								<div class="rvt-row rvt-p-bottom-md">
 									<div>
 										<a href="/people/@person.Netid" class="rvt-link-bold">@person.Name</a> (<a
 									href="mailto:@person.CampusEmail">@person.Netid</a>)
@@ -90,11 +90,18 @@
 						}
 						else if (HasSearched && PeopleList.Count() == 0)
 						{
-							<div class="rvt-panel">
-								<p>
-									No people found matching those filters. You can make yourself easier to find by <a
-									href="/people/@LoggedInUser.Username">keeping your profile up to date.</a>
-								</p>
+							<div class="rvt-card">
+								<div class="rvt-card__body">
+									<h2 class="rvt-card__title">
+										No Matches
+									</h2>
+									<div class="rvt-card__content [ rvt-flow ]">
+									<p>
+										No people found matching those filters. You can make yourself easier to find by <a
+										href="/people/@LoggedInUser.Username">keeping your profile up to date.</a>
+									</p>
+									</div>
+								</div>
 							</div>
 						}
 					</div>

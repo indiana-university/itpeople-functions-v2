@@ -19,12 +19,12 @@ namespace Integration
             var resp = await GetAnonymous("LspdbWebService.svc/LspList");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var actual = await DeserializeXml<LspInfoArray>(resp);
-            Assert.NotNull(actual);
-            Assert.NotNull(actual.LspInfos);
+            Assert3.NotNull(actual);
+            Assert3.NotNull(actual.LspInfos);
             // Parks and Rec has a support relationship with one or more departments, so all Parks and Rec
             // staffers are considered LSPs. They will have the "LA" flag if they are in the Leader or Sublead roles.
-            Assert.AreEqual(1, actual.LspInfos.Length);
-            Assert.True(actual.LspInfos.Any(i => i.NetworkID == TestEntities.People.ServiceAdmin.Netid && i.IsLA == true));
+            Assert3.AreEqual(1, actual.LspInfos.Length);
+            Assert3.IsTrue(actual.LspInfos.Any(i => i.NetworkID == TestEntities.People.ServiceAdmin.Netid && i.IsLA == true));
         }
 
         [TestCase("lknope", new string[0])]
@@ -37,11 +37,11 @@ namespace Integration
             var resp = await GetAnonymous($"LspdbWebService.svc/LspDepartments/{netid}");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var actual = await DeserializeXml<LspDepartmentArray>(resp);
-            Assert.NotNull(actual);
-            Assert.AreEqual(netid, actual.NetworkID);
-            Assert.NotNull(actual.DeptCodeList);
-            Assert.AreEqual(expectedDepartments.Length, actual.DeptCodeList.A.Count());
-            CollectionAssert.AreEquivalent(expectedDepartments, actual.DeptCodeList.A);
+            Assert3.NotNull(actual);
+            Assert3.AreEqual(netid, actual.NetworkID);
+            Assert3.NotNull(actual.DeptCodeList);
+            Assert3.AreEqual(expectedDepartments.Length, actual.DeptCodeList.A.Count());
+            Assert3.AreEqual(expectedDepartments, actual.DeptCodeList.A);
         }
 
         [Test]
@@ -50,9 +50,9 @@ namespace Integration
             var resp = await GetAnonymous($"LspdbWebService.svc/LspDepartments/ jOhnDOE  ");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var actual = await DeserializeXml<LspDepartmentArray>(resp);
-            Assert.NotNull(actual);
-            Assert.AreEqual("johndoe", actual.NetworkID);
-            Assert.AreEqual(2, actual.DeptCodeList.A.Count());
+            Assert3.NotNull(actual);
+            Assert3.AreEqual("johndoe", actual.NetworkID);
+            Assert3.AreEqual(2, actual.DeptCodeList.A.Count());
         }
 
         [Test]
@@ -63,15 +63,15 @@ namespace Integration
             
             var responseString = await resp.Content.ReadAsStringAsync();
             var deptCodeTag = Regex.Escape("<DeptCodeList>");
-            Assert.AreEqual(1, Regex.Matches(responseString, deptCodeTag).Count());
+            Assert3.AreEqual(1, Regex.Matches(responseString, deptCodeTag).Count());
             
             var aTag = Regex.Escape("<a>");
-            Assert.AreEqual(2, Regex.Matches(responseString, aTag).Count());
+            Assert3.AreEqual(2, Regex.Matches(responseString, aTag).Count());
             
             var actual = await DeserializeXml<LspDepartmentArray>(resp);
-            Assert.NotNull(actual);
-            Assert.AreEqual("johndoe", actual.NetworkID);
-            Assert.AreEqual(2, actual.DeptCodeList.A.Count());
+            Assert3.NotNull(actual);
+            Assert3.AreEqual("johndoe", actual.NetworkID);
+            Assert3.AreEqual(2, actual.DeptCodeList.A.Count());
         }
 
         [TestCase(TestEntities.Departments.ParksName, new string[]{"johndoe"})]
@@ -84,11 +84,11 @@ namespace Integration
             var resp = await GetAnonymous($"LspdbWebService.svc/LspsInDept/{department}");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var actual = await DeserializeXml<LspContactArray>(resp);
-            Assert.NotNull(actual);
-            Assert.NotNull(actual.LspContacts);
-            Assert.AreEqual(expectedDepartments.Length, actual.LspContacts.Count());
+            Assert3.NotNull(actual);
+            Assert3.NotNull(actual.LspContacts);
+            Assert3.AreEqual(expectedDepartments.Length, actual.LspContacts.Count());
             var actualDepartments = actual.LspContacts.Select(c => c.NetworkID);
-            CollectionAssert.AreEquivalent(expectedDepartments, actualDepartments);
+            Assert3.AreEqual(expectedDepartments, actualDepartments);
         }
 
         private async Task<LspContact> GetParksLsps()
@@ -96,8 +96,8 @@ namespace Integration
             var resp = await GetAnonymous($"LspdbWebService.svc/LspsInDept/{TestEntities.Departments.ParksName}");
             AssertStatusCode(resp, HttpStatusCode.OK);
             var arr = await DeserializeXml<LspContactArray>(resp);
-            Assert.NotNull(arr);
-            Assert.NotNull(arr.LspContacts);
+            Assert3.NotNull(arr);
+            Assert3.NotNull(arr.LspContacts);
             var expected = TestEntities.People.ServiceAdmin;
             return arr.LspContacts.SingleOrDefault(c => c.NetworkID == expected.Netid);
         }
@@ -107,12 +107,12 @@ namespace Integration
         {
             var expected = TestEntities.People.ServiceAdmin;
             var actual = await GetParksLsps();
-            Assert.AreEqual(expected.CampusPhone, actual.Phone);
-            Assert.AreEqual(expected.CampusEmail, actual.Email);
-            Assert.AreEqual(TestEntities.Units.CityOfPawnee.Email ?? expected.CampusEmail, actual.PreferredEmail);
-            Assert.AreEqual(expected.Name, actual.FullName);
-            Assert.AreEqual(TestEntities.Units.CityOfPawnee.Email, actual.GroupInternalEmail);
-            Assert.True(actual.IsLSPAdmin);
+            Assert3.AreEqual(expected.CampusPhone, actual.Phone);
+            Assert3.AreEqual(expected.CampusEmail, actual.Email);
+            Assert3.AreEqual(TestEntities.Units.CityOfPawnee.Email ?? expected.CampusEmail, actual.PreferredEmail);
+            Assert3.AreEqual(expected.Name, actual.FullName);
+            Assert3.AreEqual(TestEntities.Units.CityOfPawnee.Email, actual.GroupInternalEmail);
+            Assert3.IsTrue(actual.IsLSPAdmin);
         }
 
         [TestCase(null, TestEntities.People.ServiceAdminEmail)]
@@ -125,7 +125,7 @@ namespace Integration
             await db.SaveChangesAsync();
 
             var actual = await GetParksLsps();
-            Assert.AreEqual(expectedEmail, actual.PreferredEmail);
+            Assert3.AreEqual(expectedEmail, actual.PreferredEmail);
         }
 
 

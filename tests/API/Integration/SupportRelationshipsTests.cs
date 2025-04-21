@@ -22,7 +22,7 @@ namespace Integration
 				var resp = await GetAuthenticated("supportRelationships");
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<SupportRelationshipResponse>>();
-				Assert.AreEqual(2, actual.Count);
+				Assert3.AreEqual(2, actual.Count);
 			}
 		}
 
@@ -42,10 +42,10 @@ namespace Integration
 				var resp = await GetAuthenticated($"supportRelationships/{TestEntities.SupportRelationships.ParksAndRecRelationshipId}");
 				var actual = await resp.Content.ReadAsAsync<SupportRelationshipResponse>();
 				var expected = TestEntities.SupportRelationships.ParksAndRecRelationship;
-				Assert.AreEqual(expected.Id, actual.Id);
-				Assert.AreEqual(expected.Department.Id, actual.Department.Id);
-				Assert.AreEqual(expected.Unit.Id, actual.Unit.Id);
-				Assert.AreEqual(expected.SupportType.Id, actual.SupportType.Id);
+				Assert3.AreEqual(expected.Id, actual.Id);
+				Assert3.AreEqual(expected.Department.Id, actual.Department.Id);
+				Assert3.AreEqual(expected.Unit.Id, actual.Unit.Id);
+				Assert3.AreEqual(expected.SupportType.Id, actual.SupportType.Id);
 			}
 
             [Test]
@@ -80,10 +80,10 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.Created);
 				var actual = await resp.Content.ReadAsAsync<SupportRelationship>();
 
-				Assert.NotZero(actual.Id);
-				Assert.AreEqual(FireAuditor.UnitId, actual.Unit.Id);
-				Assert.AreEqual(FireAuditor.DepartmentId, actual.Department.Id);
-				Assert.AreEqual(FireAuditor.SupportTypeId, actual.SupportType.Id);
+				Assert3.NotZero(actual.Id);
+				Assert3.AreEqual(FireAuditor.UnitId, actual.Unit.Id);
+				Assert3.AreEqual(FireAuditor.DepartmentId, actual.Department.Id);
+				Assert3.AreEqual(FireAuditor.SupportTypeId, actual.SupportType.Id);
 			}
 
 
@@ -98,10 +98,10 @@ namespace Integration
 				var resp = await PostAuthenticated("supportRelationships", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains("The request body was malformed, the unitId, departmentId, and/or supportTypeId field was missing or invalid.", actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual((int)HttpStatusCode.BadRequest, actual.StatusCode);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains("The request body was malformed, the unitId, departmentId, and/or supportTypeId field was missing or invalid.", actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 
 			//403 unauthorized
@@ -126,7 +126,7 @@ namespace Integration
 				var resp = await PostAuthenticated($"supportRelationships", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
+				Assert3.AreEqual((int)HttpStatusCode.NotFound, actual.StatusCode);
 			}
 
 			//409
@@ -141,9 +141,9 @@ namespace Integration
 				var resp = await PostAuthenticated("supportRelationships", req, ValidAdminJwt);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains("The provided unit already has a support relationship with the provided department.", actual.Errors);
+				Assert3.AreEqual((int)HttpStatusCode.Conflict, actual.StatusCode);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains("The provided unit already has a support relationship with the provided department.", actual.Errors);
 			}
 
 			//400 Can't make a Support Relationship for an inactive(archived) Unit.
@@ -160,9 +160,9 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.BadRequest);
 				var actual = await resp.Content.ReadAsAsync<ApiError>();
 
-				Assert.AreEqual(1, actual.Errors.Count);
-				Assert.Contains(ArchivedUnitError, actual.Errors);
-				Assert.AreEqual("(none)", actual.Details);
+				Assert3.AreEqual(1, actual.Errors.Count);
+				Assert3.Contains(ArchivedUnitError, actual.Errors);
+				Assert3.AreEqual("(none)", actual.Details);
 			}
 
 			[TestCase(TestEntities.Units.ParksAndRecUnitId, UnitPermissions.Viewer, HttpStatusCode.Forbidden, EntityPermissions.Get, Description = "Viewer")]
@@ -335,13 +335,13 @@ namespace Integration
 				AssertStatusCode(resp, HttpStatusCode.OK);
 				var actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
 				// Ensure all results are valid.
-				Assert.False(actual.Any(sr => string.IsNullOrWhiteSpace(sr.ContactEmail)));
-				Assert.False(actual.Any(sr => string.IsNullOrWhiteSpace(sr.Dept)));
-				Assert.False(actual.Any(sr => string.IsNullOrWhiteSpace(sr.DeptDescription)));
-				Assert.False(actual.Any(sr => sr.Key <= 0));
+				Assert3.IsFalse(actual.Any(sr => string.IsNullOrWhiteSpace(sr.ContactEmail)));
+				Assert3.IsFalse(actual.Any(sr => string.IsNullOrWhiteSpace(sr.Dept)));
+				Assert3.IsFalse(actual.Any(sr => string.IsNullOrWhiteSpace(sr.DeptDescription)));
+				Assert3.IsFalse(actual.Any(sr => sr.Key <= 0));
 
 				// Ensure we got the expected number of results.
-				Assert.AreEqual(expectedMatches, actual.Count);
+				Assert3.AreEqual(expectedMatches, actual.Count);
 			}
 
 			[Test]
@@ -364,8 +364,8 @@ namespace Integration
 				var actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
 
 				// Make sure we got what we expected.
-				Assert.AreEqual(2, actual.Count);
-				Assert.True(actual.All(r => r.Dept == TestEntities.Departments.FireName));
+				Assert3.AreEqual(2, actual.Count);
+				Assert3.IsTrue(actual.All(r => r.Dept == TestEntities.Departments.FireName));
 
 				// Ensure explicitly URL Encoded values work
 				resp = await GetAuthenticated($"SsspSupportRelationships?dept={System.Web.HttpUtility.UrlEncode(TestEntities.Departments.FireName)}");
@@ -373,8 +373,8 @@ namespace Integration
 				actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
 
 				// Make sure we got what we expected.
-				Assert.AreEqual(2, actual.Count);
-				Assert.True(actual.All(r => r.Dept == TestEntities.Departments.FireName));
+				Assert3.AreEqual(2, actual.Count);
+				Assert3.IsTrue(actual.All(r => r.Dept == TestEntities.Departments.FireName));
 
 				// Ensure non-existent department names get no results
 				resp = await GetAuthenticated($"SsspSupportRelationships?dept=Department That Does Not Exist");
@@ -382,7 +382,7 @@ namespace Integration
 				actual = await resp.Content.ReadAsAsync<List<SsspSupportRelationshipResponse>>();
 
 				// Make sure we got what we expected.
-				Assert.AreEqual(0, actual.Count);
+				Assert3.AreEqual(0, actual.Count);
 			}
 		}
 	}
