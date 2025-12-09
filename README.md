@@ -10,6 +10,8 @@ IT People serverless APIs and Tasks (Version 2)
 
 ## Getting Started
 
+Test
+
 To build the project, install the requirements (above), clone this repo and run:
 
 ```
