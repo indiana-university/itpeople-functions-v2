@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Integration
 {
@@ -76,12 +77,13 @@ namespace Integration
         private async Task createContainer(IDockerClient client)
         {
             Progress.WriteLine($"⏳ Creating container '{ContainerName}' using image '{ImageName}'");
-            await client.Containers.CreateContainerAsync(new CreateContainerParameters(ToConfig())
+            await client.Containers.CreateContainerAsync(new CreateContainerParameters()
             {
                 Image = ImageName,
                 Name = ContainerName,
                 Tty = true,
                 HostConfig = ToHostConfig(),
+                Env = EnvironmentVariables
             });
         }
 
@@ -108,7 +110,7 @@ namespace Integration
 
         public abstract HostConfig ToHostConfig();
 
-        public abstract Config ToConfig();
+        public abstract List<string> EnvironmentVariables { get;  }
 
         public override string ToString()
         {
@@ -166,7 +168,7 @@ namespace Integration
 
         public void Report(JSONMessage value)
         {
-            _progress.WriteLine(value.ProgressMessage);
+            _progress.WriteLine(value.Status);
         }
     }
 }

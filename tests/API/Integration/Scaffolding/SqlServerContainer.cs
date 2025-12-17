@@ -38,11 +38,8 @@ namespace Integration
                     },
             };
 
-        public override Config ToConfig() 
-            => new Config
-            {
-                Env = new List<string> { "ACCEPT_EULA=Y", "SA_PASSWORD=abcd1234@", "MSSQL_PID=Developer" }
-            };
+        public override List<string> EnvironmentVariables =>
+            new List<string> { "ACCEPT_EULA=Y", "SA_PASSWORD=abcd1234@", "MSSQL_PID=Developer" };
 
         protected override DbConnection GetConnection() 
             => new SqlConnection(PeopleContext.LocalServerConnectionString);
