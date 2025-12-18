@@ -41,7 +41,7 @@ namespace Integration
         public override List<string> EnvironmentVariables =>
             new List<string> { "ACCEPT_EULA=Y", "SA_PASSWORD=abcd1234@", "MSSQL_PID=Developer" };
 
-        protected override DbConnection GetConnection() 
+        protected override DbConnection GetConnection()
             => new SqlConnection(PeopleContext.LocalServerConnectionString);
     }
 }

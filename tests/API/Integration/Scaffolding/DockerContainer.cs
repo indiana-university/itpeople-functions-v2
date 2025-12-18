@@ -110,7 +110,7 @@ namespace Integration
 
         public abstract HostConfig ToHostConfig();
 
-        public abstract List<string> EnvironmentVariables { get;  }
+        public abstract List<string> EnvironmentVariables { get; }
 
         public override string ToString()
         {
