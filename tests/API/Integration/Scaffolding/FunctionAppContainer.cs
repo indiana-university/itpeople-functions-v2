@@ -52,18 +52,15 @@ namespace Integration
             }
         }
 
-        public override Config ToConfig() 
-            => new Config
-                {
-                    Env = new List<string> 
-                    {
-                        // Add test-only environment variables here, or
-                        // add them in Dockerfile.API
-                        
-                        // for testing, allow all IPv4 and IPv6 ranges to access
-                        // LSP functions
-                        "LspFuncsAllowedIpRanges=0.0.0.0/0,::/0"
-                    }
+        public override List<string> EnvironmentVariables => 
+            new List<string> 
+            {
+                // Add test-only environment variables here, or
+                // add them in Dockerfile.API
+                
+                // for testing, allow all IPv4 and IPv6 ranges to access
+                // LSP functions
+                "LspFuncsAllowedIpRanges=0.0.0.0/0,::/0"
             };
 
         public override HostConfig ToHostConfig()
