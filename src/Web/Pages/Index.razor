@@ -1,27 +1,46 @@
-﻿@using web.Shared;
-@implements IDisposable
 @page "/"
 
 <PageTitle>IT People - Indiana University</PageTitle>
 
 <div class="rvt-container rvt-container--senior rvt-container--center rvt-p-bottom-xl rvt-p-top-lg">
-	<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">IT People</h1>
-	<AuthenticatedView>
-		<Authenticated>
-			<p>
-				IT People is a directory of people doing or supporting information technology (IT) work at Indiana University. You can search for <a href="/units">units</a> and people by name, or browse all units and their membership.
-			</p>
-		</Authenticated>
-		<NotAuthenticated>
-			<p>
-				IT People is a directory of people doing or supporting information technology (IT) work at Indiana University. Please log in to browse the directory.
-			</p>
-			<p>
-				<a class="rvt-button" href="/SignIn">Log In</a>
-			</p>
-		</NotAuthenticated>
-	</AuthenticatedView>
+	<h1 class="rvt-ts-32 rvt-ts-41-lg-up rvt-text-bold">IT People Has Been Retired</h1>
+	<p class="rvt-m-top-md">
+		The IT People application has been retired. Please see the resources below for support and access to tools previously managed through IT People.
+	</p>
+
+	<div class="rvt-card rvt-m-top-xl">
+		<div class="rvt-card__body">
+			<h2 class="rvt-card__title">Getting IT Support</h2>
+			<p>To get IT support, use the following resources:</p>
+			<ul class="rvt-list">
+				<li>
+					<a href="https://uits.iu.edu/get-help/">How to get help with IT</a> &mdash; Contact UITS for assistance with general IT issues and services.
+				</li>
+				<li>
+					<a href="https://uits.iu.edu/services/it-education-and-community-support/it-community-partnerships/index.html">IT Community Partnerships (ITCP)</a> &mdash; For information about your unit's local or zone support.
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<div class="rvt-card rvt-m-top-lg">
+		<div class="rvt-card__body">
+			<h2 class="rvt-card__title">Access to Previously Managed Tools</h2>
+			<p>If your team needs access to tools previously managed through IT People, please contact the appropriate team for assistance:</p>
+			<ul class="rvt-list">
+				<li>
+					<strong>Unblock</strong> &mdash; Contact <a href="https://informationsecurity.iu.edu/">UIPO</a>
+				</li>
+				<li>
+					<strong>ClearPass</strong> &mdash; Contact <a href="https://uits.iu.edu/services/wifi-and-networks/telecommunications/">IU Network Operations Center</a>
+				</li>
+				<li>
+					<strong>SuperPass or AMS</strong> &mdash; Contact <a href="https://servicenow.iu.edu/kb?id=kb_article_view&sysparm_article=KB0023158">Identity Management Systems</a>
+				</li>
+				<li>
+					<strong>CCI Tools</strong> &mdash; Contact the ADS Admin team via the <a href="https://tools.cci.iu.edu/#/feedback/form">Feedback Form</a>
+				</li>
+			</ul>
+		</div>
+	</div>
 </div>
-@code{
-	public void Dispose() {	}
-}
