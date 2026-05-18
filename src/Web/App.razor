@@ -28,33 +28,4 @@
 	public string HeaderTitle = "IT People";
 	public string PrivacyNoticeUrl = "/privacy";
 	public List<AbstractHeaderItem> NavLinks = new List<AbstractHeaderItem>();
-	private List<HeaderLink> ProfileLinks = new List<HeaderLink>();
-	private AuthenticatedUser User = null;
-	private string AuthenticationDestination;
-
-	protected override async Task OnInitializedAsync()
-	{
-		User = await localStorage.GetItemAsync<AuthenticatedUser>("user");
-		var loggedInUser = User?.Username ?? "";
-		var isLoggedIn = User != null;
-		AuthenticationDestination = new Uri(Navigation.Uri).PathAndQuery;
-		var signInUrl = $"/SignIn?Destination={System.Net.WebUtility.UrlEncode(AuthenticationDestination)}";
-		
-		// Build up NavLinks.
-		NavLinks = new List<AbstractHeaderItem>();
-		if(isLoggedIn)
-		{
-			NavLinks.Add(new HeaderLink("/People", "People"));
-			NavLinks.Add(new HeaderLink("/Units", "Units"));
-			NavLinks.Add(new HeaderLink("/Search", "Search"));
-			ProfileLinks.Insert(0, new HeaderLink($"/People/{loggedInUser}", "Profile", "Manage your profile information"));
-			ProfileLinks.Add(new HeaderLink("/SignOut", "Log Out"));
-			NavLinks.Add(new HeaderProfile(loggedInUser, ProfileLinks, null, isLoggedIn));
-		}
-		else
-		{
-			NavLinks.Add(new HeaderLink(signInUrl, "Log In"));
-		}
-
-	}
 }
