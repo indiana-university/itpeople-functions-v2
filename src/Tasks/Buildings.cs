@@ -17,7 +17,7 @@ namespace Tasks
     {
         // Runs at 30 minutes past every hour (00:30 AM, 01:30 AM, 02:30 AM, ...)
         [Function(nameof(ScheduledBuildingsUpdate))]
-        public static Task ScheduledBuildingsUpdate([TimerTrigger("0 30 * * * *")]TimerInfo timer, 
+        public static Task ScheduledBuildingsUpdate([TimerTrigger("0 30 6-20 * * *")]TimerInfo timer, 
             [DurableClient] DurableTaskClient starter)
             => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(BuildingsUpdateOrchestrator));
 

@@ -1,4 +1,4 @@
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using Docker.DotNet.Models;
 using System.IO;
 using System.Collections.Generic;
@@ -38,13 +38,10 @@ namespace Integration
                     },
             };
 
-        public override Config ToConfig() 
-            => new Config
-            {
-                Env = new List<string> { "ACCEPT_EULA=Y", "SA_PASSWORD=abcd1234@", "MSSQL_PID=Developer" }
-            };
+        public override List<string> EnvironmentVariables =>
+            new List<string> { "ACCEPT_EULA=Y", "SA_PASSWORD=abcd1234@", "MSSQL_PID=Developer" };
 
-        protected override DbConnection GetConnection() 
+        protected override DbConnection GetConnection()
             => new SqlConnection(PeopleContext.LocalServerConnectionString);
     }
 }

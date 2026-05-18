@@ -19,15 +19,12 @@ namespace Integration
             DockerExec($"pull {ImageName}", ".");
         }
 
-        public override Config ToConfig() 
-            => new Config
-            {
-                Env = new List<string> 
-                { 
+        public override List<string> EnvironmentVariables =>
+            new List<string>
+                {
                     "POSTGRES_USER=SA",
                     "POSTGRES_PASSWORD=abcd1234@",
-                }
-            };
+                };
 
         // Watch the port mapping here to avoid port
         // contention w/ other Sql Server installations

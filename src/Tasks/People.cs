@@ -15,9 +15,9 @@ namespace Tasks
 {
     public static class People
     {
-        // Runs at the top of the hour (00:00 AM, 01:00 AM, 02:00 AM, ...)
+        // Runs at the top of the hour from 6:00 AM to 9:00 PM (06:00 AM, 07:00 AM, 09:00 AM, ...)
         [Function(nameof(ScheduledPeopleUpdate))]
-        public static Task ScheduledPeopleUpdate([TimerTrigger("0 0 * * * *")] TimerInfo timer,
+        public static Task ScheduledPeopleUpdate([TimerTrigger("0 0 6-21 * * *")] TimerInfo timer,
             [DurableClient] DurableTaskClient starter) 
             => Utils.StartOrchestratorAsSingleton(timer, starter, nameof(PeopleUpdateOrchestrator));
 
