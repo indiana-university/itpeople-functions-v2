@@ -31,7 +31,7 @@ class Program
             var firstOu = ParseDnComponent(groupDn, "ou");
             var csvPath = Path.Combine(firstOu, $"{cn}.csv");
 
-            Console.Write($"Reading members of {firstOu}/{cn} from LDAP...");
+            Console.Write($"\nReading members of {firstOu}/{cn} from LDAP...");
             var members = GetGroupMembers(ldap, groupDn);
             Console.WriteLine($" {members.Count} found.");
 
@@ -44,8 +44,7 @@ class Program
             if (File.Exists(csvPath))
             {
                 var existing = (await File.ReadAllLinesAsync(csvPath)).Skip(1).Count(l => !string.IsNullOrWhiteSpace(l));
-                Console.WriteLine($"  CSV already exists with {existing} entries. Overwrite? [Y/N]");
-                if (string.Equals(Console.ReadLine()?.Trim(), "Y", StringComparison.OrdinalIgnoreCase))
+                if (Confirm($"  CSV already exists with {existing} entries. Overwrite?"))
                 {
                     Directory.CreateDirectory(firstOu);
                     await File.WriteAllLinesAsync(csvPath, new[] { SamAccountName }.Concat(members));
@@ -63,11 +62,9 @@ class Program
                 Console.WriteLine($"  Written to {csvPath}");
             }
 
-            Console.WriteLine($"  Remove all {members.Count} members from {firstOu}/{cn}? [Y/N]");
-            if (string.Equals(Console.ReadLine()?.Trim(), "Y", StringComparison.OrdinalIgnoreCase))
+            if (Confirm($"  Remove all {members.Count} members from {firstOu}/{cn}?"))
             {
-                Console.WriteLine($"  Are you really sure? [Y/N]");
-                if (string.Equals(Console.ReadLine()?.Trim(), "Y", StringComparison.OrdinalIgnoreCase))
+                if (Confirm($"  Are you really sure?"))
                 {
                     RemoveAllGroupMembers(ldap, groupDn, members);
                     Console.WriteLine($"  Removed {members.Count} members from {firstOu}/{cn}.");
@@ -78,6 +75,12 @@ class Program
                 }
             }
         }
+    }
+
+    static bool Confirm(string message)
+    {
+        Console.Write($"{message} [Y/N] ");
+        return string.Equals(Console.ReadLine()?.Trim(), "Y", StringComparison.OrdinalIgnoreCase);
     }
 
     static string ParseDnComponent(string dn, string type)
