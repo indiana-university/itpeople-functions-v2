@@ -31,7 +31,7 @@ class Program
             var firstOu = ParseDnComponent(groupDn, "ou");
             var csvPath = Path.Combine(firstOu, $"{cn}.csv");
 
-            Console.Write($"Reading members of {cn} from LDAP...");
+            Console.Write($"Reading members of {firstOu}/{cn} from LDAP...");
             var members = GetGroupMembers(ldap, groupDn);
             Console.WriteLine($" {members.Count} found.");
 
