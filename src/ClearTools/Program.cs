@@ -29,15 +29,27 @@ class Program
         {
             var cn = ParseDnComponent(groupDn, "cn");
             var firstOu = ParseDnComponent(groupDn, "ou");
+            var csvPath = Path.Combine(firstOu, $"{cn}.csv");
 
-            Console.Write($"Reading members of {cn}...");
+            Console.Write($"Reading members of {cn} from LDAP...");
             var members = GetGroupMembers(ldap, groupDn);
             Console.WriteLine($" {members.Count} found.");
 
+            if (File.Exists(csvPath))
+            {
+                var existing = (await File.ReadAllLinesAsync(csvPath)).Skip(1).Count(l => !string.IsNullOrWhiteSpace(l));
+                Console.WriteLine($"  CSV already exists with {existing} entries. Overwrite? [Y/N]");
+                var response = Console.ReadLine()?.Trim();
+                if (!string.Equals(response, "Y", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("  Skipped.");
+                    continue;
+                }
+            }
+
             Directory.CreateDirectory(firstOu);
-            var csvPath = Path.Combine(firstOu, $"{cn}.csv");
             await File.WriteAllLinesAsync(csvPath, new[] { SamAccountName }.Concat(members));
-            Console.WriteLine($"Written to {csvPath}");
+            Console.WriteLine($"  Written to {csvPath}");
         }
     }
 
