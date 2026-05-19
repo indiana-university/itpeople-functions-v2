@@ -35,6 +35,12 @@ class Program
             var members = GetGroupMembers(ldap, groupDn);
             Console.WriteLine($" {members.Count} found.");
 
+            if (members.Count == 0)
+            {
+                Console.WriteLine("  Group is empty, skipping.");
+                continue;
+            }
+
             if (File.Exists(csvPath))
             {
                 var existing = (await File.ReadAllLinesAsync(csvPath)).Skip(1).Count(l => !string.IsNullOrWhiteSpace(l));
