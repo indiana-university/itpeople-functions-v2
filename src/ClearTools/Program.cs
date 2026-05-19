@@ -39,17 +39,38 @@ class Program
             {
                 var existing = (await File.ReadAllLinesAsync(csvPath)).Skip(1).Count(l => !string.IsNullOrWhiteSpace(l));
                 Console.WriteLine($"  CSV already exists with {existing} entries. Overwrite? [Y/N]");
-                var response = Console.ReadLine()?.Trim();
-                if (!string.Equals(response, "Y", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(Console.ReadLine()?.Trim(), "Y", StringComparison.OrdinalIgnoreCase))
+                {
+                    Directory.CreateDirectory(firstOu);
+                    await File.WriteAllLinesAsync(csvPath, new[] { SamAccountName }.Concat(members));
+                    Console.WriteLine($"  Written to {csvPath}");
+                }
+                else
                 {
                     Console.WriteLine("  Skipped.");
-                    continue;
                 }
             }
+            else
+            {
+                Directory.CreateDirectory(firstOu);
+                await File.WriteAllLinesAsync(csvPath, new[] { SamAccountName }.Concat(members));
+                Console.WriteLine($"  Written to {csvPath}");
+            }
 
-            Directory.CreateDirectory(firstOu);
-            await File.WriteAllLinesAsync(csvPath, new[] { SamAccountName }.Concat(members));
-            Console.WriteLine($"  Written to {csvPath}");
+            Console.WriteLine($"  Remove all {members.Count} members from {firstOu}/{cn}? [Y/N]");
+            if (string.Equals(Console.ReadLine()?.Trim(), "Y", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"  Are you really sure? [Y/N]");
+                if (string.Equals(Console.ReadLine()?.Trim(), "Y", StringComparison.OrdinalIgnoreCase))
+                {
+                    RemoveAllGroupMembers(ldap, groupDn, members);
+                    Console.WriteLine($"  Removed {members.Count} members from {firstOu}/{cn}.");
+                }
+                else
+                {
+                    Console.WriteLine("  Removal cancelled.");
+                }
+            }
         }
     }
 
@@ -63,6 +84,17 @@ class Program
                 return trimmed[prefix.Length..];
         }
         throw new Exception($"No {type}= component found in: {dn}");
+    }
+
+    static void RemoveAllGroupMembers(LdapConnection ldap, string groupDn, List<string> members)
+    {
+        foreach (var batch in members.Chunk(PageSize))
+        {
+            var modifications = batch
+                .Select(netid => new LdapModification(LdapModification.Delete, new LdapAttribute("member", $"cn={netid},{SearchBase}")))
+                .ToArray();
+            ldap.Modify(groupDn, modifications);
+        }
     }
 
     static List<string> GetGroupMembers(LdapConnection ldap, string groupDn)
